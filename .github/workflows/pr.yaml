@@ -1,0 +1,24 @@
+name: Pull Request
+
+on:
+  pull_request:
+
+jobs:
+  ci:
+    name: CI - Build and Test
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: build 
+        uses: ./.github/actions/build
+        with:
+          configuration: Debug
+          useVersioning: false
+          
+      - name: test 
+        uses: ./.github/actions/test

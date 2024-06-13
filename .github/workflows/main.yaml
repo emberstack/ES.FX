@@ -1,0 +1,74 @@
+name: Main
+
+on:
+  push:
+    branches:
+      - '**'  # Matches all branches
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: build 
+        uses: ./.github/actions/build
+        with:
+          configuration: Debug
+          useVersioning: false
+
+      - name: test 
+        uses: ./.github/actions/test
+
+  cd:
+    name: CD
+    needs: ci
+    runs-on: ubuntu-latest
+    if: >
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop' ||
+      startsWith(github.ref, 'refs/heads/feature/') ||
+      startsWith(github.ref, 'refs/heads/release/') ||
+      startsWith(github.ref, 'refs/heads/hotfix/')
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: build 
+        uses: ./.github/actions/build
+        with:
+          configuration: Release
+          useVersioning: true
+
+      - name: artifacts - nuget - gather
+        run: |
+          mkdir -p .artifacts/nuget
+          find . -name "*.nupkg" -exec cp {} .artifacts/nuget/ \;
+
+      - name: artifacts - nuget - upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-nuget
+          path: .artifacts/nuget/*.nupkg
+
+      - name: git - tag
+        if: >
+          github.ref == 'refs/heads/main' ||
+          startsWith(github.ref, 'refs/heads/release/') ||
+          startsWith(github.ref, 'refs/heads/hotfix/')
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag ${{env.GitVersion_SemVer}}
+          git push origin ${{env.GitVersion_SemVer}}
+
+          
+

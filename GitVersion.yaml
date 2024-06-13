@@ -1,0 +1,35 @@
+mode: ContinuousDeployment
+branches:
+  main:
+    tag: ''
+    increment: Patch
+    regex: ^main$
+    source-branches: ['develop', 'release']
+    is-mainline: true
+  develop:
+    tag: 'dev'
+    increment: Minor
+    regex: ^develop$
+    source-branches: ['main']
+    is-mainline: false
+  feature:
+    tag: 'feature'
+    increment: Inherit
+    regex: ^feature[/-]
+    source-branches: ['develop']
+    is-mainline: false
+  release:
+    tag: 'rc'
+    increment: Patch
+    regex: ^release[/-]
+    source-branches: ['develop']
+    is-mainline: false
+  hotfix:
+    tag: 'hotfix'
+    increment: Patch
+    regex: ^hotfix[/-]
+    source-branches: ['main', 'develop']
+    is-mainline: false
+ignore:
+  sha: []
+merge-message-formats: {}

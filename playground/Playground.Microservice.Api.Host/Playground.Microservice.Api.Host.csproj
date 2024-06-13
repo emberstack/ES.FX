@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.Ignite.Hosting\ES.FX.Ignite.Hosting.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.Ignite.Migrations\ES.FX.Ignite.Migrations.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.Ignite.Serilog\ES.FX.Ignite.Serilog.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.Serilog\ES.FX.Serilog.csproj" />
+    <ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
+    <ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+</Project>
