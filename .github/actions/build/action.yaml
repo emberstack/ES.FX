@@ -1,0 +1,57 @@
+name: Build
+description: 'Build steps'
+inputs:
+  useVersioning:
+    description: 'Apply versioning to the build'
+    required: true
+    default: 'false'
+  configuration:
+    description: 'Build configuration'
+    required: true
+    default: 'Debug'
+runs:
+  using: 'composite'
+  steps:
+   
+
+    - name: tools - dotnet - install
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.x'
+
+    - name: tools - gitversion - install
+      if: ${{ inputs.useVersioning == 'true' }}
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: '5.x'
+        preferLatestVersion: true
+
+    - name: tools - gitversion - execute
+      if: ${{ inputs.useVersioning == 'true' }}
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      # with:
+      #   useConfigFile: true
+      #   configFilePath: GitVersion.yaml
+
+    - name: cache - nuget
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: dotnet restore
+      shell: bash
+      run: dotnet restore
+
+
+    - name: dotnet build
+      if: ${{ inputs.useVersioning != 'true' }}
+      shell: bash
+      run: dotnet build --no-restore --configuration ${{ inputs.configuration }}
+
+    - name: dotnet build
+      if: ${{ inputs.useVersioning == 'true' }}
+      shell: bash
+      run: dotnet build --no-restore --configuration ${{ inputs.configuration }} /p:Version=${{env.GitVersion_SemVer}} /p:AssemblyVersion=${{env.GitVersion_AssemblySemFileVer}} /p:NuGetVersion=${{env.GitVersion_SemVer}}

@@ -1,0 +1,16 @@
+name: Test
+description: 'Test steps'
+runs:
+  using: 'composite'
+  steps:
+    - name: dotnet test
+      shell: bash
+      run: dotnet test --no-build --verbosity normal
+
+    - name: test-reporter
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: .artifacts/TestResults/*.trx
+        reporter: dotnet-trx
