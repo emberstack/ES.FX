@@ -2,30 +2,26 @@
 
 namespace ES.FX.Hosting.Lifetime;
 
-
 /// <summary>
-/// Builder for creating a <see cref="ProgramEntry"/> instance
+///     Builder for creating a <see cref="ProgramEntry" /> instance
 /// </summary>
 public class ProgramEntryBuilder
 {
-    private ILogger _logger;
     private readonly List<Func<ProgramEntryOptions, Task>> _exitActions = [];
     private readonly ProgramEntryOptions _options;
+    private ILogger _logger;
 
     public ProgramEntryBuilder(ProgramEntryOptions options)
     {
         _options = options;
-        _logger = LoggerFactory.Create(builder =>
-        {
-            builder.AddConsole();
-        }).CreateLogger<ProgramEntry>();
+        _logger = LoggerFactory.Create(builder => { builder.AddConsole(); }).CreateLogger<ProgramEntry>();
     }
 
     /// <summary>
-    /// Sets the logger to be used by the <see cref="ProgramEntry"/>
+    ///     Sets the logger to be used by the <see cref="ProgramEntry" />
     /// </summary>
-    /// <param name="logger">The new <see cref="ILogger"/> instance</param>
-    /// <returns>The <see cref="ProgramEntryBuilder"/></returns>
+    /// <param name="logger">The new <see cref="ILogger" /> instance</param>
+    /// <returns>The <see cref="ProgramEntryBuilder" /></returns>
     public ProgramEntryBuilder WithLogger(ILogger logger)
     {
         _logger = logger;
@@ -33,10 +29,10 @@ public class ProgramEntryBuilder
     }
 
     /// <summary>
-    /// Adds a new action to be executed before the program exits (regardless of the exit reason)
+    ///     Adds a new action to be executed before the program exits (regardless of the exit reason)
     /// </summary>
     /// <param name="exitAction">Func to execute on exit</param>
-    /// <returns>The <see cref="ProgramEntryBuilder"/></returns>
+    /// <returns>The <see cref="ProgramEntryBuilder" /></returns>
     public ProgramEntryBuilder AddExitAction(Func<ProgramEntryOptions, Task> exitAction)
     {
         _exitActions.Add(exitAction);
@@ -44,11 +40,8 @@ public class ProgramEntryBuilder
     }
 
     /// <summary>
-    /// Builds the <see cref="ProgramEntry"/> instance
+    ///     Builds the <see cref="ProgramEntry" /> instance
     /// </summary>
-    /// <returns>The <see cref="ProgramEntry"/> instance</returns>
-    public ProgramEntry Build()
-    {
-        return new ProgramEntry(_logger, _exitActions, new ProgramEntryOptions { Args = _options.Args });
-    }
+    /// <returns>The <see cref="ProgramEntry" /> instance</returns>
+    public ProgramEntry Build() => new(_logger, _exitActions, new ProgramEntryOptions { Args = _options.Args });
 }

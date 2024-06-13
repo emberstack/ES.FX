@@ -2,7 +2,6 @@ using ES.FX.Exceptions;
 
 namespace ES.FX.Tests.Exceptions;
 
-
 public class ExceptionExtensionsTests
 {
     [Fact]
@@ -25,8 +24,8 @@ public class ExceptionExtensionsTests
     public void Exception_InnerMostOfType_ReturnsInnermostExceptionOfType()
     {
         var exception = new Exception("Outer",
-            new ArgumentException("Inner", 
-                new ArgumentException("Innermost", 
+            new ArgumentException("Inner",
+                new ArgumentException("Innermost",
                     new Exception("Last"))));
         var result = exception.InnermostException<ArgumentException>();
         Assert.NotNull(result);
@@ -51,5 +50,4 @@ public class ExceptionExtensionsTests
         var result = exception.InnermostException<ArgumentException>();
         Assert.Null(result);
     }
-
 }

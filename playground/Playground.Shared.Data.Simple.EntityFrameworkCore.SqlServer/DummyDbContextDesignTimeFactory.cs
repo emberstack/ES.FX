@@ -2,7 +2,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
 
@@ -20,10 +19,12 @@ public class DummyDbContextDesignTimeFactory : IDesignTimeDbContextFactory<Simpl
             InitialCatalog = $"{nameof(SimpleDbContext)}_Design",
             TrustServerCertificate = true
         };
-        optionsBuilder.UseSqlServer(sqlBuilder.ConnectionString, sqlServerDbContextOptionsBuilder =>
-        {
-            sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(DummyDbContextDesignTimeFactory).Assembly.FullName);
-        });
+        optionsBuilder.UseSqlServer(sqlBuilder.ConnectionString,
+            sqlServerDbContextOptionsBuilder =>
+            {
+                sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(DummyDbContextDesignTimeFactory).Assembly
+                    .FullName);
+            });
 
         return new SimpleDbContext(optionsBuilder.Options);
     }

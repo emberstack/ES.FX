@@ -2,10 +2,8 @@ using ES.FX.Linq;
 
 namespace ES.FX.Tests.Linq;
 
-
 public class EnumerableExtensionsTests
 {
-
     [Fact]
     public void Enumerable_GetManifestResources_ReturnsItemIfNotEmpty()
     {
@@ -22,7 +20,4 @@ public class EnumerableExtensionsTests
         var result = enumerable.TakeRandomItemOrDefault();
         Assert.Equal(default, result);
     }
-
-
-
 }

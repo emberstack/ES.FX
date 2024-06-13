@@ -3,7 +3,7 @@
 namespace ES.FX.Ignite.Migrations.Configuration;
 
 /// <summary>
-/// Provides the settings for the <see cref="MigrationsService"/>
+///     Provides the settings for the <see cref="MigrationsService" />
 /// </summary>
 public class MigrationsServiceSparkSettings
 {

@@ -110,7 +110,6 @@ public class SqlServerDbContextHostingExtensionsTests
     }
 
 
-
     [Fact]
     public void AddSqlServerDbContext_CanChangeSettingsInCode()
     {
@@ -118,12 +117,12 @@ public class SqlServerDbContextHostingExtensionsTests
 
         //Configure settings
         builder.Configuration.AddInMemoryCollection([
-            new(
+            new KeyValuePair<string, string?>(
                 $"{DbContextSpark.ConfigurationSectionKey}:{nameof(TestDbContext)}:{SparkConfig.SettingsKey}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.DisableTracing)}",
                 true.ToString()),
-            new(
+            new KeyValuePair<string, string?>(
                 $"{DbContextSpark.ConfigurationSectionKey}:{nameof(TestDbContext)}:{SparkConfig.SettingsKey}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.DisableHealthChecks)}",
-                true.ToString()),
+                true.ToString())
         ]);
         builder.AddSqlServerDbContext<TestDbContext>(
             configureSettings: settings =>
@@ -160,17 +159,16 @@ public class SqlServerDbContextHostingExtensionsTests
         const int changedCommandTimeout = 500;
 
 
-
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         //Configure options
         builder.Configuration.AddInMemoryCollection([
-            new(
+            new KeyValuePair<string, string?>(
                 $"{DbContextSpark.ConfigurationSectionKey}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<TestDbContext>.ConnectionString)}",
                 initialConnectionString),
-            new(
+            new KeyValuePair<string, string?>(
                 $"{DbContextSpark.ConfigurationSectionKey}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<TestDbContext>.CommandTimeout)}",
-                initialCommandTimeout.ToString()),
+                initialCommandTimeout.ToString())
         ]);
         builder.AddSqlServerDbContext<TestDbContext>(
             configureOptions: options =>
@@ -194,7 +192,8 @@ public class SqlServerDbContextHostingExtensionsTests
         var context = app.Services.GetRequiredService<TestDbContext>();
 
         Assert.Equal(changedCommandTimeout, context.Options.FindExtension<SqlServerOptionsExtension>()?.CommandTimeout);
-        Assert.Equal(changedConnectionString, context.Options.FindExtension<SqlServerOptionsExtension>()?.ConnectionString);
+        Assert.Equal(changedConnectionString,
+            context.Options.FindExtension<SqlServerOptionsExtension>()?.ConnectionString);
     }
 
     [Fact]

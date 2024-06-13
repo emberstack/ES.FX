@@ -3,13 +3,13 @@
 namespace ES.FX.Exceptions;
 
 /// <summary>
-/// Extension methods for <see cref="Exception"/>
+///     Extension methods for <see cref="Exception" />
 /// </summary>
 [PublicAPI]
 public static class ExceptionExtensions
 {
     /// <summary>
-    /// Returns the innermost <see cref="Exception"/>
+    ///     Returns the innermost <see cref="Exception" />
     /// </summary>
     public static Exception InnermostException(this Exception exception)
     {
@@ -22,7 +22,7 @@ public static class ExceptionExtensions
 
 
     /// <summary>
-    /// Returns the innermost <see cref="Exception"/> of type <see cref="T"/>  
+    ///     Returns the innermost <see cref="Exception" /> of type <see cref="T" />
     /// </summary>
     public static Exception? InnermostException<T>(this Exception? exception) where T : Exception
     {
@@ -31,12 +31,10 @@ public static class ExceptionExtensions
         T? foundException = null;
         while (exception != null)
         {
-            if (exception is T specificException)
-            {
-                foundException = specificException;
-            }
+            if (exception is T specificException) foundException = specificException;
             exception = exception.InnerException;
         }
+
         return foundException;
     }
 }

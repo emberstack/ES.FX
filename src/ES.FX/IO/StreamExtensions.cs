@@ -1,12 +1,13 @@
 ﻿using JetBrains.Annotations;
 using static System.ArgumentNullException;
+
 namespace ES.FX.IO;
 
 [PublicAPI]
 public static class StreamExtensions
 {
     /// <summary>
-    /// Reads all bytes from the stream and returns them as a byte array
+    ///     Reads all bytes from the stream and returns them as a byte array
     /// </summary>
     public static byte[] ToByteArray(this Stream stream)
     {
@@ -21,7 +22,7 @@ public static class StreamExtensions
     }
 
     /// <summary>
-    /// Reads all bytes from the stream asynchronously and returns them as a byte array
+    ///     Reads all bytes from the stream asynchronously and returns them as a byte array
     /// </summary>
     public static async Task<byte[]> ToByteArrayAsync(this Stream stream, CancellationToken cancellationToken = default)
     {

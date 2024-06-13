@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.Context;
 
-
 public class TestDbContext(
     DbContextOptions<TestDbContext> dbContextOptions) :
     DbContext(dbContextOptions)

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ES.FX.Microsoft.EntityFrameworkCore.Factories;
 
 /// <summary>
-/// Defines a factory for creating instances of <see cref="DbContext"/> using a delegate.
+///     Defines a factory for creating instances of <see cref="DbContext" /> using a delegate.
 /// </summary>
 /// <typeparam name="T">DbContext type</typeparam>
 /// <param name="serviceProvider">Service provider used by the factory</param>

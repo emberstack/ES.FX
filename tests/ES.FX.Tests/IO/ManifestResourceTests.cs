@@ -2,7 +2,6 @@ using ES.FX.IO;
 
 namespace ES.FX.Tests.IO;
 
-
 public class ManifestResourceTests
 {
     [Fact]
@@ -52,6 +51,4 @@ public class ManifestResourceTests
         Assert.Equal(2, result.Length);
         Assert.Equal(sourceArray, result);
     }
-
-
 }

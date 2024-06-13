@@ -3,18 +3,17 @@
 namespace ES.FX.Ignite.Migrations.Spark;
 
 /// <summary>
-/// <see cref="MigrationsServiceSpark"/> definition
+///     <see cref="MigrationsServiceSpark" /> definition
 /// </summary>
 public static class MigrationsServiceSpark
 {
     /// <summary>
-    /// Spark name
+    ///     Spark name
     /// </summary>
     public const string Name = "MigrationsService";
 
     /// <summary>
-    /// The default configuration section key.
+    ///     The default configuration section key.
     /// </summary>
     public const string ConfigurationSectionKey = $"{IgniteConfigurationSections.Services}:{Name}";
-
 }

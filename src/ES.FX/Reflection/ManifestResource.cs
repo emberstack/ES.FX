@@ -30,10 +30,7 @@ public class ManifestResource(Assembly Assembly, string Name)
     /// <summary>
     ///     Returns the stream for the manifest resource
     /// </summary>
-    public Stream? GetStream()
-    {
-        return Assembly.GetManifestResourceStream(Name);
-    }
+    public Stream? GetStream() => Assembly.GetManifestResourceStream(Name);
 
 
     /// <summary>
@@ -85,5 +82,4 @@ public class ManifestResource(Assembly Assembly, string Name)
         var stream = GetStream();
         return stream is not null ? new StreamReader(stream) : null;
     }
-
 }

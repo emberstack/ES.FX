@@ -13,14 +13,15 @@ namespace ES.FX.Serilog.Lifetime;
 public static class ProgramEntrySerilogExtensions
 {
     /// <summary>
-    /// Use Serilog as the logger for the ProgramEntry
+    ///     Use Serilog as the logger for the ProgramEntry
     /// </summary>
-    /// <param name="builder">The <see cref="ProgramEntryBuilder"/></param>
+    /// <param name="builder">The <see cref="ProgramEntryBuilder" /></param>
     /// <param name="minimumLevel">The minimum level for logging</param>
-    /// <param name="configureLoggerConfiguration"> Action to configure the <see cref="LoggerConfiguration"/>.</param>
+    /// <param name="configureLoggerConfiguration"> Action to configure the <see cref="LoggerConfiguration" />.</param>
     /// <param name="enableConsoleSelfLog">Enables the Serilog SelfLog to console (useful to debug Serilog)</param>
-    /// <returns>The <see cref="ProgramEntryBuilder"/></returns>
-    public static ProgramEntryBuilder UseSerilog(this ProgramEntryBuilder builder, LogEventLevel minimumLevel = LogEventLevel.Information,
+    /// <returns>The <see cref="ProgramEntryBuilder" /></returns>
+    public static ProgramEntryBuilder UseSerilog(this ProgramEntryBuilder builder,
+        LogEventLevel minimumLevel = LogEventLevel.Information,
         Action<LoggerConfiguration>? configureLoggerConfiguration = null, bool enableConsoleSelfLog = true)
     {
         // Enable Serilog SelfLog to console

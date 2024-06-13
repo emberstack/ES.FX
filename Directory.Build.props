@@ -40,4 +40,3 @@
 		<VSTestResultsDirectory>$(MSBuildThisFileDirectory)/.artifacts/TestResults</VSTestResultsDirectory>
 	</PropertyGroup>
 </Project>
-

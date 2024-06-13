@@ -8,17 +8,16 @@ using Microsoft.Extensions.Hosting;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests;
 
-public class SqlServerDbContextConnectTests(SqlServerContainerFixture sqlServerFixture) : IClassFixture<SqlServerContainerFixture>
+public class SqlServerDbContextConnectTests(SqlServerContainerFixture sqlServerFixture)
+    : IClassFixture<SqlServerContainerFixture>
 {
     [Fact]
     public async Task AddSqlServerDbContext_CanConnect()
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
-        builder.AddSqlServerDbContext<TestDbContext>(configureOptions: options =>
-            {
-                options.ConnectionString = sqlServerFixture.GetConnectionString();
-            },
+        builder.AddSqlServerDbContext<TestDbContext>(
+            configureOptions: options => { options.ConnectionString = sqlServerFixture.GetConnectionString(); },
             configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
             {
                 sqlServerDbContextOptionsBuilder.MigrationsAssembly(

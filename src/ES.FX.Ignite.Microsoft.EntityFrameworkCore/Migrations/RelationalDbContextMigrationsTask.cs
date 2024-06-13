@@ -1,18 +1,16 @@
 ﻿using System.Diagnostics;
 using ES.FX.Migrations.Abstractions;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.Migrations;
 
 /// <summary>
-/// <see cref="IMigrationsTask"/> for applying migrations to <see cref="DbContext"/> that uses relational databases.
+///     <see cref="IMigrationsTask" /> for applying migrations to <see cref="DbContext" /> that uses relational databases.
 /// </summary>
-/// <typeparam name="TDbContext">The <see cref="DbContext"/> type</typeparam>
+/// <typeparam name="TDbContext">The <see cref="DbContext" /> type</typeparam>
 /// <param name="logger">Logger instance</param>
-/// <param name="context">The <see cref="TDbContext"/> instance</param>
-/// 
+/// <param name="context">The <see cref="TDbContext" /> instance</param>
 public class RelationalDbContextMigrationsTask<TDbContext>(
     ILogger<RelationalDbContextMigrationsTask<TDbContext>> logger,
     TDbContext context) : IMigrationsTask where TDbContext : DbContext
@@ -38,6 +36,7 @@ public class RelationalDbContextMigrationsTask<TDbContext>(
         }
 
         stopWatch.Stop();
-        logger.LogInformation("Migrations for {contextType} completed in {elapsed}", typeof(TDbContext).Name, stopWatch.Elapsed);
+        logger.LogInformation("Migrations for {contextType} completed in {elapsed}", typeof(TDbContext).Name,
+            stopWatch.Elapsed);
     }
 }

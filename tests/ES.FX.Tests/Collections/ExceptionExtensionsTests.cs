@@ -2,7 +2,6 @@ using ES.FX.Collections;
 
 namespace ES.FX.Tests.Collections;
 
-
 public class ExceptionExtensionsTests
 {
     [Fact]

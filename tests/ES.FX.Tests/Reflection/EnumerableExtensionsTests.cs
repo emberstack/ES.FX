@@ -2,10 +2,8 @@ using ES.FX.Reflection;
 
 namespace ES.FX.Tests.Reflection;
 
-
 public class EnumerableExtensionsTests
 {
-
     [Fact]
     public void Assembly_GetManifestResources_ReturnsManifestResources()
     {
@@ -67,7 +65,6 @@ public class EnumerableExtensionsTests
     }
 
 
-
     [Fact]
     public void ManifestResource_ReturnsResourceByName()
     {
@@ -118,8 +115,6 @@ public class EnumerableExtensionsTests
     }
 
 
-
-
     [Fact]
     public async Task ManifestResource_CanReadTextAsync()
     {
@@ -155,6 +150,4 @@ public class EnumerableExtensionsTests
         var result = await resource.ReadAllBytesAsync();
         Assert.NotNull(result);
     }
-
-
 }

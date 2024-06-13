@@ -1,6 +1,7 @@
 ﻿namespace ES.FX.Ignite.Spark.Configuration;
+
 /// <summary>
-/// Ignite default configuration sections
+///     Ignite default configuration sections
 /// </summary>
 public static class IgniteConfigurationSections
 {

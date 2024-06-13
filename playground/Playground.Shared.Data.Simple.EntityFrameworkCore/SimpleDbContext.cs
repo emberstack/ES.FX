@@ -3,7 +3,6 @@ using Playground.Shared.Data.Simple.EntityFrameworkCore.Entities;
 
 namespace Playground.Shared.Data.Simple.EntityFrameworkCore;
 
-
 public class SimpleDbContext(
     DbContextOptions<SimpleDbContext> dbContextOptions) :
     DbContext(dbContextOptions)

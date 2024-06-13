@@ -20,10 +20,12 @@ public class TestDbContextDesignTimeFactory : IDesignTimeDbContextFactory<TestDb
             InitialCatalog = $"{nameof(TestDbContext)}_Design",
             TrustServerCertificate = true
         };
-        optionsBuilder.UseSqlServer(sqlBuilder.ConnectionString, sqlServerDbContextOptionsBuilder =>
-        {
-            sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(TestDbContextDesignTimeFactory).Assembly.FullName);
-        });
+        optionsBuilder.UseSqlServer(sqlBuilder.ConnectionString,
+            sqlServerDbContextOptionsBuilder =>
+            {
+                sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(TestDbContextDesignTimeFactory).Assembly
+                    .FullName);
+            });
 
         return new TestDbContext(optionsBuilder.Options);
     }

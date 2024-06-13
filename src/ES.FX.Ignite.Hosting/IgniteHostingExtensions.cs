@@ -12,10 +12,7 @@ public static class IgniteHostingExtensions
         AddDefaultConfigurationSlim(builder);
     }
 
-    public static IHost UseIgnite(this IHost app)
-    {
-        return app;
-    }
+    public static IHost UseIgnite(this IHost app) => app;
 
 
     private static void AddDefaultConfigurationSlim(IHostApplicationBuilder builder)
@@ -25,7 +22,6 @@ public static class IgniteHostingExtensions
         // Useful when mounting a configuration file from a secret manager or a configuration provider.
         builder.Configuration
             .AddJsonFile($"appsettings.{builder.Environment}.overrides.json",
-                optional: true, reloadOnChange: true);
+                true, true);
     }
-
 }

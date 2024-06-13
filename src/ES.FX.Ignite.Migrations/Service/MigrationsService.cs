@@ -8,11 +8,14 @@ using Microsoft.Extensions.Logging;
 namespace ES.FX.Ignite.Migrations.Service;
 
 /// <summary>
-/// Hosted service for running migrations tasks.
+///     Hosted service for running migrations tasks.
 /// </summary>
-/// <param name="logger"> The <see cref="ILogger{TCategoryName}"/>.</param>
-/// <param name="settings"> The <see cref="MigrationsServiceSparkSettings"/>.</param>
-/// <param name="serviceProvider"> The <see cref="IServiceProvider"/> used to look up the <see cref="IMigrationsTask"/> instances.</param>
+/// <param name="logger"> The <see cref="ILogger{TCategoryName}" />.</param>
+/// <param name="settings"> The <see cref="MigrationsServiceSparkSettings" />.</param>
+/// <param name="serviceProvider">
+///     The <see cref="IServiceProvider" /> used to look up the <see cref="IMigrationsTask" />
+///     instances.
+/// </param>
 public class MigrationsService(
     ILogger<MigrationsService> logger,
     MigrationsServiceSparkSettings settings,
@@ -23,10 +26,7 @@ public class MigrationsService(
     {
         logger.LogDebug("Service enabled: {enabled}", settings.Enabled);
 
-        if (!settings.Enabled)
-        {
-            return;
-        }
+        if (!settings.Enabled) return;
 
 
         logger.LogTrace("Running migration tasks");

@@ -26,13 +26,10 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.AddDbContextMigrationsTask<SimpleDbContext>();
 
 
-
     builder.Services.AddHostedService<TestHostedService>();
 
     var app = builder.Build();
     app.UseIgnite();
-
-
 
 
     await app.RunAsync();

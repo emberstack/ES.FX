@@ -4,13 +4,10 @@ namespace ES.FX.Shared.SqlServer.Tests.Fixtures;
 
 public sealed class SqlServerContainerFixture : IAsyncLifetime
 {
-    public MsSqlContainer? Container { get; private set; }
     public const string Registry = "mcr.microsoft.com";
     public const string Image = "mssql/server";
     public const string Tag = "2022-latest";
-
-    public string GetConnectionString() => Container?.GetConnectionString() ??
-                                           throw new InvalidOperationException("The test container was not initialized.");
+    public MsSqlContainer? Container { get; private set; }
 
     public async Task InitializeAsync()
     {
@@ -23,9 +20,10 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (Container is not null)
-        {
-            await Container.DisposeAsync();
-        }
+        if (Container is not null) await Container.DisposeAsync();
     }
+
+    public string GetConnectionString() =>
+        Container?.GetConnectionString() ??
+        throw new InvalidOperationException("The test container was not initialized.");
 }

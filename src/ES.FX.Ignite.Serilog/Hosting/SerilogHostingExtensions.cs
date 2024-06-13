@@ -11,17 +11,24 @@ namespace ES.FX.Ignite.Serilog.Hosting;
 public static class SerilogHostingExtensions
 {
     /// <summary>
-    /// Adds Serilog to the host builder with the default enrichers and default configuration
+    ///     Adds Serilog to the host builder with the default enrichers and default configuration
     /// </summary>
     /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
-    /// /// <param name="configureLoggerConfiguration">An optional delegate that can be used for customizing the <see cref="LoggerConfiguration"/> that will be used to construct a <see cref="Logger"/>.</param>
-    /// <param name="applyDefaultConfiguration">Apply the default logger configuration. If enabled the default configuration will be applied before the custom configuration.</param>
-    public static void AddSerilog(this IHostApplicationBuilder builder, Action<LoggerConfiguration>? configureLoggerConfiguration = null, bool applyDefaultConfiguration = true)
+    /// ///
+    /// <param name="configureLoggerConfiguration">
+    ///     An optional delegate that can be used for customizing the
+    ///     <see cref="LoggerConfiguration" /> that will be used to construct a <see cref="Logger" />.
+    /// </param>
+    /// <param name="applyDefaultConfiguration">
+    ///     Apply the default logger configuration. If enabled the default configuration
+    ///     will be applied before the custom configuration.
+    /// </param>
+    public static void AddSerilog(this IHostApplicationBuilder builder,
+        Action<LoggerConfiguration>? configureLoggerConfiguration = null, bool applyDefaultConfiguration = true)
     {
         builder.Services.AddSerilog((services, loggerConfiguration) =>
         {
             if (applyDefaultConfiguration)
-            {
                 loggerConfiguration
                     .MinimumLevel.Verbose()
                     .Destructure.ToMaximumCollectionCount(64)
@@ -31,7 +38,6 @@ public static class SerilogHostingExtensions
                     .Enrich.WithMachineName()
                     .Enrich.WithEnvironmentName()
                     .Enrich.With<EntryAssemblyNameEnricher>();
-            }
 
             loggerConfiguration
                 .ReadFrom.Services(services)
@@ -40,10 +46,6 @@ public static class SerilogHostingExtensions
             configureLoggerConfiguration?.Invoke(loggerConfiguration);
         });
 
-        if (applyDefaultConfiguration)
-        {
-            builder.Services.AddSingleton<ILogEventEnricher, ApplicationNameEnricher>();
-
-        }
+        if (applyDefaultConfiguration) builder.Services.AddSingleton<ILogEventEnricher, ApplicationNameEnricher>();
     }
 }
