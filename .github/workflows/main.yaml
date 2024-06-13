@@ -70,5 +70,15 @@ jobs:
           git tag ${{env.GitVersion_SemVer}}
           git push origin ${{env.GitVersion_SemVer}}
 
+      - name: dotnet nuget add source
+        shell: bash
+        run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/emberstack/index.json"
+
+
+      - name: dotnet nuget push
+        run: |
+          for pkg in .artifacts/nuget/*.nupkg; do
+            dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} 
+          done
           
 
