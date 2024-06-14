@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - '**'  # Matches all branches
+    paths:
+      - 'src/**'
+      - 'tests/**'
 
 jobs:
   ci:
@@ -30,11 +33,17 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
     if: >
+      (
+      contains(toJson(github.event.commits), 'src/') }} || 
+      contains(toJson(github.event.commits), 'ES.FX.sln') }} || 
+      contains(toJson(github.event.commits), 'Directory.Build.props') }} || 
+      ) && (
       github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/develop' ||
       startsWith(github.ref, 'refs/heads/feature/') ||
       startsWith(github.ref, 'refs/heads/release/') ||
       startsWith(github.ref, 'refs/heads/hotfix/')
+      )
 
     steps:
       - name: checkout
