@@ -13,7 +13,7 @@ public static class MigrationsServiceSpark
     public const string Name = "MigrationsService";
 
     /// <summary>
-    ///     The default configuration section key.
+    ///     The default configuration section path
     /// </summary>
-    public const string ConfigurationSectionKey = $"{IgniteConfigurationSections.Services}:{Name}";
+    public const string ConfigurationSectionPath = $"{IgniteConfigurationSections.Services}:{Name}";
 }

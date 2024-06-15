@@ -18,13 +18,13 @@ namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 public static class SqlServerDbContextHostingExtensions
 {
     /// <summary>
-    ///     Registers the given <see cref="DbContext" /> as a service in the services provided by the
+    ///     Registers <see cref="TDbContext" /> as a service in the services provided by the
     ///     <paramref name="builder" />.
-    ///     Enables retries, health check, logging and telemetry for the <see cref="DbContext" />.
+    ///     Enables retries, health check, logging and telemetry for the <see cref="TDbContext" />.
     /// </summary>
     /// <typeparam name="TDbContext">The <see cref="TDbContext" /> that needs to be registered.</typeparam>
     /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
-    /// <param name="key">A name used to retrieve the settings and options from configuration</param>
+    /// <param name="name">A name used to retrieve the settings and options from configuration</param>
     /// <param name="configureSettings">
     ///     An optional delegate that can be used for customizing settings. It's invoked after the
     ///     settings are read from the configuration.
@@ -42,25 +42,24 @@ public static class SqlServerDbContextHostingExtensions
     ///     <see cref="SqlServerDbContextOptionsBuilder" />.
     /// </param>
     /// <param name="lifetime">
-    ///     o
     ///     The lifetime of the <see cref="DbContext" />. Default is
     ///     <see cref="ServiceLifetime.Transient" />.
     /// </param>
-    /// <param name="configurationSectionKey">
-    ///     The configuration section key. Default is
-    ///     <see cref="DbContextSpark.ConfigurationSectionKey" />.
+    /// <param name="configurationSectionPath">
+    ///     The configuration section path. Default is
+    ///     <see cref="DbContextSpark.ConfigurationSectionPath" />.
     /// </param>
     public static void AddSqlServerDbContext<TDbContext>(this IHostApplicationBuilder builder,
-        string? key = null,
+        string? name = null,
         Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
         Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
         Action<DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
         Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder = null,
         ServiceLifetime lifetime = ServiceLifetime.Transient,
-        string configurationSectionKey = DbContextSpark.ConfigurationSectionKey) where TDbContext : DbContext =>
-        builder.RegisterDbContext(key, configureSettings, configureOptions,
+        string configurationSectionPath = DbContextSpark.ConfigurationSectionPath) where TDbContext : DbContext =>
+        builder.RegisterDbContext(name, configureSettings, configureOptions,
             configureDbContextOptionsBuilder, configureSqlServerDbContextOptionsBuilder, lifetime,
-            configurationSectionKey);
+            configurationSectionPath);
 
     /// <summary>
     ///     Registers a <see cref="IDbContextFactory{TDbContext}" /> as a service in the services provided by the
@@ -72,7 +71,7 @@ public static class SqlServerDbContextHostingExtensions
     ///     <see cref="IDbContextFactory{TDbContext}" /> that needs to be registered.
     /// </typeparam>
     /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
-    /// <param name="key">A name used to retrieve the settings and options from configuration</param>
+    /// <param name="name">A name used to retrieve the settings and options from configuration</param>
     /// <param name="configureSettings">
     ///     An optional delegate that can be used for customizing settings. It's invoked after the
     ///     settings are read from the configuration.
@@ -93,83 +92,73 @@ public static class SqlServerDbContextHostingExtensions
     ///     The lifetime of the <see cref="IDbContextFactory{TDbContext}" />. Default is
     ///     <see cref="ServiceLifetime.Transient" />.
     /// </param>
-    /// <param name="configurationSectionKey">
-    ///     The configuration section key. Default is
-    ///     <see cref="DbContextSpark.ConfigurationSectionKey" />.
+    /// <param name="configurationSectionPath">
+    ///     The configuration section path. Default is
+    ///     <see cref="DbContextSpark.ConfigurationSectionPath" />.
     /// </param>
     /// <remarks>
     ///     This also registers the <see cref="DbContext" /> as a service in the services provided by the
     ///     <paramref name="builder" /> with the same lifetime specified by <paramref name="lifetime" />.
     /// </remarks>
     public static void AddSqlServerDbContextFactory<TDbContext>(this IHostApplicationBuilder builder,
-        string? key = null,
+        string? name = null,
         Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
         Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
         Action<DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
         Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder = null,
         ServiceLifetime lifetime = ServiceLifetime.Transient,
-        string configurationSectionKey = DbContextSpark.ConfigurationSectionKey) where TDbContext : DbContext =>
-        builder.RegisterDbContext(key, configureSettings, configureOptions,
+        string configurationSectionPath = DbContextSpark.ConfigurationSectionPath) where TDbContext : DbContext =>
+        builder.RegisterDbContext(name, configureSettings, configureOptions,
             configureDbContextOptionsBuilder, configureSqlServerDbContextOptionsBuilder, lifetime,
-            configurationSectionKey, true);
+            configurationSectionPath, true);
 
 
     private static void RegisterDbContext<TDbContext>(this IHostApplicationBuilder builder,
-        string? key = null,
+        string? name = null,
         Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
         Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
         Action<DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
         Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder = null,
         ServiceLifetime lifetime = ServiceLifetime.Transient,
-        string configurationSectionKey = DbContextSpark.ConfigurationSectionKey,
-        bool useDbContextFactory = false) where TDbContext : DbContext
+        string configurationSectionPath = DbContextSpark.ConfigurationSectionPath,
+        bool useFactory = false) where TDbContext : DbContext
     {
-        key = SparkConfig.Key(key, typeof(TDbContext).Name);
-        var configurationKey = SparkConfig.ConfigurationKey(key, configurationSectionKey);
+        name = SparkConfig.Name(name, typeof(TDbContext).Name);
+        var configPath = SparkConfig.Path(name, configurationSectionPath);
 
-        ConfigureOptions(builder, configurationKey, configureOptions);
-
-        var settings = SparkConfig.GetSettings(builder.Configuration, configurationKey, configureSettings);
+        var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
         builder.Services.AddSingleton(settings);
 
-        if (useDbContextFactory)
+        var optionsBuilder = builder.Services
+            .AddOptions<SqlServerDbContextSparkOptions<TDbContext>>()
+            .BindConfiguration(configPath);
+        if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
+
+        if (useFactory)
             builder.Services.AddDbContextFactory<TDbContext>(ConfigureBuilder, lifetime);
         else
             builder.Services.AddDbContext<TDbContext>(ConfigureBuilder, lifetime);
 
-        ConfigureInstrumentation(builder, key, settings);
+        ConfigureInstrumentation(builder, name, settings);
 
 
         return;
 
-        void ConfigureBuilder(IServiceProvider sp, DbContextOptionsBuilder dbContextOptionsBuilder)
-        {
+        void ConfigureBuilder(IServiceProvider sp, DbContextOptionsBuilder dbContextOptionsBuilder) =>
             ConfigureDbContextOptionsBuilder<TDbContext>(sp, dbContextOptionsBuilder,
                 configureDbContextOptionsBuilder,
                 configureSqlServerDbContextOptionsBuilder);
-        }
     }
 
 
-    private static void ConfigureOptions<T>(
-        IHostApplicationBuilder builder,
-        string configurationKey,
-        Action<SqlServerDbContextSparkOptions<T>>? configureOptions = null) where T : DbContext
-    {
-        var optionsBuilder = builder.Services
-            .AddOptions<SqlServerDbContextSparkOptions<T>>()
-            .BindConfiguration(configurationKey);
-
-        if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
-    }
-
-    private static void ConfigureDbContextOptionsBuilder<T>(IServiceProvider serviceProvider,
+    private static void ConfigureDbContextOptionsBuilder<TDbContext>(IServiceProvider serviceProvider,
         DbContextOptionsBuilder dbContextOptionsBuilder,
         Action<DbContextOptionsBuilder>? configureDbContextOptionsBuilder,
-        Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder) where T : DbContext
+        Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder)
+        where TDbContext : DbContext
     {
         var sqlServerDbContextSparkOptions = serviceProvider
-            .GetRequiredService<IOptionsMonitor<SqlServerDbContextSparkOptions<T>>>()
+            .GetRequiredService<IOptionsMonitor<SqlServerDbContextSparkOptions<TDbContext>>>()
             .CurrentValue;
 
         var connectionStringBuilder = new SqlConnectionStringBuilder(sqlServerDbContextSparkOptions.ConnectionString);
@@ -191,7 +180,7 @@ public static class SqlServerDbContextHostingExtensions
 
     private static void ConfigureInstrumentation<TContext>(
         IHostApplicationBuilder builder,
-        string key,
+        string serviceName,
         SqlServerDbContextSparkSettings<TContext> settings) where TContext : DbContext
     {
         if (!settings.DisableTracing)
@@ -200,7 +189,7 @@ public static class SqlServerDbContextHostingExtensions
 
         if (!settings.DisableHealthChecks)
             builder.TryAddHealthCheck(
-                $"{DbContextSpark.Name}.{key}",
+                $"{DbContextSpark.Name}.{serviceName}",
                 static hcBuilder => hcBuilder.AddDbContextCheck<TContext>());
     }
 }

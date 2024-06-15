@@ -1,16 +1,16 @@
 ﻿using ES.FX.Ignite.Spark.Configuration;
 
-namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.Spark;
+namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Spark;
 
 /// <summary>
-///     <see cref="DbContextSpark" /> definition
+///     <see cref="SqlServerClientSpark" /> definition
 /// </summary>
-public static class DbContextSpark
+public static class SqlServerClientSpark
 {
     /// <summary>
     ///     Spark name
     /// </summary>
-    public const string Name = "DbContext";
+    public const string Name = "SqlServerClient";
 
     /// <summary>
     ///     The default configuration section path
