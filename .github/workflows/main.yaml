@@ -54,17 +54,8 @@ jobs:
       - name: tools - gitversion - execute
         uses: gittools/actions/gitversion/execute@v1.1.1
         with:
-          # additionalArguments: '/showConfig'
-        #   useConfigFile: true
-        #   configFilePath: GitVersion.yaml
-          overrideConfig: |
-            branches:
-              develop:
-                tag: 'develop'
-              hotfix:
-                tag: 'hotfix'
-              release:
-                tag: 'rc'
+          useConfigFile: true
+          configFilePath: GitVersion.yaml
 
       - name: cache - nuget
         uses: actions/cache@v4
