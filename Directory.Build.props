@@ -1,0 +1,43 @@
+<Project>
+	<PropertyGroup>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!--Generate debug symbols and embed them in the build output.-->
+		<DebugType>embedded</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<!--Set the solution directory to the parent directory of the build file.-->
+		<SolutionDir Condition="'$(SolutionDir)' == ''">$(MSBuildThisFileDirectory)..\</SolutionDir>
+	</PropertyGroup>
+	<PropertyGroup>
+		<PackageOutputDir>$(SolutionDir).artifacts/nuget</PackageOutputDir>
+		<Authors>emberstack</Authors>
+		<Company>EmberStack</Company>
+		<RepositoryUrl>https://github.com/emberstack/ES.FX</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<!--<PackageOutputPath>$(PackageOutputDir)</PackageOutputPath>-->
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<NoWarn>$(NoWarn);NU5104</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<!-- Default to false; specific projects will override to true -->
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<!-- ES.FX Projects should build packages -->
+	<PropertyGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.StartsWith('ES.FX'))">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<!--Test projects-->
+	<ItemGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.EndsWith('.Tests'))">
+		<AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
+	</ItemGroup>
+	<PropertyGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.EndsWith('.Tests'))">
+		<VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>
+		<VSTestResultsDirectory>$(MSBuildThisFileDirectory).artifacts/TestResults</VSTestResultsDirectory>
+	</PropertyGroup>
+</Project>
