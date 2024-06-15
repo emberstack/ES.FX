@@ -1,0 +1,156 @@
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - '**'  # Matches all branches
+  pull_request:
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      id-token: write
+      contents: read
+      checks: write
+    env:
+      build: false
+    outputs:
+      change_detection_src: ${{ steps.change_detection.outputs.src }}
+      build: ${{ env.build }}
+      semVer: ${{env.GitVersion_SemVer}}
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: tools - dotnet - install
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: tools - gitversion - install
+        uses: gittools/actions/gitversion/setup@v1.1.1
+        with:
+          versionSpec: '5.x'
+          preferLatestVersion: true
+
+      - name: tools - gitversion - execute
+        uses: gittools/actions/gitversion/execute@v1.1.1
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yaml
+
+      - name: tools - detect changes
+        id: change_detection
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            src:
+              - 'src/**'
+              - 'ES.FX.sln'
+              - 'Directory.Build.props'
+            build:
+              - 'src/**'
+              - 'playground/**'
+              - 'tests/**'
+              - 'ES.FX.sln'
+              - 'Directory.Build.props'
+
+      - name: tools - evaluate build flag
+        if: steps.change_detection.outputs.build == 'true' ||
+            github.event_name == 'pull_request'
+        run: echo "build=true" >> $GITHUB_ENV
+
+
+      - name: cache - nuget
+        if: ${{ env.build == 'true' }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: dotnet restore
+        if: ${{ env.build == 'true' }}
+        run: dotnet restore
+
+      - name: dotnet build
+        if: ${{ env.build == 'true' }}
+        run: dotnet build --no-restore --configuration Release /p:Version=${{env.GitVersion_SemVer}} /p:AssemblyVersion=${{env.GitVersion_AssemblySemFileVer}} /p:NuGetVersion=${{env.GitVersion_SemVer}}
+
+      - name: dotnet test
+        if: ${{ env.build == 'true' }}
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+      - name: test-reporter
+        uses: dorny/test-reporter@v1
+        if: ${{ env.build == 'true' }}
+        with:
+          name: Test Results
+          path: .artifacts/TestResults/*.trx
+          reporter: dotnet-trx
+
+      - name: artifacts - nuget - gather
+        if: ${{ env.build == 'true' }}
+        run: |
+          mkdir -p .artifacts/nuget
+          find . -name "*.nupkg" -exec cp {} .artifacts/nuget/ \;
+
+      - name: artifacts - nuget - upload
+        if: ${{ env.build == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-nuget-${{env.GitVersion_SemVer}}
+          path: .artifacts/nuget/*.nupkg
+
+  cd:
+    name: CD
+    runs-on: ubuntu-latest
+    needs: ci
+    if: >
+      needs.ci.outputs.change_detection_src == 'true' &&
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop' ||
+      startsWith(github.ref, 'refs/heads/feature/') ||
+      startsWith(github.ref, 'refs/heads/releases/') ||
+      startsWith(github.ref, 'refs/heads/hotfix/'))
+    env:
+      build: ${{ needs.ci.outputs.build }}
+      semVer: ${{ needs.ci.outputs.semVer }}
+      changes_src: ${{ needs.ci.outputs.change_detection_src }}
+    steps:
+      - name: artifacts - nuget - download
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts-nuget-${{env.semVer}}
+          path: .artifacts/nuget
+
+      - name: dotnet nuget add source
+        run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/emberstack/index.json"
+
+      - name: dotnet nuget push
+        run: |
+          for pkg in .artifacts/nuget/*.nupkg; do
+            dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} 
+          done
+
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: git - tag
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag version/v${{env.semVer}}
+          git push origin version/v${{env.semVer}}
