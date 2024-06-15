@@ -34,30 +34,36 @@ jobs:
               - 'src/**'
               - 'ES.FX.sln'
               - 'Directory.Build.props'
-            tests:
-              - 'tests/**'
-            playground:
+            build:
+              - 'src/**'
               - 'playground/**'
+              - 'tests/**'
+              - 'ES.FX.sln'
+              - 'Directory.Build.props'
 
 
       - name: tools - dotnet - install
+        if: ${{ change_detection.outputs.build == 'true' }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
       - name: tools - gitversion - install
+        if: ${{ change_detection.outputs.build == 'true' }}
         uses: gittools/actions/gitversion/setup@v1.1.1
         with:
           versionSpec: '5.x'
           preferLatestVersion: true
 
       - name: tools - gitversion - execute
+        if: ${{ change_detection.outputs.build == 'true' }}
         uses: gittools/actions/gitversion/execute@v1.1.1
         with:
           useConfigFile: true
           configFilePath: GitVersion.yaml
 
       - name: cache - nuget
+        if: ${{ change_detection.outputs.build == 'true' }}
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -66,31 +72,36 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: dotnet restore
+        if: ${{ change_detection.outputs.build == 'true' }}
         shell: bash
         run: dotnet restore
 
       - name: dotnet build
+        if: ${{ change_detection.outputs.build == 'true' }}
         shell: bash
         run: dotnet build --no-restore --configuration Release /p:Version=${{env.GitVersion_SemVer}} /p:AssemblyVersion=${{env.GitVersion_AssemblySemFileVer}} /p:NuGetVersion=${{env.GitVersion_SemVer}}
 
       - name: dotnet test
+        if: ${{ change_detection.outputs.build == 'true' }}
         shell: bash
         run: dotnet test --no-build --configuration Release --verbosity normal
 
       - name: test-reporter
         uses: dorny/test-reporter@v1
-        if: always()
+        if: ${{ change_detection.outputs.build == 'true' }}
         with:
           name: Test Results
           path: .artifacts/TestResults/*.trx
           reporter: dotnet-trx
 
       - name: artifacts - nuget - gather
+        if: ${{ change_detection.outputs.build == 'true' }}
         run: |
           mkdir -p .artifacts/nuget
           find . -name "*.nupkg" -exec cp {} .artifacts/nuget/ \;
 
       - name: artifacts - nuget - upload
+        if: ${{ change_detection.outputs.build == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: artifacts-nuget
@@ -109,7 +120,7 @@ jobs:
       startsWith(github.ref, 'refs/heads/feature/') ||
       startsWith(github.ref, 'refs/heads/release/') ||
       startsWith(github.ref, 'refs/heads/hotfix/'))
-      
+
     steps:
 
       - name: artifacts - nuget - download
