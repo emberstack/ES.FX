@@ -27,6 +27,7 @@
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 	</PropertyGroup>
 
+	<!-- ES.FX Projects should build packages -->
 	<PropertyGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.StartsWith('ES.FX'))">
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>
@@ -37,6 +38,6 @@
 	</ItemGroup>
 	<PropertyGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.EndsWith('.Tests'))">
 		<VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>
-		<VSTestResultsDirectory>$(MSBuildThisFileDirectory)/.artifacts/TestResults</VSTestResultsDirectory>
+		<VSTestResultsDirectory>$(MSBuildThisFileDirectory).artifacts/TestResults</VSTestResultsDirectory>
 	</PropertyGroup>
 </Project>

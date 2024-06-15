@@ -1,58 +1,89 @@
-name: Main
+name: Main Workflow
 
 on:
   push:
     branches:
       - '**'  # Matches all branches
+  pull_request:
 
 jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      id-token: write
+      contents: read
+      checks: write
+    outputs:
+      change_detection_src: ${{ steps.change_detection.outputs.src }}
     steps:
 
-      - name: checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: build 
-        uses: ./.github/actions/build
-        with:
-          configuration: Debug
-          useVersioning: false
-
-      - name: test 
-        uses: ./.github/actions/test
-
-  cd:
-    name: CD
-    needs: ci
-    runs-on: ubuntu-latest
-    if: >
-      (
-      contains(toJson(github.event.commits), 'src/') || 
-      contains(toJson(github.event.commits), 'ES.FX.sln') || 
-      contains(toJson(github.event.commits), 'Directory.Build.props')
-      ) && (
-      github.ref == 'refs/heads/main' ||
-      github.ref == 'refs/heads/develop' ||
-      startsWith(github.ref, 'refs/heads/feature/') ||
-      startsWith(github.ref, 'refs/heads/release/') ||
-      startsWith(github.ref, 'refs/heads/hotfix/')
-      )
-
-    steps:
       - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: build 
-        uses: ./.github/actions/build
+      - name: tools - detect changes
+        id: change_detection
+        uses: dorny/paths-filter@v3
         with:
-          configuration: Release
-          useVersioning: true
+          base: ${{ github.event_name == 'pull_request' && '' || github.ref }}
+          filters: |
+            src:
+              - 'src/**'
+              - 'ES.FX.sln'
+              - 'Directory.Build.props'
+            tests:
+              - 'tests/**'
+            playground:
+              - 'playground/**'
+
+
+      - name: tools - dotnet - install
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: tools - gitversion - install
+        uses: gittools/actions/gitversion/setup@v1.1.1
+        with:
+          versionSpec: '5.x'
+          preferLatestVersion: true
+
+      - name: tools - gitversion - execute
+        uses: gittools/actions/gitversion/execute@v1.1.1
+        # with:
+        #   useConfigFile: true
+        #   configFilePath: GitVersion.yaml
+
+      - name: cache - nuget
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: dotnet restore
+        shell: bash
+        run: dotnet restore
+
+      - name: dotnet build
+        shell: bash
+        run: dotnet build --no-restore --configuration Release /p:Version=${{env.GitVersion_SemVer}} /p:AssemblyVersion=${{env.GitVersion_AssemblySemFileVer}} /p:NuGetVersion=${{env.GitVersion_SemVer}}
+
+      - name: dotnet test
+        shell: bash
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+      - name: test-reporter
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results
+          path: .artifacts/TestResults/*.trx
+          reporter: dotnet-trx
 
       - name: artifacts - nuget - gather
         run: |
@@ -64,6 +95,32 @@ jobs:
         with:
           name: artifacts-nuget
           path: .artifacts/nuget/*.nupkg
+
+  cd:
+    name: CD
+    runs-on: ubuntu-latest
+    needs: ci
+    if: >
+      needs.ci.outputs.change_detection_src == 'true' &&
+      github.event.workflow_run.conclusion == 'success' && 
+      github.event.workflow_run.event == 'push' &&
+      (github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop' ||
+      startsWith(github.ref, 'refs/heads/feature/') ||
+      startsWith(github.ref, 'refs/heads/release/') ||
+      startsWith(github.ref, 'refs/heads/hotfix/'))
+    steps:
+
+      - name: artifacts - nuget - download
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts-nuget
+          path: .artifacts/nuget
+
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: git - tag
         if: >
@@ -80,11 +137,8 @@ jobs:
         shell: bash
         run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/emberstack/index.json"
 
-
       - name: dotnet nuget push
         run: |
           for pkg in .artifacts/nuget/*.nupkg; do
             dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} 
           done
-          
-

@@ -31,9 +31,6 @@ public static class SqlConnectionStringBuilderExtensions
     /// </summary>
     /// <param name="builder"></param>
     /// <returns>The cloned <see cref="SqlConnectionStringBuilder" /></returns>
-    public static SqlConnectionStringBuilder CloneForMaster(this SqlConnectionStringBuilder builder)
-    {
-        var clone = new SqlConnectionStringBuilder(builder.ConnectionString);
-        return clone.SetInitialCatalogToMaster();
-    }
+    public static SqlConnectionStringBuilder CloneForMaster(this SqlConnectionStringBuilder builder) =>
+        new SqlConnectionStringBuilder(builder.ConnectionString).SetInitialCatalogToMaster();
 }
