@@ -57,6 +57,12 @@ jobs:
           additionalArguments: '/showConfig'
         #   useConfigFile: true
         #   configFilePath: GitVersion.yaml
+          overrideConfig: |
+            branches:
+              develop:
+                tag: 'develop'
+              hotfix:
+                tag: 'hotfix'
 
       - name: cache - nuget
         uses: actions/cache@v4
@@ -131,8 +137,8 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git tag ${{env.GitVersion_SemVer}}
-          git push origin ${{env.GitVersion_SemVer}}
+          git tag v${{env.GitVersion_SemVer}}
+          git push origin v${{env.GitVersion_SemVer}}
 
       - name: dotnet nuget add source
         shell: bash
