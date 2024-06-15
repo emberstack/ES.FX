@@ -109,6 +109,7 @@ jobs:
       startsWith(github.ref, 'refs/heads/feature/') ||
       startsWith(github.ref, 'refs/heads/release/') ||
       startsWith(github.ref, 'refs/heads/hotfix/'))
+      
     steps:
 
       - name: artifacts - nuget - download
