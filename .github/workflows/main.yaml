@@ -53,7 +53,8 @@ jobs:
 
       - name: tools - gitversion - execute
         uses: gittools/actions/gitversion/execute@v1.1.1
-        # with:
+        with:
+          additionalArguments: '/showConfig'
         #   useConfigFile: true
         #   configFilePath: GitVersion.yaml
 
