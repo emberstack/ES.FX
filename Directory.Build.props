@@ -32,6 +32,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>
 
+
 	<!--Test projects-->
 	<ItemGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.EndsWith('.Tests'))">
 		<AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
