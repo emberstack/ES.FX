@@ -28,7 +28,7 @@ jobs:
         id: change_detection
         uses: dorny/paths-filter@v3
         with:
-          base: ${{ github.event_name == 'pull_request' && '' || github.ref }}
+          base: ${{ github.ref }}
           filters: |
             src:
               - 'src/**'
