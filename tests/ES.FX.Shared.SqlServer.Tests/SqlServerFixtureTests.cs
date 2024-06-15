@@ -1,3 +1,4 @@
+using ES.FX.Microsoft.Data.SqlClient.Queries;
 using ES.FX.Shared.SqlServer.Tests.Fixtures;
 using Microsoft.Data.SqlClient;
 
@@ -10,12 +11,8 @@ public class SqlServerFixtureTests(SqlServerContainerFixture sqlServerContainerF
     public void SqlServerContainer_CanConnect()
     {
         var connectionString = sqlServerContainerFixture.GetConnectionString();
-        var client = new SqlConnection(connectionString);
-        client.Open();
-        var command = client.CreateCommand();
-        command.CommandText = "SELECT 1";
-        var result = command.ExecuteScalar();
-        Assert.Equal(1, result);
-        client.Close();
+        var connection = new SqlConnection(connectionString);
+        var result = connection.ExecuteSafeQuery();
+        Assert.True(result);
     }
 }

@@ -62,9 +62,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.Microsoft.Enti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests", "tests\ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests\ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.csproj", "{0AAE113B-7D85-477C-A72C-55B8C8BED049}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Spark.Tests", "tests\ES.FX.Ignite.Spark.Tests\ES.FX.Ignite.Spark.Tests.csproj", "{E0F4DFC2-46E3-4EF6-AA9D-71F0B73911D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.Spark.Tests", "tests\ES.FX.Ignite.Spark.Tests\ES.FX.Ignite.Spark.Tests.csproj", "{E0F4DFC2-46E3-4EF6-AA9D-71F0B73911D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Shared.SqlServer.Tests", "tests\ES.FX.Shared.SqlServer.Tests\ES.FX.Shared.SqlServer.Tests.csproj", "{938AE7EF-E227-4EED-912D-43A9AEF614B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Shared.SqlServer.Tests", "tests\ES.FX.Shared.SqlServer.Tests\ES.FX.Shared.SqlServer.Tests.csproj", "{938AE7EF-E227-4EED-912D-43A9AEF614B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Microsoft.Data.SqlClient", "src\ES.FX.Ignite.Microsoft.Data.SqlClient\ES.FX.Ignite.Microsoft.Data.SqlClient.csproj", "{DB1966F4-AF4B-4E04-97FD-01F0E994EDA0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Microsoft.Data.SqlClient", "src\ES.FX.Microsoft.Data.SqlClient\ES.FX.Microsoft.Data.SqlClient.csproj", "{EDFC5F9A-F0F6-46E0-A3DC-9B81F5115327}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Microsoft.Data.SqlClient.Tests", "tests\ES.FX.Ignite.Microsoft.Data.SqlClient.Tests\ES.FX.Ignite.Microsoft.Data.SqlClient.Tests.csproj", "{F78162A1-433B-4245-99FB-6C0B9E7B05C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -156,6 +162,18 @@ Global
 		{938AE7EF-E227-4EED-912D-43A9AEF614B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{938AE7EF-E227-4EED-912D-43A9AEF614B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{938AE7EF-E227-4EED-912D-43A9AEF614B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB1966F4-AF4B-4E04-97FD-01F0E994EDA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB1966F4-AF4B-4E04-97FD-01F0E994EDA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB1966F4-AF4B-4E04-97FD-01F0E994EDA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB1966F4-AF4B-4E04-97FD-01F0E994EDA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDFC5F9A-F0F6-46E0-A3DC-9B81F5115327}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDFC5F9A-F0F6-46E0-A3DC-9B81F5115327}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDFC5F9A-F0F6-46E0-A3DC-9B81F5115327}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDFC5F9A-F0F6-46E0-A3DC-9B81F5115327}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F78162A1-433B-4245-99FB-6C0B9E7B05C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F78162A1-433B-4245-99FB-6C0B9E7B05C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F78162A1-433B-4245-99FB-6C0B9E7B05C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F78162A1-433B-4245-99FB-6C0B9E7B05C0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -187,6 +205,9 @@ Global
 		{0AAE113B-7D85-477C-A72C-55B8C8BED049} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{E0F4DFC2-46E3-4EF6-AA9D-71F0B73911D3} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{938AE7EF-E227-4EED-912D-43A9AEF614B5} = {BD8EB348-8F5D-41BB-BA2E-6D5C7A71FAB5}
+		{DB1966F4-AF4B-4E04-97FD-01F0E994EDA0} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
+		{EDFC5F9A-F0F6-46E0-A3DC-9B81F5115327} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
+		{F78162A1-433B-4245-99FB-6C0B9E7B05C0} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}

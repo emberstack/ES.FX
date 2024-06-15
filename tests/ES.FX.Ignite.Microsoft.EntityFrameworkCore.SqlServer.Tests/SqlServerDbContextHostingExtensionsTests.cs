@@ -53,7 +53,7 @@ public class SqlServerDbContextHostingExtensionsTests
 
         var factory1 = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
         var factory2 = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
-        Assert.NotEqual(factory1, factory2);
+        Assert.NotSame(factory1, factory2);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class SqlServerDbContextHostingExtensionsTests
 
         var factory1 = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
         var factory2 = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
-        Assert.Equal(factory1, factory2);
+        Assert.Same(factory1, factory2);
     }
 
     [Fact]
@@ -82,31 +82,31 @@ public class SqlServerDbContextHostingExtensionsTests
         // Scoped factories should be the same within the same scope
         var factory1 = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
         var factory2 = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
-        Assert.Equal(factory1, factory2);
+        Assert.Same(factory1, factory2);
 
         // Factory created DbContexts should not be scoped if the factory is scoped
         var createdDbContext1 = factory1.CreateDbContext();
         var createdDbContext2 = factory1.CreateDbContext();
-        Assert.NotEqual(createdDbContext1, createdDbContext2);
+        Assert.NotSame(createdDbContext1, createdDbContext2);
 
         // Resolved DbContexts should be the same within the same scope
         var resolvedDbContext1 = app.Services.GetRequiredService<TestDbContext>();
         var resolvedDbContext2 = app.Services.GetRequiredService<TestDbContext>();
-        Assert.Equal(resolvedDbContext1, resolvedDbContext2);
+        Assert.Same(resolvedDbContext1, resolvedDbContext2);
 
 
         // Factories should be different in different scopes
         var scope = app.Services.CreateScope();
         var scopedFactory1 = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TestDbContext>>();
         var scopedFactory2 = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TestDbContext>>();
-        Assert.Equal(scopedFactory1, scopedFactory2);
-        Assert.NotEqual(scopedFactory1, factory1);
+        Assert.Same(scopedFactory1, scopedFactory2);
+        Assert.NotSame(scopedFactory1, factory1);
 
         // Scope resolved DbContexts should be the same within the same scope
         var scopedDbContext1 = scope.ServiceProvider.GetRequiredService<TestDbContext>();
         var scopedDbContext2 = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-        Assert.Equal(scopedDbContext1, scopedDbContext2);
-        Assert.NotEqual(scopedDbContext1, resolvedDbContext1);
+        Assert.Same(scopedDbContext1, scopedDbContext2);
+        Assert.NotSame(scopedDbContext1, resolvedDbContext1);
     }
 
 
@@ -118,10 +118,10 @@ public class SqlServerDbContextHostingExtensionsTests
         //Configure settings
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionKey}:{nameof(TestDbContext)}:{SparkConfig.SettingsKey}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.DisableTracing)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.DisableTracing)}",
                 true.ToString()),
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionKey}:{nameof(TestDbContext)}:{SparkConfig.SettingsKey}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.DisableHealthChecks)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.DisableHealthChecks)}",
                 true.ToString())
         ]);
         builder.AddSqlServerDbContext<TestDbContext>(
@@ -164,10 +164,10 @@ public class SqlServerDbContextHostingExtensionsTests
         //Configure options
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionKey}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<TestDbContext>.ConnectionString)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<TestDbContext>.ConnectionString)}",
                 initialConnectionString),
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionKey}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<TestDbContext>.CommandTimeout)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<TestDbContext>.CommandTimeout)}",
                 initialCommandTimeout.ToString())
         ]);
         builder.AddSqlServerDbContext<TestDbContext>(

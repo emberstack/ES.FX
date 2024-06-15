@@ -5,6 +5,7 @@ using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 using ES.FX.Ignite.Migrations.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Serilog.Lifetime;
+using Microsoft.Data.SqlClient;
 using Playground.Microservice.Api.Host.HostedServices;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
@@ -28,9 +29,13 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     builder.Services.AddHostedService<TestHostedService>();
 
+
+    builder.Services.AddKeyedSingleton<SqlConnection>(null, (sp, key) => { return new SqlConnection("nothing"); });
+
     var app = builder.Build();
     app.UseIgnite();
 
+    app.Services.GetRequiredService<SqlConnection>();
 
     await app.RunAsync();
     return 0;

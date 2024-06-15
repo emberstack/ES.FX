@@ -5,41 +5,41 @@ namespace ES.FX.Ignite.Spark.Tests.Configuration;
 public class SparkConfigTests
 {
     [Fact]
-    public void SparkConfig_Key_UsesDefaultIfNull()
+    public void SparkConfig_Name_UsesDefaultIfNull()
     {
-        const string defaultKey = "default";
-        var key = SparkConfig.Key(null, defaultKey);
+        const string defaultName = "default";
+        var name = SparkConfig.Name(null, defaultName);
 
-        Assert.Equal(defaultKey, key);
+        Assert.Equal(defaultName, name);
     }
 
     [Fact]
-    public void SparkConfig_Key_UsesKeyIfNotNull()
+    public void SparkConfig_Name_UsesNameIfNotNull()
     {
-        const string defaultKey = "default";
-        const string properKey = "key";
-        var key = SparkConfig.Key(properKey, defaultKey);
+        const string defaultName = "default";
+        const string serviceName = "key";
+        var name = SparkConfig.Name(serviceName, defaultName);
 
-        Assert.Equal(properKey, key);
+        Assert.Equal(serviceName, name);
     }
 
 
     [Fact]
-    public void SparkConfig_ConfigurationKey_UsesKeyIfSectionIsNull()
+    public void SparkConfig_Path_UsesNameIfSectionIsNull()
     {
-        const string key = "key";
-        var configurationKey = SparkConfig.ConfigurationKey(key, string.Empty);
+        const string name = "name";
+        var configPath = SparkConfig.Path(name, string.Empty);
 
-        Assert.Equal(key, configurationKey);
+        Assert.Equal(name, configPath);
     }
 
     [Fact]
-    public void SparkConfig_ConfigurationKey_UsesKeyAndSection()
+    public void SparkConfig_Path_UsesNameAndSection()
     {
         const string section = "section";
-        const string key = "key";
-        var configurationKey = SparkConfig.ConfigurationKey(key, section);
+        const string name = "name";
+        var configPath = SparkConfig.Path(name, section);
 
-        Assert.Equal($"{section}:{key}", configurationKey);
+        Assert.Equal($"{section}:{name}", configPath);
     }
 }
