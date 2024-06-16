@@ -11,26 +11,26 @@ namespace ES.FX.Reflection;
 /// <remarks>
 ///     Creates a new wrapper for the manifest resource
 /// </remarks>
-/// <param name="Assembly">Source assembly</param>
-/// <param name="Name">Resource name</param>
+/// <param name="assembly">Source assembly</param>
+/// <param name="name">Resource name</param>
 [PublicAPI]
-public class ManifestResource(Assembly Assembly, string Name)
+public class ManifestResource(Assembly assembly, string name)
 {
     /// <summary>
     ///     Gets the resource name
     /// </summary>
-    public string Name { get; } = Name;
+    public string Name { get; } = name;
 
 
     /// <summary>
     ///     Gets the manifest resource info
     /// </summary>
-    public ManifestResourceInfo? Info => Assembly.GetManifestResourceInfo(Name);
+    public ManifestResourceInfo? Info => assembly.GetManifestResourceInfo(Name);
 
     /// <summary>
     ///     Returns the stream for the manifest resource
     /// </summary>
-    public Stream? GetStream() => Assembly.GetManifestResourceStream(Name);
+    public Stream? GetStream() => assembly.GetManifestResourceStream(Name);
 
 
     /// <summary>

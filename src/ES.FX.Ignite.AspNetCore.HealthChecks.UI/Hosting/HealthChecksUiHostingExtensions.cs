@@ -1,5 +1,6 @@
 ﻿using ES.FX.AspNetCore.HealthChecks.UI.HealthChecksEndpointRegistry;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Configuration;
+using ES.FX.Ignite.AspNetCore.HealthChecks.UI.IgniteTheme;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Spark;
 using ES.FX.Ignite.Spark.Configuration;
 using HealthChecks.UI.Configuration;
@@ -79,6 +80,10 @@ public static class HealthChecksUiHostingExtensions
 
         if (!settings.EndpointEnabled) return;
 
+
+        app.UseMiddleware<ThemeMiddleware>();
+
+
         //TODO: Broken UI polling. Replace this with app.UseHealthChecksUI when this issue is fixed: https://github.com/Xabaril/AspNetCore.Diagnostics.HealthChecks/pull/1782
         app.UseRouting().UseEndpoints(config =>
             config.MapHealthChecksUI(options =>
@@ -87,10 +92,12 @@ public static class HealthChecksUiHostingExtensions
                 options.ApiPath = settings.UiApiEndpointPath;
 
                 options.WebhookPath = settings.UiWebhookEndpointPath;
-                options.ResourcesPath = $"{options.UIPath}/resources";
+                options.ResourcesPath = $"{options.UIPath}/{ThemeMiddleware.IgniteThemeResourcesPath}";
                 options.UseRelativeApiPath = false;
                 options.UseRelativeResourcesPath = false;
                 options.UseRelativeWebhookPath = false;
+
+                options.AsideMenuOpened = false;
 
                 configureHealthChecksUiOptions?.Invoke(options);
             }));
