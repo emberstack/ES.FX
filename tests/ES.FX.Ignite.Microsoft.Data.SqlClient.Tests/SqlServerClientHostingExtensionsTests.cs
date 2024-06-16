@@ -115,28 +115,28 @@ public class SqlServerClientHostingExtensionsTests
         //Configure settings
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.DisableTracing)}",
+                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.TracingEnabled)}",
                 true.ToString()),
             new KeyValuePair<string, string?>(
-                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.DisableHealthChecks)}",
+                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.HealthChecksEnabled)}",
                 true.ToString())
         ]);
         builder.AddSqlServerClient(name,
             configureSettings: settings =>
             {
                 //Settings should have correct value from configuration
-                Assert.True(settings.DisableTracing);
-                Assert.True(settings.DisableHealthChecks);
+                Assert.True(settings.TracingEnabled);
+                Assert.True(settings.HealthChecksEnabled);
 
                 //Change the settings
-                settings.DisableTracing = false;
+                settings.TracingEnabled = false;
             });
 
         var app = builder.Build();
 
         var settings = app.Services.GetRequiredService<SqlServerClientSparkSettings>();
-        Assert.False(settings.DisableTracing);
-        Assert.True(settings.DisableHealthChecks);
+        Assert.False(settings.TracingEnabled);
+        Assert.True(settings.HealthChecksEnabled);
     }
 
     [Fact]

@@ -123,13 +123,13 @@ public static class SqlServerClientHostingExtensions
         builder.Services.Add(new ServiceDescriptor(typeof(SqlConnection), serviceKey, ResolveSqlConnection, lifetime));
 
 
-        if (!settings.DisableTracing)
+        if (settings.TracingEnabled)
             builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
             {
                 tracerProviderBuilder.AddSqlClientInstrumentation();
             });
 
-        if (!settings.DisableHealthChecks)
+        if (settings.HealthChecksEnabled)
             builder.TryAddHealthCheck(new HealthCheckRegistration(
                 $"{SqlServerClientSpark.Name}_{name.Trim()}" +
                 (string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"_{serviceKey.Trim()}")

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Design;
 namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
 
 [PublicAPI]
-public class DummyDbContextDesignTimeFactory : IDesignTimeDbContextFactory<SimpleDbContext>
+public class SimpleDbContextDesignTimeFactory : IDesignTimeDbContextFactory<SimpleDbContext>
 {
     public SimpleDbContext CreateDbContext(string[] args)
     {
@@ -22,7 +22,7 @@ public class DummyDbContextDesignTimeFactory : IDesignTimeDbContextFactory<Simpl
         optionsBuilder.UseSqlServer(sqlBuilder.ConnectionString,
             sqlServerDbContextOptionsBuilder =>
             {
-                sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(DummyDbContextDesignTimeFactory).Assembly
+                sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(SimpleDbContextDesignTimeFactory).Assembly
                     .FullName);
             });
 

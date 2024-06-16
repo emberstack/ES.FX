@@ -1,11 +1,12 @@
 using ES.FX.Hosting.Lifetime;
+using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Hosting;
 using ES.FX.Ignite.Hosting;
+using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Migrations;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 using ES.FX.Ignite.Migrations.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Serilog.Lifetime;
-using Microsoft.Data.SqlClient;
 using Playground.Microservice.Api.Host.HostedServices;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
@@ -15,27 +16,39 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     var builder = WebApplication.CreateBuilder(args);
     builder.AddIgnite();
 
+    //Serilog
     builder.AddSerilog();
+
+    // Migrations service
     builder.AddMigrationsService();
 
+
+    //SqlServerDbContext
     builder.AddSqlServerDbContextFactory<SimpleDbContext>(nameof(SimpleDbContext),
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {
-            sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(DummyDbContextDesignTimeFactory).Assembly
+            sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(SimpleDbContextDesignTimeFactory).Assembly
                 .FullName);
         });
+
+    //DbContext Migrations
     builder.AddDbContextMigrationsTask<SimpleDbContext>();
+
+
+    //Sql Server Client
+    builder.AddSqlServerClientFactory(nameof(SimpleDbContext));
+
+    //// Add health checks UI
+    builder.AddIgniteHealthChecksUi();
 
 
     builder.Services.AddHostedService<TestHostedService>();
 
-
-    builder.Services.AddKeyedSingleton<SqlConnection>(null, (sp, key) => { return new SqlConnection("nothing"); });
-
     var app = builder.Build();
     app.UseIgnite();
 
-    app.Services.GetRequiredService<SqlConnection>();
+    app.UseIgniteHealthChecksUi();
+
 
     await app.RunAsync();
     return 0;

@@ -10,12 +10,12 @@ namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 public class SqlServerDbContextSparkSettings<TDbContext> where TDbContext : DbContext
 {
     /// <summary>
-    ///     Gets or sets a boolean value that indicates whether the database health check is disabled or not.
+    ///     Gets or sets a boolean value that indicates whether the database health checks are enabled or not.
     /// </summary>
-    public bool DisableHealthChecks { get; set; }
+    public bool HealthChecksEnabled { get; set; } = true;
 
     /// <summary>
-    ///     Gets or sets a boolean value that indicates whether the OpenTelemetry tracing is disabled or not.
+    ///     Gets or sets a boolean value that indicates whether the OpenTelemetry tracing is enabled or not.
     /// </summary>
-    public bool DisableTracing { get; set; }
+    public bool TracingEnabled { get; set; } = true;
 }

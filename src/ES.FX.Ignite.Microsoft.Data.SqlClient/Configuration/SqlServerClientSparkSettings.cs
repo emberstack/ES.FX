@@ -8,12 +8,12 @@ namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 public class SqlServerClientSparkSettings
 {
     /// <summary>
-    ///     Gets or sets a boolean value that indicates whether the database health check is disabled or not.
+    ///     Gets or sets a boolean value that indicates whether the database health checks are enabled.
     /// </summary>
-    public bool DisableHealthChecks { get; set; }
+    public bool HealthChecksEnabled { get; set; } = true;
 
     /// <summary>
-    ///     Gets or sets a boolean value that indicates whether the OpenTelemetry tracing is disabled or not.
+    ///     Gets or sets a boolean value that indicates whether the OpenTelemetry tracing is enabled.
     /// </summary>
-    public bool DisableTracing { get; set; }
+    public bool TracingEnabled { get; set; } = true;
 }

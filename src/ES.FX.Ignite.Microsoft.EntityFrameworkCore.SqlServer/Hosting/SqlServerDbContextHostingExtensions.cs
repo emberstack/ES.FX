@@ -183,11 +183,11 @@ public static class SqlServerDbContextHostingExtensions
         string serviceName,
         SqlServerDbContextSparkSettings<TContext> settings) where TContext : DbContext
     {
-        if (!settings.DisableTracing)
+        if (settings.TracingEnabled)
             builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
                 tracerProviderBuilder.AddSqlClientInstrumentation());
 
-        if (!settings.DisableHealthChecks)
+        if (settings.HealthChecksEnabled)
             builder.TryAddHealthCheck(
                 $"{DbContextSpark.Name}.{serviceName}",
                 static hcBuilder => hcBuilder.AddDbContextCheck<TContext>());
