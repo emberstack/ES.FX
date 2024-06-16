@@ -1,4 +1,5 @@
 ﻿using EntityFramework.Exceptions.SqlServer;
+using ES.FX.Ignite.Microsoft.EntityFrameworkCore.HealthChecks;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Spark;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 using ES.FX.Ignite.Spark.Configuration;
@@ -139,7 +140,7 @@ public static class SqlServerDbContextHostingExtensions
         else
             builder.Services.AddDbContext<TDbContext>(ConfigureBuilder, lifetime);
 
-        ConfigureInstrumentation(builder, name, settings);
+        ConfigureObservability(builder, name, settings);
 
 
         return;
@@ -178,7 +179,7 @@ public static class SqlServerDbContextHostingExtensions
     }
 
 
-    private static void ConfigureInstrumentation<TContext>(
+    private static void ConfigureObservability<TContext>(
         IHostApplicationBuilder builder,
         string serviceName,
         SqlServerDbContextSparkSettings<TContext> settings) where TContext : DbContext
@@ -188,8 +189,18 @@ public static class SqlServerDbContextHostingExtensions
                 tracerProviderBuilder.AddSqlClientInstrumentation());
 
         if (settings.HealthChecksEnabled)
-            builder.TryAddHealthCheck(
-                $"{DbContextSpark.Name}.{serviceName}",
-                static hcBuilder => hcBuilder.AddDbContextCheck<TContext>());
+        {
+            var healthCheckKey = $"{DbContextSpark.Name}.{serviceName.Trim()}";
+
+            builder.TryAddHealthCheck(healthCheckKey,
+                hcBuilder => hcBuilder
+                    .AddDbContextCheck<TContext>(healthCheckKey, tags: [DbContextSpark.Name]));
+
+            builder.TryAddHealthCheck($"{healthCheckKey}.Migrations",
+                hcBuilder => hcBuilder
+                    .AddCheck<RelationalDbContextMigrationsHealthCheck<TContext>>(
+                        $"{healthCheckKey}.Migrations",
+                        tags: [DbContextSpark.Name, nameof(Migrations)]));
+        }
     }
 }

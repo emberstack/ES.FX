@@ -25,7 +25,7 @@ public static class IgniteHostingExtensions
         Action<IgniteSettings>? configureSettings = null,
         string configurationSectionPath = IgniteConfigurationSections.Ignite)
     {
-        var settings = SparkConfig.GetSettings(builder.Configuration, string.Empty, configureSettings);
+        var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);
 
         AddConfiguration(builder, settings.Configuration);
@@ -86,7 +86,7 @@ public static class IgniteHostingExtensions
         if (settings.ApplicationStatusCheckEnabled)
             builder.TryAddHealthCheck(builder.Environment.ApplicationName,
                 hcBuilder =>
-                    hcBuilder.AddApplicationStatus(builder.Environment.ApplicationName, tags: ["live"]));
+                    hcBuilder.AddApplicationStatus(builder.Environment.ApplicationName, tags: ["live", nameof(Host)]));
     }
 
     private static void AddHttpClient(IHostApplicationBuilder builder, IgniteHttpClientSettings settings)
@@ -135,7 +135,7 @@ public static class IgniteHostingExtensions
         if (uiHealthChecksRegistry is not null)
         {
             uiHealthChecksRegistry.AddHealthCheckEndpoint("Readiness", settings.ReadinessEndpointPath);
-            uiHealthChecksRegistry.AddHealthCheckEndpoint("Liveness", settings.ReadinessEndpointPath);
+            uiHealthChecksRegistry.AddHealthCheckEndpoint("Liveness", settings.LivenessEndpointPath);
 
             //Change the response writer to use the UI response writer
             readinessHealthCheckOptions.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;

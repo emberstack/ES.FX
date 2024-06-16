@@ -130,10 +130,10 @@ public static class SqlServerClientHostingExtensions
             });
 
         if (settings.HealthChecksEnabled)
-            builder.TryAddHealthCheck(new HealthCheckRegistration(
-                $"{SqlServerClientSpark.Name}_{name.Trim()}" +
-                (string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"_{serviceKey.Trim()}")
-                ,
+        {
+            var healthCheckKey =
+                $"{SqlServerClientSpark.Name}.{name.Trim()}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"_{serviceKey.Trim()}")}";
+            builder.TryAddHealthCheck(new HealthCheckRegistration(healthCheckKey,
                 sp =>
                 {
                     var options = sp.GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>().Get(serviceKey);
@@ -143,8 +143,9 @@ public static class SqlServerClientHostingExtensions
                     });
                 },
                 default,
-                default,
+                [SqlServerClientSpark.Name],
                 default));
+        }
 
         return;
 
