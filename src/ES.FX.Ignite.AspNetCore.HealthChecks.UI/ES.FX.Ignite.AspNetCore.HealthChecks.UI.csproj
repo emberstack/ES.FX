@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="IgniteTheme\material.woff2" />
+		<None Remove="IgniteTheme\theme.css" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="IgniteTheme\theme.css" />
+		<EmbeddedResource Include="IgniteTheme\material.woff2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ES.FX.Additions.AspNetCore.HealthChecks.UI\ES.FX.Additions.AspNetCore.HealthChecks.UI.csproj" />
+		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
+		<ProjectReference Include="..\ES.FX\ES.FX.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
+	</ItemGroup>
+
+</Project>

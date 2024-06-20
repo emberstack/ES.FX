@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\ES.FX.Additions.Microsoft.EntityFrameworkCore\ES.FX.Additions.Microsoft.EntityFrameworkCore.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore\ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
+	</ItemGroup>
+
+</Project>

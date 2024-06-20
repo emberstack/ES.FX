@@ -1,0 +1,30 @@
+{
+  "profiles": {
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": false,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_HTTP_PORTS": "8080"
+      },
+      "publishAllPorts": true,
+      "useSSL": false,
+      "httpPort": 50000,
+      "dockerfileRunArguments": "--network localenv --memory=512m"
+    },
+    "HOST": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_HTTP_PORTS": "8080",
+        "OTEL_RESOURCE_ATTRIBUTES":"service.instance.id=local-instance,k8s.pod.name=local-pod,k8s.pod.uid=local-pod-id,k8s.namespace.name=local-namespace,k8s.node.name=local-node"
+      },
+      "applicationUrl": "http://0.0.0.0:50001",
+      "dotnetRunMessages": false,
+      "httpPort": 50000
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json"
+}
