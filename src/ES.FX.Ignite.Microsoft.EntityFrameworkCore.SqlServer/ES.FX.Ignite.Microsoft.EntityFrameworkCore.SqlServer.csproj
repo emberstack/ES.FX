@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="EntityFrameworkCore.Exceptions.SqlServer" Version="8.1.2" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.8.0-beta.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ES.FX.Ignite.Microsoft.EntityFrameworkCore\ES.FX.Ignite.Microsoft.EntityFrameworkCore.csproj" />
+		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
+		<ProjectReference Include="..\ES.FX.Microsoft.EntityFrameworkCore\ES.FX.Microsoft.EntityFrameworkCore.csproj" />
+		<ProjectReference Include="..\ES.FX.Migrations\ES.FX.Migrations.csproj" />
+	</ItemGroup>
+</Project>
