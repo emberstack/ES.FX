@@ -16,9 +16,12 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    //Serilog
+    builder.Logging.ClearProviders();
     builder.AddIgniteSerilog();
 
     builder.AddIgnite();
+
 
     //Migrations service
     builder.AddIgniteMigrationsService();
@@ -52,7 +55,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     var app = builder.Build();
     app.UseIgnite();
-
 
     app.UseIgniteHealthChecksUi();
 

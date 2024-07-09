@@ -24,6 +24,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\ES.FX.AspNetCore.HealthChecks.UI\ES.FX.AspNetCore.HealthChecks.UI.csproj" />
+		<ProjectReference Include="..\ES.FX.Hosting\ES.FX.Hosting.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
 	</ItemGroup>
 </Project>
