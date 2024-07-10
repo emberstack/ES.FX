@@ -72,15 +72,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Microsoft.Data.SqlCli
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.Microsoft.Data.SqlClient.Tests", "tests\ES.FX.Ignite.Microsoft.Data.SqlClient.Tests\ES.FX.Ignite.Microsoft.Data.SqlClient.Tests.csproj", "{F78162A1-433B-4245-99FB-6C0B9E7B05C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.AspNetCore.HealthChecks.UI", "src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj", "{63DEC81A-B8A1-4166-8162-6F71E9D0783F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.AspNetCore.HealthChecks.UI", "src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj", "{63DEC81A-B8A1-4166-8162-6F71E9D0783F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.AspNetCore.HealthChecks.UI", "src\ES.FX.AspNetCore.HealthChecks.UI\ES.FX.AspNetCore.HealthChecks.UI.csproj", "{BC9B5CA3-54F0-4194-8056-45729087FDC3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.AspNetCore.HealthChecks.UI", "src\ES.FX.AspNetCore.HealthChecks.UI\ES.FX.AspNetCore.HealthChecks.UI.csproj", "{BC9B5CA3-54F0-4194-8056-45729087FDC3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Seq", "src\ES.FX.Ignite.Seq\ES.FX.Ignite.Seq.csproj", "{1E500003-0805-485E-879E-2186FF6C7972}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.Seq", "src\ES.FX.Ignite.Seq\ES.FX.Ignite.Seq.csproj", "{1E500003-0805-485E-879E-2186FF6C7972}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Microsoft.Extensions.Diagnostics.HealthChecks", "src\ES.FX.Microsoft.Extensions.Diagnostics.HealthChecks\ES.FX.Microsoft.Extensions.Diagnostics.HealthChecks.csproj", "{6859E590-8534-41DE-B684-DE44C3A7061E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Microsoft.Extensions.Diagnostics.HealthChecks", "src\ES.FX.Microsoft.Extensions.Diagnostics.HealthChecks\ES.FX.Microsoft.Extensions.Diagnostics.HealthChecks.csproj", "{6859E590-8534-41DE-B684-DE44C3A7061E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Microsoft.EntityFrameworkCore.SqlServer", "src\ES.FX.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Microsoft.EntityFrameworkCore.SqlServer.csproj", "{9CFA0CB8-0E85-47DC-8C94-9D77CBC0A315}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Microsoft.EntityFrameworkCore.SqlServer", "src\ES.FX.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Microsoft.EntityFrameworkCore.SqlServer.csproj", "{9CFA0CB8-0E85-47DC-8C94-9D77CBC0A315}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.FluentValidation", "src\ES.FX.Ignite.FluentValidation\ES.FX.Ignite.FluentValidation.csproj", "{DD1A7896-2FA7-4048-8716-514153091B96}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -204,6 +206,10 @@ Global
 		{9CFA0CB8-0E85-47DC-8C94-9D77CBC0A315}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9CFA0CB8-0E85-47DC-8C94-9D77CBC0A315}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9CFA0CB8-0E85-47DC-8C94-9D77CBC0A315}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD1A7896-2FA7-4048-8716-514153091B96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD1A7896-2FA7-4048-8716-514153091B96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD1A7896-2FA7-4048-8716-514153091B96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD1A7896-2FA7-4048-8716-514153091B96}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -243,6 +249,7 @@ Global
 		{1E500003-0805-485E-879E-2186FF6C7972} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
 		{6859E590-8534-41DE-B684-DE44C3A7061E} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 		{9CFA0CB8-0E85-47DC-8C94-9D77CBC0A315} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
+		{DD1A7896-2FA7-4048-8716-514153091B96} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}

@@ -39,6 +39,8 @@ public static class IgniteHostingExtensions
         AddHealthChecks(builder, settings.HealthChecks);
 
         AddHttpClient(builder, settings.HttpClient);
+
+        AddAspNetServices(builder, settings.AspNetCore);
     }
 
     private static void AddConfiguration(IHostApplicationBuilder builder, IgniteConfigurationSettings settings)
@@ -106,10 +108,24 @@ public static class IgniteHostingExtensions
         builder.Services.AddHttpClient();
     }
 
+    private static void AddAspNetServices(IHostApplicationBuilder builder, IgniteAspNetCoreSettings settings)
+    {
+        if (settings.EndpointsApiExplorerEnabled)
+            builder.Services.AddEndpointsApiExplorer();
+
+        if (settings.SwaggerGenEnabled)
+            builder.Services.AddSwaggerGen();
+
+        if (settings.ProblemDetailsEnabled)
+            builder.Services.AddProblemDetails();
+    }
+
 
     public static IHost UseIgnite(this IHost app)
     {
         var settings = app.Services.GetRequiredService<IgniteSettings>();
+
+        UseSwashbuckle(app, settings.AspNetCore);
 
         UseHealthChecks(app, settings.HealthChecks);
 
@@ -150,5 +166,18 @@ public static class IgniteHostingExtensions
             uiHealthChecksRegistry.AddHealthCheckEndpoint(HealthChecksEndpoints.LivenessEndpointName,
                 settings.LivenessEndpointPath);
         }
+    }
+
+    private static void UseSwashbuckle(IHost host, IgniteAspNetCoreSettings settings)
+    {
+        if (host is not WebApplication app) return;
+
+        if (!settings.EndpointsApiExplorerEnabled || !settings.SwaggerGenEnabled) return;
+
+        if (settings.SwaggerEnabled)
+            app.UseSwagger();
+
+        if (settings.SwaggerUIEnabled)
+            app.UseSwaggerUI();
     }
 }

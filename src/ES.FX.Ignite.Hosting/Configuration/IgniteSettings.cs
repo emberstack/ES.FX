@@ -24,4 +24,10 @@ public class IgniteSettings
     ///     Settings for HttpClient
     /// </summary>
     public IgniteHttpClientSettings HttpClient { get; } = new();
+
+
+    /// <summary>
+    ///     Settings for AspNetCore
+    /// </summary>
+    public IgniteAspNetCoreSettings AspNetCore { get; } = new();
 }

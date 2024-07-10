@@ -24,11 +24,15 @@ public static class SerilogHostingExtensions
     ///     Apply the default logger configuration. If enabled the default configuration
     ///     will be applied before the custom configuration.
     /// </param>
-    /// <param name="writeToProviders">By default, Serilog does not write events to <see cref="T:Microsoft.Extensions.Logging.ILoggerProvider" />s registered through
-    /// the Microsoft.Extensions.Logging API. Normally, equivalent Serilog sinks are used in place of providers. Specify
-    /// <c>true</c> to write events to all providers.</param>
+    /// <param name="writeToProviders">
+    ///     By default, Serilog does not write events to <see cref="T:Microsoft.Extensions.Logging.ILoggerProvider" />s
+    ///     registered through
+    ///     the Microsoft.Extensions.Logging API. Normally, equivalent Serilog sinks are used in place of providers. Specify
+    ///     <c>true</c> to write events to all providers.
+    /// </param>
     public static void AddIgniteSerilog(this IHostApplicationBuilder builder,
-        Action<LoggerConfiguration>? configureLoggerConfiguration = null, bool applyDefaultConfiguration = true, bool writeToProviders = true)
+        Action<LoggerConfiguration>? configureLoggerConfiguration = null, bool applyDefaultConfiguration = true,
+        bool writeToProviders = true)
     {
         builder.GuardSparkConfiguration($"{nameof(Serilog)}",
             $"{nameof(Serilog)} already configured.");
