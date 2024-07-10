@@ -45,13 +45,13 @@ jobs:
           dotnet-version: '8.x'
 
       - name: tools - gitversion - install
-        uses: gittools/actions/gitversion/setup@v1.1.1
+        uses: gittools/actions/gitversion/setup@v1.2.0
         with:
           versionSpec: '5.x'
           preferLatestVersion: true
 
       - name: tools - gitversion - execute
-        uses: gittools/actions/gitversion/execute@v1.1.1
+        uses: gittools/actions/gitversion/execute@v1.2.0
         with:
           useConfigFile: true
           configFilePath: GitVersion.yaml
