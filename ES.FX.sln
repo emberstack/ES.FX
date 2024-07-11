@@ -82,7 +82,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Microsoft.Extensions.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Microsoft.EntityFrameworkCore.SqlServer", "src\ES.FX.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Microsoft.EntityFrameworkCore.SqlServer.csproj", "{9CFA0CB8-0E85-47DC-8C94-9D77CBC0A315}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.FluentValidation", "src\ES.FX.Ignite.FluentValidation\ES.FX.Ignite.FluentValidation.csproj", "{DD1A7896-2FA7-4048-8716-514153091B96}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.FluentValidation", "src\ES.FX.Ignite.FluentValidation\ES.FX.Ignite.FluentValidation.csproj", "{DD1A7896-2FA7-4048-8716-514153091B96}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Swashbuckle", "src\ES.FX.Ignite.Swashbuckle\ES.FX.Ignite.Swashbuckle.csproj", "{4635FE85-68EE-4A0A-A22D-815F2C98DC0C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -210,6 +212,10 @@ Global
 		{DD1A7896-2FA7-4048-8716-514153091B96}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD1A7896-2FA7-4048-8716-514153091B96}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DD1A7896-2FA7-4048-8716-514153091B96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4635FE85-68EE-4A0A-A22D-815F2C98DC0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4635FE85-68EE-4A0A-A22D-815F2C98DC0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4635FE85-68EE-4A0A-A22D-815F2C98DC0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4635FE85-68EE-4A0A-A22D-815F2C98DC0C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -250,6 +256,7 @@ Global
 		{6859E590-8534-41DE-B684-DE44C3A7061E} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 		{9CFA0CB8-0E85-47DC-8C94-9D77CBC0A315} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 		{DD1A7896-2FA7-4048-8716-514153091B96} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
+		{4635FE85-68EE-4A0A-A22D-815F2C98DC0C} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}

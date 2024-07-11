@@ -7,6 +7,8 @@ using Microsoft.Extensions.Hosting;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Configuration;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Configuration;
+using ServiceCollectionExtensions =
+    SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions.ServiceCollectionExtensions;
 
 namespace ES.FX.Ignite.FluentValidation.Hosting;
 
@@ -48,11 +50,11 @@ public static class FluentValidationHostingExtensions
         builder.Services.AddSingleton(settings);
 
         if (settings.EndpointsAutoValidationEnabled)
-            ServiceCollectionExtensions
-                .AddFluentValidationAutoValidation(builder.Services, configureAutoValidationEndpointsConfiguration);
+            builder.Services
+                .AddFluentValidationAutoValidation(configureAutoValidationEndpointsConfiguration);
 
         if (settings.MvcAutoValidationEnabled)
-            SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions.ServiceCollectionExtensions
+            ServiceCollectionExtensions
                 .AddFluentValidationAutoValidation(builder.Services, configureAutoValidationMvcConfiguration);
     }
 }

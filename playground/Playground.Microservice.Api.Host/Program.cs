@@ -8,9 +8,11 @@ using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 using ES.FX.Ignite.Migrations.Hosting;
 using ES.FX.Ignite.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
+using ES.FX.Ignite.Swashbuckle.Hosting;
 using ES.FX.Serilog.Lifetime;
 using FluentValidation;
 using Playground.Microservice.Api.Host.HostedServices;
+using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
@@ -24,10 +26,10 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.AddIgniteSerilog();
 
     builder.AddIgnite();
-
     //Fluent Validation
     builder.AddIgniteFluentValidation();
-
+    //Fluent Validation
+    builder.AddIgniteSwashbuckle();
 
     //Migrations service
     builder.AddIgniteMigrationsService();
@@ -59,9 +61,12 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     builder.Services.AddHostedService<TestHostedService>();
     builder.Services.AddScoped<IValidator<TestRequest>, TestValidator>();
+    builder.Services.AddScoped<IValidator<TestComplexRequest>, TestComplexRequestValidator>();
 
     var app = builder.Build();
     app.UseIgnite();
+
+    app.UseIgniteSwashbuckle();
 
     app.UseIgniteHealthChecksUi();
 
@@ -75,17 +80,12 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         .WithName("TestAutoValidation")
         .WithOpenApi();
 
+    app.MapPost("/test/complex/autoValidation", (TestComplexRequest request) => { return Results.Ok(request); })
+        .AddFluentValidationAutoValidation()
+        .WithName("TestComplexAutoValidation")
+        .WithOpenApi();
+
 
     await app.RunAsync();
     return 0;
 });
-
-public record TestRequest(string Name = "Test");
-
-internal class TestValidator : AbstractValidator<TestRequest>
-{
-    public TestValidator()
-    {
-        RuleFor(x => x.Name).NotEmpty();
-    }
-}
