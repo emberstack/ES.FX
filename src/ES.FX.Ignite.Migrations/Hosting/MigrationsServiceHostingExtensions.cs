@@ -23,7 +23,7 @@ public static class MigrationsServiceHostingExtensions
     ///     The configuration section path. Default is
     ///     <see cref="MigrationsServiceSpark.ConfigurationSectionPath" />.
     /// </param>
-    public static void AddIgniteMigrationsService(this IHostApplicationBuilder builder,
+    public static void IgniteMigrationsService(this IHostApplicationBuilder builder,
         Action<MigrationsServiceSparkSettings>? configureSettings = null,
         string configurationSectionPath = MigrationsServiceSpark.ConfigurationSectionPath)
     {

@@ -20,9 +20,9 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         if (useFactory)
-            builder.AddIgniteSqlServerClientFactory("database", configureOptions: ConfigureOptions);
+            builder.IgniteSqlServerClientFactory("database", configureOptions: ConfigureOptions);
         else
-            builder.AddIgniteSqlServerClient("database", configureOptions: ConfigureOptions);
+            builder.IgniteSqlServerClient("database", configureOptions: ConfigureOptions);
 
         var app = builder.Build();
 

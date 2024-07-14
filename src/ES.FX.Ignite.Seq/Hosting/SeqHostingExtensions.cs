@@ -20,7 +20,7 @@ namespace ES.FX.Ignite.Seq.Hosting;
 [PublicAPI]
 public static class SeqHostingExtensions
 {
-    public static void AddIgniteSeq(this IHostApplicationBuilder builder,
+    public static void IgniteSeq(this IHostApplicationBuilder builder,
         string name,
         Action<SeqSparkSettings>? configureSettings = null,
         Action<SeqSparkOptions>? configureOptions = null,

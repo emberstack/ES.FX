@@ -31,9 +31,9 @@ public class HostingTests
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         if (!useFactory)
-            builder.AddIgniteSqlServerDbContext<TestDbContext>(lifetime: serviceLifetime);
+            builder.IgniteSqlServerDbContext<TestDbContext>(lifetime: serviceLifetime);
         else
-            builder.AddIgniteSqlServerDbContextFactory<TestDbContext>(lifetime: serviceLifetime);
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>(lifetime: serviceLifetime);
 
         var app = builder.Build();
 
@@ -115,13 +115,13 @@ public class HostingTests
 
         if (useFactory)
         {
-            builder.AddIgniteSqlServerDbContextFactory<TestDbContext>();
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>();
 
             // Adding the factory again is not supported
             var notSupported = false;
             try
             {
-                builder.AddIgniteSqlServerDbContextFactory<TestDbContext>();
+                builder.IgniteSqlServerDbContextFactory<TestDbContext>();
             }
             catch (SparkReconfigurationNotSupportedException)
             {
@@ -134,7 +134,7 @@ public class HostingTests
             notSupported = false;
             try
             {
-                builder.AddIgniteSqlServerDbContext<TestDbContext>();
+                builder.IgniteSqlServerDbContext<TestDbContext>();
             }
             catch (SparkReconfigurationNotSupportedException)
             {
@@ -145,13 +145,13 @@ public class HostingTests
         }
         else
         {
-            builder.AddIgniteSqlServerDbContext<TestDbContext>();
+            builder.IgniteSqlServerDbContext<TestDbContext>();
 
             // Adding the context again is not supported
             var notSupported = false;
             try
             {
-                builder.AddIgniteSqlServerDbContext<TestDbContext>();
+                builder.IgniteSqlServerDbContext<TestDbContext>();
             }
             catch (SparkReconfigurationNotSupportedException)
             {
@@ -164,7 +164,7 @@ public class HostingTests
             notSupported = false;
             try
             {
-                builder.AddIgniteSqlServerDbContextFactory<TestDbContext>();
+                builder.IgniteSqlServerDbContextFactory<TestDbContext>();
             }
             catch (SparkReconfigurationNotSupportedException)
             {
@@ -192,9 +192,9 @@ public class HostingTests
         ]);
 
         if (useFactory)
-            builder.AddIgniteSqlServerDbContextFactory<TestDbContext>(configureSettings: ConfigureSettings);
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>(configureSettings: ConfigureSettings);
         else
-            builder.AddIgniteSqlServerDbContext<TestDbContext>(configureSettings: ConfigureSettings);
+            builder.IgniteSqlServerDbContext<TestDbContext>(configureSettings: ConfigureSettings);
 
 
         var app = builder.Build();
@@ -248,9 +248,9 @@ public class HostingTests
         ]);
 
         if (useFactory)
-            builder.AddIgniteSqlServerDbContextFactory<TestDbContext>(configureOptions: ConfigureOptions);
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>(configureOptions: ConfigureOptions);
         else
-            builder.AddIgniteSqlServerDbContext<TestDbContext>(configureOptions: ConfigureOptions);
+            builder.IgniteSqlServerDbContext<TestDbContext>(configureOptions: ConfigureOptions);
 
 
         var app = builder.Build();
@@ -295,10 +295,10 @@ public class HostingTests
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         if (useFactory)
-            builder.AddIgniteSqlServerDbContextFactory<TestDbContext>(
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>(
                 configureDbContextOptionsBuilder: ConfigureDbContextOptionsBuilder);
         else
-            builder.AddIgniteSqlServerDbContext<TestDbContext>(
+            builder.IgniteSqlServerDbContext<TestDbContext>(
                 configureDbContextOptionsBuilder: ConfigureDbContextOptionsBuilder);
 
 
@@ -333,10 +333,10 @@ public class HostingTests
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         if (useFactory)
-            builder.AddIgniteSqlServerDbContextFactory<TestDbContext>(
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>(
                 configureSqlServerDbContextOptionsBuilder: ConfigureDbContextOptionsBuilder);
         else
-            builder.AddIgniteSqlServerDbContext<TestDbContext>(
+            builder.IgniteSqlServerDbContext<TestDbContext>(
                 configureSqlServerDbContextOptionsBuilder: ConfigureDbContextOptionsBuilder);
 
 

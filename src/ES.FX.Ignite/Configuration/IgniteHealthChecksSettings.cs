@@ -1,6 +1,4 @@
-﻿using ES.FX.AspNetCore.HealthChecks.UI.HealthChecksEndpointRegistry;
-
-namespace ES.FX.Ignite.Hosting.Configuration;
+﻿namespace ES.FX.Ignite.Configuration;
 
 /// <summary>
 ///     Settings for HealthChecks
@@ -26,15 +24,4 @@ public class IgniteHealthChecksSettings
     ///     Gets or sets a value indicating whether the application status check is enabled
     /// </summary>
     public bool ApplicationStatusCheckEnabled { get; set; } = true;
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether the health checks UI response writer is enabled
-    /// </summary>
-    public bool HealthChecksUiResponseWriterEnabled { get; set; } = true;
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether the health checks endpoints are added to the
-    ///     <see cref="HealthChecksEndpointRegistryService" />
-    /// </summary>
-    public bool HealthChecksEndpointsAutoRegister { get; set; } = true;
 }

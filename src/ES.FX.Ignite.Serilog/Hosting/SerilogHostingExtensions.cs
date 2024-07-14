@@ -30,7 +30,7 @@ public static class SerilogHostingExtensions
     ///     the Microsoft.Extensions.Logging API. Normally, equivalent Serilog sinks are used in place of providers. Specify
     ///     <c>true</c> to write events to all providers.
     /// </param>
-    public static void AddIgniteSerilog(this IHostApplicationBuilder builder,
+    public static void IgniteSerilog(this IHostApplicationBuilder builder,
         Action<LoggerConfiguration>? configureLoggerConfiguration = null, bool applyDefaultConfiguration = true,
         bool writeToProviders = true)
     {

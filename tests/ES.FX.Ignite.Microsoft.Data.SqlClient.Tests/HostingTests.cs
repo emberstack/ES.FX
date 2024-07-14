@@ -31,9 +31,9 @@ public class HostingTests
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         if (!useFactory)
-            builder.AddIgniteSqlServerClient("database", serviceKey, lifetime: serviceLifetime);
+            builder.IgniteSqlServerClient("database", serviceKey, lifetime: serviceLifetime);
         else
-            builder.AddIgniteSqlServerClientFactory("database", serviceKey, lifetime: serviceLifetime);
+            builder.IgniteSqlServerClientFactory("database", serviceKey, lifetime: serviceLifetime);
 
         var app = builder.Build();
 
@@ -138,13 +138,13 @@ public class HostingTests
 
         if (useFactory)
         {
-            builder.AddIgniteSqlServerClientFactory("database1", serviceKey);
-            builder.AddIgniteSqlServerClientFactory("database2", secondServiceKey);
+            builder.IgniteSqlServerClientFactory("database1", serviceKey);
+            builder.IgniteSqlServerClientFactory("database2", secondServiceKey);
         }
         else
         {
-            builder.AddIgniteSqlServerClient("database1", serviceKey);
-            builder.AddIgniteSqlServerClient("database2", secondServiceKey);
+            builder.IgniteSqlServerClient("database1", serviceKey);
+            builder.IgniteSqlServerClient("database2", secondServiceKey);
         }
 
 
@@ -202,13 +202,13 @@ public class HostingTests
 
         if (useFactory)
         {
-            builder.AddIgniteSqlServerClientFactory("database", serviceKey);
+            builder.IgniteSqlServerClientFactory("database", serviceKey);
 
             // Adding the factory again is not supported
             var notSupported = false;
             try
             {
-                builder.AddIgniteSqlServerClientFactory("database", serviceKey);
+                builder.IgniteSqlServerClientFactory("database", serviceKey);
             }
             catch (SparkReconfigurationNotSupportedException)
             {
@@ -221,7 +221,7 @@ public class HostingTests
             notSupported = false;
             try
             {
-                builder.AddIgniteSqlServerClient("database", serviceKey);
+                builder.IgniteSqlServerClient("database", serviceKey);
             }
             catch (SparkReconfigurationNotSupportedException)
             {
@@ -232,13 +232,13 @@ public class HostingTests
         }
         else
         {
-            builder.AddIgniteSqlServerClient("database", serviceKey);
+            builder.IgniteSqlServerClient("database", serviceKey);
 
             // Adding the client again is not supported
             var notSupported = false;
             try
             {
-                builder.AddIgniteSqlServerClient("database", serviceKey);
+                builder.IgniteSqlServerClient("database", serviceKey);
             }
             catch (SparkReconfigurationNotSupportedException)
             {
@@ -251,7 +251,7 @@ public class HostingTests
             notSupported = false;
             try
             {
-                builder.AddIgniteSqlServerClientFactory("database", serviceKey);
+                builder.IgniteSqlServerClientFactory("database", serviceKey);
             }
             catch (SparkReconfigurationNotSupportedException)
             {
@@ -282,9 +282,9 @@ public class HostingTests
         ]);
 
         if (useFactory)
-            builder.AddIgniteSqlServerClientFactory(name, configureSettings: ConfigureSettings);
+            builder.IgniteSqlServerClientFactory(name, configureSettings: ConfigureSettings);
         else
-            builder.AddIgniteSqlServerClient(name, configureSettings: ConfigureSettings);
+            builder.IgniteSqlServerClient(name, configureSettings: ConfigureSettings);
 
 
         var app = builder.Build();
@@ -335,9 +335,9 @@ public class HostingTests
         ]);
 
         if (useFactory)
-            builder.AddIgniteSqlServerClientFactory(name, configureOptions: ConfigureOptions);
+            builder.IgniteSqlServerClientFactory(name, configureOptions: ConfigureOptions);
         else
-            builder.AddIgniteSqlServerClient(name, configureOptions: ConfigureOptions);
+            builder.IgniteSqlServerClient(name, configureOptions: ConfigureOptions);
 
 
         var app = builder.Build();

@@ -15,17 +15,17 @@ return await ProgramEntry.CreateBuilder(args).Build().RunAsync(async options =>
 {
     var builder = Host.CreateApplicationBuilder(args);
 
-    builder.AddIgnite();
+    builder.Ignite();
 
     //Serilog
-    builder.AddIgniteSerilog();
+    builder.IgniteSerilog();
 
     // Migrations service
-    builder.AddIgniteMigrationsService();
+    builder.IgniteMigrationsService();
 
 
     //SqlServerDbContext
-    builder.AddIgniteSqlServerDbContextFactory<SimpleDbContext>(nameof(SimpleDbContext),
+    builder.IgniteSqlServerDbContextFactory<SimpleDbContext>(nameof(SimpleDbContext),
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {
             sqlServerDbContextOptionsBuilder.MigrationsAssembly(typeof(SimpleDbContextDesignTimeFactory).Assembly
@@ -37,12 +37,12 @@ return await ProgramEntry.CreateBuilder(args).Build().RunAsync(async options =>
 
 
     //Sql Server Client
-    builder.AddIgniteSqlServerClientFactory(nameof(SimpleDbContext));
+    builder.IgniteSqlServerClientFactory(nameof(SimpleDbContext));
 
     builder.Services.AddHostedService<TestHostedService>();
 
     var app = builder.Build();
-    app.UseIgnite();
+    app.Ignite();
 
 
     await app.RunAsync();

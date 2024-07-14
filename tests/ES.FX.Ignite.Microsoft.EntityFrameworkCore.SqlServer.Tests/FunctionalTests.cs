@@ -21,11 +21,11 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         if (useFactory)
-            builder.AddIgniteSqlServerDbContextFactory<TestDbContext>(
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>(
                 configureOptions: ConfigureOptions,
                 configureSqlServerDbContextOptionsBuilder: ConfigureSqlServerDbContextOptionsBuilder);
         else
-            builder.AddIgniteSqlServerDbContext<TestDbContext>(
+            builder.IgniteSqlServerDbContext<TestDbContext>(
                 configureOptions: ConfigureOptions,
                 configureSqlServerDbContextOptionsBuilder: ConfigureSqlServerDbContextOptionsBuilder);
 

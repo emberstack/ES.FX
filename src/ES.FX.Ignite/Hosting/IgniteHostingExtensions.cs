@@ -1,11 +1,9 @@
 ﻿using Azure.Monitor.OpenTelemetry.AspNetCore;
-using ES.FX.AspNetCore.HealthChecks.UI.HealthChecksEndpointRegistry;
-using ES.FX.Ignite.Hosting.Configuration;
+using ES.FX.Ignite.Configuration;
 using ES.FX.Ignite.Spark;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.HealthChecks;
 using HealthChecks.ApplicationStatus.DependencyInjection;
-using HealthChecks.UI.Client;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -23,11 +21,11 @@ namespace ES.FX.Ignite.Hosting;
 [PublicAPI]
 public static class IgniteHostingExtensions
 {
-    public static void AddIgnite(this IHostApplicationBuilder builder,
+    public static void Ignite(this IHostApplicationBuilder builder,
         Action<IgniteSettings>? configureSettings = null,
         string configurationSectionPath = IgniteConfigurationSections.Ignite)
     {
-        builder.GuardSparkConfiguration($"{nameof(Ignite)}", $"{nameof(Ignite)} already configured.");
+        builder.GuardSparkConfiguration($"{nameof(FX.Ignite)}", $"{nameof(FX.Ignite)} already configured.");
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);
@@ -118,7 +116,7 @@ public static class IgniteHostingExtensions
     }
 
 
-    public static IHost UseIgnite(this IHost app)
+    public static IHost Ignite(this IHost app)
     {
         var settings = app.Services.GetRequiredService<IgniteSettings>();
 
@@ -143,23 +141,8 @@ public static class IgniteHostingExtensions
             Predicate = r => r.Tags.Contains(HealthChecksTags.Live)
         };
 
-        if (settings.HealthChecksUiResponseWriterEnabled)
-        {
-            readinessHealthCheckOptions.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
-            livenessHealthCheckOptions.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
-        }
 
         app.MapHealthChecks(settings.ReadinessEndpointPath, readinessHealthCheckOptions);
         app.MapHealthChecks(settings.LivenessEndpointPath, livenessHealthCheckOptions);
-
-
-        var uiHealthChecksRegistry = app.Services.GetService<HealthChecksEndpointRegistryService>();
-        if (settings.HealthChecksEndpointsAutoRegister && uiHealthChecksRegistry is not null)
-        {
-            uiHealthChecksRegistry.AddHealthCheckEndpoint(HealthChecksEndpoints.ReadinessEndpointName,
-                settings.ReadinessEndpointPath);
-            uiHealthChecksRegistry.AddHealthCheckEndpoint(HealthChecksEndpoints.LivenessEndpointName,
-                settings.LivenessEndpointPath);
-        }
     }
 }

@@ -37,7 +37,7 @@ public static class FluentValidationHostingExtensions
     ///     The configuration section path. Default is
     ///     <see cref="FluentValidationSpark.ConfigurationSectionPath" />.
     /// </param>
-    public static void AddIgniteFluentValidation(this IHostApplicationBuilder builder,
+    public static void IgniteFluentValidation(this IHostApplicationBuilder builder,
         Action<FluentValidationSparkSettings>? configureSettings = null,
         Action<AutoValidationEndpointsConfiguration>? configureAutoValidationEndpointsConfiguration = null,
         Action<AutoValidationMvcConfiguration>? configureAutoValidationMvcConfiguration = null,

@@ -36,7 +36,7 @@ public static class HealthChecksUiHostingExtensions
     ///     The configuration section path. Default is
     ///     <see cref="HealthChecksUiSpark.ConfigurationSectionPath" />.
     /// </param>
-    public static void AddIgniteHealthChecksUi(this WebApplicationBuilder builder,
+    public static void IgniteHealthChecksUi(this WebApplicationBuilder builder,
         Action<HealthChecksUiSparkSettings>? configureSettings = null,
         Action<Settings>? configureHealthChecksUiSettings = null,
         Action<HealthChecksUIBuilder>? configureHealthChecksUiBuilder = null,
@@ -79,7 +79,7 @@ public static class HealthChecksUiHostingExtensions
     ///     An optional delegate that can be used for customizing health checks UI
     ///     options.
     /// </param>
-    public static void UseIgniteHealthChecksUi(this WebApplication app,
+    public static void IgniteHealthChecksUi(this WebApplication app,
         Action<Options>? configureHealthChecksUiOptions = null)
     {
         var settings = app.Services.GetRequiredService<HealthChecksUiSparkSettings>();

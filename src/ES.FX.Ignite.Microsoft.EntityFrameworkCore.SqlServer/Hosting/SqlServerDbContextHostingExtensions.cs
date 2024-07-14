@@ -48,7 +48,7 @@ public static class SqlServerDbContextHostingExtensions
     ///     The configuration section path. Default is
     ///     <see cref="DbContextSpark.ConfigurationSectionPath" />.
     /// </param>
-    public static void AddIgniteSqlServerDbContext<TDbContext>(this IHostApplicationBuilder builder,
+    public static void IgniteSqlServerDbContext<TDbContext>(this IHostApplicationBuilder builder,
         string? name = null,
         Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
         Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
@@ -99,7 +99,7 @@ public static class SqlServerDbContextHostingExtensions
     ///     This also registers the <see cref="DbContext" /> as a service in the services provided by the
     ///     <paramref name="builder" /> with the same lifetime specified by <paramref name="lifetime" />.
     /// </remarks>
-    public static void AddIgniteSqlServerDbContextFactory<TDbContext>(this IHostApplicationBuilder builder,
+    public static void IgniteSqlServerDbContextFactory<TDbContext>(this IHostApplicationBuilder builder,
         string? name = null,
         Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
         Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,

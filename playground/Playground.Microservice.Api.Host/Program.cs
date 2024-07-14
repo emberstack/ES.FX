@@ -23,20 +23,20 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     //Serilog
     builder.Logging.ClearProviders();
-    builder.AddIgniteSerilog();
+    builder.IgniteSerilog();
 
-    builder.AddIgnite();
+    builder.Ignite();
     //Fluent Validation
-    builder.AddIgniteFluentValidation();
+    builder.IgniteFluentValidation();
     //Fluent Validation
-    builder.AddIgniteSwashbuckle();
+    builder.IgniteSwashbuckle();
 
     //Migrations service
-    builder.AddIgniteMigrationsService();
+    builder.IgniteMigrationsService();
 
 
     //SqlServerDbContext
-    builder.AddIgniteSqlServerDbContextFactory<SimpleDbContext>(nameof(SimpleDbContext),
+    builder.IgniteSqlServerDbContextFactory<SimpleDbContext>(nameof(SimpleDbContext),
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {
             sqlServerDbContextOptionsBuilder.MigrationsAssembly(
@@ -48,15 +48,15 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
 
     //Sql Server Client
-    builder.AddIgniteSqlServerClientFactory(nameof(SimpleDbContext));
+    builder.IgniteSqlServerClientFactory(nameof(SimpleDbContext));
 
 
     // Add health checks UI
-    builder.AddIgniteHealthChecksUi();
+    builder.IgniteHealthChecksUi();
 
 
     //Add Seq
-    builder.AddIgniteSeq("dev");
+    builder.IgniteSeq("dev");
 
 
     builder.Services.AddHostedService<TestHostedService>();
@@ -64,11 +64,11 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddScoped<IValidator<TestComplexRequest>, TestComplexRequestValidator>();
 
     var app = builder.Build();
-    app.UseIgnite();
+    app.Ignite();
 
-    app.UseIgniteSwashbuckle();
+    app.IgniteSwashbuckle();
 
-    app.UseIgniteHealthChecksUi();
+    app.IgniteHealthChecksUi();
 
 
     app.MapGet("/test/exception", void () => throw new Exception("Test exception"))

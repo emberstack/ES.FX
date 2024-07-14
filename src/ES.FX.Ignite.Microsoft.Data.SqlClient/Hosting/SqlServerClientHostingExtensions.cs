@@ -44,7 +44,7 @@ public static class SqlServerClientHostingExtensions
     ///     The configuration section path. Default is
     ///     <see cref="SqlServerClientSpark.ConfigurationSectionPath" />.
     /// </param>
-    public static void AddIgniteSqlServerClient(this IHostApplicationBuilder builder,
+    public static void IgniteSqlServerClient(this IHostApplicationBuilder builder,
         string name,
         string? serviceKey = null,
         Action<SqlServerClientSparkSettings>? configureSettings = null,
@@ -83,7 +83,7 @@ public static class SqlServerClientHostingExtensions
     ///     <see cref="SqlServerClientSpark.ConfigurationSectionPath" />.
     /// </param>
     /// <remarks> For convenience, this method also registers <see cref="SqlConnection" /> as a service.</remarks>
-    public static void AddIgniteSqlServerClientFactory(this IHostApplicationBuilder builder,
+    public static void IgniteSqlServerClientFactory(this IHostApplicationBuilder builder,
         string name,
         string? serviceKey = null,
         Action<SqlServerClientSparkSettings>? configureSettings = null,

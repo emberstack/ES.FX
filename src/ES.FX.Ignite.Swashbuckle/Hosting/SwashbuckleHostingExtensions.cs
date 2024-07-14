@@ -31,7 +31,7 @@ public static class SwashbuckleHostingExtensions
     ///     The configuration section path. Default is
     ///     <see cref="SwashbuckleSpark.ConfigurationSectionPath" />.
     /// </param>
-    public static void AddIgniteSwashbuckle(this IHostApplicationBuilder builder,
+    public static void IgniteSwashbuckle(this IHostApplicationBuilder builder,
         Action<SwashbuckleSparkSettings>? configureSettings = null,
         Action<SwaggerGenOptions>? configureSwaggerGenOptions = null,
         string configurationSectionPath = SwashbuckleSpark.ConfigurationSectionPath)
@@ -58,7 +58,7 @@ public static class SwashbuckleHostingExtensions
     ///     An optional delegate that can be used for customizing the
     ///     <see cref="SwaggerUIOptions" />.
     /// </param>
-    public static void UseIgniteSwashbuckle(this WebApplication app,
+    public static void IgniteSwashbuckle(this WebApplication app,
         Action<SwaggerOptions>? configureSwaggerOptions = null,
         // ReSharper disable once InconsistentNaming
         Action<SwaggerUIOptions>? configureSwaggerUIOptions = null)

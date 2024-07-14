@@ -1,4 +1,4 @@
-﻿namespace ES.FX.Ignite.Hosting.Configuration;
+﻿namespace ES.FX.Ignite.Configuration;
 
 /// <summary>
 ///     Settings used to configure the Ignite services
