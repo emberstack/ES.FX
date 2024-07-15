@@ -1,0 +1,36 @@
+﻿using JetBrains.Annotations;
+using Microsoft.AspNetCore.Builder;
+using NSwag.AspNetCore;
+
+namespace ES.FX.Ignite.NSwag.Hosting;
+
+[PublicAPI]
+public static class NSwagHostingExtensions
+{
+    /// <summary>
+    ///     Uses <see cref="NSwag" />
+    ///     Enables the OpenAPI/Swagger specification generation and the Swagger UI.
+    /// </summary>
+    /// <param name="app"> The <see cref="WebApplication" /> to configure the Ignite HealthChecks UI for.</param>
+    /// <param name="useSwaggerUi"> A flag indicating whether to use Swagger UI. Default is <c>true</c>.</param>
+    /// <param name="configureOpenApiDocumentMiddlewareSettings">
+    ///     An optional delegate that can be used for customizing <see cref="OpenApiDocumentMiddlewareSettings" />.
+    /// </param>
+    /// <param name="configureSwaggerUiSettings">
+    ///     An optional delegate that can be used for customizing <see cref="SwaggerUiSettings" />.
+    /// </param>
+    public static void IgniteNSwag(this WebApplication app,
+        bool useSwaggerUi = true,
+        Action<OpenApiDocumentMiddlewareSettings>? configureOpenApiDocumentMiddlewareSettings = null,
+        Action<SwaggerUiSettings>? configureSwaggerUiSettings = null)
+    {
+        app.UseOpenApi(configureOpenApiDocumentMiddlewareSettings);
+
+        if (useSwaggerUi)
+            app.UseSwaggerUi(settings =>
+            {
+                settings.DocExpansion = "list";
+                configureSwaggerUiSettings?.Invoke(settings);
+            });
+    }
+}

@@ -6,6 +6,7 @@ using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Migrations;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 using ES.FX.Ignite.Migrations.Hosting;
+using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.Swashbuckle.Hosting;
@@ -66,7 +67,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     var app = builder.Build();
     app.Ignite();
 
-    app.IgniteSwashbuckle();
+    app.IgniteNSwag();
 
     app.IgniteHealthChecksUi();
 

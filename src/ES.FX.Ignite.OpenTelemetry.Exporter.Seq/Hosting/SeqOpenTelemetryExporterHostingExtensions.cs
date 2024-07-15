@@ -26,8 +26,9 @@ public static class SeqOpenTelemetryExporterHostingExtensions
         Action<SeqOpenTelemetryExporterSparkOptions>? configureOptions = null,
         string configurationSectionPath = SeqOpenTelemetryExporterSpark.ConfigurationSectionPath)
     {
-
-        var configPath = string.IsNullOrWhiteSpace(name) ? configurationSectionPath : SparkConfig.Path(name, configurationSectionPath);
+        var configPath = string.IsNullOrWhiteSpace(name)
+            ? configurationSectionPath
+            : SparkConfig.Path(name, configurationSectionPath);
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
         builder.Services.AddKeyedSingleton(name, settings);
@@ -43,7 +44,8 @@ public static class SeqOpenTelemetryExporterHostingExtensions
             builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddProcessor(
                 sp =>
                 {
-                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>().Get(name);
+                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>()
+                        .Get(name);
                     ConfigureOtlpExporterOptions(options, options.OtlpLogExporter, "/ingest/otlp/v1/logs");
 
                     var exporter = new OtlpLogExporter(options.OtlpLogExporter);
@@ -58,7 +60,8 @@ public static class SeqOpenTelemetryExporterHostingExtensions
             builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(
                 sp =>
                 {
-                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>().Get(name);
+                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>()
+                        .Get(name);
                     ConfigureOtlpExporterOptions(options, options.OtlpTraceExporter, "/ingest/otlp/v1/traces");
 
                     var exporter = new OtlpTraceExporter(options.OtlpTraceExporter);
@@ -75,7 +78,8 @@ public static class SeqOpenTelemetryExporterHostingExtensions
         return;
 
 
-        static void ConfigureOtlpExporterOptions(SeqOpenTelemetryExporterSparkOptions options, OtlpExporterOptions exporterOptions,
+        static void ConfigureOtlpExporterOptions(SeqOpenTelemetryExporterSparkOptions options,
+            OtlpExporterOptions exporterOptions,
             string httpProtobufSuffix)
         {
             exporterOptions.Protocol = options.OtlpProtocol;
@@ -93,7 +97,8 @@ public static class SeqOpenTelemetryExporterHostingExtensions
         }
     }
 
-    private static void ConfigureObservability(IHostApplicationBuilder builder, string? name, SeqOpenTelemetryExporterSparkSettings settings)
+    private static void ConfigureObservability(IHostApplicationBuilder builder, string? name,
+        SeqOpenTelemetryExporterSparkSettings settings)
     {
         if (settings.HealthChecksEnabled)
         {
