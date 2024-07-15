@@ -29,8 +29,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Ignite();
     //Fluent Validation
     builder.IgniteFluentValidation();
-    //Fluent Validation
-    builder.IgniteSwashbuckle();
+
 
     //Migrations service
     builder.IgniteMigrationsService();
@@ -58,6 +57,8 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     //Add Seq
     builder.IgniteSeqOpenTelemetryExporter();
+
+    builder.Services.AddOpenApiDocument();
 
 
     builder.Services.AddHostedService<TestHostedService>();
