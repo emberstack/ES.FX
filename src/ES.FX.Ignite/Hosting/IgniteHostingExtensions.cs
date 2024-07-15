@@ -1,4 +1,5 @@
-﻿using Azure.Monitor.OpenTelemetry.AspNetCore;
+﻿using System.Text.Json.Serialization;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ES.FX.Ignite.Configuration;
 using ES.FX.Ignite.Spark;
 using ES.FX.Ignite.Spark.Configuration;
@@ -7,6 +8,7 @@ using HealthChecks.ApplicationStatus.DependencyInjection;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -113,6 +115,18 @@ public static class IgniteHostingExtensions
 
         if (settings.ProblemDetailsEnabled)
             builder.Services.AddProblemDetails();
+
+        if (settings.JsonStringEnumConverterEnabled)
+        {
+            builder.Services.ConfigureHttpJsonOptions(options =>
+            {
+                options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+            builder.Services.Configure<JsonOptions>(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+        }
     }
 
 

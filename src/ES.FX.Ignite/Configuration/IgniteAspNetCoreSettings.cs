@@ -14,4 +14,9 @@ public class IgniteAspNetCoreSettings
     ///     Gets or sets a value indicating whether the ProblemDetails middleware is enabled
     /// </summary>
     public bool ProblemDetailsEnabled { get; set; } = true;
+
+    /// <summary>
+    ///     Gets or sets a value indicating whether the JsonStringEnumConverter is enabled
+    /// </summary>
+    public bool JsonStringEnumConverterEnabled { get; set; } = true;
 }
