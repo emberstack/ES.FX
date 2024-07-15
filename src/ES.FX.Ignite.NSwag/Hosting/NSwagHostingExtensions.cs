@@ -1,5 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using NSwag.AspNetCore;
 
 namespace ES.FX.Ignite.NSwag.Hosting;
@@ -29,6 +31,8 @@ public static class NSwagHostingExtensions
         if (useSwaggerUi)
             app.UseSwaggerUi(settings =>
             {
+                var env = app.Services.GetRequiredService<IHostEnvironment>();
+                settings.DocumentTitle = $"{env.ApplicationName} - Swagger UI";
                 settings.DocExpansion = "list";
                 configureSwaggerUiSettings?.Invoke(settings);
             });
