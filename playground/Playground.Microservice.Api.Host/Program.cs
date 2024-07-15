@@ -9,7 +9,6 @@ using ES.FX.Ignite.Migrations.Hosting;
 using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
-using ES.FX.Ignite.Swashbuckle.Hosting;
 using ES.FX.Serilog.Lifetime;
 using FluentValidation;
 using Playground.Microservice.Api.Host.HostedServices;

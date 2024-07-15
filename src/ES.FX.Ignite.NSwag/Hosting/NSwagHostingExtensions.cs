@@ -2,10 +2,8 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using NSwag.AspNetCore;
 using SwaggerThemes;
-using System.Threading.Tasks;
 
 namespace ES.FX.Ignite.NSwag.Hosting;
 
@@ -33,12 +31,11 @@ public static class NSwagHostingExtensions
     {
         app.UseOpenApi(configureOpenApiDocumentMiddlewareSettings);
 
-        
 
         if (useSwaggerUi)
             app.UseSwaggerUi(settings =>
             {
-                if (useSwaggerUiDarkMode) 
+                if (useSwaggerUiDarkMode)
                     settings.CustomInlineStyles = SwaggerTheme.GetSwaggerThemeCss(Theme.UniversalDark);
 
                 var env = app.Services.GetRequiredService<IHostEnvironment>();
@@ -46,6 +43,5 @@ public static class NSwagHostingExtensions
                 settings.DocExpansion = "list";
                 configureSwaggerUiSettings?.Invoke(settings);
             });
-            
     }
 }
