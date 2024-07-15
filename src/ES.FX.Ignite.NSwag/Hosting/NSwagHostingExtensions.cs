@@ -41,6 +41,7 @@ public static class NSwagHostingExtensions
                 var env = app.Services.GetRequiredService<IHostEnvironment>();
                 settings.DocumentTitle = $"{env.ApplicationName} - Swagger UI";
                 settings.DocExpansion = "list";
+                settings.AdditionalSettings.Add("displayRequestDuration", true);
                 configureSwaggerUiSettings?.Invoke(settings);
             });
     }
