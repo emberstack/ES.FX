@@ -17,23 +17,18 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.FluentValidation\ES.FX.Ignite.FluentValidation.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.Microsoft.Data.SqlClient\ES.FX.Ignite.Microsoft.Data.SqlClient.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.Data.SqlClient\ES.FX.Ignite.Microsoft.Data.SqlClient.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Migrations\ES.FX.Ignite.Migrations.csproj" />
-		<ProjectReference Include="..\..\src\ES.FX.Ignite.Seq\ES.FX.Ignite.Seq.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.OpenTelemetry.Exporter.Seq\ES.FX.Ignite.OpenTelemetry.Exporter.Seq.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Serilog\ES.FX.Ignite.Serilog.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Swashbuckle\ES.FX.Ignite.Swashbuckle.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite\ES.FX.Ignite.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Serilog\ES.FX.Serilog.csproj" />
-		<ProjectReference
-			Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
-		<ProjectReference
-			Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
+		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
+		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 
 </Project>

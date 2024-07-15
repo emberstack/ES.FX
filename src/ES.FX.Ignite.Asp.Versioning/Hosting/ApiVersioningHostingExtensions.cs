@@ -36,7 +36,8 @@ public static class ApiVersioningHostingExtensions
             })
             .AddApiExplorer(options =>
             {
-                options.GroupNameFormat = "'v'V";
+                // ReSharper disable once StringLiteralTypo
+                options.GroupNameFormat = "'v'VVV";
                 options.SubstituteApiVersionInUrl = true;
 
                 configureApiExplorerOptions?.Invoke(options);

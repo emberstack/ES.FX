@@ -1,9 +1,9 @@
-﻿namespace ES.FX.Ignite.Seq.Configuration;
+﻿namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
 
 /// <summary>
 ///     Provides the settings for connecting to Seq
 /// </summary>
-public class SeqSparkSettings
+public class SeqOpenTelemetryExporterSparkSettings
 {
     /// <summary>
     ///     Gets or sets a boolean value that indicates whether the Seq is enabled.

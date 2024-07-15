@@ -1,4 +1,4 @@
-﻿using ES.FX.Ignite.Seq.Configuration;
+﻿using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Microsoft.Extensions.Diagnostics.HealthChecks;
 using JetBrains.Annotations;
@@ -15,24 +15,25 @@ using ExportProcessorType = OpenTelemetry.ExportProcessorType;
 using SimpleActivityExportProcessor = OpenTelemetry.SimpleActivityExportProcessor;
 using SimpleLogRecordExportProcessor = OpenTelemetry.SimpleLogRecordExportProcessor;
 
-namespace ES.FX.Ignite.Seq.Hosting;
+namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 
 [PublicAPI]
-public static class SeqHostingExtensions
+public static class SeqOpenTelemetryExporterHostingExtensions
 {
-    public static void IgniteSeq(this IHostApplicationBuilder builder,
-        string name,
-        Action<SeqSparkSettings>? configureSettings = null,
-        Action<SeqSparkOptions>? configureOptions = null,
-        string configurationSectionPath = SeqSpark.ConfigurationSectionPath)
+    public static void IgniteSeqOpenTelemetryExporter(this IHostApplicationBuilder builder,
+        string? name = null,
+        Action<SeqOpenTelemetryExporterSparkSettings>? configureSettings = null,
+        Action<SeqOpenTelemetryExporterSparkOptions>? configureOptions = null,
+        string configurationSectionPath = SeqOpenTelemetryExporterSpark.ConfigurationSectionPath)
     {
-        var configPath = SparkConfig.Path(name, configurationSectionPath);
+
+        var configPath = string.IsNullOrWhiteSpace(name) ? configurationSectionPath : SparkConfig.Path(name, configurationSectionPath);
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
         builder.Services.AddKeyedSingleton(name, settings);
 
         var optionsBuilder = builder.Services
-            .AddOptions<SeqSparkOptions>(name)
+            .AddOptions<SeqOpenTelemetryExporterSparkOptions>(name ?? Options.DefaultName)
             .BindConfiguration(configPath);
         if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
 
@@ -42,7 +43,7 @@ public static class SeqHostingExtensions
             builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddProcessor(
                 sp =>
                 {
-                    var options = sp.GetRequiredService<IOptionsMonitor<SeqSparkOptions>>().Get(name);
+                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>().Get(name);
                     ConfigureOtlpExporterOptions(options, options.OtlpLogExporter, "/ingest/otlp/v1/logs");
 
                     var exporter = new OtlpLogExporter(options.OtlpLogExporter);
@@ -57,7 +58,7 @@ public static class SeqHostingExtensions
             builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(
                 sp =>
                 {
-                    var options = sp.GetRequiredService<IOptionsMonitor<SeqSparkOptions>>().Get(name);
+                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>().Get(name);
                     ConfigureOtlpExporterOptions(options, options.OtlpTraceExporter, "/ingest/otlp/v1/traces");
 
                     var exporter = new OtlpTraceExporter(options.OtlpTraceExporter);
@@ -74,7 +75,7 @@ public static class SeqHostingExtensions
         return;
 
 
-        static void ConfigureOtlpExporterOptions(SeqSparkOptions options, OtlpExporterOptions exporterOptions,
+        static void ConfigureOtlpExporterOptions(SeqOpenTelemetryExporterSparkOptions options, OtlpExporterOptions exporterOptions,
             string httpProtobufSuffix)
         {
             exporterOptions.Protocol = options.OtlpProtocol;
@@ -92,19 +93,20 @@ public static class SeqHostingExtensions
         }
     }
 
-    private static void ConfigureObservability(IHostApplicationBuilder builder, string name, SeqSparkSettings settings)
+    private static void ConfigureObservability(IHostApplicationBuilder builder, string? name, SeqOpenTelemetryExporterSparkSettings settings)
     {
         if (settings.HealthChecksEnabled)
         {
-            var healthCheckName = $"{SeqSpark.Name}.{name.Trim()}";
+            var healthCheckName =
+                $"{SeqOpenTelemetryExporterSpark.Name}{(string.IsNullOrWhiteSpace(name) ? string.Empty : $"[{name}]")}";
             builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName, sp =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<SeqSparkOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>().Get(name);
                 return new HttpGetHealthCheck(new HttpGetHealthCheckOptions
                 {
                     Uri = options.HealthUrl ?? string.Empty
                 });
-            }, default, [SeqSpark.Name], default));
+            }, default, [SeqOpenTelemetryExporterSpark.Name], default));
         }
     }
 }

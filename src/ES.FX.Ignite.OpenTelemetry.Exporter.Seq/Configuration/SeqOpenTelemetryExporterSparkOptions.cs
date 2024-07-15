@@ -1,11 +1,11 @@
 ﻿using OpenTelemetry.Exporter;
 
-namespace ES.FX.Ignite.Seq.Configuration;
+namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
 
 /// <summary>
 ///     Provides the options for connecting to Seq
 /// </summary>
-public class SeqSparkOptions
+public class SeqOpenTelemetryExporterSparkOptions
 {
     /// <summary>
     ///     The Seq ingestion endpoint.
