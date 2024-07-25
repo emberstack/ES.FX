@@ -1,4 +1,5 @@
-﻿using Testcontainers.MsSql;
+﻿using DotNet.Testcontainers.Builders;
+using Testcontainers.MsSql;
 
 namespace ES.FX.Shared.SqlServer.Tests.Fixtures;
 
@@ -14,6 +15,7 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
         Container = new MsSqlBuilder()
             .WithName($"{nameof(SqlServerContainerFixture)}-{Guid.NewGuid()}")
             .WithImage($"{Registry}/{Image}:{Tag}")
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(1433))
             .Build();
         await Container.StartAsync();
     }
