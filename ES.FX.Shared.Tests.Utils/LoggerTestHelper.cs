@@ -5,10 +5,10 @@ namespace ES.FX.Shared.Tests.Utils
 {
     public static class LoggerTestHelper
     {
-        public static Mock<ILogger<T>> VerifyLoggerWasCalled<T>(this Mock<ILogger<T>> logger, string expectedMessage, LogLevel logLevel = LogLevel.Debug)
+        public static Mock<ILogger<T>> VerifyLoggerWasCalled<T>(this Mock<ILogger<T>> logger, string expectedMessage = "", LogLevel logLevel = LogLevel.Debug)
         {
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-            Func<object, Type, bool> state = (v, t) => v.ToString().Contains(expectedMessage);
+            Func<object, Type, bool> state = (v, t) => string.IsNullOrEmpty(expectedMessage) ? true: v.ToString().Contains(expectedMessage);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 
 #pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
