@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -14,7 +14,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
     <PackageReference Include="Moq" Version="4.20.70" />
     <PackageReference Include="xunit" Version="2.9.0" />
@@ -25,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.Data.SqlClient\ES.FX.Ignite.Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Include="..\ES.FX.Shared.SqlServer.Tests\ES.FX.Shared.SqlServer.Tests.csproj" />
+    <ProjectReference Include="..\ES.FX.Shared.Tests.Utils\ES.FX.Shared.Tests.Utils.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
   </ItemGroup>
 
   <ItemGroup>
