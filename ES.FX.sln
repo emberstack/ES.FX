@@ -98,13 +98,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Asp.Versioning.Tests"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Hosting.Tests", "tests\ES.FX.Hosting.Tests\ES.FX.Hosting.Tests.csproj", "{6086BB51-ABAD-465F-9D6D-87FD97927AD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Shared.Tests.Utils", "tests\ES.FX.Shared.Tests.Utils\ES.FX.Shared.Tests.Utils.csproj", "{C19DAFBC-F55A-4BF7-B170-6A14CB7FB1DA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Shared.Tests.Utils", "tests\ES.FX.Shared.Tests.Utils\ES.FX.Shared.Tests.Utils.csproj", "{C19DAFBC-F55A-4BF7-B170-6A14CB7FB1DA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Microsoft.Data.SqlClient.Tests", "tests\ES.FX.Microsoft.Data.SqlClient.Tests\ES.FX.Microsoft.Data.SqlClient.Tests.csproj", "{9274296F-42A3-4095-95DC-8CA1D427DE60}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Microsoft.EntityFrameworkCore.Tests", "tests\ES.FX.Microsoft.EntityFrameworkCore.Tests\ES.FX.Microsoft.EntityFrameworkCore.Tests.csproj", "{89C8302F-76B7-4AF8-891B-A7EB97C204F5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.NSwag.AspNetCore.Tests", "tests\ES.FX.NSwag.AspNetCore.Tests\ES.FX.NSwag.AspNetCore.Tests.csproj", "{3863B20A-E9FE-439B-867D-9CA193A295C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Serilog.Tests", "tests\ES.FX.Serilog.Tests\ES.FX.Serilog.Tests.csproj", "{8B701432-0E07-4AC8-A54A-D9FD88A45043}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -276,6 +278,10 @@ Global
 		{3863B20A-E9FE-439B-867D-9CA193A295C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3863B20A-E9FE-439B-867D-9CA193A295C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3863B20A-E9FE-439B-867D-9CA193A295C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B701432-0E07-4AC8-A54A-D9FD88A45043}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B701432-0E07-4AC8-A54A-D9FD88A45043}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B701432-0E07-4AC8-A54A-D9FD88A45043}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B701432-0E07-4AC8-A54A-D9FD88A45043}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -327,6 +333,7 @@ Global
 		{9274296F-42A3-4095-95DC-8CA1D427DE60} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{89C8302F-76B7-4AF8-891B-A7EB97C204F5} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{3863B20A-E9FE-439B-867D-9CA193A295C4} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{8B701432-0E07-4AC8-A54A-D9FD88A45043} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}
