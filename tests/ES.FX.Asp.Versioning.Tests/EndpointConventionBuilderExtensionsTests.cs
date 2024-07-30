@@ -4,7 +4,7 @@ using Asp.Versioning.Conventions;
 using Microsoft.AspNetCore.Builder;
 using Moq;
 
-namespace ES.FX.Asp.Versioning.Test
+namespace ES.FX.Asp.Versioning.Tests
 {
     public class EndpointConventionBuilderExtensionsTests
     {
