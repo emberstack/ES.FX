@@ -6,7 +6,7 @@ using Moq;
 
 namespace ES.FX.Asp.Versioning.Test
 {
-    public class EndpointConventionBuilderExtensionsTest
+    public class EndpointConventionBuilderExtensionsTests
     {
         [Theory]
         [InlineData(1)]
