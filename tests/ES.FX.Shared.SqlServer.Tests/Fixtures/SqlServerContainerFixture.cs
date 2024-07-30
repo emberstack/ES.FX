@@ -15,6 +15,7 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
         Container = new MsSqlBuilder()
             .WithName($"{nameof(SqlServerContainerFixture)}-{Guid.NewGuid()}")
             .WithImage($"{Registry}/{Image}:{Tag}")
+            // FIXME until this is fixed https://github.com/testcontainers/testcontainers-dotnet/pull/1221
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(1433))
             .Build();
         await Container.StartAsync();
