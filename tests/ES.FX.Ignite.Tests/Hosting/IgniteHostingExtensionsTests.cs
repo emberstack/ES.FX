@@ -70,7 +70,8 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Ignite();
 
-            Assert.Equal(builder.Services.Any(s => s.ServiceType == typeof(TracerProvider)), enable);
+            var app = builder.Build();
+            Assert.Equal(app.Services.GetService<TracerProvider>() != null, enable);
         }
 
         [Theory]
@@ -88,7 +89,9 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Ignite();
 
-            Assert.Equal(builder.Services.Any(s => s.ServiceType == typeof(ApplicationStatusHealthCheck)), enable);
+            var app = builder.Build();
+
+            Assert.Equal(app.Services.GetService<ApplicationStatusHealthCheck>() != null, enable);
         }
 
         [Theory]
@@ -106,7 +109,10 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Ignite();
 
-            Assert.Equal(builder.Services.Any(s => s.ServiceType == typeof(ResiliencePipelineBuilder)), enable);
+            var app = builder.Build();
+
+            Assert.Equal(app.Services.GetService<ResiliencePipelineBuilder>() != null, enable);
+
         }
 
         [Theory]
@@ -141,7 +147,8 @@ namespace ES.FX.Ignite.Tests.Hosting
             ]);
             builder.Ignite();
 
-            Assert.Equal(builder.Services.Any(s => s.ServiceType == typeof(IProblemDetailsService)), enable);
+            var app = builder.Build();
+            Assert.Equal(app.Services.GetService<IProblemDetailsService>() != null, enable);
         }
 
         [Theory]
@@ -158,8 +165,8 @@ namespace ES.FX.Ignite.Tests.Hosting
             ]);
             builder.Ignite();
 
-            var services = builder.Build().Services;
-            var jsonOptionsService = services.GetRequiredService<IOptions<JsonOptions>>();
+            var app = builder.Build();
+            var jsonOptionsService = app.Services.GetRequiredService<IOptions<JsonOptions>>();
             Assert.Equal(jsonOptionsService.Value.SerializerOptions.Converters.Any(c => c.GetType() == typeof(JsonStringEnumConverter)), enable);
         }
     }
