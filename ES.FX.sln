@@ -108,11 +108,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Serilog.Tests", "test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.Tests", "tests\ES.FX.Ignite.Tests\ES.FX.Ignite.Tests.csproj", "{5E081A76-1E5F-49D2-B348-1C620A6A7727}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Asp.Versioning.Tests", "tests\ES.FX.Asp.Versioning.Tests\ES.FX.Asp.Versioning.Tests.csproj", "{4E666CED-0981-489C-ACAF-DF324460E206}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Asp.Versioning.Tests", "tests\ES.FX.Asp.Versioning.Tests\ES.FX.Asp.Versioning.Tests.csproj", "{4E666CED-0981-489C-ACAF-DF324460E206}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Asp.Versioning.Tests", "tests\ES.FX.Ignite.Asp.Versioning.Tests\ES.FX.Ignite.Asp.Versioning.Tests.csproj", "{FCDEF616-D361-4189-828B-E5DAFA874A8D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.Asp.Versioning.Tests", "tests\ES.FX.Ignite.Asp.Versioning.Tests\ES.FX.Ignite.Asp.Versioning.Tests.csproj", "{FCDEF616-D361-4189-828B-E5DAFA874A8D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests", "tests\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.csproj", "{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests", "tests\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.csproj", "{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.FluentValidation.Tests", "tests\ES.FX.Ignite.FluentValidation.Tests\ES.FX.Ignite.FluentValidation.Tests.csproj", "{B8852433-2403-44D4-9F1A-CBC3D2B2D308}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -300,6 +302,10 @@ Global
 		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8852433-2403-44D4-9F1A-CBC3D2B2D308}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8852433-2403-44D4-9F1A-CBC3D2B2D308}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8852433-2403-44D4-9F1A-CBC3D2B2D308}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8852433-2403-44D4-9F1A-CBC3D2B2D308}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -355,6 +361,7 @@ Global
 		{4E666CED-0981-489C-ACAF-DF324460E206} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{FCDEF616-D361-4189-828B-E5DAFA874A8D} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{B8852433-2403-44D4-9F1A-CBC3D2B2D308} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}
