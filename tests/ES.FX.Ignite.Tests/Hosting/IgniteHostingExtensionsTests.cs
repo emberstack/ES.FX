@@ -36,7 +36,7 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Configuration.AddInMemoryCollection([
                 new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:Configuration:AdditionalJsonSettingsFiles:0",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.Configuration)}:{ nameof(IgniteConfigurationSettings.AdditionalJsonSettingsFiles)}:0",
                 "testAdditionalAppSettings.json")
             ]);
 
@@ -64,7 +64,7 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Configuration.AddInMemoryCollection([
                 new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:OpenTelemetry:Enabled",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{ nameof(IgniteSettings.OpenTelemetry)}:{ nameof(IgniteOpenTelemetrySettings.Enabled)}",
                 enable.ToString())
             ]);
 
@@ -83,7 +83,7 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Configuration.AddInMemoryCollection([
                 new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:HealthChecks:ApplicationStatusCheckEnabled",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{ nameof(IgniteSettings.HealthChecks)}:{ nameof(IgniteHealthChecksSettings.ApplicationStatusCheckEnabled)}",
                 enable.ToString())
             ]);
 
@@ -103,7 +103,7 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Configuration.AddInMemoryCollection([
                 new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:HttpClient:StandardResilienceHandlerEnabled",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{ nameof(IgniteSettings.HttpClient)}:{ nameof(IgniteHttpClientSettings.StandardResilienceHandlerEnabled)}",
                 enable.ToString())
             ]);
 
@@ -124,7 +124,7 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Configuration.AddInMemoryCollection([
                 new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:AspNetCore:EndpointsApiExplorerEnabled",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{ nameof(IgniteSettings.AspNetCore)}:{ nameof(IgniteAspNetCoreSettings.EndpointsApiExplorerEnabled)}",
                 enable.ToString())
             ]);
 
@@ -142,7 +142,7 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Configuration.AddInMemoryCollection([
                 new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:AspNetCore:ProblemDetailsEnabled",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{ nameof(IgniteSettings.AspNetCore)}:{ nameof(IgniteAspNetCoreSettings.ProblemDetailsEnabled)}",
                 enable.ToString())
             ]);
             builder.Ignite();
@@ -160,7 +160,7 @@ namespace ES.FX.Ignite.Tests.Hosting
 
             builder.Configuration.AddInMemoryCollection([
                 new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:AspNetCore:JsonStringEnumConverterEnabled",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{ nameof(IgniteSettings.AspNetCore)}:{ nameof(IgniteAspNetCoreSettings.JsonStringEnumConverterEnabled)}",
                 enable.ToString())
             ]);
             builder.Ignite();

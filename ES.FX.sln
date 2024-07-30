@@ -112,6 +112,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Asp.Versioning.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Asp.Versioning.Tests", "tests\ES.FX.Ignite.Asp.Versioning.Tests\ES.FX.Ignite.Asp.Versioning.Tests.csproj", "{FCDEF616-D361-4189-828B-E5DAFA874A8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests", "tests\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.csproj", "{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -294,6 +296,10 @@ Global
 		{FCDEF616-D361-4189-828B-E5DAFA874A8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FCDEF616-D361-4189-828B-E5DAFA874A8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FCDEF616-D361-4189-828B-E5DAFA874A8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -348,6 +354,7 @@ Global
 		{5E081A76-1E5F-49D2-B348-1C620A6A7727} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{4E666CED-0981-489C-ACAF-DF324460E206} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{FCDEF616-D361-4189-828B-E5DAFA874A8D} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{1845482B-099A-4AD7-AFF0-8A26D50BEE9B} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}

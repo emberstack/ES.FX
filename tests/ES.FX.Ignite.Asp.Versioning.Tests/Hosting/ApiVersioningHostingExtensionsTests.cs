@@ -19,7 +19,16 @@ namespace ES.FX.Ignite.Asp.Versioning.Tests.Hosting
             var serviceProvider = builder.Build().Services;
             Assert.Contains(builder.Services, s => s.ServiceType == typeof(ApiVersion));
             Assert.Contains(builder.Services, s => s.ServiceType == typeof(IApiVersionDescriptionProviderFactory));
-            
+
+        }
+
+        [Fact]
+        public void IgniteApiVersioningCanBeCalledMultipleTimes()
+        {
+            var builder = Host.CreateEmptyApplicationBuilder(null);
+
+            builder.IgniteApiVersioning();
+            builder.IgniteApiVersioning();
         }
     }
 }
