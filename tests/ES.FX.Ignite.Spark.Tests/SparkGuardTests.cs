@@ -11,7 +11,7 @@ public class SparkGuardTests
     [InlineData("key1")]
     public void DefaultErrorMessageGeneratorTest(string testKey)
     {
-        Assert.False(string.IsNullOrEmpty(SparkGuard.GuardSparkDefaultConfigurationErrorMessageGenerator(testKey)));
+        Assert.False(string.IsNullOrEmpty(SparkGuard.DefaultConfigurationErrorMessageGenerator(testKey)));
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class SparkGuardTests
         var key = "key1";
         builderMock.Setup(builderMock => builderMock.Properties).Returns(new Dictionary<object, object>()).Verifiable();
 
-        var message = SparkGuard.GuardSparkDefaultConfigurationErrorMessageGenerator(key);
+        var message = SparkGuard.DefaultConfigurationErrorMessageGenerator(key);
 
         SparkGuard.GuardSparkConfiguration(builderMock.Object, key, message);
 
@@ -35,7 +35,7 @@ public class SparkGuardTests
         var key = "key1";
         builderMock.Setup(builderMock => builderMock.Properties).Returns(new Dictionary<object, object>() { { key, string.Empty } }).Verifiable();
 
-        var message = SparkGuard.GuardSparkDefaultConfigurationErrorMessageGenerator(key);
+        var message = SparkGuard.DefaultConfigurationErrorMessageGenerator(key);
 
         SparkGuard.GuardSparkConfiguration(builderMock.Object, key, message);
 

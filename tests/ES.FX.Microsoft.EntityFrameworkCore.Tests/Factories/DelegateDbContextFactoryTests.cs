@@ -8,7 +8,7 @@ namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Tests.Factories
     public class DelegateDbContextFactoryTests
     {
         [Fact]
-        public void TestFactory()
+        public void DelegateFactory_CanCreateDbContext()
         {
             var serviceProviderMock = new Mock<IServiceProvider>();
             var funcMock = new Mock<Func<IServiceProvider, DbContext>>();

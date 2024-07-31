@@ -43,7 +43,7 @@ public static class HealthChecksUiHostingExtensions
         string configurationSectionPath = HealthChecksUiSpark.ConfigurationSectionPath)
     {
         builder.GuardSparkConfiguration($"{HealthChecksUiSpark.Name}",
-            SparkGuard.GuardSparkDefaultConfigurationErrorMessageGenerator(HealthChecksUiSpark.Name));
+            SparkGuard.DefaultConfigurationErrorMessageGenerator(HealthChecksUiSpark.Name));
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

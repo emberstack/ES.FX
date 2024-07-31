@@ -10,7 +10,7 @@ namespace ES.FX.Serilog.Tests.Lifetime
     public class ProgramEntrySerilogExtensionsTests
     {
         [Fact]
-        public void VerifyLoggerConfiguration()
+        public void Serilog_LoggerConfigurationAdded()
         {
             var builder = Host.CreateEmptyApplicationBuilder(null);
             var funcMock = new Mock<Action<LoggerConfiguration>>();

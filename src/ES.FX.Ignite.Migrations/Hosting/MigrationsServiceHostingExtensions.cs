@@ -28,7 +28,7 @@ public static class MigrationsServiceHostingExtensions
         string configurationSectionPath = MigrationsServiceSpark.ConfigurationSectionPath)
     {
         builder.GuardSparkConfiguration($"{MigrationsServiceSpark.Name}",
-            SparkGuard.GuardSparkDefaultConfigurationErrorMessageGenerator(MigrationsServiceSpark.Name));
+            SparkGuard.DefaultConfigurationErrorMessageGenerator(MigrationsServiceSpark.Name));
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

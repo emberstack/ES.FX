@@ -27,7 +27,7 @@ public static class IgniteHostingExtensions
         Action<IgniteSettings>? configureSettings = null,
         string configurationSectionPath = IgniteConfigurationSections.Ignite)
     {
-        builder.GuardSparkConfiguration($"{nameof(FX.Ignite)}", SparkGuard.GuardSparkDefaultConfigurationErrorMessageGenerator(nameof(FX.Ignite)));
+        builder.GuardSparkConfiguration($"{nameof(FX.Ignite)}", SparkGuard.DefaultConfigurationErrorMessageGenerator(nameof(FX.Ignite)));
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

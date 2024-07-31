@@ -7,7 +7,7 @@ namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Tests.Factories
     public class DelegateSqlConnectionFactoryTests
     {
         [Fact]
-        public void TestConnectionCreationFactory()
+        public void DelegateFactory_CanCreateConnections()
         {
             SqlConnection connection = new SqlConnection();
 

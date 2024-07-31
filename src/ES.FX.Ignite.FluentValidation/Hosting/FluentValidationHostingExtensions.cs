@@ -44,7 +44,7 @@ public static class FluentValidationHostingExtensions
         string configurationSectionPath = FluentValidationSpark.ConfigurationSectionPath)
     {
         builder.GuardSparkConfiguration(FluentValidationSpark.Name,
-            SparkGuard.GuardSparkDefaultConfigurationErrorMessageGenerator(FluentValidationSpark.Name));
+            SparkGuard.DefaultConfigurationErrorMessageGenerator(FluentValidationSpark.Name));
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);
