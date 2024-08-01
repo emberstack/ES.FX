@@ -15,10 +15,6 @@ internal sealed class FluentValidationTestHost
 
         var app = builder.Build();
 
-        app.MapGet("/", async context =>
-        {
-            await context.Response.WriteAsync("hello");
-        });
         app.MapPost(APIRoute, (TestRequest request) => { return Results.Ok(request); })
         .AddFluentValidationAutoValidation()
         .WithName("TestAutoValidation");
