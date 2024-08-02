@@ -21,7 +21,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<InternalsVisibleTo Include="ES.FX.Ignite.FluentValidation" />
+		<InternalsVisibleTo Include="ES.FX.Ignite.FluentValidation.Tests" />
 	</ItemGroup>
 
 	<ItemGroup>
