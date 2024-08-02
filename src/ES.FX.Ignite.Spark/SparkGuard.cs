@@ -5,7 +5,7 @@ namespace ES.FX.Ignite.Spark;
 
 public static class SparkGuard
 {
-    public static string DefaultConfigurationErrorMessageGenerator(string key)
+    public static string AlreadyConfiguredError(string key)
     {
         return $"Spark configuration for {key} is already set";
     }
@@ -13,7 +13,7 @@ public static class SparkGuard
     {
         var propertyKey = $"{nameof(SparkGuard)}-{key}";
         if (builder.Properties.ContainsKey(propertyKey))
-            throw new SparkReconfigurationNotSupportedException(string.IsNullOrEmpty(message) ? DefaultConfigurationErrorMessageGenerator(key) : message);
+            throw new SparkReconfigurationNotSupportedException(string.IsNullOrEmpty(message) ? AlreadyConfiguredError(key) : message);
 
         builder.Properties.Add(propertyKey, string.Empty);
     }
