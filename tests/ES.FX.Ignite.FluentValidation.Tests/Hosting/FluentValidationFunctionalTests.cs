@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Text;
+using ES.FX.Shared.Tests.Utils;
 
 namespace ES.FX.Ignite.FluentValidation.Tests.Hosting
 {
@@ -11,7 +12,7 @@ namespace ES.FX.Ignite.FluentValidation.Tests.Hosting
         [InlineData("test", false)]
         public async Task FluentValidation_CheckAutoValidations(string name, bool shouldThrowValidationError)
         {
-            var client = GetClient();
+            var client = WebApplicationFactoryUtils<FluentValidationTestHost>.GetClient();
 
             var person = new TestRequest(name);
 
@@ -22,22 +23,6 @@ namespace ES.FX.Ignite.FluentValidation.Tests.Hosting
             string resultContent = await response.Content.ReadAsStringAsync();
 
             Assert.True(resultContent.Contains("validation error") == shouldThrowValidationError);
-        }
-
-        private HttpClient GetClient()
-        {
-            var application = new WebApplicationFactory<FluentValidationTestHost>()
-                .WithWebHostBuilder(builder =>
-                {
-                    builder.ConfigureServices(services =>
-                    {
-                        services.AddAuthorization();
-                        services.AddControllers();
-                    });
-                });
-
-            var client = application.CreateClient();
-            return client;
         }
     }
 }

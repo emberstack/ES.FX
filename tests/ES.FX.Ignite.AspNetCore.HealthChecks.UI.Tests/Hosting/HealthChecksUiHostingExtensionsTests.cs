@@ -6,6 +6,8 @@ using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Configuration;
 using ES.FX.AspNetCore.HealthChecks.UI.HealthChecksEndpointRegistry;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc.Testing;
+using ES.FX.Shared.Tests.Utils;
 
 namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.Hosting
 {
@@ -68,6 +70,15 @@ namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.Hosting
                 //Change the settings
                 settings.EndpointEnabled = false;
             }
+        }
+
+        [Fact]
+        public async Task FunctionalHealthChecksTestAPIPathIsWorking()
+        {
+            var client = WebApplicationFactoryUtils<HealthChecksTestHost>.GetClient();
+
+            var response = await client.GetAsync(new HealthChecksUiSparkSettings().UiApiEndpointPath);
+            Assert.True(response.IsSuccessStatusCode);
         }
     }
 }
