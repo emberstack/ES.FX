@@ -37,7 +37,7 @@ public static class SwashbuckleHostingExtensions
         string configurationSectionPath = SwashbuckleSpark.ConfigurationSectionPath)
     {
         builder.GuardSparkConfiguration(SwashbuckleSpark.Name,
-            $"{SwashbuckleSpark.Name} already configured.");
+            SparkGuard.AlreadyConfiguredError(SwashbuckleSpark.Name));
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

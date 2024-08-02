@@ -35,7 +35,7 @@ public static class SerilogHostingExtensions
         bool writeToProviders = true)
     {
         builder.GuardSparkConfiguration($"{nameof(Serilog)}",
-            $"{nameof(Serilog)} already configured.");
+            SparkGuard.AlreadyConfiguredError($"{nameof(Serilog)}"));
 
         builder.Services.AddSerilog((services, loggerConfiguration) =>
         {

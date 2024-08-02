@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,6 +8,18 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="testAdditionalAppSettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="testAdditionalAppSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2">
@@ -25,8 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.Data.SqlClient\ES.FX.Ignite.Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Include="..\ES.FX.Shared.SqlServer.Tests\ES.FX.Shared.SqlServer.Tests.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.Ignite\ES.FX.Ignite.csproj" />
   </ItemGroup>
 
   <ItemGroup>
