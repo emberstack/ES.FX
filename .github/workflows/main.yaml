@@ -104,7 +104,7 @@ jobs:
 
       - name: test-reporter
         uses: dorny/test-reporter@v1
-        if: ${{ env.build == 'true' }}
+        if: ${{ env.build == 'true' && github.event.pull_request.head.repo.fork == false }}
         with:
           name: Test Results
           path: .artifacts/TestResults/*.trx
