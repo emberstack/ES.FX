@@ -25,7 +25,7 @@ public class HostingTests
         else
             builder.IgniteSqlServerClientFactory("database");
 
-        Assert.Throws<SparkReconfigurationNotSupportedException>(() =>
+        Assert.Throws<ReconfigurationNotSupportedException>(() =>
         {
             if (!useFactory)
                 builder.IgniteSqlServerClient("database");
@@ -73,59 +73,59 @@ public class HostingTests
         switch (serviceLifetime)
         {
             case ServiceLifetime.Transient:
-                {
-                    var instance1 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
-                    var instance2 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
-                    Assert.NotSame(instance1, instance2);
+            {
+                var instance1 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
+                var instance2 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
+                Assert.NotSame(instance1, instance2);
 
-                    if (useFactory)
-                    {
-                        var factory1 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
-                        var factory2 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
-                        Assert.NotSame(factory1, factory2);
-                    }
+                if (useFactory)
+                {
+                    var factory1 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
+                    var factory2 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
+                    Assert.NotSame(factory1, factory2);
                 }
+            }
                 break;
             case ServiceLifetime.Singleton:
-                {
-                    var instance1 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
-                    var instance2 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
-                    Assert.Same(instance1, instance2);
+            {
+                var instance1 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
+                var instance2 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
+                Assert.Same(instance1, instance2);
 
-                    if (useFactory)
-                    {
-                        var factory1 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
-                        var factory2 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
-                        Assert.Same(factory1, factory2);
-                    }
+                if (useFactory)
+                {
+                    var factory1 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
+                    var factory2 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
+                    Assert.Same(factory1, factory2);
                 }
+            }
                 break;
             case ServiceLifetime.Scoped:
+            {
+                var instance1 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
+                var instance2 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
+                Assert.Same(instance1, instance2);
+
+                var scope = app.Services.CreateScope();
+                var scopedInstance1 = scope.ServiceProvider.GetRequiredKeyedService<SqlConnection>(serviceKey);
+                var scopedInstance2 = scope.ServiceProvider.GetRequiredKeyedService<SqlConnection>(serviceKey);
+                Assert.Same(scopedInstance1, scopedInstance2);
+                Assert.NotSame(scopedInstance1, instance1);
+
+                if (useFactory)
                 {
-                    var instance1 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
-                    var instance2 = app.Services.GetRequiredKeyedService<SqlConnection>(serviceKey);
-                    Assert.Same(instance1, instance2);
+                    var factory1 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
+                    var factory2 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
+                    Assert.Same(factory1, factory2);
 
-                    var scope = app.Services.CreateScope();
-                    var scopedInstance1 = scope.ServiceProvider.GetRequiredKeyedService<SqlConnection>(serviceKey);
-                    var scopedInstance2 = scope.ServiceProvider.GetRequiredKeyedService<SqlConnection>(serviceKey);
-                    Assert.Same(scopedInstance1, scopedInstance2);
-                    Assert.NotSame(scopedInstance1, instance1);
-
-                    if (useFactory)
-                    {
-                        var factory1 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
-                        var factory2 = app.Services.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
-                        Assert.Same(factory1, factory2);
-
-                        var scopedFactory1 =
-                            scope.ServiceProvider.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
-                        var scopedFactory2 =
-                            scope.ServiceProvider.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
-                        Assert.Same(scopedFactory1, scopedFactory2);
-                        Assert.NotSame(scopedFactory1, factory1);
-                    }
+                    var scopedFactory1 =
+                        scope.ServiceProvider.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
+                    var scopedFactory2 =
+                        scope.ServiceProvider.GetRequiredKeyedService<ISqlConnectionFactory>(serviceKey);
+                    Assert.Same(scopedFactory1, scopedFactory2);
+                    Assert.NotSame(scopedFactory1, factory1);
                 }
+            }
                 break;
 
             default:
@@ -231,7 +231,7 @@ public class HostingTests
             {
                 builder.IgniteSqlServerClientFactory("database", serviceKey);
             }
-            catch (SparkReconfigurationNotSupportedException)
+            catch (ReconfigurationNotSupportedException)
             {
                 notSupported = true;
             }
@@ -244,7 +244,7 @@ public class HostingTests
             {
                 builder.IgniteSqlServerClient("database", serviceKey);
             }
-            catch (SparkReconfigurationNotSupportedException)
+            catch (ReconfigurationNotSupportedException)
             {
                 notSupported = true;
             }
@@ -261,7 +261,7 @@ public class HostingTests
             {
                 builder.IgniteSqlServerClient("database", serviceKey);
             }
-            catch (SparkReconfigurationNotSupportedException)
+            catch (ReconfigurationNotSupportedException)
             {
                 notSupported = true;
             }
@@ -274,7 +274,7 @@ public class HostingTests
             {
                 builder.IgniteSqlServerClientFactory("database", serviceKey);
             }
-            catch (SparkReconfigurationNotSupportedException)
+            catch (ReconfigurationNotSupportedException)
             {
                 notSupported = true;
             }

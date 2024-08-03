@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ES.FX.Shared.Tests.Utils\ES.FX.Shared.Tests.Utils.csproj" />
     <ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
   </ItemGroup>
 

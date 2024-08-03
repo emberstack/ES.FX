@@ -1,27 +1,26 @@
-using ES.FX.Asp.Versioning.Builder;
 using Asp.Versioning;
-using Asp.Versioning.Conventions;
+using ES.FX.Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Builder;
 using Moq;
 
-namespace ES.FX.Asp.Versioning.Tests
+namespace ES.FX.Asp.Versioning.Tests;
+
+public class EndpointConventionBuilderExtensionsTests
 {
-    public class EndpointConventionBuilderExtensionsTests
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(100)]
+    [InlineData(0)]
+    public void HasApiVersion_RangeApplied(int numberOfVersions)
     {
-        [Theory]
-        [InlineData(1)]
-        [InlineData(5)]
-        [InlineData(100)]
-        [InlineData(0)]
-        public void HasApiVersionCalled(int numberOfVersions)
-        {
-            Mock<IEndpointConventionBuilder> mockIEndpointConventionBuilder = new();
+        Mock<IEndpointConventionBuilder> mockIEndpointConventionBuilder = new();
 
-            var versions = Enumerable.Range(1, numberOfVersions).ToList().Select((p) => new ApiVersion(p));
+        var versions = Enumerable.Range(1, numberOfVersions).ToList().Select(p => new ApiVersion(p));
 
-            mockIEndpointConventionBuilder.Object.HasApiVersions(versions);
+        mockIEndpointConventionBuilder.Object.HasApiVersions(versions);
 
-            mockIEndpointConventionBuilder.Verify(x => x.Add(It.IsAny<Action<EndpointBuilder>>()), Times.Exactly(numberOfVersions));
-        }
+        mockIEndpointConventionBuilder.Verify(x => x.Add(It.IsAny<Action<EndpointBuilder>>()),
+            Times.Exactly(numberOfVersions));
     }
 }

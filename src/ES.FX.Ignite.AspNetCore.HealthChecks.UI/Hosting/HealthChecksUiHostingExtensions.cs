@@ -2,7 +2,6 @@
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Configuration;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.IgniteTheme;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Interceptors;
-using ES.FX.Ignite.Spark;
 using ES.FX.Ignite.Spark.Configuration;
 using HealthChecks.UI.Configuration;
 using HealthChecks.UI.Core;
@@ -42,8 +41,7 @@ public static class HealthChecksUiHostingExtensions
         Action<HealthChecksUIBuilder>? configureHealthChecksUiBuilder = null,
         string configurationSectionPath = HealthChecksUiSpark.ConfigurationSectionPath)
     {
-        builder.GuardSparkConfiguration($"{HealthChecksUiSpark.Name}",
-            SparkGuard.AlreadyConfiguredError(HealthChecksUiSpark.Name));
+        builder.GuardConfigurationKey(HealthChecksUiSpark.Name);
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

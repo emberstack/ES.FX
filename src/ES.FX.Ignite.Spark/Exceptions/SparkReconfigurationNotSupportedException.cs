@@ -1,5 +1,5 @@
 ﻿namespace ES.FX.Ignite.Spark.Exceptions;
 
-public class SparkReconfigurationNotSupportedException(string message) : NotSupportedException(message)
+public class ReconfigurationNotSupportedException(string message) : NotSupportedException(message)
 {
 }

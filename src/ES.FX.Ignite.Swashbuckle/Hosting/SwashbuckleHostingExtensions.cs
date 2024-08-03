@@ -1,5 +1,4 @@
-﻿using ES.FX.Ignite.Spark;
-using ES.FX.Ignite.Spark.Configuration;
+﻿using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Swashbuckle.Configuration;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
@@ -36,8 +35,7 @@ public static class SwashbuckleHostingExtensions
         Action<SwaggerGenOptions>? configureSwaggerGenOptions = null,
         string configurationSectionPath = SwashbuckleSpark.ConfigurationSectionPath)
     {
-        builder.GuardSparkConfiguration(SwashbuckleSpark.Name,
-            SparkGuard.AlreadyConfiguredError(SwashbuckleSpark.Name));
+        builder.GuardConfigurationKey(SwashbuckleSpark.Name);
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

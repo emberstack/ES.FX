@@ -25,11 +25,15 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
-		<ProjectReference Include="..\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT.csproj" />
+		<ProjectReference Include="..\ES.FX.Shared.Tests.Utils\ES.FX.Shared.Tests.Utils.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="NewFolder\" />
 	</ItemGroup>
 
 </Project>

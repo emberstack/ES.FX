@@ -1,6 +1,5 @@
 ﻿using ES.FX.Ignite.Migrations.Configuration;
 using ES.FX.Ignite.Migrations.Service;
-using ES.FX.Ignite.Spark;
 using ES.FX.Ignite.Spark.Configuration;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,8 +26,7 @@ public static class MigrationsServiceHostingExtensions
         Action<MigrationsServiceSparkSettings>? configureSettings = null,
         string configurationSectionPath = MigrationsServiceSpark.ConfigurationSectionPath)
     {
-        builder.GuardSparkConfiguration($"{MigrationsServiceSpark.Name}",
-            SparkGuard.AlreadyConfiguredError(MigrationsServiceSpark.Name));
+        builder.GuardConfigurationKey(MigrationsServiceSpark.Name);
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

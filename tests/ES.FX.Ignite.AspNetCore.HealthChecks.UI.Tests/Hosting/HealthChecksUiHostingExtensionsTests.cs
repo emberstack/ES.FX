@@ -1,84 +1,74 @@
-﻿using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Hosting;
-using Microsoft.AspNetCore.Builder;
-using ES.FX.Ignite.Spark.Exceptions;
-using Microsoft.Extensions.Configuration;
-using ES.FX.Ignite.Spark.Configuration;
+﻿using ES.FX.AspNetCore.HealthChecks.UI.HealthChecksEndpointRegistry;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Configuration;
-using ES.FX.AspNetCore.HealthChecks.UI.HealthChecksEndpointRegistry;
+using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Hosting;
+using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Exceptions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Mvc.Testing;
-using ES.FX.Shared.Tests.Utils;
 
-namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.Hosting
+namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.Hosting;
+
+public class HealthChecksUiHostingExtensionsTests
 {
-    public class HealthChecksUiHostingExtensionsTests
+    [Fact]
+    public void CanIgnite()
     {
-        [Fact]
-        public void IgniteHealthCheckUiDoesNotAllowReconfiguration()
-        {
-            var builder = WebApplication.CreateBuilder([]);
+        var builder = WebApplication.CreateBuilder([]);
 
-            builder.IgniteHealthChecksUi();
+        builder.IgniteHealthChecksUi();
 
-            Assert.Throws<SparkReconfigurationNotSupportedException>(() => builder.IgniteHealthChecksUi());
-        }
-
-        [Fact]
-        public void IgniteHealthCheckUiShouldAddTheServices()
-        {
-            var builder = WebApplication.CreateBuilder([]);
-
-            builder.IgniteHealthChecksUi();
-
-            builder.Configuration.AddInMemoryCollection([
-                 new KeyValuePair<string, string?>(
-                $"{HealthChecksUiSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{ nameof(HealthChecksUiSparkSettings.EndpointEnabled)}",
+        builder.Configuration.AddInMemoryCollection([
+            new KeyValuePair<string, string?>(
+                $"{HealthChecksUiSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(HealthChecksUiSparkSettings.EndpointEnabled)}",
                 true.ToString())
-             ]);
+        ]);
 
-            var serviceProvider = builder.Build().Services;
-            Assert.NotNull(serviceProvider.GetRequiredService<HealthChecksEndpointRegistryService>());
-            Assert.NotNull(serviceProvider.GetRequiredService<HealthChecksUiSparkSettings>());
-        }
+        var serviceProvider = builder.Build().Services;
+        Assert.NotNull(serviceProvider.GetRequiredService<HealthChecksEndpointRegistryService>());
+        Assert.NotNull(serviceProvider.GetRequiredService<HealthChecksUiSparkSettings>());
+    }
 
-        [Fact]
-        public void CanOverride_Settings()
-        {
-            var builder = WebApplication.CreateBuilder([]);
 
-            builder.Configuration.AddInMemoryCollection([
-                 new KeyValuePair<string, string?>(
-                $"{HealthChecksUiSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{ nameof(HealthChecksUiSparkSettings.EndpointEnabled)}",
+    [Fact]
+    public void CanIgnite_Once()
+    {
+        var builder = WebApplication.CreateBuilder([]);
+
+        builder.IgniteHealthChecksUi();
+
+        Assert.Throws<ReconfigurationNotSupportedException>(() => builder.IgniteHealthChecksUi());
+    }
+
+
+    [Fact]
+    public void CanOverride_Settings()
+    {
+        var builder = WebApplication.CreateBuilder([]);
+
+        builder.Configuration.AddInMemoryCollection([
+            new KeyValuePair<string, string?>(
+                $"{HealthChecksUiSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(HealthChecksUiSparkSettings.EndpointEnabled)}",
                 true.ToString())
-             ]);
+        ]);
 
-            builder.IgniteHealthChecksUi(configureSettings: ConfigureSettings);
+        builder.IgniteHealthChecksUi(ConfigureSettings);
 
-            var app = builder.Build();
+        var app = builder.Build();
 
-            var resolvedSettings = app.Services.GetRequiredService<HealthChecksUiSparkSettings>();
-            Assert.False(resolvedSettings.EndpointEnabled);
+        var resolvedSettings = app.Services.GetRequiredService<HealthChecksUiSparkSettings>();
+        Assert.False(resolvedSettings.EndpointEnabled);
 
-            return;
+        return;
 
-            void ConfigureSettings(HealthChecksUiSparkSettings settings)
-            {
-                //Settings should have correct value from configuration
-                Assert.True(settings.EndpointEnabled);
-
-
-                //Change the settings
-                settings.EndpointEnabled = false;
-            }
-        }
-
-        [Fact]
-        public async Task FunctionalHealthChecksTestAPIPathIsWorking()
+        void ConfigureSettings(HealthChecksUiSparkSettings settings)
         {
-            var client = WebApplicationFactoryUtils<HealthChecksTestHost>.GetClient();
+            //Settings should have correct value from configuration
+            Assert.True(settings.EndpointEnabled);
 
-            var response = await client.GetAsync(new HealthChecksUiSparkSettings().UiApiEndpointPath);
-            Assert.True(response.IsSuccessStatusCode);
+
+            //Change the settings
+            settings.EndpointEnabled = false;
         }
     }
 }

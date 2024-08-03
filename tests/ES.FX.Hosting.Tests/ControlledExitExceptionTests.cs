@@ -1,23 +1,23 @@
 ﻿using ES.FX.Hosting.Lifetime;
 
-namespace ES.FX.Hosting.Tests
-{
-    public class ControlledExitExceptionTests
-    {
-        public const string message = "message";
-        [Fact]
-        public void TestCtorWithMessage()
-        {
-            var exception = new ControlledExitException(message);
-            Assert.Equal(message, exception.Message);
-        }
+namespace ES.FX.Hosting.Tests;
 
-        [Fact]
-        public void TestCtorWithMessageAndInnerException()
-        {
-            var innerException = new Exception(message);
-            var exception = new ControlledExitException(message, innerException);
-            Assert.Equal(innerException, exception.InnerException);
-        }
+public class ControlledExitExceptionTests
+{
+    public const string Message = "message";
+
+    [Fact]
+    public void Ctor_Message()
+    {
+        var exception = new ControlledExitException(Message);
+        Assert.Equal(Message, exception.Message);
+    }
+
+    [Fact]
+    public void Ctor_MessageAndInnerException()
+    {
+        var innerException = new Exception(Message);
+        var exception = new ControlledExitException(Message, innerException);
+        Assert.Equal(innerException, exception.InnerException);
     }
 }

@@ -1,5 +1,4 @@
 ﻿using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
-using ES.FX.Ignite.Spark;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Microsoft.Data.SqlClient.Abstractions;
 using ES.FX.Microsoft.Data.SqlClient.Factories;
@@ -103,8 +102,7 @@ public static class SqlServerClientHostingExtensions
         string configurationSectionPath = SqlServerClientSpark.ConfigurationSectionPath,
         bool useFactory = false)
     {
-        builder.GuardSparkConfiguration($"{SqlServerClientSpark.Name}[{serviceKey}]",
-            $"{SqlServerClientSpark.Name} with serviceKey '{serviceKey}' already configured.");
+        builder.GuardConfigurationKey($"{SqlServerClientSpark.Name}[{serviceKey}]");
 
         var configPath = SparkConfig.Path(name, configurationSectionPath);
 

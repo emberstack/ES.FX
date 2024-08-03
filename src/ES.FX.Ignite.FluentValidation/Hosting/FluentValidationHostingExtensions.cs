@@ -1,5 +1,4 @@
 ﻿using ES.FX.Ignite.FluentValidation.Configuration;
-using ES.FX.Ignite.Spark;
 using ES.FX.Ignite.Spark.Configuration;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,8 +42,7 @@ public static class FluentValidationHostingExtensions
         Action<AutoValidationMvcConfiguration>? configureAutoValidationMvcConfiguration = null,
         string configurationSectionPath = FluentValidationSpark.ConfigurationSectionPath)
     {
-        builder.GuardSparkConfiguration(FluentValidationSpark.Name,
-            SparkGuard.AlreadyConfiguredError(FluentValidationSpark.Name));
+        builder.GuardConfigurationKey(FluentValidationSpark.Name);
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

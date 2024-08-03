@@ -1,4 +1,4 @@
-﻿using ES.FX.Ignite.Spark;
+﻿using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Serilog.Enrichers;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,8 +34,7 @@ public static class SerilogHostingExtensions
         Action<LoggerConfiguration>? configureLoggerConfiguration = null, bool applyDefaultConfiguration = true,
         bool writeToProviders = true)
     {
-        builder.GuardSparkConfiguration($"{nameof(Serilog)}",
-            SparkGuard.AlreadyConfiguredError($"{nameof(Serilog)}"));
+        builder.GuardConfigurationKey(nameof(Serilog));
 
         builder.Services.AddSerilog((services, loggerConfiguration) =>
         {

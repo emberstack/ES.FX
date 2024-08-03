@@ -123,7 +123,7 @@ public class HostingTests
             {
                 builder.IgniteSqlServerDbContextFactory<TestDbContext>();
             }
-            catch (SparkReconfigurationNotSupportedException)
+            catch (ReconfigurationNotSupportedException)
             {
                 notSupported = true;
             }
@@ -136,7 +136,7 @@ public class HostingTests
             {
                 builder.IgniteSqlServerDbContext<TestDbContext>();
             }
-            catch (SparkReconfigurationNotSupportedException)
+            catch (ReconfigurationNotSupportedException)
             {
                 notSupported = true;
             }
@@ -153,7 +153,7 @@ public class HostingTests
             {
                 builder.IgniteSqlServerDbContext<TestDbContext>();
             }
-            catch (SparkReconfigurationNotSupportedException)
+            catch (ReconfigurationNotSupportedException)
             {
                 notSupported = true;
             }
@@ -166,7 +166,7 @@ public class HostingTests
             {
                 builder.IgniteSqlServerDbContextFactory<TestDbContext>();
             }
-            catch (SparkReconfigurationNotSupportedException)
+            catch (ReconfigurationNotSupportedException)
             {
                 notSupported = true;
             }

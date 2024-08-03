@@ -1,6 +1,5 @@
 ﻿using EntityFramework.Exceptions.SqlServer;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
-using ES.FX.Ignite.Spark;
 using ES.FX.Ignite.Spark.Configuration;
 using JetBrains.Annotations;
 using Microsoft.Data.SqlClient;
@@ -122,8 +121,7 @@ public static class SqlServerDbContextHostingExtensions
         string configurationSectionPath = DbContextSpark.ConfigurationSectionPath,
         bool useFactory = false) where TDbContext : DbContext
     {
-        builder.GuardSparkConfiguration($"{DbContextSpark.Name}[{typeof(TDbContext).FullName}]",
-            $"{DbContextSpark.Name}[{typeof(TDbContext).FullName}] already configured.");
+        builder.GuardConfigurationKey($"{DbContextSpark.Name}[{typeof(TDbContext).FullName}]");
 
         name = SparkConfig.Name(name, typeof(TDbContext).Name);
         var configPath = SparkConfig.Path(name, configurationSectionPath);

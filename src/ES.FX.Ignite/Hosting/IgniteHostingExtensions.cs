@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ES.FX.Ignite.Configuration;
-using ES.FX.Ignite.Spark;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.HealthChecks;
 using HealthChecks.ApplicationStatus.DependencyInjection;
@@ -27,7 +26,7 @@ public static class IgniteHostingExtensions
         Action<IgniteSettings>? configureSettings = null,
         string configurationSectionPath = IgniteConfigurationSections.Ignite)
     {
-        builder.GuardSparkConfiguration($"{nameof(FX.Ignite)}", SparkGuard.AlreadyConfiguredError(nameof(FX.Ignite)));
+        builder.GuardConfigurationKey(nameof(FX.Ignite));
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);

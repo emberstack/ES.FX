@@ -1,3 +1,4 @@
+using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.Exceptions;
 using Microsoft.Extensions.Hosting;
 using Moq;
@@ -9,37 +10,41 @@ public class SparkGuardTests
     [Theory]
     [InlineData("")]
     [InlineData("key1")]
-    public void DefaultErrorMessageGeneratorTest(string testKey)
+    public void AlreadyConfiguredError_NotEmpty(string testKey)
     {
-        Assert.False(string.IsNullOrEmpty(SparkGuard.AlreadyConfiguredError(testKey)));
+        Assert.False(string.IsNullOrEmpty(KeyedConfigurationGuard.AlreadyConfiguredError(testKey)));
     }
 
     [Fact]
-    public void SparkGuardFirstConfigure()
+    public void Guard_Configuration()
     {
+        const string key = "spark";
+
         var builderMock = new Mock<IHostApplicationBuilder>();
-        var key = "key1";
-        builderMock.Setup(builderMock => builderMock.Properties).Returns(new Dictionary<object, object>()).Verifiable();
+        builderMock.Setup(mock => mock.Properties)
+            .Returns(new Dictionary<object, object>()).Verifiable();
 
-        var message = SparkGuard.AlreadyConfiguredError(key);
+        var message = KeyedConfigurationGuard.AlreadyConfiguredError(key);
 
-        SparkGuard.GuardSparkConfiguration(builderMock.Object, key, message);
+        builderMock.Object.GuardConfigurationKey(key, message);
 
-        Assert.True(builderMock.Object.Properties.TryGetValue($"{nameof(SparkGuard)}-{key}", out var value));
+        Assert.True(builderMock.Object.ConfigurationKeyGuardSet(key));
     }
 
     [Fact]
-    public void SparkGuardReconfigurationNotSupported()
+    public void Guard_ReconfigurationNotSupported()
     {
+        const string key = "spark";
+
         var builderMock = new Mock<IHostApplicationBuilder>();
-        var key = "key1";
-        builderMock.Setup(builderMock => builderMock.Properties).Returns(new Dictionary<object, object>() { { key, string.Empty } }).Verifiable();
+        builderMock.Setup(mock => mock.Properties)
+            .Returns(new Dictionary<object, object>()).Verifiable();
 
-        var message = SparkGuard.AlreadyConfiguredError(key);
+        var message = KeyedConfigurationGuard.AlreadyConfiguredError(key);
 
-        SparkGuard.GuardSparkConfiguration(builderMock.Object, key, message);
+        builderMock.Object.GuardConfigurationKey(key, message);
 
-        Assert.Throws<SparkReconfigurationNotSupportedException>(() => SparkGuard.GuardSparkConfiguration(builderMock.Object, key, message));
+        Assert.Throws<ReconfigurationNotSupportedException>(() =>
+            builderMock.Object.GuardConfigurationKey(key, message));
     }
-
 }
