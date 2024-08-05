@@ -116,7 +116,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.FluentValidati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT", "tests\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT.csproj", "{114AEEC9-5002-447A-B8F8-935407D56601}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.FluentValidation.Tests.SUT", "tests\ES.FX.Ignite.FluentValidation.Tests.SUT\ES.FX.Ignite.FluentValidation.Tests.SUT.csproj", "{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.FluentValidation.Tests.SUT", "tests\ES.FX.Ignite.FluentValidation.Tests.SUT\ES.FX.Ignite.FluentValidation.Tests.SUT.csproj", "{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Migrations.Tests", "tests\ES.FX.Ignite.Migrations.Tests\ES.FX.Ignite.Migrations.Tests.csproj", "{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -312,6 +314,10 @@ Global
 		{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -369,6 +375,7 @@ Global
 		{B8852433-2403-44D4-9F1A-CBC3D2B2D308} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{114AEEC9-5002-447A-B8F8-935407D56601} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}
