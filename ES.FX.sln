@@ -118,11 +118,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.AspNetCore.Hea
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.FluentValidation.Tests.SUT", "tests\ES.FX.Ignite.FluentValidation.Tests.SUT\ES.FX.Ignite.FluentValidation.Tests.SUT.csproj", "{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Migrations.Tests", "tests\ES.FX.Ignite.Migrations.Tests\ES.FX.Ignite.Migrations.Tests.csproj", "{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.Migrations.Tests", "tests\ES.FX.Ignite.Migrations.Tests\ES.FX.Ignite.Migrations.Tests.csproj", "{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.NSwag.Tests", "tests\ES.FX.Ignite.NSwag.Tests\ES.FX.Ignite.NSwag.Tests.csproj", "{4E6AAC13-3099-485F-9E28-94A5315FFC59}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.NSwag.Tests", "tests\ES.FX.Ignite.NSwag.Tests\ES.FX.Ignite.NSwag.Tests.csproj", "{4E6AAC13-3099-485F-9E28-94A5315FFC59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.NSwag.Tests.SUT", "tests\ES.FX.Ignite.NSwag.Tests.SUT\ES.FX.Ignite.NSwag.Tests.SUT.csproj", "{0E9361C2-F1BA-4549-9842-A38B515830E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.NSwag.Tests.SUT", "tests\ES.FX.Ignite.NSwag.Tests.SUT\ES.FX.Ignite.NSwag.Tests.SUT.csproj", "{0E9361C2-F1BA-4549-9842-A38B515830E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Serilog.Tests", "tests\ES.FX.Ignite.Serilog.Tests\ES.FX.Ignite.Serilog.Tests.csproj", "{44A6414B-8AED-4E0E-930B-C710E143F5A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -330,6 +332,10 @@ Global
 		{0E9361C2-F1BA-4549-9842-A38B515830E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0E9361C2-F1BA-4549-9842-A38B515830E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0E9361C2-F1BA-4549-9842-A38B515830E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44A6414B-8AED-4E0E-930B-C710E143F5A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44A6414B-8AED-4E0E-930B-C710E143F5A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44A6414B-8AED-4E0E-930B-C710E143F5A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44A6414B-8AED-4E0E-930B-C710E143F5A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -390,6 +396,7 @@ Global
 		{105EE73D-2C22-4686-BFAC-0D2AA78BBEE4} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{4E6AAC13-3099-485F-9E28-94A5315FFC59} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{0E9361C2-F1BA-4549-9842-A38B515830E4} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{44A6414B-8AED-4E0E-930B-C710E143F5A3} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}
