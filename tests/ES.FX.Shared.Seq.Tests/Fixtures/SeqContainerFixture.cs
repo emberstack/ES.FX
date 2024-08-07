@@ -18,7 +18,7 @@ public sealed class SeqContainerFixture : IAsyncLifetime
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request
                             .ForPath("/")))
             .WithEnvironment("ACCEPT_EULA", "Y")
-            .WithPortBinding(5341, 80)
+            .WithPortBinding(80, true)
             .Build();
         await Container.StartAsync();
     }
