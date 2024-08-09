@@ -60,9 +60,9 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     //Add Seq
     builder.IgniteSeqOpenTelemetryExporter();
 
-    builder.IgniteAzureBlobServiceClient("Dev");
-    builder.IgniteAzureQueueServiceClient("Dev");
-    builder.IgniteAzureTableServiceClient("Dev");
+    builder.IgniteAzureBlobServiceClient();
+    builder.IgniteAzureQueueServiceClient();
+    builder.IgniteAzureTableServiceClient();
 
     builder.Services.AddOpenApiDocument();
 
