@@ -3,9 +3,9 @@ using Asp.Versioning.ApiExplorer;
 using ES.FX.Ignite.Asp.Versioning.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace ES.FX.Ignite.Asp.Versioning.Tests.Hosting;
+namespace ES.FX.Ignite.Asp.Versioning.Tests;
 
-public class ApiVersioningHostingExtensionsTests
+public class HostingTests
 {
     [Fact]
     public void ServicesAdded()

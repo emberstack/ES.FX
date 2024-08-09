@@ -10,8 +10,8 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" Version="6.0.2">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7">
 			<PrivateAssets>all</PrivateAssets>
@@ -21,13 +21,14 @@
 		<PackageReference Include="Moq" Version="4.20.70" />
 		<PackageReference Include="xunit" Version="2.9.0" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.EntityFrameworkCore\ES.FX.Ignite.Microsoft.EntityFrameworkCore.csproj" />
+		<ProjectReference
+			Include="..\..\src\ES.FX.Ignite.Microsoft.EntityFrameworkCore\ES.FX.Ignite.Microsoft.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

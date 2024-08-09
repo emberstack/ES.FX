@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.Hosting;
+namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests;
 
-public class HealthChecksUiHostingExtensionsTests
+public class HostingTests
 {
     [Fact]
     public void CanIgnite()

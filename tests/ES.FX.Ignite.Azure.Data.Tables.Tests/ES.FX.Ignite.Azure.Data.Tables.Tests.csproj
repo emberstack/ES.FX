@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -25,9 +25,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.Microsoft.Data.SqlClient\ES.FX.Ignite.Microsoft.Data.SqlClient.csproj" />
-		<ProjectReference Include="..\ES.FX.Shared.SqlServer.Tests\ES.FX.Shared.SqlServer.Tests.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.Azure.Data.Tables\ES.FX.Ignite.Azure.Data.Tables.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

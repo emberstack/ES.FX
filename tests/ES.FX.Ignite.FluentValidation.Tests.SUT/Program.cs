@@ -18,6 +18,9 @@ SimpleValidationEndpoint.MapRoutes(root);
 app.Run();
 
 // ReSharper disable once UnusedMember.Global
-public partial class Program
+namespace ES.FX.Ignite.FluentValidation.Tests.SUT
 {
+    public class Program
+    {
+    }
 }

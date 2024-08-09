@@ -1,11 +1,12 @@
 ﻿using System.Text;
+using ES.FX.Ignite.FluentValidation.Tests.SUT;
 using ES.FX.Ignite.FluentValidation.Tests.SUT.Endpoints;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 
-namespace ES.FX.Ignite.FluentValidation.Tests.Functional;
+namespace ES.FX.Ignite.FluentValidation.Tests;
 
-public class FluentValidationFunctionalTests(WebApplicationFactory<Program> factory)
+public class FunctionalTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
     [Theory]

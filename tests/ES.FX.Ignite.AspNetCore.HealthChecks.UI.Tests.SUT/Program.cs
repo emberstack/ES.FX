@@ -9,6 +9,9 @@ app.IgniteHealthChecksUi();
 app.Run();
 
 // ReSharper disable once UnusedMember.Global
-public partial class Program
+namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT
 {
+    public class Program
+    {
+    }
 }

@@ -1,12 +1,12 @@
-﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
-using Microsoft.Data.SqlClient;
+﻿using Azure.Storage.Queues;
+using ES.FX.Ignite.Spark.Configuration.Abstractions;
 
-namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
+namespace ES.FX.Ignite.Azure.Storage.Queues.Configuration;
 
 /// <summary>
-///     Provides the settings for connecting to a SQL Server database using a <see cref="SqlConnection" />
+///     Provides the settings for connecting to Azure Storage using a <see cref="QueueServiceClient" />
 /// </summary>
-public class SqlServerClientSparkSettings : ISparkHealthCheckSettings, ISparkTracingSettings
+public class AzureQueueStorageSparkSettings : ISparkHealthCheckSettings, ISparkTracingSettings
 {
     /// <summary>
     ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksEnabled" />

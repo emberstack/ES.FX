@@ -6,11 +6,6 @@
 public class SwashbuckleSparkSettings
 {
     /// <summary>
-    ///     Gets or sets a value indicating whether SwaggerGen is enabled
-    /// </summary>
-    public bool SwaggerGenEnabled { get; set; } = true;
-
-    /// <summary>
     ///     Gets or sets a value indicating whether Swagger is enabled
     /// </summary>
     public bool SwaggerEnabled { get; set; } = true;
