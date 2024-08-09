@@ -116,7 +116,25 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.FluentValidati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT", "tests\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT.csproj", "{114AEEC9-5002-447A-B8F8-935407D56601}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.FluentValidation.Tests.SUT", "tests\ES.FX.Ignite.FluentValidation.Tests.SUT\ES.FX.Ignite.FluentValidation.Tests.SUT.csproj", "{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.FluentValidation.Tests.SUT", "tests\ES.FX.Ignite.FluentValidation.Tests.SUT\ES.FX.Ignite.FluentValidation.Tests.SUT.csproj", "{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Common", "src\ES.FX.Ignite.Azure.Common\ES.FX.Ignite.Azure.Common.csproj", "{C936CEE8-34B3-435C-970F-200DB84D5177}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Storage.Blobs", "src\ES.FX.Ignite.Azure.Storage.Blobs\ES.FX.Ignite.Azure.Storage.Blobs.csproj", "{03D880C3-F1F1-4746-ADEC-9F59CFD12519}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Storage.Queues", "src\ES.FX.Ignite.Azure.Storage.Queues\ES.FX.Ignite.Azure.Storage.Queues.csproj", "{EB2D9423-CDFF-4911-95F9-0A77FA7A750C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Data.Tables", "src\ES.FX.Ignite.Azure.Data.Tables\ES.FX.Ignite.Azure.Data.Tables.csproj", "{40B14732-2810-45E8-AFFF-F25613EEE663}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Security.KeyVault.Secrets", "src\ES.FX.Ignite.Azure.Security.KeyVault.Secrets\ES.FX.Ignite.Azure.Security.KeyVault.Secrets.csproj", "{C8FAFE2B-A175-4215-918D-2526D10D3830}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Data.Tables.Tests", "tests\ES.FX.Ignite.Azure.Data.Tables.Tests\ES.FX.Ignite.Azure.Data.Tables.Tests.csproj", "{3159E21B-341C-4800-A812-564F07B0A03B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Storage.Blobs.Tests", "tests\ES.FX.Ignite.Azure.Storage.Blobs.Tests\ES.FX.Ignite.Azure.Storage.Blobs.Tests.csproj", "{7D7DF31D-78DA-440F-A5E2-311C5CED142C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Storage.Queues.Tests", "tests\ES.FX.Ignite.Azure.Storage.Queues.Tests\ES.FX.Ignite.Azure.Storage.Queues.Tests.csproj", "{ADABA0FD-C43E-4F2C-981F-480C186CFD72}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests", "tests\ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests\ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests.csproj", "{497C425C-451C-4D46-9693-A609D06D946D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -312,6 +330,42 @@ Global
 		{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C936CEE8-34B3-435C-970F-200DB84D5177}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C936CEE8-34B3-435C-970F-200DB84D5177}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C936CEE8-34B3-435C-970F-200DB84D5177}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C936CEE8-34B3-435C-970F-200DB84D5177}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03D880C3-F1F1-4746-ADEC-9F59CFD12519}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03D880C3-F1F1-4746-ADEC-9F59CFD12519}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03D880C3-F1F1-4746-ADEC-9F59CFD12519}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03D880C3-F1F1-4746-ADEC-9F59CFD12519}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB2D9423-CDFF-4911-95F9-0A77FA7A750C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB2D9423-CDFF-4911-95F9-0A77FA7A750C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB2D9423-CDFF-4911-95F9-0A77FA7A750C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB2D9423-CDFF-4911-95F9-0A77FA7A750C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40B14732-2810-45E8-AFFF-F25613EEE663}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40B14732-2810-45E8-AFFF-F25613EEE663}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40B14732-2810-45E8-AFFF-F25613EEE663}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40B14732-2810-45E8-AFFF-F25613EEE663}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8FAFE2B-A175-4215-918D-2526D10D3830}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8FAFE2B-A175-4215-918D-2526D10D3830}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8FAFE2B-A175-4215-918D-2526D10D3830}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8FAFE2B-A175-4215-918D-2526D10D3830}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3159E21B-341C-4800-A812-564F07B0A03B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3159E21B-341C-4800-A812-564F07B0A03B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3159E21B-341C-4800-A812-564F07B0A03B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3159E21B-341C-4800-A812-564F07B0A03B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D7DF31D-78DA-440F-A5E2-311C5CED142C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D7DF31D-78DA-440F-A5E2-311C5CED142C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D7DF31D-78DA-440F-A5E2-311C5CED142C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D7DF31D-78DA-440F-A5E2-311C5CED142C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADABA0FD-C43E-4F2C-981F-480C186CFD72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADABA0FD-C43E-4F2C-981F-480C186CFD72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADABA0FD-C43E-4F2C-981F-480C186CFD72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADABA0FD-C43E-4F2C-981F-480C186CFD72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{497C425C-451C-4D46-9693-A609D06D946D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{497C425C-451C-4D46-9693-A609D06D946D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{497C425C-451C-4D46-9693-A609D06D946D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{497C425C-451C-4D46-9693-A609D06D946D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -369,6 +423,15 @@ Global
 		{B8852433-2403-44D4-9F1A-CBC3D2B2D308} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{114AEEC9-5002-447A-B8F8-935407D56601} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{8C7D4F05-178B-49D3-9FDE-4A591D3DB78C} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{C936CEE8-34B3-435C-970F-200DB84D5177} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
+		{03D880C3-F1F1-4746-ADEC-9F59CFD12519} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
+		{EB2D9423-CDFF-4911-95F9-0A77FA7A750C} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
+		{40B14732-2810-45E8-AFFF-F25613EEE663} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
+		{C8FAFE2B-A175-4215-918D-2526D10D3830} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
+		{3159E21B-341C-4800-A812-564F07B0A03B} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{7D7DF31D-78DA-440F-A5E2-311C5CED142C} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{ADABA0FD-C43E-4F2C-981F-480C186CFD72} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
+		{497C425C-451C-4D46-9693-A609D06D946D} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}

@@ -1,9 +1,10 @@
 ﻿using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Configuration;
+using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.Functional;
+namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests;
 
-public class HealthChecksUiFunctionalTests(WebApplicationFactory<Program> factory)
+public class FunctionalTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
     [Fact]

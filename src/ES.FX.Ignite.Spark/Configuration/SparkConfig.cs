@@ -30,10 +30,12 @@ public static class SparkConfig
     /// <param name="serviceName">Name of the service</param>
     /// <param name="sectionPath">Section path</param>
     /// <returns></returns>
-    public static string Path(string serviceName, string sectionPath)
+    public static string Path(string? serviceName, string sectionPath)
     {
-        serviceName = serviceName.Trim();
         sectionPath = sectionPath.Trim();
+
+        if (string.IsNullOrWhiteSpace(serviceName)) return sectionPath;
+        serviceName = serviceName.Trim();
         var configPath = sectionPath == string.Empty ? serviceName : $"{sectionPath}:{serviceName}";
 
         return configPath;

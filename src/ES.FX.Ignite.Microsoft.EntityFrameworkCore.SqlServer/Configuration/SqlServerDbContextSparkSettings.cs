@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
+using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 
@@ -7,15 +8,16 @@ namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 ///     <see cref="TDbContext" />
 /// </summary>
 /// <typeparam name="TDbContext"><see cref="DbContext" /> type</typeparam>
-public class SqlServerDbContextSparkSettings<TDbContext> where TDbContext : DbContext
+public class SqlServerDbContextSparkSettings<TDbContext> : ISparkHealthCheckSettings, ISparkTracingSettings
+    where TDbContext : DbContext
 {
     /// <summary>
-    ///     Gets or sets a boolean value that indicates whether the database health checks are enabled or not.
+    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksEnabled" />
     /// </summary>
     public bool HealthChecksEnabled { get; set; } = true;
 
     /// <summary>
-    ///     Gets or sets a boolean value that indicates whether the OpenTelemetry tracing is enabled or not.
+    ///     <inheritdoc cref="ISparkTracingSettings.TracingEnabled" />
     /// </summary>
     public bool TracingEnabled { get; set; } = true;
 }

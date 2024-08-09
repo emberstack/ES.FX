@@ -1,5 +1,8 @@
 using ES.FX.Hosting.Lifetime;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Hosting;
+using ES.FX.Ignite.Azure.Data.Tables.Hosting;
+using ES.FX.Ignite.Azure.Storage.Blobs.Hosting;
+using ES.FX.Ignite.Azure.Storage.Queues.Hosting;
 using ES.FX.Ignite.FluentValidation.Hosting;
 using ES.FX.Ignite.Hosting;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
@@ -56,6 +59,10 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     //Add Seq
     builder.IgniteSeqOpenTelemetryExporter();
+
+    builder.IgniteAzureBlobServiceClient("Dev");
+    builder.IgniteAzureQueueServiceClient("Dev");
+    builder.IgniteAzureTableServiceClient("Dev");
 
     builder.Services.AddOpenApiDocument();
 

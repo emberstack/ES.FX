@@ -7,9 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Results;
 
-namespace ES.FX.Ignite.FluentValidation.Tests.Hosting;
+namespace ES.FX.Ignite.FluentValidation.Tests;
 
-public class FluentValidationHostingExtensions
+public class HostingTests
 {
     [Fact]
     public void IgniteDoesNotAllowReconfiguration()

@@ -14,9 +14,9 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Trace;
 using Polly;
 
-namespace ES.FX.Ignite.Tests.Hosting;
+namespace ES.FX.Ignite.Tests;
 
-public class IgniteHostingExtensionsTests
+public class HostingTests
 {
     [Fact]
     public void Ignite_WhenCalled_ShouldAddServices()

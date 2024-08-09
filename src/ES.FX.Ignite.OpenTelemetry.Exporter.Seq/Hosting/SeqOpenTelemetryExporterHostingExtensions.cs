@@ -26,9 +26,7 @@ public static class SeqOpenTelemetryExporterHostingExtensions
         Action<SeqOpenTelemetryExporterSparkOptions>? configureOptions = null,
         string configurationSectionPath = SeqOpenTelemetryExporterSpark.ConfigurationSectionPath)
     {
-        var configPath = string.IsNullOrWhiteSpace(name)
-            ? configurationSectionPath
-            : SparkConfig.Path(name, configurationSectionPath);
+        var configPath = SparkConfig.Path(name, configurationSectionPath);
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
         builder.Services.AddKeyedSingleton(name, settings);
