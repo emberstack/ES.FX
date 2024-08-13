@@ -1,55 +1,37 @@
 ﻿using ES.FX.Shared.Seq.Tests.Fixtures;
-using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Hosting;
-using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
-using ES.FX.Ignite.Serilog.Hosting;
-using ES.FX.Ignite.Hosting;
-using Microsoft.AspNetCore.Builder;
 using Seq.Api;
+using Newtonsoft.Json;
+using System.Text;
+using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.SUT.Endpoints;
 
 namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests
 {
-
-    public class FunctionalTests(SeqContainerFixture seqFixture)
-        : IClassFixture<SeqContainerFixture>
+    public class FunctionalTests(SeqContainerFixture seqFixture) : IClassFixture<SeqContainerFixture>
     {
         [Fact]
         public async Task EventsArePresentInSeq()
         {
-            var builder = WebApplication.CreateBuilder([]);
+            var name = "name";
+            Assert.NotNull(seqFixture.WebApplicationFactory);
 
-            builder.Ignite();
-            builder.IgniteHealthChecksUi();
-            builder.IgniteSeqOpenTelemetryExporter(SeqOpenTelemetryExporterSpark.ConfigurationSectionPath, (x) =>
-            {
-                x.Enabled = true;
-            }, (x) =>
-            {
-                x.IngestionEndpoint = seqFixture.GetConnectionString();
-                x.HealthUrl = seqFixture.GetConnectionString() + "/health";
-            });
+            var client = seqFixture.WebApplicationFactory.CreateClient();
 
-            builder.IgniteSerilog();
+            var response = await client.PostAsync(
+            SimpleEndpoint.RoutePattern,
+            new StringContent(
+                JsonConvert.SerializeObject(new SimpleEndpoint.Request(name)),
+                Encoding.UTF8, "application/json"));
 
-            var app = builder.Build();
+            var resultContent = await response.Content.ReadAsStringAsync();
 
-            app.Ignite();
-            app.IgniteHealthChecksUi();
+            // wait for the events to be processed
+            await Task.Delay(5000);
 
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-#pragma warning disable xUnit1030 // Do not call ConfigureAwait(false) in test method
-            app.RunAsync().ConfigureAwait(false);
-#pragma warning restore xUnit1030 // Do not call ConfigureAwait(false) in test method
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            SeqConnection seqClient = new SeqConnection(seqFixture.GetConnectionString());
+            var events = await seqClient.Events.ListAsync(null, null, null, 100, null, null, true);
 
-            // bad approach, but we need to wait for the app to start
-            await Task.Delay(10000);
-
-
-            SeqConnection client = new SeqConnection(seqFixture.GetConnectionString());
-            var events = await client.Events.ListAsync();
-            Assert.NotNull(events);
             Assert.NotEmpty(events);
+            Assert.Contains(events, x => x.RenderedMessage.Contains(SimpleEndpoint.RoutePattern));
         }
-
     }
 }

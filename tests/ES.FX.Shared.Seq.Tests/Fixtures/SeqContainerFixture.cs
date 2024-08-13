@@ -9,6 +9,7 @@ public sealed class SeqContainerFixture : IAsyncLifetime
     public const string Image = "seq";
     public const string Tag = "latest";
     public IContainer? Container { get; private set; }
+    public SeqSUTWebApplicationFactory? WebApplicationFactory;
 
     public async Task InitializeAsync()
     {
@@ -21,11 +22,14 @@ public sealed class SeqContainerFixture : IAsyncLifetime
             .WithPortBinding(80, true)
             .Build();
         await Container.StartAsync();
+
+        WebApplicationFactory = new(GetConnectionString());
     }
 
     public async Task DisposeAsync()
     {
         if (Container is not null) await Container.DisposeAsync();
+        if (WebApplicationFactory is not null) WebApplicationFactory.Dispose();
     }
 
     public string GetConnectionString() => $"http://{Container?.Hostname}:{Container?.GetMappedPublicPort(80)}";
