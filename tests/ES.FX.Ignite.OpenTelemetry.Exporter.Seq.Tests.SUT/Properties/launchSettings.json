@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.SUT": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:62176;http://localhost:62177"
+    }
+  }
+}

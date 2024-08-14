@@ -14,19 +14,20 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8" />
-		<PackageReference Include="Moq" Version="4.20.70" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.7" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+		<PackageReference Include="Seq.Api" Version="2024.3.0" />
+		<PackageReference Include="Testcontainers" Version="3.9.0" />
 		<PackageReference Include="xunit" Version="2.9.0" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
-		<ProjectReference Include="..\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT\ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.OpenTelemetry.Exporter.Seq\ES.FX.Ignite.OpenTelemetry.Exporter.Seq.csproj" />
+		<ProjectReference Include="..\ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.SUT\ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.SUT.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
