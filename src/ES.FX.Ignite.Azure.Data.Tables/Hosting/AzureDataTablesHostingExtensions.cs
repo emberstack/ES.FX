@@ -1,8 +1,8 @@
 ﻿using Azure.Data.Tables;
 using ES.FX.Ignite.Azure.Common.Hosting;
 using ES.FX.Ignite.Azure.Data.Tables.Configuration;
+using ES.FX.Ignite.Azure.Data.Tables.HealthChecks;
 using ES.FX.Ignite.Spark.Configuration;
-using HealthChecks.Azure.Data.Tables;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -56,6 +56,6 @@ public static class AzureDataTablesHostingExtensions
         builder.Services.IgniteAzureClientObservability<TableServiceClient>(serviceKey,
             settings.TracingEnabled,
             settings.HealthChecksEnabled,
-            (_, client) => new AzureTableServiceHealthCheck(client, null));
+            (_, client) => new SimpleTableServiceHealthCheck(client, false));
     }
 }

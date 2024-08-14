@@ -1,4 +1,7 @@
-﻿namespace ES.FX.Ignite.Configuration;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+
+namespace ES.FX.Ignite.Configuration;
 
 /// <summary>
 ///     Settings for HealthChecks
@@ -24,4 +27,9 @@ public class IgniteHealthChecksSettings
     ///     Gets or sets a value indicating whether the application status check is enabled
     /// </summary>
     public bool ApplicationStatusCheckEnabled { get; set; } = true;
+
+    /// <summary>
+    ///     Gets or sets the response writer for the health checks endpoints
+    /// </summary>
+    public Func<HttpContext, HealthReport, Task>? ResponseWriter { get; set; }
 }
