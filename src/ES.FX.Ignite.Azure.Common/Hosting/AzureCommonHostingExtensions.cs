@@ -70,7 +70,7 @@ public static class AzureCommonHostingExtensions
         if (healthChecksEnabled)
         {
             var healthCheckName =
-                $"{nameof(Azure)}-{typeof(TClient).Name}-{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"[{serviceKey}]")}";
+                $"{nameof(Azure)}-{typeof(TClient).Name}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"-[{serviceKey}]")}";
             services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName,
                 serviceProvider => healthCheckFactory(serviceProvider,
                     serviceProvider.GetRequiredKeyedService<TClient>(serviceKey)),

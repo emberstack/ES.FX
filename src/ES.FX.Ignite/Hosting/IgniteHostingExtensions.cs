@@ -154,6 +154,11 @@ public static class IgniteHostingExtensions
             Predicate = r => r.Tags.Contains(HealthChecksTags.Live)
         };
 
+        if (settings.ResponseWriter is not null)
+        {
+            readinessHealthCheckOptions.ResponseWriter = settings.ResponseWriter;
+            livenessHealthCheckOptions.ResponseWriter = settings.ResponseWriter;
+        }
 
         app.MapHealthChecks(settings.ReadinessEndpointPath, readinessHealthCheckOptions);
         app.MapHealthChecks(settings.LivenessEndpointPath, livenessHealthCheckOptions);

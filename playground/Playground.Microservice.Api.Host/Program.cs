@@ -12,13 +12,14 @@ using ES.FX.Ignite.Migrations.Hosting;
 using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
+using ES.FX.Ignite.StackExchange.Redis.Hosting;
 using ES.FX.Serilog.Lifetime;
 using FluentValidation;
+using HealthChecks.UI.Client;
 using Playground.Microservice.Api.Host.HostedServices;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
-using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 
 return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(async _ =>
 {
@@ -28,7 +29,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Logging.ClearProviders();
     builder.IgniteSerilog();
 
-    builder.Ignite();
+    builder.Ignite(settings => { settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse; });
     //Fluent Validation
     builder.IgniteFluentValidation();
 
@@ -60,9 +61,10 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     //Add Seq
     builder.IgniteSeqOpenTelemetryExporter();
 
-    builder.IgniteAzureBlobServiceClient("Dev");
-    builder.IgniteAzureQueueServiceClient("Dev");
-    builder.IgniteAzureTableServiceClient("Dev");
+    builder.IgniteAzureBlobServiceClient();
+    builder.IgniteAzureQueueServiceClient();
+    builder.IgniteAzureTableServiceClient();
+    builder.IgniteRedisClient();
 
     builder.Services.AddOpenApiDocument();
 
@@ -77,22 +79,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     app.IgniteNSwag();
 
     app.IgniteHealthChecksUi();
-
-
-    app.MapGet("/test/exception", void () => throw new Exception("Test exception"))
-        .WithName("TestException")
-        .WithOpenApi();
-
-    app.MapPost("/test/autoValidation", (TestRequest request) => { return Results.Ok(request); })
-        .AddFluentValidationAutoValidation()
-        .WithName("TestAutoValidation")
-        .WithOpenApi();
-
-    app.MapPost("/test/complex/autoValidation", (TestComplexRequest request) => { return Results.Ok(request); })
-        .AddFluentValidationAutoValidation()
-        .WithName("TestComplexAutoValidation")
-        .WithOpenApi();
-
 
     await app.RunAsync();
     return 0;
