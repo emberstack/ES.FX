@@ -157,7 +157,7 @@ public static class SqlServerClientHostingExtensions
                 {
                     ConnectionString = options.ConnectionString ?? string.Empty
                 });
-            }, default, [SqlServerClientSpark.Name], default));
+            }, settings.HealthChecksFailureStatus, [SqlServerClientSpark.Name], default));
         }
     }
 }

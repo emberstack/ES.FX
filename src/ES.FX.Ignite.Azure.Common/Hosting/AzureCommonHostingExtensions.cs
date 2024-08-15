@@ -57,10 +57,12 @@ public static class AzureCommonHostingExtensions
     /// </param>
     /// <param name="tracingEnabled"> Indicates if Tracing is enabled or not. </param>
     /// <param name="healthChecksEnabled"> Indicates if HealthChecks are enabled or not. </param>
+    /// <param name="healthCheckFailureStatus">Indicates which <see cref="HealthStatus" /> to use for failures</param>
     /// <param name="healthCheckFactory"> The factory used to create the health checks if enabled</param>
     public static void IgniteAzureClientObservability<TClient>(this IServiceCollection services, string? serviceKey,
         bool tracingEnabled,
         bool healthChecksEnabled,
+        HealthStatus? healthCheckFailureStatus,
         Func<IServiceProvider, TClient, IHealthCheck> healthCheckFactory) where TClient : class
     {
         if (tracingEnabled)
@@ -74,7 +76,7 @@ public static class AzureCommonHostingExtensions
             services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName,
                 serviceProvider => healthCheckFactory(serviceProvider,
                     serviceProvider.GetRequiredKeyedService<TClient>(serviceKey)),
-                default,
+                healthCheckFailureStatus,
                 [nameof(Azure), typeof(TClient).Name],
                 default));
         }

@@ -190,6 +190,7 @@ public static class SqlServerDbContextHostingExtensions
         if (settings.HealthChecksEnabled)
             builder.Services.AddHealthChecks().AddDbContextCheck<TContext>(
                 $"{DbContextSpark.Name}.{serviceName.Trim()}",
-                tags: [DbContextSpark.Name]);
+                tags: [DbContextSpark.Name],
+                failureStatus: settings.HealthChecksFailureStatus);
     }
 }

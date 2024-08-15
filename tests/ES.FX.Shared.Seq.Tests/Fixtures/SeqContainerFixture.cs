@@ -8,8 +8,8 @@ public sealed class SeqContainerFixture : IAsyncLifetime
     public const string Registry = "datalust";
     public const string Image = "seq";
     public const string Tag = "latest";
-    public IContainer? Container { get; private set; }
     public SeqSUTWebApplicationFactory? WebApplicationFactory;
+    public IContainer? Container { get; private set; }
 
     public async Task InitializeAsync()
     {
@@ -17,13 +17,13 @@ public sealed class SeqContainerFixture : IAsyncLifetime
             .WithName($"{nameof(SeqContainerFixture)}-{Guid.NewGuid()}")
             .WithImage($"{Registry}/{Image}:{Tag}")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request
-                            .ForPath("/")))
+                .ForPath("/")))
             .WithEnvironment("ACCEPT_EULA", "Y")
             .WithPortBinding(80, true)
             .Build();
         await Container.StartAsync();
 
-        WebApplicationFactory = new(GetConnectionString());
+        WebApplicationFactory = new SeqSUTWebApplicationFactory(GetConnectionString());
     }
 
     public async Task DisposeAsync()
