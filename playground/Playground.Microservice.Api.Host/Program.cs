@@ -29,7 +29,9 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Logging.ClearProviders();
     builder.IgniteSerilog();
 
-    builder.Ignite(settings => { settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse; });
+    builder.Ignite(settings =>
+        settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse);
+
     //Fluent Validation
     builder.IgniteFluentValidation();
 
