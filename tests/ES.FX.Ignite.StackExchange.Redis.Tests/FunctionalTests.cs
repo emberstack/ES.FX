@@ -69,7 +69,7 @@ public class FunctionalTests(RedisContainerFixture redisFixture)
         var connection2 = app.Services.GetRequiredKeyedService<IConnectionMultiplexer>(secondServiceKey);
 
         Assert.NotSame(connection1, connection2);
-        Assert.Same(connection1.Configuration.ToString(), connection2.Configuration.ToString());
+        Assert.Equal(connection1.Configuration.ToString(), connection2.Configuration.ToString());
 
         void ConfigureOptions(RedisSparkOptions options)
         {
