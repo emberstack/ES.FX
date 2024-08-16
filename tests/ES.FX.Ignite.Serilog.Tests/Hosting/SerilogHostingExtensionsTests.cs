@@ -1,33 +1,32 @@
-﻿using Microsoft.AspNetCore.Builder;
-using ES.FX.Ignite.Serilog.Hosting;
+﻿using ES.FX.Ignite.Serilog.Hosting;
+using ES.FX.Ignite.Spark.Exceptions;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using ES.FX.Ignite.Spark.Exceptions;
 
-namespace ES.FX.Ignite.Serilog.Tests.Hosting
+namespace ES.FX.Ignite.Serilog.Tests.Hosting;
+
+public class SerilogHostingExtensionsTests
 {
-    public class SerilogHostingExtensionsTests
+    [Fact]
+    public void CanIgnite()
     {
-        [Fact]
-        public void CanIgnite()
-        {
-            var builder = WebApplication.CreateBuilder([]);
+        var builder = WebApplication.CreateBuilder([]);
 
-            builder.IgniteSerilog();
+        builder.IgniteSerilog();
 
-            var serviceProvider = builder.Build().Services;
-            Assert.NotNull(serviceProvider.GetRequiredService<ILogger>());
-        }
+        var serviceProvider = builder.Build().Services;
+        Assert.NotNull(serviceProvider.GetRequiredService<ILogger>());
+    }
 
 
-        [Fact]
-        public void CanIgnite_Once()
-        {
-            var builder = WebApplication.CreateBuilder([]);
+    [Fact]
+    public void CanIgnite_Once()
+    {
+        var builder = WebApplication.CreateBuilder([]);
 
-            builder.IgniteSerilog();
+        builder.IgniteSerilog();
 
-            Assert.Throws<ReconfigurationNotSupportedException>(() => builder.IgniteSerilog());
-        }
+        Assert.Throws<ReconfigurationNotSupportedException>(() => builder.IgniteSerilog());
     }
 }

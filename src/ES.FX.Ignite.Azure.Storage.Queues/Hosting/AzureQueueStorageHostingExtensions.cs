@@ -56,6 +56,7 @@ public static class AzureQueueStorageHostingExtensions
         builder.Services.IgniteAzureClientObservability<QueueServiceClient>(serviceKey,
             settings.TracingEnabled,
             settings.HealthChecksEnabled,
+            settings.HealthChecksFailureStatus,
             (_, client) => new AzureQueueStorageHealthCheck(client));
     }
 }

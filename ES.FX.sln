@@ -156,6 +156,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.OpenTelemetry.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.StackExchange.Redis", "src\ES.FX.Ignite.StackExchange.Redis\ES.FX.Ignite.StackExchange.Redis.csproj", "{4D59B23E-4E1D-4617-B23A-F8A2D23328DC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.StackExchange.Redis", "src\ES.FX.StackExchange.Redis\ES.FX.StackExchange.Redis.csproj", "{7CDC3CE5-FC2B-4C66-BC9D-DD0AA1471EDD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -426,6 +428,10 @@ Global
 		{4D59B23E-4E1D-4617-B23A-F8A2D23328DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D59B23E-4E1D-4617-B23A-F8A2D23328DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D59B23E-4E1D-4617-B23A-F8A2D23328DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CDC3CE5-FC2B-4C66-BC9D-DD0AA1471EDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CDC3CE5-FC2B-4C66-BC9D-DD0AA1471EDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CDC3CE5-FC2B-4C66-BC9D-DD0AA1471EDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CDC3CE5-FC2B-4C66-BC9D-DD0AA1471EDD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -502,6 +508,7 @@ Global
 		{497C425C-451C-4D46-9693-A609D06D946D} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{55694C58-56AF-4FDF-8669-F955534CFBC1} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 		{4D59B23E-4E1D-4617-B23A-F8A2D23328DC} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
+		{7CDC3CE5-FC2B-4C66-BC9D-DD0AA1471EDD} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}

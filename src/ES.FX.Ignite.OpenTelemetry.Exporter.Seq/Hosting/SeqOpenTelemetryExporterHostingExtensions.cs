@@ -109,7 +109,7 @@ public static class SeqOpenTelemetryExporterHostingExtensions
                 {
                     Uri = options.HealthUrl ?? string.Empty
                 });
-            }, default, [SeqOpenTelemetryExporterSpark.Name], default));
+            }, settings.HealthChecksFailureStatus, [SeqOpenTelemetryExporterSpark.Name], default));
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
 
@@ -27,4 +28,9 @@ public class SeqOpenTelemetryExporterSparkSettings : ISparkHealthCheckSettings
     ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksEnabled" />
     /// </summary>
     public bool HealthChecksEnabled { get; set; } = true;
+
+    /// <summary>
+    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksFailureStatus" />
+    /// </summary>
+    public HealthStatus? HealthChecksFailureStatus { get; set; }
 }

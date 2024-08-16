@@ -56,6 +56,7 @@ public static class AzureDataTablesHostingExtensions
         builder.Services.IgniteAzureClientObservability<TableServiceClient>(serviceKey,
             settings.TracingEnabled,
             settings.HealthChecksEnabled,
+            settings.HealthChecksFailureStatus,
             (_, client) => new SimpleTableServiceHealthCheck(client, false));
     }
 }
