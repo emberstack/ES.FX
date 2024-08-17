@@ -1,6 +1,6 @@
-﻿namespace ES.FX.Ignite.Spark.Configuration.Abstractions;
+﻿namespace ES.FX.Ignite.Spark.Configuration;
 
-public class SparkTracingSettings
+public class TracingSettings
 {
     /// <summary>
     ///     Gets or sets a boolean value that indicates whether the OpenTelemetry tracing is enabled.

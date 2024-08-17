@@ -1,5 +1,5 @@
 ﻿using Azure.Core.Extensions;
-using ES.FX.Ignite.Spark.Configuration.Abstractions;
+using ES.FX.Ignite.Spark.Configuration;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -57,15 +57,15 @@ public static class AzureCommonHostingExtensions
     ///     service
     /// </param>
     /// <param name="tracingSettings">
-    ///     <see cref="SparkTracingSettings" />
+    ///     <see cref="TracingSettings" />
     /// </param>
     /// <param name="healthCheckSettings">
-    ///     <see cref="SparkHealthCheckSettings" />
+    ///     <see cref="HealthCheckSettings" />
     /// </param>
     /// <param name="healthCheckFactory"> The factory used to create the health checks if enabled</param>
     public static void IgniteAzureClientObservability<TClient>(this IServiceCollection services, string? serviceKey,
-        SparkTracingSettings tracingSettings,
-        SparkHealthCheckSettings healthCheckSettings,
+        TracingSettings tracingSettings,
+        HealthCheckSettings healthCheckSettings,
         Func<IServiceProvider, TClient, IHealthCheck> healthCheckFactory) where TClient : class
     {
         if (tracingSettings.Enabled)
@@ -80,8 +80,8 @@ public static class AzureCommonHostingExtensions
                 serviceProvider => healthCheckFactory(serviceProvider,
                     serviceProvider.GetRequiredKeyedService<TClient>(serviceKey)),
                 healthCheckSettings.FailureStatus,
-                [nameof(Azure), typeof(TClient).Name],
-                default));
+                [nameof(Azure), typeof(TClient).Name, .. healthCheckSettings.Tags],
+                healthCheckSettings.Timeout));
         }
     }
 }

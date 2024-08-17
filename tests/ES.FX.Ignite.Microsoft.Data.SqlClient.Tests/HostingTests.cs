@@ -1,7 +1,6 @@
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 using ES.FX.Ignite.Spark.Configuration;
-using ES.FX.Ignite.Spark.Configuration.Abstractions;
 using ES.FX.Ignite.Spark.Exceptions;
 using ES.FX.Microsoft.Data.SqlClient.Abstractions;
 using Microsoft.Data.SqlClient;
@@ -296,10 +295,10 @@ public class HostingTests
         //Configure settings
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.Tracing)}:{nameof(SparkTracingSettings.Enabled)}",
+                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.Tracing)}:{nameof(TracingSettings.Enabled)}",
                 true.ToString()),
             new KeyValuePair<string, string?>(
-                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.HealthChecks)}:{nameof(SparkHealthCheckSettings.Enabled)}",
+                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}",
                 true.ToString())
         ]);
 

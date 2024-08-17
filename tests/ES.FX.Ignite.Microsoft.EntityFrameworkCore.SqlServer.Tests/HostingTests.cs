@@ -2,7 +2,6 @@ using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.Context;
 using ES.FX.Ignite.Spark.Configuration;
-using ES.FX.Ignite.Spark.Configuration.Abstractions;
 using ES.FX.Ignite.Spark.Exceptions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -185,10 +184,10 @@ public class HostingTests
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.Tracing)}:{nameof(SparkTracingSettings.Enabled)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.Tracing)}:{nameof(TracingSettings.Enabled)}",
                 true.ToString()),
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.HealthChecks)}:{nameof(SparkHealthCheckSettings.Enabled)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}",
                 true.ToString())
         ]);
 

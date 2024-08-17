@@ -1,4 +1,4 @@
-﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
+﻿using ES.FX.Ignite.Spark.Configuration;
 
 namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
 
@@ -24,7 +24,7 @@ public class SeqOpenTelemetryExporterSparkSettings
     public bool TracesExporterEnabled { get; set; } = true;
 
     /// <summary>
-    ///     <inheritdoc cref="SparkHealthCheckSettings" />
+    ///     <inheritdoc cref="HealthCheckSettings" />
     /// </summary>
-    public SparkHealthCheckSettings HealthChecks { get; set; } = new();
+    public HealthCheckSettings HealthChecks { get; set; } = new();
 }

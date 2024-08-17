@@ -1,5 +1,5 @@
 ﻿using Azure.Storage.Queues;
-using ES.FX.Ignite.Spark.Configuration.Abstractions;
+using ES.FX.Ignite.Spark.Configuration;
 
 namespace ES.FX.Ignite.Azure.Storage.Queues.Configuration;
 
@@ -9,13 +9,13 @@ namespace ES.FX.Ignite.Azure.Storage.Queues.Configuration;
 public class AzureQueueStorageSparkSettings
 {
     /// <summary>
-    ///     <inheritdoc cref="SparkHealthCheckSettings" />
+    ///     <inheritdoc cref="HealthCheckSettings" />
     /// </summary>
-    public SparkHealthCheckSettings HealthChecks { get; set; } = new();
+    public HealthCheckSettings HealthChecks { get; set; } = new();
 
 
     /// <summary>
-    ///     <inheritdoc cref="SparkTracingSettings" />
+    ///     <inheritdoc cref="TracingSettings" />
     /// </summary>
-    public SparkTracingSettings Tracing { get; set; } = new();
+    public TracingSettings Tracing { get; set; } = new();
 }

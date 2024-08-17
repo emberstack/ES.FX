@@ -102,7 +102,10 @@ public static class RedisHostingExtensions
                     serviceKey is null
                         ? sp.GetRequiredService<IConnectionMultiplexer>()
                         : sp.GetRequiredKeyedService<IConnectionMultiplexer>(serviceKey),
-                healthCheckName, tags: [nameof(Redis)], failureStatus: settings.HealthChecks.FailureStatus);
+                healthCheckName,
+                settings.HealthChecks.FailureStatus,
+                [nameof(Redis), .. settings.HealthChecks.Tags],
+                settings.HealthChecks.Timeout);
         }
     }
 }

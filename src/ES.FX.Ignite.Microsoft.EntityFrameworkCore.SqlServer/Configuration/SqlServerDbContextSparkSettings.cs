@@ -1,4 +1,4 @@
-﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
+﻿using ES.FX.Ignite.Spark.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
@@ -12,13 +12,13 @@ public class SqlServerDbContextSparkSettings<TDbContext>
     where TDbContext : DbContext
 {
     /// <summary>
-    ///     <inheritdoc cref="SparkHealthCheckSettings" />
+    ///     <inheritdoc cref="HealthCheckSettings" />
     /// </summary>
-    public SparkHealthCheckSettings HealthChecks { get; set; } = new();
+    public HealthCheckSettings HealthChecks { get; set; } = new();
 
 
     /// <summary>
-    ///     <inheritdoc cref="SparkTracingSettings" />
+    ///     <inheritdoc cref="TracingSettings" />
     /// </summary>
-    public SparkTracingSettings Tracing { get; set; } = new();
+    public TracingSettings Tracing { get; set; } = new();
 }

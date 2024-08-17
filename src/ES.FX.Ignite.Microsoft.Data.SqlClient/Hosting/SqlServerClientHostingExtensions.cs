@@ -149,15 +149,18 @@ public static class SqlServerClientHostingExtensions
             var healthCheckName =
                 $"{SqlServerClientSpark.Name}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"[{serviceKey}]")}";
             builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName, serviceProvider =>
-            {
-                var options = serviceProvider
-                    .GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>()
-                    .Get(serviceKey);
-                return new SqlServerHealthCheck(new SqlServerHealthCheckOptions
                 {
-                    ConnectionString = options.ConnectionString ?? string.Empty
-                });
-            }, settings.HealthChecks.FailureStatus, [SqlServerClientSpark.Name], default));
+                    var options = serviceProvider
+                        .GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>()
+                        .Get(serviceKey);
+                    return new SqlServerHealthCheck(new SqlServerHealthCheckOptions
+                    {
+                        ConnectionString = options.ConnectionString ?? string.Empty
+                    });
+                },
+                settings.HealthChecks.FailureStatus,
+                [SqlServerClientSpark.Name, ..settings.HealthChecks.Tags],
+                settings.HealthChecks.Timeout));
         }
     }
 }
