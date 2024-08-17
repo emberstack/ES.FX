@@ -1,9 +1,8 @@
-using ES.FX.Shared.Seq.Tests.Fixtures;
 using Seq.Api;
 
-namespace ES.FX.Shared.Seq.Tests;
+namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.Fixtures;
 
-public class SeqServerFixtureTests(SeqContainerFixture seqContainerFixture)
+public class SeqContainerFixtureTests(SeqContainerFixture seqContainerFixture)
     : IClassFixture<SeqContainerFixture>
 {
     [Fact]

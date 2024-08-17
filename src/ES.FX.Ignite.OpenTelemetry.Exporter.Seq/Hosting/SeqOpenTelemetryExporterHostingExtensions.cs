@@ -98,7 +98,7 @@ public static class SeqOpenTelemetryExporterHostingExtensions
     private static void ConfigureObservability(IHostApplicationBuilder builder, string? name,
         SeqOpenTelemetryExporterSparkSettings settings)
     {
-        if (settings.HealthChecksEnabled)
+        if (settings.HealthChecks.Enabled)
         {
             var healthCheckName =
                 $"{SeqOpenTelemetryExporterSpark.Name}{(string.IsNullOrWhiteSpace(name) ? string.Empty : $"[{name}]")}";
@@ -109,7 +109,7 @@ public static class SeqOpenTelemetryExporterHostingExtensions
                 {
                     Uri = options.HealthUrl ?? string.Empty
                 });
-            }, settings.HealthChecksFailureStatus, [SeqOpenTelemetryExporterSpark.Name], default));
+            }, settings.HealthChecks.FailureStatus, [SeqOpenTelemetryExporterSpark.Name], default));
         }
     }
 }

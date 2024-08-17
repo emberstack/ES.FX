@@ -11,7 +11,5 @@ app.Run();
 // ReSharper disable once UnusedMember.Global
 namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT
 {
-    public class Program
-    {
-    }
+    public class Program;
 }

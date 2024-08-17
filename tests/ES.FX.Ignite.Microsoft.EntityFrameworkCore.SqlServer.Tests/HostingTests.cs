@@ -2,6 +2,7 @@ using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.Context;
 using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.Abstractions;
 using ES.FX.Ignite.Spark.Exceptions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -184,10 +185,10 @@ public class HostingTests
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.TracingEnabled)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.Tracing)}:{nameof(SparkTracingSettings.Enabled)}",
                 true.ToString()),
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.HealthChecksEnabled)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.HealthChecks)}:{nameof(SparkHealthCheckSettings.Enabled)}",
                 true.ToString())
         ]);
 
@@ -200,8 +201,8 @@ public class HostingTests
         var app = builder.Build();
 
         var resolvedSettings = app.Services.GetRequiredService<SqlServerDbContextSparkSettings<TestDbContext>>();
-        Assert.False(resolvedSettings.TracingEnabled);
-        Assert.True(resolvedSettings.HealthChecksEnabled);
+        Assert.False(resolvedSettings.Tracing.Enabled);
+        Assert.True(resolvedSettings.HealthChecks.Enabled);
 
 
         return;
@@ -209,11 +210,11 @@ public class HostingTests
         void ConfigureSettings(SqlServerDbContextSparkSettings<TestDbContext> settings)
         {
             //Settings should have correct value from configuration
-            Assert.True(settings.TracingEnabled);
-            Assert.True(settings.HealthChecksEnabled);
+            Assert.True(settings.Tracing.Enabled);
+            Assert.True(settings.HealthChecks.Enabled);
 
             //Change the settings
-            settings.TracingEnabled = false;
+            settings.Tracing.Enabled = false;
         }
     }
 

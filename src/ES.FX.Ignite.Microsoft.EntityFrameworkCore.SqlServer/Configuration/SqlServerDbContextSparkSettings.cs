@@ -1,6 +1,5 @@
 ﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 
@@ -9,21 +8,17 @@ namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 ///     <see cref="TDbContext" />
 /// </summary>
 /// <typeparam name="TDbContext"><see cref="DbContext" /> type</typeparam>
-public class SqlServerDbContextSparkSettings<TDbContext> : ISparkHealthCheckSettings, ISparkTracingSettings
+public class SqlServerDbContextSparkSettings<TDbContext>
     where TDbContext : DbContext
 {
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksEnabled" />
+    ///     <inheritdoc cref="SparkHealthCheckSettings" />
     /// </summary>
-    public bool HealthChecksEnabled { get; set; } = true;
+    public SparkHealthCheckSettings HealthChecks { get; set; } = new();
+
 
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksFailureStatus" />
+    ///     <inheritdoc cref="SparkTracingSettings" />
     /// </summary>
-    public HealthStatus? HealthChecksFailureStatus { get; set; }
-
-    /// <summary>
-    ///     <inheritdoc cref="ISparkTracingSettings.TracingEnabled" />
-    /// </summary>
-    public bool TracingEnabled { get; set; } = true;
+    public SparkTracingSettings Tracing { get; set; } = new();
 }

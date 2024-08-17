@@ -1,4 +1,5 @@
 ﻿using Azure.Core.Extensions;
+using ES.FX.Ignite.Spark.Configuration.Abstractions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -55,28 +56,30 @@ public static class AzureCommonHostingExtensions
     ///     If not null, registers a keyed service with the service key. If null, registers a default
     ///     service
     /// </param>
-    /// <param name="tracingEnabled"> Indicates if Tracing is enabled or not. </param>
-    /// <param name="healthChecksEnabled"> Indicates if HealthChecks are enabled or not. </param>
-    /// <param name="healthCheckFailureStatus">Indicates which <see cref="HealthStatus" /> to use for failures</param>
+    /// <param name="tracingSettings">
+    ///     <see cref="SparkTracingSettings" />
+    /// </param>
+    /// <param name="healthCheckSettings">
+    ///     <see cref="SparkHealthCheckSettings" />
+    /// </param>
     /// <param name="healthCheckFactory"> The factory used to create the health checks if enabled</param>
     public static void IgniteAzureClientObservability<TClient>(this IServiceCollection services, string? serviceKey,
-        bool tracingEnabled,
-        bool healthChecksEnabled,
-        HealthStatus? healthCheckFailureStatus,
+        SparkTracingSettings tracingSettings,
+        SparkHealthCheckSettings healthCheckSettings,
         Func<IServiceProvider, TClient, IHealthCheck> healthCheckFactory) where TClient : class
     {
-        if (tracingEnabled)
+        if (tracingSettings.Enabled)
             services.AddOpenTelemetry().WithTracing(traceBuilder =>
                 traceBuilder.AddSource([$"{typeof(TClient).Namespace}.*"]));
 
-        if (healthChecksEnabled)
+        if (healthCheckSettings.Enabled)
         {
             var healthCheckName =
                 $"{nameof(Azure)}-{typeof(TClient).Name}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"-[{serviceKey}]")}";
             services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName,
                 serviceProvider => healthCheckFactory(serviceProvider,
                     serviceProvider.GetRequiredKeyedService<TClient>(serviceKey)),
-                healthCheckFailureStatus,
+                healthCheckSettings.FailureStatus,
                 [nameof(Azure), typeof(TClient).Name],
                 default));
         }

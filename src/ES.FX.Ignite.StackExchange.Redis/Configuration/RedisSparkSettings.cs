@@ -1,5 +1,4 @@
 ﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using StackExchange.Redis;
 
 namespace ES.FX.Ignite.StackExchange.Redis.Configuration;
@@ -7,22 +6,16 @@ namespace ES.FX.Ignite.StackExchange.Redis.Configuration;
 /// <summary>
 ///     Provides the settings for connecting to a Redis server using a <see cref="IConnectionMultiplexer" />
 /// </summary>
-public class RedisSparkSettings : ISparkHealthCheckSettings, ISparkTracingSettings
+public class RedisSparkSettings
 {
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksEnabled" />
+    ///     <inheritdoc cref="SparkHealthCheckSettings" />
     /// </summary>
-    public bool HealthChecksEnabled { get; set; } = true;
+    public SparkHealthCheckSettings HealthChecks { get; set; } = new();
 
 
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksFailureStatus" />
+    ///     <inheritdoc cref="SparkTracingSettings" />
     /// </summary>
-    public HealthStatus? HealthChecksFailureStatus { get; set; }
-
-
-    /// <summary>
-    ///     <inheritdoc cref="ISparkTracingSettings.TracingEnabled" />
-    /// </summary>
-    public bool TracingEnabled { get; set; } = true;
+    public SparkTracingSettings Tracing { get; set; } = new();
 }

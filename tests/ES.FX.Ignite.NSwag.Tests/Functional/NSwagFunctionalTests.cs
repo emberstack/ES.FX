@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using ES.FX.Ignite.NSwag.Tests.SUT;
+using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace ES.FX.Ignite.NSwag.Tests.Hosting;
+namespace ES.FX.Ignite.NSwag.Tests.Functional;
 
 public class NSwagFunctionalTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>

@@ -9,6 +9,7 @@ app.IgniteSwashbuckle();
 app.Run();
 
 // ReSharper disable once UnusedMember.Global
-public partial class Program
+namespace ES.FX.Ignite.Swashbuckle.Tests.SUT
 {
+    public class Program;
 }

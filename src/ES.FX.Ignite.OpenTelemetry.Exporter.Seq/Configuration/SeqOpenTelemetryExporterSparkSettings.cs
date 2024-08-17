@@ -1,12 +1,11 @@
 ﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
 
 /// <summary>
 ///     Provides the settings for connecting to Seq
 /// </summary>
-public class SeqOpenTelemetryExporterSparkSettings : ISparkHealthCheckSettings
+public class SeqOpenTelemetryExporterSparkSettings
 {
     /// <summary>
     ///     Gets or sets a boolean value that indicates whether the Seq is enabled.
@@ -25,12 +24,7 @@ public class SeqOpenTelemetryExporterSparkSettings : ISparkHealthCheckSettings
     public bool TracesExporterEnabled { get; set; } = true;
 
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksEnabled" />
+    ///     <inheritdoc cref="SparkHealthCheckSettings" />
     /// </summary>
-    public bool HealthChecksEnabled { get; set; } = true;
-
-    /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksFailureStatus" />
-    /// </summary>
-    public HealthStatus? HealthChecksFailureStatus { get; set; }
+    public SparkHealthCheckSettings HealthChecks { get; set; } = new();
 }

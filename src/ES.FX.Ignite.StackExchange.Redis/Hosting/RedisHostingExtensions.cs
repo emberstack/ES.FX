@@ -73,7 +73,7 @@ public static class RedisHostingExtensions
 
             var instanceSettings = sp.GetRequiredKeyedService<RedisSparkSettings>(serviceKey);
 
-            if (instanceSettings.TracingEnabled)
+            if (instanceSettings.Tracing.Enabled)
                 sp.GetRequiredService<StackExchangeRedisInstrumentation>().AddConnection(connection);
 
             return connection;
@@ -85,7 +85,7 @@ public static class RedisHostingExtensions
     private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey,
         RedisSparkSettings settings)
     {
-        if (settings.TracingEnabled)
+        if (settings.Tracing.Enabled)
             builder.Services.AddOpenTelemetry().WithTracing(t =>
             {
                 t.AddSource($"{typeof(StackExchangeRedisInstrumentation).Namespace}");
@@ -93,7 +93,7 @@ public static class RedisHostingExtensions
                 t.AddInstrumentation(sp => sp.GetRequiredService<StackExchangeRedisInstrumentation>());
             });
 
-        if (settings.HealthChecksEnabled)
+        if (settings.HealthChecks.Enabled)
         {
             var healthCheckName =
                 $"{RedisSpark.Name}{(serviceKey is null ? string.Empty : $"[{serviceKey}]")}";
@@ -102,7 +102,7 @@ public static class RedisHostingExtensions
                     serviceKey is null
                         ? sp.GetRequiredService<IConnectionMultiplexer>()
                         : sp.GetRequiredKeyedService<IConnectionMultiplexer>(serviceKey),
-                healthCheckName, tags: [nameof(Redis)], failureStatus: settings.HealthChecksFailureStatus);
+                healthCheckName, tags: [nameof(Redis)], failureStatus: settings.HealthChecks.FailureStatus);
         }
     }
 }

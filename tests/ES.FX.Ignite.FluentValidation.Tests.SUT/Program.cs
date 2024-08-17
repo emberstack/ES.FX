@@ -20,7 +20,5 @@ app.Run();
 // ReSharper disable once UnusedMember.Global
 namespace ES.FX.Ignite.FluentValidation.Tests.SUT
 {
-    public class Program
-    {
-    }
+    public class Program;
 }

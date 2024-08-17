@@ -138,13 +138,13 @@ public static class SqlServerClientHostingExtensions
     private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey,
         SqlServerClientSparkSettings settings)
     {
-        if (settings.TracingEnabled)
+        if (settings.Tracing.Enabled)
             builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
             {
                 tracerProviderBuilder.AddSqlClientInstrumentation();
             });
 
-        if (settings.HealthChecksEnabled)
+        if (settings.HealthChecks.Enabled)
         {
             var healthCheckName =
                 $"{SqlServerClientSpark.Name}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"[{serviceKey}]")}";
@@ -157,7 +157,7 @@ public static class SqlServerClientHostingExtensions
                 {
                     ConnectionString = options.ConnectionString ?? string.Empty
                 });
-            }, settings.HealthChecksFailureStatus, [SqlServerClientSpark.Name], default));
+            }, settings.HealthChecks.FailureStatus, [SqlServerClientSpark.Name], default));
         }
     }
 }

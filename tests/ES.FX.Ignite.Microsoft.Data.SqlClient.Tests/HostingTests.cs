@@ -1,6 +1,7 @@
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.Abstractions;
 using ES.FX.Ignite.Spark.Exceptions;
 using ES.FX.Microsoft.Data.SqlClient.Abstractions;
 using Microsoft.Data.SqlClient;
@@ -295,10 +296,10 @@ public class HostingTests
         //Configure settings
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.TracingEnabled)}",
+                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.Tracing)}:{nameof(SparkTracingSettings.Enabled)}",
                 true.ToString()),
             new KeyValuePair<string, string?>(
-                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.HealthChecksEnabled)}",
+                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.HealthChecks)}:{nameof(SparkHealthCheckSettings.Enabled)}",
                 true.ToString())
         ]);
 
@@ -311,8 +312,8 @@ public class HostingTests
         var app = builder.Build();
 
         var resolvedSettings = app.Services.GetRequiredService<SqlServerClientSparkSettings>();
-        Assert.False(resolvedSettings.TracingEnabled);
-        Assert.True(resolvedSettings.HealthChecksEnabled);
+        Assert.False(resolvedSettings.Tracing.Enabled);
+        Assert.True(resolvedSettings.HealthChecks.Enabled);
 
 
         return;
@@ -320,11 +321,11 @@ public class HostingTests
         void ConfigureSettings(SqlServerClientSparkSettings settings)
         {
             //Settings should have correct value from configuration
-            Assert.True(settings.TracingEnabled);
-            Assert.True(settings.HealthChecksEnabled);
+            Assert.True(settings.Tracing.Enabled);
+            Assert.True(settings.HealthChecks.Enabled);
 
             //Change the settings
-            settings.TracingEnabled = false;
+            settings.Tracing.Enabled = false;
         }
     }
 

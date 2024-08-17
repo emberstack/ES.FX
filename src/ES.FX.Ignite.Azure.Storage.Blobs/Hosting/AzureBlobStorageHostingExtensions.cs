@@ -54,9 +54,8 @@ public static class AzureBlobStorageHostingExtensions
             configureClientOptions);
 
         builder.Services.IgniteAzureClientObservability<BlobServiceClient>(serviceKey,
-            settings.TracingEnabled,
-            settings.HealthChecksEnabled,
-            settings.HealthChecksFailureStatus,
+            settings.Tracing,
+            settings.HealthChecks,
             (_, client) => new AzureBlobStorageHealthCheck(client));
     }
 }
