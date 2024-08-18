@@ -7,7 +7,7 @@ public class HealthCheckSettings
     /// <summary>
     ///     Gets or sets a boolean value that indicates whether the health checks are enabled.
     /// </summary>
-    public bool Enabled { get; set; }
+    public bool Enabled { get; set; } = true;
 
     /// <summary>
     ///     Gets or sets the HealthStatus to use in case of HealthChecks failure. If not set, the default value is
