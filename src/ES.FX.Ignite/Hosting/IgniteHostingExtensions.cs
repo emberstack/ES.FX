@@ -79,7 +79,15 @@ public static class IgniteHostingExtensions
             })
             .WithTracing(tracing =>
             {
-                if (settings.AspNetCoreTracingEnabled) tracing.AddAspNetCoreInstrumentation();
+                if (settings.AspNetCoreTracingEnabled)
+                    tracing.AddAspNetCoreInstrumentation(options =>
+                    {
+                        options.Filter = httpContext =>
+                        {
+                            // Filter out health check requests
+                            return !httpContext.Request.Path.StartsWithSegments("/health");
+                        };
+                    });
                 if (settings.HttpClientTracingEnabled) tracing.AddHttpClientInstrumentation();
             });
 

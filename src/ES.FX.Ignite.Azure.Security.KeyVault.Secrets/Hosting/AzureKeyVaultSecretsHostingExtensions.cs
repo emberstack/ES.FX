@@ -54,9 +54,8 @@ public static class AzureKeyVaultSecretsHostingExtensions
             configureClientOptions);
 
         builder.Services.IgniteAzureClientObservability<SecretClient>(serviceKey,
-            settings.TracingEnabled,
-            settings.HealthChecksEnabled,
-            settings.HealthChecksFailureStatus,
+            settings.Tracing,
+            settings.HealthChecks,
             (_, client) => new AzureKeyVaultSecretsHealthCheck(client));
     }
 }

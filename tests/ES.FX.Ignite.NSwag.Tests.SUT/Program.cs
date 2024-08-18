@@ -8,6 +8,7 @@ app.IgniteNSwag();
 app.Run();
 
 // ReSharper disable once UnusedMember.Global
-public partial class Program
+namespace ES.FX.Ignite.NSwag.Tests.SUT
 {
+    public class Program;
 }

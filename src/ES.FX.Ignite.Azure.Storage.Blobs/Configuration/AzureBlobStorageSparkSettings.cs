@@ -1,26 +1,21 @@
 ﻿using Azure.Storage.Blobs;
-using ES.FX.Ignite.Spark.Configuration.Abstractions;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+using ES.FX.Ignite.Spark.Configuration;
 
 namespace ES.FX.Ignite.Azure.Storage.Blobs.Configuration;
 
 /// <summary>
 ///     Provides the settings for connecting to Azure Storage using a <see cref="BlobServiceClient" />
 /// </summary>
-public class AzureBlobStorageSparkSettings : ISparkHealthCheckSettings, ISparkTracingSettings
+public class AzureBlobStorageSparkSettings
 {
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksEnabled" />
+    ///     <inheritdoc cref="HealthCheckSettings" />
     /// </summary>
-    public bool HealthChecksEnabled { get; set; } = true;
+    public HealthCheckSettings HealthChecks { get; set; } = new();
+
 
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksFailureStatus" />
+    ///     <inheritdoc cref="TracingSettings" />
     /// </summary>
-    public HealthStatus? HealthChecksFailureStatus { get; set; }
-
-    /// <summary>
-    ///     <inheritdoc cref="ISparkTracingSettings.TracingEnabled" />
-    /// </summary>
-    public bool TracingEnabled { get; set; } = true;
+    public TracingSettings Tracing { get; set; } = new();
 }

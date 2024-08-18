@@ -1,26 +1,21 @@
-﻿using ES.FX.Ignite.Spark.Configuration.Abstractions;
+﻿using ES.FX.Ignite.Spark.Configuration;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 
 /// <summary>
 ///     Provides the settings for connecting to a SQL Server database using a <see cref="SqlConnection" />
 /// </summary>
-public class SqlServerClientSparkSettings : ISparkHealthCheckSettings, ISparkTracingSettings
+public class SqlServerClientSparkSettings
 {
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksEnabled" />
+    ///     <inheritdoc cref="HealthCheckSettings" />
     /// </summary>
-    public bool HealthChecksEnabled { get; set; } = true;
+    public HealthCheckSettings HealthChecks { get; set; } = new();
+
 
     /// <summary>
-    ///     <inheritdoc cref="ISparkHealthCheckSettings.HealthChecksFailureStatus" />
+    ///     <inheritdoc cref="TracingSettings" />
     /// </summary>
-    public HealthStatus? HealthChecksFailureStatus { get; set; }
-
-    /// <summary>
-    ///     <inheritdoc cref="ISparkTracingSettings.TracingEnabled" />
-    /// </summary>
-    public bool TracingEnabled { get; set; } = true;
+    public TracingSettings Tracing { get; set; } = new();
 }

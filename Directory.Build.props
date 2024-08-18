@@ -23,10 +23,10 @@
 	</PropertyGroup>
 
 	<!--Test projects-->
-	<ItemGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.EndsWith('.Tests'))">
+	<ItemGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.Contains('.Tests'))">
 		<AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
 	</ItemGroup>
-	<PropertyGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.EndsWith('.Tests'))">
+	<PropertyGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.Contains('.Tests'))">
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>
 		<VSTestResultsDirectory>$(MSBuildThisFileDirectory).artifacts/TestResults</VSTestResultsDirectory>

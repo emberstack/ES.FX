@@ -53,14 +53,3 @@ public class MigrationsServiceTests
         Assert.True(testMigration.ApplyMigrationsCalled);
     }
 }
-
-internal class TestMigrationTask : IMigrationsTask
-{
-    public bool ApplyMigrationsCalled { get; private set; }
-
-    Task IMigrationsTask.ApplyMigrations(CancellationToken cancellationToken)
-    {
-        ApplyMigrationsCalled = true;
-        return Task.CompletedTask;
-    }
-}

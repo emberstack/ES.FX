@@ -138,26 +138,29 @@ public static class SqlServerClientHostingExtensions
     private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey,
         SqlServerClientSparkSettings settings)
     {
-        if (settings.TracingEnabled)
+        if (settings.Tracing.Enabled)
             builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
             {
                 tracerProviderBuilder.AddSqlClientInstrumentation();
             });
 
-        if (settings.HealthChecksEnabled)
+        if (settings.HealthChecks.Enabled)
         {
             var healthCheckName =
                 $"{SqlServerClientSpark.Name}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"[{serviceKey}]")}";
             builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName, serviceProvider =>
-            {
-                var options = serviceProvider
-                    .GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>()
-                    .Get(serviceKey);
-                return new SqlServerHealthCheck(new SqlServerHealthCheckOptions
                 {
-                    ConnectionString = options.ConnectionString ?? string.Empty
-                });
-            }, settings.HealthChecksFailureStatus, [SqlServerClientSpark.Name], default));
+                    var options = serviceProvider
+                        .GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>()
+                        .Get(serviceKey);
+                    return new SqlServerHealthCheck(new SqlServerHealthCheckOptions
+                    {
+                        ConnectionString = options.ConnectionString ?? string.Empty
+                    });
+                },
+                settings.HealthChecks.FailureStatus,
+                [SqlServerClientSpark.Name, ..settings.HealthChecks.Tags],
+                settings.HealthChecks.Timeout));
         }
     }
 }

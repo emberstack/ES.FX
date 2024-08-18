@@ -1,6 +1,6 @@
 ﻿using System.Text;
+using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.Fixtures;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.SUT.Endpoints;
-using ES.FX.Shared.Seq.Tests.Fixtures;
 using Newtonsoft.Json;
 using Seq.Api;
 
