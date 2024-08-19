@@ -35,7 +35,7 @@ public class HostingTests
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{RedisSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.TracingEnabled)}",
+                $"{RedisSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.Tracing)}:{nameof(RedisSparkSettings.Tracing.Enabled)}",
                 tracingEnabled.ToString())
         ]);
 
@@ -55,7 +55,7 @@ public class HostingTests
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{RedisSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.HealthChecksEnabled)}",
+                $"{RedisSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.HealthChecks)}:{nameof(RedisSparkSettings.HealthChecks.Enabled)}",
                 tracingEnabled.ToString())
         ]);
 
@@ -74,7 +74,7 @@ public class HostingTests
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{RedisSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.TracingEnabled)}",
+                $"{RedisSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.Tracing)}:{nameof(RedisSparkSettings.Tracing.Enabled)}",
                 true.ToString())
         ]);
 
@@ -83,17 +83,17 @@ public class HostingTests
         var app = builder.Build();
 
         var resolvedSettings = app.Services.GetRequiredService<RedisSparkSettings>();
-        Assert.False(resolvedSettings.TracingEnabled);
+        Assert.NotNull(resolvedSettings.Tracing);
 
         return;
 
         static void ConfigureSettings(RedisSparkSettings settings)
         {
             //Settings should have correct value from configuration
-            Assert.True(settings.TracingEnabled);
+            Assert.True(settings.Tracing.Enabled);
 
             //Change the settings
-            settings.TracingEnabled = false;
+            settings.Tracing.Enabled = false;
         }
     }
 

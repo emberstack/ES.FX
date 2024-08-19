@@ -53,10 +53,10 @@ public class FunctionalTests(RedisContainerFixture redisFixture)
         //Configure settings
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{RedisSpark.ConfigurationSectionPath}:database1:{SparkConfig.Settings}:{nameof(RedisSparkSettings.TracingEnabled)}",
+                $"{RedisSpark.ConfigurationSectionPath}:database1:{SparkConfig.Settings}:{nameof(RedisSparkSettings.Tracing)}:{nameof(RedisSparkSettings.Tracing.Enabled)}",
                 true.ToString()),
                     new KeyValuePair<string, string?>(
-                $"{RedisSpark.ConfigurationSectionPath}:database2:{SparkConfig.Settings}:{nameof(RedisSparkSettings.TracingEnabled)}",
+                $"{RedisSpark.ConfigurationSectionPath}:database2:{SparkConfig.Settings}:{nameof(RedisSparkSettings.Tracing)}:{nameof(RedisSparkSettings.Tracing.Enabled)}",
                 true.ToString())
         ]);
 
