@@ -1,6 +1,6 @@
 ﻿using Testcontainers.Redis;
 
-namespace ES.FX.Shared.StackExchange.Redis.Tests.Fixtures;
+namespace ES.FX.Ignite.StackExchange.Redis.Tests.Fixtures;
 
 public sealed class RedisContainerFixture : IAsyncLifetime
 {

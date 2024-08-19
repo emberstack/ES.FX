@@ -20,10 +20,7 @@ public class HostingTests
 
         builder.IgniteRedisClient();
 
-        Assert.Throws<ReconfigurationNotSupportedException>(() =>
-        {
-            builder.IgniteRedisClient();
-        });
+        Assert.Throws<ReconfigurationNotSupportedException>(() => { builder.IgniteRedisClient(); });
     }
 
     [Theory]

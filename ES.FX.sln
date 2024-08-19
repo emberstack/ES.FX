@@ -156,11 +156,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.StackExchange.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.StackExchange.Redis", "src\ES.FX.StackExchange.Redis\ES.FX.StackExchange.Redis.csproj", "{7CDC3CE5-FC2B-4C66-BC9D-DD0AA1471EDD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.StackExchange.Redis.Tests", "tests\ES.FX.StackExchange.Redis.Tests\ES.FX.StackExchange.Redis.Tests.csproj", "{1A2B33E0-AF04-408C-9C33-2A4E52355564}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.StackExchange.Redis.Tests", "tests\ES.FX.StackExchange.Redis.Tests\ES.FX.StackExchange.Redis.Tests.csproj", "{1A2B33E0-AF04-408C-9C33-2A4E52355564}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Shared.StackExchange.Redis.Tests", "tests\ES.FX.Shared.StackExchange.Redis.Tests\ES.FX.Shared.StackExchange.Redis.Tests.csproj", "{663E18A3-B550-451C-9A05-D9E82EB1EDDB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Ignite.StackExchange.Redis.Tests", "tests\ES.FX.Ignite.StackExchange.Redis.Tests\ES.FX.Ignite.StackExchange.Redis.Tests.csproj", "{F3C2DA14-F398-4192-B4D0-21B05719637E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.StackExchange.Redis.Tests", "tests\ES.FX.Ignite.StackExchange.Redis.Tests\ES.FX.Ignite.StackExchange.Redis.Tests.csproj", "{F3C2DA14-F398-4192-B4D0-21B05719637E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -436,10 +434,6 @@ Global
 		{1A2B33E0-AF04-408C-9C33-2A4E52355564}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A2B33E0-AF04-408C-9C33-2A4E52355564}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A2B33E0-AF04-408C-9C33-2A4E52355564}.Release|Any CPU.Build.0 = Release|Any CPU
-		{663E18A3-B550-451C-9A05-D9E82EB1EDDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{663E18A3-B550-451C-9A05-D9E82EB1EDDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{663E18A3-B550-451C-9A05-D9E82EB1EDDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{663E18A3-B550-451C-9A05-D9E82EB1EDDB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F3C2DA14-F398-4192-B4D0-21B05719637E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F3C2DA14-F398-4192-B4D0-21B05719637E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3C2DA14-F398-4192-B4D0-21B05719637E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -521,7 +515,6 @@ Global
 		{4D59B23E-4E1D-4617-B23A-F8A2D23328DC} = {5A5969AF-86CB-489B-B0DE-C0BAADF5B424}
 		{7CDC3CE5-FC2B-4C66-BC9D-DD0AA1471EDD} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 		{1A2B33E0-AF04-408C-9C33-2A4E52355564} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
-		{663E18A3-B550-451C-9A05-D9E82EB1EDDB} = {BD8EB348-8F5D-41BB-BA2E-6D5C7A71FAB5}
 		{F3C2DA14-F398-4192-B4D0-21B05719637E} = {32548940-0629-46AC-B9BF-E7C41F1C49DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

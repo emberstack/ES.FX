@@ -1,7 +1,7 @@
 ﻿using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.StackExchange.Redis.Configuration;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
-using ES.FX.Shared.StackExchange.Redis.Tests.Fixtures;
+using ES.FX.Ignite.StackExchange.Redis.Tests.Fixtures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -55,7 +55,7 @@ public class FunctionalTests(RedisContainerFixture redisFixture)
             new KeyValuePair<string, string?>(
                 $"{RedisSpark.ConfigurationSectionPath}:database1:{SparkConfig.Settings}:{nameof(RedisSparkSettings.Tracing)}:{nameof(RedisSparkSettings.Tracing.Enabled)}",
                 true.ToString()),
-                    new KeyValuePair<string, string?>(
+            new KeyValuePair<string, string?>(
                 $"{RedisSpark.ConfigurationSectionPath}:database2:{SparkConfig.Settings}:{nameof(RedisSparkSettings.Tracing)}:{nameof(RedisSparkSettings.Tracing.Enabled)}",
                 true.ToString())
         ]);
@@ -69,7 +69,7 @@ public class FunctionalTests(RedisContainerFixture redisFixture)
         var connection2 = app.Services.GetRequiredKeyedService<IConnectionMultiplexer>(secondServiceKey);
 
         Assert.NotSame(connection1, connection2);
-        Assert.Equal(connection1.Configuration.ToString(), connection2.Configuration.ToString());
+        Assert.Equal(connection1.Configuration, connection2.Configuration);
 
         void ConfigureOptions(RedisSparkOptions options)
         {

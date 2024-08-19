@@ -1,7 +1,6 @@
-using ES.FX.Shared.StackExchange.Redis.Tests.Fixtures;
 using StackExchange.Redis;
 
-namespace ES.FX.Shared.StackExchange.Redis.Tests;
+namespace ES.FX.Ignite.StackExchange.Redis.Tests.Fixtures;
 
 public class RedisFixtureTests(RedisContainerFixture redisContainerFixture)
     : IClassFixture<RedisContainerFixture>
@@ -30,13 +29,13 @@ public class RedisFixtureTests(RedisContainerFixture redisContainerFixture)
     public async Task RedisContainer_CanConnect(string key, string value)
     {
         Assert.NotNull(redisContainerFixture.Container);
-        var _connectionMultiplexer = await ConnectionMultiplexer.ConnectAsync(redisContainerFixture.Container.GetConnectionString());
+        var _connectionMultiplexer =
+            await ConnectionMultiplexer.ConnectAsync(redisContainerFixture.Container.GetConnectionString());
 
         var database = _connectionMultiplexer.GetDatabase();
         await database.StringSetAsync(key, value);
 
         var actualValue = await database.StringGetAsync(key);
         Assert.Equal(actualValue, value);
-
     }
 }
