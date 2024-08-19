@@ -1,5 +1,4 @@
 using ES.FX.Hosting.Lifetime;
-using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Hosting;
 using ES.FX.Ignite.Azure.Data.Tables.Hosting;
 using ES.FX.Ignite.Azure.Storage.Blobs.Hosting;
 using ES.FX.Ignite.Azure.Storage.Queues.Hosting;
@@ -30,10 +29,17 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.IgniteSerilog();
 
     builder.Ignite(settings =>
-        settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse);
+    {
+        settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
+        settings.OpenTelemetry.AspNetCoreTracingHealthChecksRequestsFiltered = true;
+    });
+
 
     //Fluent Validation
     builder.IgniteFluentValidation();
+
+    // Add health checks UI
+    //builder.IgniteHealthChecksUi();
 
 
     //Migrations service
@@ -56,16 +62,15 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.IgniteSqlServerClientFactory(nameof(SimpleDbContext));
 
 
-    // Add health checks UI
-    builder.IgniteHealthChecksUi();
-
-
     //Add Seq
     builder.IgniteSeqOpenTelemetryExporter();
 
+    // Add Storage
     builder.IgniteAzureBlobServiceClient();
     builder.IgniteAzureQueueServiceClient();
     builder.IgniteAzureTableServiceClient();
+
+    // Add Redis
     builder.IgniteRedisClient();
 
     builder.Services.AddOpenApiDocument();
@@ -75,12 +80,13 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddScoped<IValidator<TestRequest>, TestValidator>();
     builder.Services.AddScoped<IValidator<TestComplexRequest>, TestComplexRequestValidator>();
 
+
     var app = builder.Build();
     app.Ignite();
 
     app.IgniteNSwag();
 
-    app.IgniteHealthChecksUi();
+    //app.IgniteHealthChecksUi();
 
     await app.RunAsync();
     return 0;

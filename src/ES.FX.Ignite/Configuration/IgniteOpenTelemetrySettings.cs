@@ -37,6 +37,11 @@ public class IgniteOpenTelemetrySettings
     public bool AspNetCoreTracingEnabled { get; set; } = true;
 
     /// <summary>
+    ///     Gets or sets a value indicating whether ASP.NET Core tracing will filter out health checks requests
+    /// </summary>
+    public bool AspNetCoreTracingHealthChecksRequestsFiltered { get; set; } = false;
+
+    /// <summary>
     ///     Gets or sets a value indicating whether HttpClient metrics are enabled
     /// </summary>
     public bool HttpClientMetricsEnabled { get; set; } = true;

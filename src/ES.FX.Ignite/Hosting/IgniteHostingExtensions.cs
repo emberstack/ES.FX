@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ES.FX.Ignite.Configuration;
+using ES.FX.Ignite.OpenTelemetry.AspNetCore;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.HealthChecks;
 using HealthChecks.ApplicationStatus.DependencyInjection;
@@ -79,7 +80,12 @@ public static class IgniteHostingExtensions
             })
             .WithTracing(tracing =>
             {
-                if (settings.AspNetCoreTracingEnabled) tracing.AddAspNetCoreInstrumentation();
+                if (settings.AspNetCoreTracingEnabled)
+                    tracing.AddAspNetCoreInstrumentation(options =>
+                    {
+                        if (settings.AspNetCoreTracingHealthChecksRequestsFiltered)
+                            options.Filter = IgnoreHealthChecksRequests.Filter;
+                    });
                 if (settings.HttpClientTracingEnabled) tracing.AddHttpClientInstrumentation();
             });
 
