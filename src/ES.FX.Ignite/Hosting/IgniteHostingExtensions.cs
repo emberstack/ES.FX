@@ -4,6 +4,7 @@ using ES.FX.Ignite.Configuration;
 using ES.FX.Ignite.OpenTelemetry.AspNetCore;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.HealthChecks;
+using ES.FX.Microsoft.AspNetCore.Middleware;
 using HealthChecks.ApplicationStatus.DependencyInjection;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
@@ -152,11 +153,18 @@ public static class IgniteHostingExtensions
 
         if (host is WebApplication app)
         {
+            UseQueryStringToHeaderMiddleware(app, settings.AspNetCore);
             UseForwardedHeaders(app, settings.AspNetCore);
             UseHealthChecks(app, settings.HealthChecks);
         }
 
         return host;
+    }
+
+    private static void UseQueryStringToHeaderMiddleware(WebApplication app, IgniteAspNetCoreSettings settings)
+    {
+        if (!settings.QueryStringToHeaderMiddlewareEnabled) return;
+        app.UseMiddleware<QueryStringToHeaderMiddleware>();
     }
 
     private static void UseForwardedHeaders(WebApplication app, IgniteAspNetCoreSettings settings)

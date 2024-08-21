@@ -1,4 +1,6 @@
-﻿namespace ES.FX.Ignite.Configuration;
+﻿using ES.FX.Microsoft.AspNetCore.Middleware;
+
+namespace ES.FX.Ignite.Configuration;
 
 /// <summary>
 ///     Settings for AspNetCore
@@ -25,4 +27,10 @@ public class IgniteAspNetCoreSettings
     ///     Gets or sets a value indicating whether the ForwardedHeaders middleware is enabled
     /// </summary>
     public bool ForwardedHeadersEnabled { get; set; } = true;
+
+
+    /// <summary>
+    ///     Gets or sets a value indicating whether the <see cref="QueryStringToHeaderMiddleware"/> is enabled
+    /// </summary>
+    public bool QueryStringToHeaderMiddlewareEnabled { get; set; } = true;
 }
