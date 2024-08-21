@@ -34,7 +34,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         settings.OpenTelemetry.AspNetCoreTracingHealthChecksRequestsFiltered = true;
     });
 
-
     //Fluent Validation
     builder.IgniteFluentValidation();
 

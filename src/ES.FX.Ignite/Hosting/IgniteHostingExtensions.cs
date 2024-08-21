@@ -8,6 +8,7 @@ using HealthChecks.ApplicationStatus.DependencyInjection;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -115,6 +116,16 @@ public static class IgniteHostingExtensions
 
     private static void AddAspNetServices(IHostApplicationBuilder builder, IgniteAspNetCoreSettings settings)
     {
+        if (settings.ForwardedHeadersEnabled)
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.RequireHeaderSymmetry = false;
+                options.ForwardedHeaders = ForwardedHeaders.All;
+                options.ForwardLimit = null;
+                options.KnownProxies.Clear();
+                options.KnownNetworks.Clear();
+            });
+
         if (settings.EndpointsApiExplorerEnabled)
             builder.Services.AddEndpointsApiExplorer();
 
@@ -135,18 +146,27 @@ public static class IgniteHostingExtensions
     }
 
 
-    public static IHost Ignite(this IHost app)
+    public static IHost Ignite(this IHost host)
     {
-        var settings = app.Services.GetRequiredService<IgniteSettings>();
+        var settings = host.Services.GetRequiredService<IgniteSettings>();
 
-        UseHealthChecks(app, settings.HealthChecks);
+        if (host is WebApplication app)
+        {
+            UseForwardedHeaders(app, settings.AspNetCore);
+            UseHealthChecks(app, settings.HealthChecks);
+        }
 
-        return app;
+        return host;
     }
 
-    private static void UseHealthChecks(IHost host, IgniteHealthChecksSettings settings)
+    private static void UseForwardedHeaders(WebApplication app, IgniteAspNetCoreSettings settings)
     {
-        if (host is not WebApplication app) return;
+        if (!settings.ForwardedHeadersEnabled) return;
+        app.UseForwardedHeaders();
+    }
+
+    private static void UseHealthChecks(WebApplication app, IgniteHealthChecksSettings settings)
+    {
         if (!settings.EndpointEnabled) return;
 
         //Readiness checks are used to determine if the app is ready to accept traffic after starting

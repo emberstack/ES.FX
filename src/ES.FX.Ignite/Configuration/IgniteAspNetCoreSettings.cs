@@ -19,4 +19,10 @@ public class IgniteAspNetCoreSettings
     ///     Gets or sets a value indicating whether the JsonStringEnumConverter is enabled
     /// </summary>
     public bool JsonStringEnumConverterEnabled { get; set; } = true;
+
+
+    /// <summary>
+    ///     Gets or sets a value indicating whether the ForwardedHeaders middleware is enabled
+    /// </summary>
+    public bool ForwardedHeadersEnabled { get; set; } = true;
 }
