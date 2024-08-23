@@ -76,19 +76,19 @@ public static class IgniteHostingExtensions
             .ConfigureResource(r => r.AddService(builder.Environment.ApplicationName))
             .WithMetrics(metrics =>
             {
-                if (settings.AspNetCoreMetricsEnabled) metrics.AddAspNetCoreInstrumentation();
-                if (settings.HttpClientMetricsEnabled) metrics.AddHttpClientInstrumentation();
                 if (settings.RuntimeMetricsEnabled) metrics.AddRuntimeInstrumentation();
+                if (settings.HttpClientMetricsEnabled) metrics.AddHttpClientInstrumentation();
+                if (settings.AspNetCoreMetricsEnabled) metrics.AddAspNetCoreInstrumentation();
             })
             .WithTracing(tracing =>
             {
+                if (settings.HttpClientTracingEnabled) tracing.AddHttpClientInstrumentation();
                 if (settings.AspNetCoreTracingEnabled)
                     tracing.AddAspNetCoreInstrumentation(options =>
                     {
                         if (settings.AspNetCoreTracingHealthChecksRequestsFiltered)
                             options.Filter = IgnoreHealthChecksRequests.Filter;
                     });
-                if (settings.HttpClientTracingEnabled) tracing.AddHttpClientInstrumentation();
             });
 
         if (settings.OtlpExporterEnabled) builder.Services.AddOpenTelemetry().UseOtlpExporter();

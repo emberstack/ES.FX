@@ -18,21 +18,13 @@ public class QueryStringToHeaderMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context)
     {
         var pairs = context.Request.Query
-            .Where(s => s.Key.ToLowerInvariant().StartsWith(Prefix.ToLowerInvariant()))
+            .Where(s => s.Key.StartsWith(Prefix, StringComparison.InvariantCultureIgnoreCase))
             .ToList();
-
-        if (!pairs.Any())
-        {
-            await next(context);
-            return;
-        }
 
         foreach (var pair in pairs)
         {
-            var headerKey = pair.Key.Substring(Prefix.Length);
-            if (string.IsNullOrWhiteSpace(headerKey))
-                continue;
-
+            var headerKey = pair.Key[Prefix.Length..];
+            if (string.IsNullOrWhiteSpace(headerKey)) continue;
             context.Request.Headers[headerKey] = pair.Value;
         }
 
