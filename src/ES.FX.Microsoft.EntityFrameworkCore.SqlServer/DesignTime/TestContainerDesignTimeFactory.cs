@@ -18,7 +18,7 @@ public class TestContainerDesignTimeFactory<TDbContext> : IDesignTimeDbContextFa
 
     public TDbContext CreateDbContext(string[] args)
     {
-        var builder = new MsSqlBuilder().WithName($"{GetType().Name}");
+        var builder = new MsSqlBuilder().WithName(GetType().Name);
         ConfigureMsSqlContainerBuilder(builder);
         _container = builder.Build();
 

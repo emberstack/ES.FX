@@ -17,10 +17,153 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities.Outbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeliveryDelayedUntil")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("Lock")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddedAt");
+
+                    b.HasIndex("DeliveryDelayedUntil");
+
+                    b.ToTable("__Outboxes", (string)null);
+                });
+
+            modelBuilder.Entity("ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities.OutboxMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("DeliveryAttemptDelay")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("DeliveryAttemptDelayIsExponential")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("DeliveryAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("DeliveryFirstAttemptedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeliveryLastAttemptError")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset?>("DeliveryLastAttemptedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("DeliveryMaxAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("DeliveryNotAfter")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeliveryNotBefore")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Headers")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("OutboxId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PayloadType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("__OutboxMessages", (string)null);
+                });
+
+            modelBuilder.Entity("ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities.OutboxMessageFault", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("DeliveryAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("DeliveryFirstAttemptedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeliveryLastAttemptError")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset?>("DeliveryLastAttemptedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeliveryNotAfter")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeliveryNotBefore")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("FaultedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Headers")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("OutboxId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PayloadType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("__OutboxMessageFaults", (string)null);
+                });
 
             modelBuilder.Entity("Playground.Shared.Data.Simple.EntityFrameworkCore.Entities.SimpleUser", b =>
                 {

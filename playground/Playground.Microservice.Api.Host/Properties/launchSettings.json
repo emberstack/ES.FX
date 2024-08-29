@@ -11,7 +11,18 @@
       "publishAllPorts": true,
       "useSSL": false,
       "httpPort": 50000,
-      "dockerfileRunArguments": "--network localenv"
+      "dockerfileRunArguments": "--network localenv --memory=512m"
+    },
+    "HOST": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_HTTP_PORTS": "8080"
+      },
+      "applicationUrl": "http://0.0.0.0:50001",
+      "dotnetRunMessages": false,
+      "httpPort": 50000
     }
   },
   "$schema": "http://json.schemastore.org/launchsettings.json"
