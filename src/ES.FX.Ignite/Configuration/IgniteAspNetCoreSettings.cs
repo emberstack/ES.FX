@@ -30,7 +30,7 @@ public class IgniteAspNetCoreSettings
 
 
     /// <summary>
-    ///     Gets or sets a value indicating whether the <see cref="QueryStringToHeaderMiddleware"/> is enabled
+    ///     Gets or sets a value indicating whether the <see cref="QueryStringToHeaderMiddleware" /> is enabled
     /// </summary>
     public bool QueryStringToHeaderMiddlewareEnabled { get; set; } = true;
 }

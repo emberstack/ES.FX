@@ -13,8 +13,11 @@ using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
 using ES.FX.Serilog.Lifetime;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using FluentValidation;
 using HealthChecks.UI.Client;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Playground.Microservice.Api.Host.HostedServices;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
@@ -46,7 +49,11 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
 
     //SqlServerDbContext
-    builder.IgniteSqlServerDbContextFactory<SimpleDbContext>(nameof(SimpleDbContext),
+    builder.IgniteSqlServerDbContextFactory<SimpleDbContext>(
+        configureDbContextOptionsBuilder: dbContextOptionsBuilder =>
+        {
+            dbContextOptionsBuilder.ConfigureWarnings(w => w.Ignore(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
+        },
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {
             sqlServerDbContextOptionsBuilder.MigrationsAssembly(
@@ -78,6 +85,11 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddHostedService<TestHostedService>();
     builder.Services.AddScoped<IValidator<TestRequest>, TestValidator>();
     builder.Services.AddScoped<IValidator<TestComplexRequest>, TestComplexRequestValidator>();
+
+
+    builder.Services.AddOutboxMessageType<OutboxTestMessage>();
+
+    builder.Services.AddOutboxDeliveryService<SimpleDbContext, OutboxMessageHandler>();
 
 
     var app = builder.Build();

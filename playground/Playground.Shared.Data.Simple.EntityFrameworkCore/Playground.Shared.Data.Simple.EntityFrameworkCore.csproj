@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ES.FX.Microsoft.EntityFrameworkCore\ES.FX.Microsoft.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore\ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.8" />
+		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
+		<!--<PackageReference Include="System.Threading.Channels" Version="8.0.0" />-->
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\ES.FX.Microsoft.EntityFrameworkCore\ES.FX.Microsoft.EntityFrameworkCore.csproj" />
+	</ItemGroup>
+
+</Project>
