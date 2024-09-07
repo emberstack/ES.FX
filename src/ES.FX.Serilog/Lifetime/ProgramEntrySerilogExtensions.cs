@@ -53,7 +53,7 @@ public static class ProgramEntrySerilogExtensions
                 .CreateLogger(typeof(ProgramEntry).FullName ?? nameof(ProgramEntry)));
 
         // Handle application exit by closing and flushing the Serilog logger
-        builder.AddExitAction(async _ => await Log.CloseAndFlushAsync());
+        builder.AddExitAction(async _ => await Log.CloseAndFlushAsync().ConfigureAwait(false));
 
         return builder;
     }

@@ -12,7 +12,8 @@ public class RelationalDbContextMigrationsHealthCheck<TContext>(TContext dbConte
         ArgumentNullException.ThrowIfNull(context);
         try
         {
-            var migrations = (await dbContext.Database.GetPendingMigrationsAsync(cancellationToken)).ToList();
+            var migrations =
+                (await dbContext.Database.GetPendingMigrationsAsync(cancellationToken).ConfigureAwait(false)).ToList();
             return migrations.Count == 0
                 ? HealthCheckResult.Healthy()
                 : HealthCheckResult.Unhealthy($"Database has {migrations.Count} pending migration(s)");

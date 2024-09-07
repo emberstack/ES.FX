@@ -23,12 +23,13 @@ public class RelationalDbContextMigrationsTask<TDbContext>(
         stopWatch.Start();
 
 
-        var migrations = (await context.Database.GetPendingMigrationsAsync(cancellationToken)).ToList();
+        var migrations = (await context.Database.GetPendingMigrationsAsync(cancellationToken)
+            .ConfigureAwait(false)).ToList();
 
         if (migrations.Count > 0)
         {
             logger.LogInformation("Applying {count} migrations", migrations.Count);
-            await context.Database.MigrateAsync(cancellationToken);
+            await context.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
         }
         else
         {

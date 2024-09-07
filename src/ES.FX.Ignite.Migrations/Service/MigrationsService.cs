@@ -46,7 +46,7 @@ public class MigrationsService(
             var taskStopwatch = new Stopwatch();
             taskStopwatch.Start();
 
-            await task.ApplyMigrations(cancellationToken);
+            await task.ApplyMigrations(cancellationToken).ConfigureAwait(false);
 
             taskStopwatch.Stop();
             logger.LogDebug("Task {currentMigrationTaskIndex}/{migrationTaskCount} completed in {elapsed}",

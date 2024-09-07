@@ -49,7 +49,7 @@ public class ManifestResource(Assembly assembly, string name)
     public async Task<byte[]?> ReadAllBytesAsync(CancellationToken cancellation = default)
     {
         await using var stream = GetStream();
-        return stream is not null ? await stream.ToByteArrayAsync(cancellation) : null;
+        return stream is not null ? await stream.ToByteArrayAsync(cancellation).ConfigureAwait(false) : null;
     }
 
 
@@ -70,7 +70,7 @@ public class ManifestResource(Assembly assembly, string name)
     {
         using var reader = GetStreamReader();
         if (reader is null) return null;
-        return await reader.ReadToEndAsync(cancellationToken);
+        return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
     }
 
 

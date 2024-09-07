@@ -44,10 +44,10 @@ public static class SqlServerSafeQuery
     {
         try
         {
-            await connection.OpenAsync(cancellationToken);
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             var command = connection.CreateCommand();
             command.CommandText = CommandText;
-            var result = await command.ExecuteScalarAsync(cancellationToken);
+            var result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
             if (close) connection.Close();
             return result != null && (int)result == 1;
         }

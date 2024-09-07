@@ -92,7 +92,6 @@ internal class OutboxDbContextSaveChangesInterceptor : SaveChangesInterceptor
 
         foreach (var message in addedMessages) message.Entity.OutboxId = outboxEntry.Entity.Id;
 
-
         DbContextDictionary.AddOrUpdate(context.GetType(),
             _ => [new WeakReference(context)],
             (_, bag) =>

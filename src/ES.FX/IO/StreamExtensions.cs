@@ -32,7 +32,7 @@ public static class StreamExtensions
             return directMemoryStream.ToArray();
 
         using var memoryStream = new MemoryStream();
-        await stream.CopyToAsync(memoryStream, cancellationToken);
+        await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
         return memoryStream.ToArray();
     }
 }

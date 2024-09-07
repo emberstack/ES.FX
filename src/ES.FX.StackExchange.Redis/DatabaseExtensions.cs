@@ -55,7 +55,8 @@ public static class DatabaseExtensions
     public static async Task<long> KeysDeleteAsync(this IDatabase database, string pattern, uint batchSize = 1000)
     {
         var result =
-            await database.ScriptEvaluateAsync(DeleteAllWithPatternBatchedScript, values: [pattern, batchSize]);
+            await database.ScriptEvaluateAsync(DeleteAllWithPatternBatchedScript, values: [pattern, batchSize])
+                .ConfigureAwait(false);
         return long.Parse(result.ToString());
     }
 }

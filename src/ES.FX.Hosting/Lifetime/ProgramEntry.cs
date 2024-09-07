@@ -18,7 +18,7 @@ public sealed class ProgramEntry(
         try
         {
             logger.LogTrace("Starting Program");
-            var exitCode = await action(options);
+            var exitCode = await action(options).ConfigureAwait(false);
             logger.LogDebug("Program completed with exit code {exitCode}", exitCode);
             return exitCode;
         }
@@ -35,7 +35,7 @@ public sealed class ProgramEntry(
         }
         finally
         {
-            foreach (var exitAction in exitActions) await exitAction(options);
+            foreach (var exitAction in exitActions) await exitAction(options).ConfigureAwait(false);
         }
     }
 

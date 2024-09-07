@@ -218,7 +218,8 @@ public class OutboxDeliveryService<TDbContext>(
         IOutboxMessageType[] messageTypes,
         CancellationToken cancellationToken)
     {
-        var deliverMessageActivity = new Activity("OutboxMessageDelivery");
+        Activity? deliverMessageActivity = null;
+        var success = false;
         try
         {
             logger.LogTrace("Delivering outbox/message:{outboxId}/{messageId} - Attempt {attempt}/{maxAttempts}",
@@ -227,13 +228,18 @@ public class OutboxDeliveryService<TDbContext>(
             var headers =
                 JsonSerializer.Deserialize<Dictionary<string, string?>>(message.Headers) ?? [];
 
-            //Set the parent activity id if available for distributed tracing
-            var parentActivityId =
-                headers.GetValueOrDefault(OutboxMessageHeaders.Diagnostics.ActivityId);
-            if (!string.IsNullOrWhiteSpace(parentActivityId))
-                deliverMessageActivity.SetParentId(parentActivityId);
-
-            deliverMessageActivity.Start();
+            deliverMessageActivity = Diagnostics.ActivitySource.StartActivity(
+                Diagnostics.DeliverMessageActivityName,
+                ActivityKind.Server,
+                headers.GetValueOrDefault(OutboxMessageHeaders.Diagnostics.ActivityId),
+                new Dictionary<string, object?>
+                {
+                    { "outbox.id", message.OutboxId },
+                    { "outbox.message.id", message.Id },
+                    { "outbox.message.addedAt", message.AddedAt },
+                    { "outbox.message.attempt", message.DeliveryAttempts },
+                    { "outbox.dbContext.type", typeof(TDbContext).FullName }
+                });
 
             //Determines the payload type of the message. Order of precedence: MessageType attribute, PayloadType, PayloadOriginalType
             var payloadType = messageTypes.FirstOrDefault(x =>
@@ -251,7 +257,7 @@ public class OutboxDeliveryService<TDbContext>(
             if (payload is null)
                 throw new NotSupportedException("Could not deserialize the message payload");
 
-            var success = await messageHandler
+            success = await messageHandler
                 .HandleAsync(new OutboxMessageHandlerContext(payloadType, payload), cancellationToken)
                 .ConfigureAwait(false);
 
@@ -270,7 +276,9 @@ public class OutboxDeliveryService<TDbContext>(
         }
         finally
         {
-            deliverMessageActivity.Stop();
+            deliverMessageActivity?.SetStatus(success ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
+            deliverMessageActivity?.Stop();
+            deliverMessageActivity?.Dispose();
         }
     }
 

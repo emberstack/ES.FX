@@ -7,6 +7,7 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore;
 
@@ -36,7 +37,9 @@ public static class OutboxExtensions
     /// <param name="optionsBuilder"></param>
     public static void AddOutboxBehavior(this DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.AddInterceptors(new OutboxDbContextSaveChangesInterceptor());
+        optionsBuilder.AddInterceptors(
+            new OutboxDbContextSaveChangesInterceptor(),
+            new OutboxDbContextTransactionInterceptor());
     }
 
 
@@ -110,4 +113,9 @@ public static class OutboxExtensions
     {
         foreach (var type in types) serviceCollection.AddOutboxMessageType(type);
     }
+
+
+    public static TracerProviderBuilder AddTransactionalOutboxInstrumentation(
+        this TracerProviderBuilder builder) =>
+        builder.AddSource(Diagnostics.ActivitySourceName);
 }
