@@ -73,11 +73,6 @@ public static class IgniteHostingExtensions
             });
 
         builder.Services.AddOpenTelemetry()
-            .ConfigureResource(r =>
-            {
-                r.AddService(builder.Environment.ApplicationName);
-                r.AddEnvironmentVariableDetector();
-            })
             .WithMetrics(metrics =>
             {
                 if (settings.RuntimeMetricsEnabled) metrics.AddRuntimeInstrumentation();
@@ -97,6 +92,14 @@ public static class IgniteHostingExtensions
 
         if (settings.OtlpExporterEnabled) builder.Services.AddOpenTelemetry().UseOtlpExporter();
         if (settings.AzureMonitorExporterEnabled) builder.Services.AddOpenTelemetry().UseAzureMonitor();
+
+        //This must be called last, after AzureMonitor so attributes don't get overridden
+        builder.Services.AddOpenTelemetry()
+            .ConfigureResource(r =>
+            {
+                r.AddService(builder.Environment.ApplicationName);
+                r.AddEnvironmentVariableDetector();
+            });
     }
 
     private static void AddHealthChecks(IHostApplicationBuilder builder, IgniteHealthChecksSettings settings)
