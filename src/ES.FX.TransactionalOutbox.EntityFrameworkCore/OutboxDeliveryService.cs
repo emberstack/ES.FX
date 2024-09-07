@@ -293,12 +293,14 @@ public class OutboxDeliveryService<TDbContext>(
         string source;
         try
         {
-            source = await OutboxDeliverySignal.GetChannel<TDbContext>().Reader.ReadAsync(sleepCts.Token).ConfigureAwait(false);
+            source = await OutboxDeliverySignal.GetChannel<TDbContext>().Reader.ReadAsync(sleepCts.Token)
+                .ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
             source = nameof(OutboxDeliveryOptions<TDbContext>.PollingInterval);
         }
+
         logger.LogTrace("Sleep interrupted by {source}", source);
     }
 }

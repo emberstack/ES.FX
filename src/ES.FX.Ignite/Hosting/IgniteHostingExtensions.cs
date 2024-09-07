@@ -73,7 +73,11 @@ public static class IgniteHostingExtensions
             });
 
         builder.Services.AddOpenTelemetry()
-            .ConfigureResource(r => r.AddService(builder.Environment.ApplicationName))
+            .ConfigureResource(r =>
+            {
+                r.AddService(builder.Environment.ApplicationName);
+                r.AddEnvironmentVariableDetector();
+            })
             .WithMetrics(metrics =>
             {
                 if (settings.RuntimeMetricsEnabled) metrics.AddRuntimeInstrumentation();
