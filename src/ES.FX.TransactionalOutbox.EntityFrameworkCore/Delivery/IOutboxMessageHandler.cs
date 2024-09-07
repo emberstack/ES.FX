@@ -9,7 +9,7 @@ public interface IOutboxMessageHandler
     ///     Returns whether the handler can deliver messages. This can be used to delay the delivery of messages until certain
     ///     conditions are met (example: health checks)
     /// </summary>
-    public ValueTask<bool> IsReadyAsync();
+    public ValueTask<bool> IsReadyAsync() => ValueTask.FromResult(true);
 
 
     /// <summary>

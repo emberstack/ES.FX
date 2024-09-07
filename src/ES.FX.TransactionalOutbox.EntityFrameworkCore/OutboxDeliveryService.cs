@@ -290,14 +290,15 @@ public class OutboxDeliveryService<TDbContext>(
 
         using var delayTokenCts = new CancellationTokenSource(delay);
         using var sleepCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, delayTokenCts.Token);
+        string source;
         try
         {
-            await OutboxDeliverySignal.GetChannel<TDbContext>().Reader.ReadAsync(sleepCts.Token).ConfigureAwait(false);
-            logger.LogTrace("Sleep interrupted by signal");
+            source = await OutboxDeliverySignal.GetChannel<TDbContext>().Reader.ReadAsync(sleepCts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            // Ignored. This is expected due to the delay token
+            source = nameof(OutboxDeliveryOptions<TDbContext>.PollingInterval);
         }
+        logger.LogTrace("Sleep interrupted by {source}", source);
     }
 }

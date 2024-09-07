@@ -38,8 +38,7 @@ public static class OutboxExtensions
     public static void AddOutboxBehavior(this DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.AddInterceptors(
-            new OutboxDbContextSaveChangesInterceptor(),
-            new OutboxDbContextTransactionInterceptor());
+            new OutboxDbContextInterceptor());
     }
 
 

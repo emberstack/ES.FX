@@ -8,21 +8,21 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 /// </summary>
 internal static class OutboxDeliverySignal
 {
-    private static readonly ConcurrentDictionary<Type, Channel<Type>> Channels = new();
+    private static readonly ConcurrentDictionary<Type, Channel<string>> Channels = new();
 
-    public static Channel<Type> GetChannel(Type type)
+    public static Channel<string> GetChannel(Type type)
     {
-        return Channels.GetOrAdd(type, _ => Channel.CreateUnbounded<Type>());
+        return Channels.GetOrAdd(type, _ => Channel.CreateUnbounded<string>());
     }
 
-    public static Channel<Type> GetChannel<TType>() => GetChannel(typeof(TType));
+    public static Channel<string> GetChannel<TType>() => GetChannel(typeof(TType));
 
 
-    public static Channel<Type> RenewChannel(Type type)
+    public static Channel<string> RenewChannel(Type type)
     {
-        var channel = Channel.CreateUnbounded<Type>();
+        var channel = Channel.CreateUnbounded<string>();
         return Channels.AddOrUpdate(type, _ => channel, (_, _) => channel);
     }
 
-    public static Channel<Type> RenewChannel<TType>() => RenewChannel(typeof(TType));
+    public static Channel<string> RenewChannel<TType>() => RenewChannel(typeof(TType));
 }

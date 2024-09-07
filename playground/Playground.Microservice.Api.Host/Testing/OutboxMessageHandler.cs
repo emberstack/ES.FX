@@ -9,6 +9,8 @@ public class OutboxMessageHandler : IOutboxMessageHandler
     public async ValueTask<bool> HandleAsync(OutboxMessageHandlerContext context,
         CancellationToken cancellationToken = default)
     {
+        //await Task.Delay(Random.Shared.Next(10,300), cancellationToken);
+
         await Task.CompletedTask;
 
 

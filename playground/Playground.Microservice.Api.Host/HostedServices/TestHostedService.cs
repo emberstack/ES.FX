@@ -21,9 +21,7 @@ internal class TestHostedService(
         var factory = serviceProvider.GetRequiredService<IDbContextFactory<SimpleDbContext>>();
         while (true)
         {
-            await using var dbContext = await factory.CreateDbContextAsync(stoppingToken);
-
-
+            await using var dbContext = await factory.CreateDbContextAsync(stoppingToken).ConfigureAwait(false);
             for (var i = 0; i < 50; i++)
             {
                 dbContext.AddOutboxMessage(new OutboxTestMessage("Property"), new OutboxMessageOptions
@@ -36,8 +34,9 @@ internal class TestHostedService(
             }
 
             await dbContext.SaveChangesAsync(stoppingToken).ConfigureAwait(false);
+            await Task.Delay(10_000, stoppingToken).ConfigureAwait(false);
+            await Task.CompletedTask;
 
-            await Task.Delay(3_000, stoppingToken).ConfigureAwait(false);
         }
     }
 }
