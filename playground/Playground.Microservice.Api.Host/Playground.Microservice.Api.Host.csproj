@@ -11,6 +11,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
+		<PackageReference Include="MediatR" Version="12.4.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
@@ -32,7 +34,6 @@
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.OpenTelemetry.Exporter.Seq\ES.FX.Ignite.OpenTelemetry.Exporter.Seq.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Serilog\ES.FX.Ignite.Serilog.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.StackExchange.Redis\ES.FX.Ignite.StackExchange.Redis.csproj" />
-		<ProjectReference Include="..\..\src\ES.FX.Ignite.Swashbuckle\ES.FX.Ignite.Swashbuckle.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite\ES.FX.Ignite.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Serilog\ES.FX.Serilog.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />

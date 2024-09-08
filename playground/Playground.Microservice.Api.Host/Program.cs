@@ -20,12 +20,22 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using FluentValidation;
 using HealthChecks.UI.Client;
+using MassTransit;
+using MassTransit.Configuration;
+using MassTransit.Logging;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Playground.Microservice.Api.Host.HostedServices;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
+using System.Windows.Input;
+using ES.FX.Microsoft.EntityFrameworkCore;
+using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
+using MediatR;
+using Google.Protobuf;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Options;
 
 return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(async _ =>
 {
@@ -38,7 +48,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Ignite(settings =>
     {
         settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
-        //settings.OpenTelemetry.AspNetCoreTracingHealthChecksRequestsFiltered = true;
     });
 
     //Add Seq
@@ -84,6 +93,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         configureDbContextOptionsBuilder: dbContextOptionsBuilder =>
         {
             dbContextOptionsBuilder.ConfigureWarnings(w => w.Ignore(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
+            dbContextOptionsBuilder.WithEntityConfigurationsFromAssembliesExtension(typeof(SimpleDbContext).Assembly);
         },
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {
@@ -103,16 +113,49 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.IgniteRedisClient();
 
 
+
+
+
     builder.Services.AddHostedService<TestHostedService>();
-    builder.Services.AddScoped<IValidator<TestRequest>, TestValidator>();
-    builder.Services.AddScoped<IValidator<TestComplexRequest>, TestComplexRequestValidator>();
 
 
     builder.Services.AddOutboxMessageType<OutboxTestMessage>();
-    builder.Services.AddOutboxDeliveryService<SimpleDbContext, OutboxMessageHandler>();
-
+    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitOutboxRelay>();
     builder.Services.AddOpenTelemetry().WithTracing(traceBuilder =>
         traceBuilder.AddTransactionalOutboxInstrumentation());
+
+
+    builder.Services.AddMediatR(cfg =>
+    {
+        cfg.RegisterServicesFromAssemblyContaining<Program>();
+    });
+
+
+
+    builder.Services.AddMassTransit(x =>
+    {
+        x.AddConsumer<MediatorConsumer<OutboxTestMessage>>(c =>
+        {
+        });
+
+        x.UsingRabbitMq((context, cfg) =>
+        {
+            cfg.Host("rabbitmq://rabbitmq.localenv.io/localenv", h => {
+                h.Username("admin");
+                h.Password("SuperPass#");
+                h.ConnectionName(builder.Environment.ApplicationName);
+            });
+            cfg.SendTopology.ConfigureErrorSettings =
+                settings => settings.SetQueueArgument("x-message-ttl", TimeSpan.FromDays(7));
+            cfg.Publish<INotification>(p => p.Exclude = true);
+
+            cfg.ConfigureEndpoints(context,
+                new DefaultEndpointNameFormatter(
+                    $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__"));
+        });
+    });
+    builder.Services.AddOpenTelemetry().WithTracing(traceBuilder =>
+        traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
 
 
     var app = builder.Build();

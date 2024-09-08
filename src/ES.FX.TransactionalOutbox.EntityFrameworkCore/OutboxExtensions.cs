@@ -35,11 +35,8 @@ public static class OutboxExtensions
     ///     grouping of messages in outboxes.
     /// </summary>
     /// <param name="optionsBuilder"></param>
-    public static void AddOutboxBehavior(this DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.AddInterceptors(
-            new OutboxDbContextInterceptor());
-    }
+    public static void AddOutboxBehavior(this DbContextOptionsBuilder optionsBuilder) =>
+        optionsBuilder.AddInterceptors(new OutboxDbContextInterceptor());
 
 
     /// <summary>
