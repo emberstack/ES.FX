@@ -34,10 +34,11 @@ public class OutboxDeliveryService<TDbContext>(
 
             //Default sleep interval. Gets updated by the options. This is used if options are not available due to exceptions
             var sleepInterval = TimeSpan.FromSeconds(10);
+            TDbContext? dbContext = null;
+            var scope = serviceProvider.CreateAsyncScope();
             try
             {
                 //Create a new scope for each iteration to avoid memory leaks
-                await using var scope = serviceProvider.CreateAsyncScope();
                 var options = scope.ServiceProvider
                     .GetRequiredService<IOptionsMonitor<OutboxDeliveryOptions<TDbContext>>>()
                     .CurrentValue;
@@ -56,151 +57,159 @@ public class OutboxDeliveryService<TDbContext>(
 
                 sleepInterval = options.PollingInterval;
 
-                await using var dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
-                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
-                    new CancellationTokenSource(options.DeliveryTimeout).Token);
+                dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
 
-                await using var transaction = await dbContext.Database
-                    .BeginTransactionAsync(options.TransactionIsolationLevel, timeout.Token)
-                    .ConfigureAwait(false);
-
-                try
-                {
-                    var outbox = await options.ExclusiveOutboxProvider
-                        .GetNextExclusiveOutboxWithoutDelay(dbContext, timeout.Token)
-                        .ConfigureAwait(false);
-
-                    if (outbox is null)
+                //Use an execution strategy to handle transient exceptions. This is required for SQL Server with retries enabled
+                await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
                     {
-                        logger.LogTrace("No outbox available");
-                        continue;
-                    }
+                        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
+                            new CancellationTokenSource(options.DeliveryTimeout).Token);
 
-                    //Set the lock for providers that do not support native locks. This updates the RowVersion
-                    outbox.Lock = Guid.NewGuid();
-                    outbox.DeliveryDelayedUntil = null;
+                        await using var transaction = await dbContext.Database
+                            .BeginTransactionAsync(options.TransactionIsolationLevel, timeout.Token)
+                            .ConfigureAwait(false);
 
-                    dbContext.Update((object)outbox);
-                    await dbContext.SaveChangesAsync(timeout.Token).ConfigureAwait(false);
-
-                    logger.LogTrace("Processing outbox {OutboxId}", outbox.Id);
-
-                    var messages = await dbContext.Set<OutboxMessage>()
-                        .Where(x => x.OutboxId == outbox.Id)
-                        .OrderBy(x => x.Id)
-                        .Take(options.BatchSize)
-                        .AsTracking()
-                        .ToListAsync(timeout.Token)
-                        .ConfigureAwait(false);
-
-
-                    foreach (var message in messages)
-                    {
-                        if (DateTimeOffset.UtcNow > message.DeliveryNotAfter)
+                        try
                         {
-                            logger.LogTrace("Outbox message {outboxId}/{messageId} has expired", message.OutboxId,
-                                message.Id);
-                            dbContext.Remove((object)message);
-                            continue;
-                        }
+                            var outbox = await options.ExclusiveOutboxProvider
+                                .GetNextExclusiveOutboxWithoutDelay(dbContext, timeout.Token)
+                                .ConfigureAwait(false);
 
-                        if (DateTimeOffset.UtcNow < message.DeliveryNotBefore)
-                        {
-                            logger.LogTrace(
-                                "Outbox message {outboxId}/{messageId} is not ready to be delivered until {notBefore}. Delaying outbox.",
-                                message.OutboxId,
-                                message.Id, message.DeliveryNotBefore);
-
-                            //Delay the entire outbox to preserve the order of messages
-                            outbox.DeliveryDelayedUntil = message.DeliveryNotBefore;
-
-                            //Proceed to the next available outbox, since this one is delayed
-                            break;
-                        }
-
-                        message.DeliveryFirstAttemptedAt ??= DateTimeOffset.UtcNow;
-                        message.DeliveryLastAttemptedAt = DateTimeOffset.UtcNow;
-                        message.DeliveryAttempts++;
-
-
-                        if (await DeliverMessage(message, messageHandler, messageTypes, timeout.Token)
-                                .ConfigureAwait(false))
-                        {
-                            dbContext.Remove(message);
-                        }
-                        else
-                        {
-                            //If the message has reached the maximum number of attempts, mark it as faulted
-                            if (message.DeliveryAttempts >= (message.DeliveryMaxAttempts ?? 1))
+                            if (outbox is null)
                             {
-                                logger.LogError("Outbox/message {outboxId}/{messageId} delivery has permanently failed",
-                                    message.OutboxId, message.Id);
-                                dbContext.Remove((object)message);
+                                logger.LogTrace("No outbox available");
+                                return;
+                            }
 
-                                dbContext.Set<OutboxMessageFault>().Add(new OutboxMessageFault
+                            //Set the lock for providers that do not support native locks. This updates the RowVersion
+                            outbox.Lock = Guid.NewGuid();
+                            outbox.DeliveryDelayedUntil = null;
+
+                            dbContext.Update((object)outbox);
+                            await dbContext.SaveChangesAsync(timeout.Token).ConfigureAwait(false);
+
+                            logger.LogTrace("Processing outbox {OutboxId}", outbox.Id);
+
+                            var messages = await dbContext.Set<OutboxMessage>()
+                                .Where(x => x.OutboxId == outbox.Id)
+                                .OrderBy(x => x.Id)
+                                .Take(options.BatchSize)
+                                .AsTracking()
+                                .ToListAsync(timeout.Token)
+                                .ConfigureAwait(false);
+
+
+                            foreach (var message in messages)
+                            {
+                                if (DateTimeOffset.UtcNow > message.DeliveryNotAfter)
                                 {
-                                    Id = message.Id,
-                                    OutboxId = message.OutboxId,
-                                    AddedAt = message.AddedAt,
-                                    Headers = message.Headers,
-                                    Payload = message.Payload,
-                                    PayloadType = message.PayloadType,
-                                    DeliveryAttempts = message.DeliveryAttempts,
-                                    DeliveryFirstAttemptedAt = message.DeliveryFirstAttemptedAt,
-                                    DeliveryLastAttemptedAt = message.DeliveryLastAttemptedAt,
-                                    DeliveryLastAttemptError = message.DeliveryLastAttemptError,
-                                    DeliveryNotBefore = message.DeliveryNotBefore,
-                                    DeliveryNotAfter = message.DeliveryNotAfter,
-                                    FaultedAt = DateTimeOffset.UtcNow
-                                });
+                                    logger.LogTrace("Outbox message {outboxId}/{messageId} has expired",
+                                        message.OutboxId,
+                                        message.Id);
+                                    dbContext.Remove((object)message);
+                                    continue;
+                                }
+
+                                if (DateTimeOffset.UtcNow < message.DeliveryNotBefore)
+                                {
+                                    logger.LogTrace(
+                                        "Outbox message {outboxId}/{messageId} is not ready to be delivered until {notBefore}. Delaying outbox.",
+                                        message.OutboxId,
+                                        message.Id, message.DeliveryNotBefore);
+
+                                    //Delay the entire outbox to preserve the order of messages
+                                    outbox.DeliveryDelayedUntil = message.DeliveryNotBefore;
+
+                                    //Proceed to the next available outbox, since this one is delayed
+                                    break;
+                                }
+
+                                message.DeliveryFirstAttemptedAt ??= DateTimeOffset.UtcNow;
+                                message.DeliveryLastAttemptedAt = DateTimeOffset.UtcNow;
+                                message.DeliveryAttempts++;
+
+
+                                if (await DeliverMessage(message, messageHandler, messageTypes, timeout.Token)
+                                        .ConfigureAwait(false))
+                                {
+                                    dbContext.Remove(message);
+                                }
+                                else
+                                {
+                                    //If the message has reached the maximum number of attempts, mark it as faulted
+                                    if (message.DeliveryAttempts >= (message.DeliveryMaxAttempts ?? 1))
+                                    {
+                                        logger.LogError(
+                                            "Outbox/message {outboxId}/{messageId} delivery has permanently failed",
+                                            message.OutboxId, message.Id);
+                                        dbContext.Remove((object)message);
+
+                                        dbContext.Set<OutboxMessageFault>().Add(new OutboxMessageFault
+                                        {
+                                            Id = message.Id,
+                                            OutboxId = message.OutboxId,
+                                            AddedAt = message.AddedAt,
+                                            Headers = message.Headers,
+                                            Payload = message.Payload,
+                                            PayloadType = message.PayloadType,
+                                            DeliveryAttempts = message.DeliveryAttempts,
+                                            DeliveryFirstAttemptedAt = message.DeliveryFirstAttemptedAt,
+                                            DeliveryLastAttemptedAt = message.DeliveryLastAttemptedAt,
+                                            DeliveryLastAttemptError = message.DeliveryLastAttemptError,
+                                            DeliveryNotBefore = message.DeliveryNotBefore,
+                                            DeliveryNotAfter = message.DeliveryNotAfter,
+                                            FaultedAt = DateTimeOffset.UtcNow
+                                        });
+                                    }
+                                    // If the message has a delay, delay the entire outbox
+                                    else if (message.DeliveryAttemptDelay > 0)
+                                    {
+                                        var waitTime = message.DeliveryAttemptDelay *
+                                                       (message.DeliveryAttemptDelayIsExponential
+                                                           ? (int)Math.Pow(2, message.DeliveryAttempts - 1)
+                                                           : 1);
+                                        outbox.DeliveryDelayedUntil = DateTimeOffset.UtcNow.AddSeconds(waitTime);
+
+                                        logger.LogWarning(
+                                            "Delaying delivery of outbox {outboxId} for {delay} due to message delivery failure",
+                                            message.OutboxId,
+                                            outbox.DeliveryDelayedUntil.Value.Subtract(DateTimeOffset.UtcNow));
+
+                                        //Proceed to the next available outbox, since this one is delayed
+                                        break;
+                                    }
+                                }
                             }
-                            // If the message has a delay, delay the entire outbox
-                            else if (message.DeliveryAttemptDelay > 0)
+
+
+                            if (messages.Count == 0)
                             {
-                                var waitTime = message.DeliveryAttemptDelay *
-                                               (message.DeliveryAttemptDelayIsExponential
-                                                   ? (int)Math.Pow(2, message.DeliveryAttempts - 1)
-                                                   : 1);
-                                outbox.DeliveryDelayedUntil = DateTimeOffset.UtcNow.AddSeconds(waitTime);
+                                logger.LogTrace("Removing empty outbox {outboxId}", outbox.Id);
+                                dbContext.Remove((object)outbox);
+                            }
 
-                                logger.LogWarning(
-                                    "Delaying delivery of outbox {outboxId} for {delay} due to message delivery failure",
-                                    message.OutboxId,
-                                    outbox.DeliveryDelayedUntil.Value.Subtract(DateTimeOffset.UtcNow));
-
-                                //Proceed to the next available outbox, since this one is delayed
-                                break;
+                            await dbContext.SaveChangesAsync(timeout.Token).ConfigureAwait(false);
+                            await transaction.CommitAsync(timeout.Token).ConfigureAwait(false);
+                            sleep = false;
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            //Ignored
+                        }
+                        catch (Exception exception)
+                        {
+                            logger.LogError(exception, "Exception occured while processing outbox");
+                            try
+                            {
+                                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                            }
+                            catch (Exception innerException)
+                            {
+                                logger.LogWarning(innerException, "Transaction rollback failed");
                             }
                         }
                     }
-
-
-                    if (messages.Count == 0)
-                    {
-                        logger.LogTrace("Removing empty outbox {outboxId}", outbox.Id);
-                        dbContext.Remove((object)outbox);
-                    }
-
-                    await dbContext.SaveChangesAsync(timeout.Token).ConfigureAwait(false);
-                    await transaction.CommitAsync(timeout.Token).ConfigureAwait(false);
-                    sleep = false;
-                }
-                catch (OperationCanceledException)
-                {
-                    //Ignored
-                }
-                catch (Exception exception)
-                {
-                    logger.LogError(exception, "Exception occured while processing outbox");
-                    try
-                    {
-                        await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
-                    }
-                    catch (Exception innerException)
-                    {
-                        logger.LogWarning(innerException, "Transaction rollback failed");
-                    }
-                }
+                ).ConfigureAwait(false);
             }
             catch (Exception exception)
             {
@@ -208,6 +217,9 @@ public class OutboxDeliveryService<TDbContext>(
             }
             finally
             {
+                if (dbContext != null)
+                    await dbContext.DisposeAsync().ConfigureAwait(false);
+                await scope.DisposeAsync().ConfigureAwait(false);
                 if (sleep) await Sleep(sleepInterval, stoppingToken).ConfigureAwait(false);
             }
         }
