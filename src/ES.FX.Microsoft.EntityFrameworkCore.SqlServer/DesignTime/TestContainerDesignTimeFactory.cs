@@ -24,6 +24,7 @@ public class TestContainerDesignTimeFactory<TDbContext> : IDesignTimeDbContextFa
 
         _container.StartAsync().Wait();
         var optionsBuilder = new DbContextOptionsBuilder<TDbContext>();
+        ConfigureDbContextOptionsBuilder(optionsBuilder);
         optionsBuilder.UseSqlServer(_container.GetConnectionString(), ConfigureSqlServerOptions);
 
 
@@ -33,6 +34,13 @@ public class TestContainerDesignTimeFactory<TDbContext> : IDesignTimeDbContextFa
 #pragma warning restore EF1001
 
         return context;
+    }
+
+    /// <summary>
+    ///     Configures the <see cref="DbContextOptionsBuilder{TDbContext}"/>> before the DbContext is created
+    /// </summary>
+    protected virtual void ConfigureDbContextOptionsBuilder(DbContextOptionsBuilder<TDbContext> builder)
+    {
     }
 
     /// <summary>
