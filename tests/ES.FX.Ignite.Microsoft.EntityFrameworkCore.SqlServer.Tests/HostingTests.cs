@@ -316,7 +316,7 @@ public class HostingTests
 
         return;
 
-        void ConfigureDbContextOptionsBuilder(DbContextOptionsBuilder dbContextOptionsBuilder)
+        void ConfigureDbContextOptionsBuilder(IServiceProvider _,DbContextOptionsBuilder dbContextOptionsBuilder)
         {
             //Enable sensitive data logging
             dbContextOptionsBuilder.EnableSensitiveDataLogging();

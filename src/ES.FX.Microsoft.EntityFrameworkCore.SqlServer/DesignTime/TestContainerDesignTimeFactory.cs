@@ -37,7 +37,7 @@ public class TestContainerDesignTimeFactory<TDbContext> : IDesignTimeDbContextFa
     }
 
     /// <summary>
-    ///     Configures the <see cref="DbContextOptionsBuilder{TDbContext}"/>> before the DbContext is created
+    ///     Configures the <see cref="DbContextOptionsBuilder{TDbContext}" />> before the DbContext is created
     /// </summary>
     protected virtual void ConfigureDbContextOptionsBuilder(DbContextOptionsBuilder<TDbContext> builder)
     {

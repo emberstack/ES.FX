@@ -51,7 +51,7 @@ public static class SqlServerDbContextHostingExtensions
         string? name = null,
         Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
         Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
-        Action<DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
+        Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
         Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder = null,
         ServiceLifetime lifetime = ServiceLifetime.Transient,
         string configurationSectionPath = DbContextSpark.ConfigurationSectionPath) where TDbContext : DbContext =>
@@ -102,7 +102,7 @@ public static class SqlServerDbContextHostingExtensions
         string? name = null,
         Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
         Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
-        Action<DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
+        Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
         Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder = null,
         ServiceLifetime lifetime = ServiceLifetime.Transient,
         string configurationSectionPath = DbContextSpark.ConfigurationSectionPath) where TDbContext : DbContext =>
@@ -115,7 +115,7 @@ public static class SqlServerDbContextHostingExtensions
         string? name = null,
         Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
         Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
-        Action<DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
+        Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
         Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder = null,
         ServiceLifetime lifetime = ServiceLifetime.Transient,
         string configurationSectionPath = DbContextSpark.ConfigurationSectionPath,
@@ -153,7 +153,7 @@ public static class SqlServerDbContextHostingExtensions
 
     private static void ConfigureDbContextOptionsBuilder<TDbContext>(IServiceProvider serviceProvider,
         DbContextOptionsBuilder dbContextOptionsBuilder,
-        Action<DbContextOptionsBuilder>? configureDbContextOptionsBuilder,
+        Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptionsBuilder,
         Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder)
         where TDbContext : DbContext
     {
@@ -174,7 +174,7 @@ public static class SqlServerDbContextHostingExtensions
                 configureSqlServerDbContextOptionsBuilder?.Invoke(options);
             })
             .UseExceptionProcessor();
-        configureDbContextOptionsBuilder?.Invoke(dbContextOptionsBuilder);
+        configureDbContextOptionsBuilder?.Invoke(serviceProvider, dbContextOptionsBuilder);
     }
 
 
