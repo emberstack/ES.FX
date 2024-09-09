@@ -36,6 +36,7 @@ using MediatR;
 using Google.Protobuf;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
+using Playground.Microservice.Api.Host.Outbox;
 
 return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(async _ =>
 {
@@ -90,7 +91,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     //SqlServerDbContext
     builder.IgniteSqlServerDbContextFactory<SimpleDbContext>(
-        configureDbContextOptionsBuilder: dbContextOptionsBuilder =>
+        configureDbContextOptionsBuilder: (_, dbContextOptionsBuilder) =>
         {
             dbContextOptionsBuilder.ConfigureWarnings(w => w.Ignore(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
             dbContextOptionsBuilder.WithEntityConfigurationsFromAssembliesExtension(typeof(SimpleDbContext).Assembly);
@@ -134,13 +135,14 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     builder.Services.AddMassTransit(x =>
     {
-        x.AddConsumer<MediatorConsumer<OutboxTestMessage>>(c =>
+        x.AddConsumer<MediatorGenericConsumer<OutboxTestMessage>>(c =>
         {
         });
 
         x.UsingRabbitMq((context, cfg) =>
         {
-            cfg.Host("rabbitmq://rabbitmq.localenv.io/localenv", h => {
+            cfg.Host("rabbitmq://rabbitmq.localenv.io/localenv", h =>
+            {
                 h.Username("admin");
                 h.Password("SuperPass#");
                 h.ConnectionName(builder.Environment.ApplicationName);

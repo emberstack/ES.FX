@@ -1,7 +1,7 @@
 ﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using MassTransit;
 
-namespace Playground.Microservice.Api.Host.Testing;
+namespace Playground.Microservice.Api.Host.Outbox;
 
 public class MassTransitOutboxRelay(IBusControl busControl, IPublishEndpoint publishEndpoint) : IOutboxMessageHandler
 {
