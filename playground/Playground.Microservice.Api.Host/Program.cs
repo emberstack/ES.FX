@@ -14,29 +14,22 @@ using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
+using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.NSwag.AspNetCore.Generation;
 using ES.FX.Serilog.Lifetime;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
-using FluentValidation;
 using HealthChecks.UI.Client;
 using MassTransit;
-using MassTransit.Configuration;
 using MassTransit.Logging;
+using MediatR;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Playground.Microservice.Api.Host.HostedServices;
+using Playground.Microservice.Api.Host.Outbox;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
-using System.Windows.Input;
-using ES.FX.Microsoft.EntityFrameworkCore;
-using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
-using MediatR;
-using Google.Protobuf;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Options;
-using Playground.Microservice.Api.Host.Outbox;
 
 return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(async _ =>
 {
@@ -46,10 +39,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Logging.ClearProviders();
     builder.IgniteSerilog();
 
-    builder.Ignite(settings =>
-    {
-        settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
-    });
+    builder.Ignite(settings => { settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse; });
 
     //Add Seq
     builder.IgniteSeqOpenTelemetryExporter();
@@ -114,9 +104,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.IgniteRedisClient();
 
 
-
-
-
     builder.Services.AddHostedService<TestHostedService>();
 
 
@@ -126,18 +113,12 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         traceBuilder.AddTransactionalOutboxInstrumentation());
 
 
-    builder.Services.AddMediatR(cfg =>
-    {
-        cfg.RegisterServicesFromAssemblyContaining<Program>();
-    });
-
+    builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
 
 
     builder.Services.AddMassTransit(x =>
     {
-        x.AddConsumer<MediatorGenericConsumer<OutboxTestMessage>>(c =>
-        {
-        });
+        x.AddConsumer<MediatorGenericConsumer<OutboxTestMessage>>(c => { });
 
         x.UsingRabbitMq((context, cfg) =>
         {

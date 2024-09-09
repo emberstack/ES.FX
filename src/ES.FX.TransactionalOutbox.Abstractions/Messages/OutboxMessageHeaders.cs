@@ -1,4 +1,4 @@
-﻿namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
+﻿namespace ES.FX.TransactionalOutbox.Abstractions.Messages;
 
 /// <summary>
 ///     Headers used in the outbox message

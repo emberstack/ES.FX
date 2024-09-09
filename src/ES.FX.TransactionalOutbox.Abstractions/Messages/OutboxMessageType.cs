@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
+namespace ES.FX.TransactionalOutbox.Abstractions.Messages;
 
 /// <summary>
 ///     Class used to define the message type for registration

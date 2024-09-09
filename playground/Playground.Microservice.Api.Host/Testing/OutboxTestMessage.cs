@@ -1,4 +1,4 @@
-﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
+﻿using ES.FX.TransactionalOutbox.Abstractions.Messages;
 using MassTransit;
 using MediatR;
 

@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
+using ES.FX.TransactionalOutbox.Abstractions.Messages;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -265,10 +265,8 @@ public class OutboxDeliveryService<TDbContext>(
                               throw new NotSupportedException("Could not determine the Type of the message");
 
 
-            var payload = JsonSerializer.Deserialize(message.Payload, payloadType);
-            if (payload is null)
-                throw new NotSupportedException("Could not deserialize the message payload");
-
+            var payload = JsonSerializer.Deserialize(message.Payload, payloadType) ??
+                          throw new NotSupportedException("Could not deserialize the message payload");
             success = await messageHandler
                 .HandleAsync(new OutboxMessageHandlerContext(payloadType, payload), cancellationToken)
                 .ConfigureAwait(false);

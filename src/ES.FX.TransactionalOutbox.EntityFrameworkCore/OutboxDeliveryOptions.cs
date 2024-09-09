@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore;
 
 /// <summary>
-///     Options used by the <see cref="OutboxDeliveryService{TDbContext}" />
+///     Options used by the <see cref="DeliveryService{TDbContext}" />
 /// </summary>
-/// <typeparam name="TDbContext">The <see cref="TDbContext" /></typeparam>
+/// <typeparam name="TDbContext">The <see cref="DeliveryService{TDbContext}" /></typeparam>
 public class OutboxDeliveryOptions<TDbContext> where TDbContext : DbContext
 {
     /// <summary>

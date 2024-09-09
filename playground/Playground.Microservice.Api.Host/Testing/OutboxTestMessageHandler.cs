@@ -2,11 +2,10 @@
 
 namespace Playground.Microservice.Api.Host.Testing;
 
-public class OutboxTestMessageHandler() : INotificationHandler<OutboxTestMessage>
+public class OutboxTestMessageHandler : INotificationHandler<OutboxTestMessage>
 {
     public async Task Handle(OutboxTestMessage request, CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
-
     }
 }

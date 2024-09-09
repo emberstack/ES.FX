@@ -160,11 +160,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.StackExchange.Redis.T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Ignite.StackExchange.Redis.Tests", "tests\ES.FX.Ignite.StackExchange.Redis.Tests\ES.FX.Ignite.StackExchange.Redis.Tests.csproj", "{F3C2DA14-F398-4192-B4D0-21B05719637E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Microsoft.AspNetCore", "src\ES.FX.Microsoft.AspNetCore\ES.FX.Microsoft.AspNetCore.csproj", "{3FBD2030-83AB-4D33-8E7C-9F4FCA4E9603}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.Microsoft.AspNetCore", "src\ES.FX.Microsoft.AspNetCore\ES.FX.Microsoft.AspNetCore.csproj", "{3FBD2030-83AB-4D33-8E7C-9F4FCA4E9603}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer", "src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj", "{9E83E1A6-0B46-4903-B1DA-16C463039E32}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer", "src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj", "{9E83E1A6-0B46-4903-B1DA-16C463039E32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.TransactionalOutbox.EntityFrameworkCore", "src\ES.FX.TransactionalOutbox.EntityFrameworkCore\ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj", "{C62E3FA6-98E6-405F-9E6B-860A38CDB864}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ES.FX.TransactionalOutbox.EntityFrameworkCore", "src\ES.FX.TransactionalOutbox.EntityFrameworkCore\ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj", "{C62E3FA6-98E6-405F-9E6B-860A38CDB864}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.TransactionalOutbox.Abstractions", "src\ES.FX.TransactionalOutbox.Abstractions\ES.FX.TransactionalOutbox.Abstractions.csproj", "{E8FB468E-DB1E-42DD-B666-604B55707602}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -456,6 +458,10 @@ Global
 		{C62E3FA6-98E6-405F-9E6B-860A38CDB864}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C62E3FA6-98E6-405F-9E6B-860A38CDB864}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C62E3FA6-98E6-405F-9E6B-860A38CDB864}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8FB468E-DB1E-42DD-B666-604B55707602}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8FB468E-DB1E-42DD-B666-604B55707602}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8FB468E-DB1E-42DD-B666-604B55707602}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8FB468E-DB1E-42DD-B666-604B55707602}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -537,6 +543,7 @@ Global
 		{3FBD2030-83AB-4D33-8E7C-9F4FCA4E9603} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 		{9E83E1A6-0B46-4903-B1DA-16C463039E32} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 		{C62E3FA6-98E6-405F-9E6B-860A38CDB864} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
+		{E8FB468E-DB1E-42DD-B666-604B55707602} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}

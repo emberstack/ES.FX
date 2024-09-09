@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
+using ES.FX.TransactionalOutbox.Abstractions.Messages;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

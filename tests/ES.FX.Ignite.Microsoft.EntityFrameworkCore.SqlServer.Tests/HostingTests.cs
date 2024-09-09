@@ -13,7 +13,6 @@ using Microsoft.Extensions.Options;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests;
 
-#pragma warning disable EF1001 // Internal EF Core API usage.
 public class HostingTests
 {
     [Theory]
@@ -206,7 +205,7 @@ public class HostingTests
 
         return;
 
-        void ConfigureSettings(SqlServerDbContextSparkSettings<TestDbContext> settings)
+        static void ConfigureSettings(SqlServerDbContextSparkSettings<TestDbContext> settings)
         {
             //Settings should have correct value from configuration
             Assert.True(settings.Tracing.Enabled);
@@ -316,7 +315,8 @@ public class HostingTests
 
         return;
 
-        void ConfigureDbContextOptionsBuilder(IServiceProvider _,DbContextOptionsBuilder dbContextOptionsBuilder)
+        static void ConfigureDbContextOptionsBuilder(IServiceProvider _,
+            DbContextOptionsBuilder dbContextOptionsBuilder)
         {
             //Enable sensitive data logging
             dbContextOptionsBuilder.EnableSensitiveDataLogging();
@@ -354,7 +354,7 @@ public class HostingTests
 
         return;
 
-        void ConfigureDbContextOptionsBuilder(SqlServerDbContextOptionsBuilder sqlServerDbContextOptionsBuilder)
+        static void ConfigureDbContextOptionsBuilder(SqlServerDbContextOptionsBuilder sqlServerDbContextOptionsBuilder)
         {
             sqlServerDbContextOptionsBuilder.CommandTimeout(commandTimeout);
         }
