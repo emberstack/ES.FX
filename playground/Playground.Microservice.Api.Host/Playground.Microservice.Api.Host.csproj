@@ -12,7 +12,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
-		<PackageReference Include="MediatR" Version="12.4.0" />
+		<PackageReference Include="MediatR" Version="12.4.1" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
@@ -22,33 +22,25 @@
 		<ProjectReference Include="..\..\src\ES.FX.Contracts\ES.FX.Contracts.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Asp.Versioning\ES.FX.Ignite.Asp.Versioning.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Azure.Data.Tables\ES.FX.Ignite.Azure.Data.Tables.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.Azure.Security.KeyVault.Secrets\ES.FX.Ignite.Azure.Security.KeyVault.Secrets.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.Azure.Security.KeyVault.Secrets\ES.FX.Ignite.Azure.Security.KeyVault.Secrets.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Azure.Storage.Blobs\ES.FX.Ignite.Azure.Storage.Blobs.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Azure.Storage.Queues\ES.FX.Ignite.Azure.Storage.Queues.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.FluentValidation\ES.FX.Ignite.FluentValidation.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.Microsoft.Data.SqlClient\ES.FX.Ignite.Microsoft.Data.SqlClient.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.Data.SqlClient\ES.FX.Ignite.Microsoft.Data.SqlClient.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Migrations\ES.FX.Ignite.Migrations.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.NSwag\ES.FX.Ignite.NSwag.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.Ignite.OpenTelemetry.Exporter.Seq\ES.FX.Ignite.OpenTelemetry.Exporter.Seq.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Ignite.OpenTelemetry.Exporter.Seq\ES.FX.Ignite.OpenTelemetry.Exporter.Seq.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Serilog\ES.FX.Ignite.Serilog.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.StackExchange.Redis\ES.FX.Ignite.StackExchange.Redis.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite\ES.FX.Ignite.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.MassTransit\ES.FX.MassTransit.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Serilog\ES.FX.Serilog.csproj" />
-		<ProjectReference
-			Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
-		<ProjectReference
-			Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
-		<ProjectReference
-			Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
+		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
+		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 
 </Project>

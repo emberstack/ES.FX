@@ -54,7 +54,7 @@ public class OutboxDeliveryService<TDbContext>(
 
                 sleepInterval = options.PollingInterval;
 
-                OutboxPayloadTypeProvider.RegisterTypes(options.MessageTypes.ToArray());
+                OutboxPayloadTypeProvider.RegisterTypes([.. options.MessageTypes]);
 
                 dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
 
