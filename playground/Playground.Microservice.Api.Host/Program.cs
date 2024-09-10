@@ -14,6 +14,7 @@ using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
+using ES.FX.MassTransit.Formatters;
 using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.NSwag.AspNetCore.Generation;
 using ES.FX.Serilog.Lifetime;
@@ -107,18 +108,22 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddHostedService<TestHostedService>();
 
 
-    builder.Services.AddOutboxMessageType<OutboxTestMessage>();
-    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitOutboxRelay>();
-    builder.Services.AddOpenTelemetry().WithTracing(traceBuilder =>
-        traceBuilder.AddTransactionalOutboxInstrumentation());
+    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitOutboxRelay>(options =>
+        {
+            options.AddMessageTypes(typeof(Program).Assembly);
+            options.UseSqlServer();
+        })
+        .AddOpenTelemetry().WithTracing(traceBuilder =>
+            traceBuilder.AddOutboxInstrumentation());
 
 
-    builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
+    builder.Services.AddMediatR(cfg => 
+        cfg.RegisterServicesFromAssemblyContaining<Program>());
 
 
     builder.Services.AddMassTransit(x =>
     {
-        x.AddConsumer<MediatorGenericConsumer<OutboxTestMessage>>(c => { });
+        x.AddConsumer<MediatorGenericConsumer<OutboxTestMessage>>();
 
         x.UsingRabbitMq((context, cfg) =>
         {
@@ -127,17 +132,28 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
                 h.Username("admin");
                 h.Password("SuperPass#");
                 h.ConnectionName(builder.Environment.ApplicationName);
+                h.PublisherConfirmation = true;
             });
             cfg.SendTopology.ConfigureErrorSettings =
                 settings => settings.SetQueueArgument("x-message-ttl", TimeSpan.FromDays(7));
+
+
             cfg.Publish<INotification>(p => p.Exclude = true);
+            cfg.Publish<IRequest>(p => p.Exclude = true);
+            cfg.Publish<IBaseRequest>(p => p.Exclude = true);
+
+            cfg.MessageTopology.SetEntityNameFormatter(new AggregatePrefixEntityNameFormatter(
+                new MessageTypeEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
+                separator: "__",
+                _ => nameof(Playground),
+                _ => "Events"
+            ));
 
             cfg.ConfigureEndpoints(context,
-                new DefaultEndpointNameFormatter(
-                    $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__"));
+                new MessageTypeDefaultEndpointNameFormatter(
+                    prefix: $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__"));
         });
-    });
-    builder.Services.AddOpenTelemetry().WithTracing(traceBuilder =>
+    }).AddOpenTelemetry().WithTracing(traceBuilder =>
         traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
 
 

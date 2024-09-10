@@ -12,7 +12,7 @@ using Playground.Shared.Data.Simple.EntityFrameworkCore;
 namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
 {
     [DbContext(typeof(SimpleDbContext))]
-    [Migration("20240906162513_V1")]
+    [Migration("20240910103810_V1")]
     partial class V1
     {
         /// <inheritdoc />
@@ -37,7 +37,7 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.Property<DateTimeOffset?>("DeliveryDelayedUntil")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid>("Lock")
+                    b.Property<Guid?>("Lock")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
@@ -50,6 +50,8 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.HasIndex("AddedAt");
 
                     b.HasIndex("DeliveryDelayedUntil");
+
+                    b.HasIndex("Lock");
 
                     b.ToTable("__Outboxes", (string)null);
                 });

@@ -4,8 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 
-public class SqlServerExclusiveOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
-    where TDbContext : DbContext
+/// <summary>
+///     SQL Server optimized provider used to get the next exclusive (locked) <see cref="Outbox" /> which does not have a
+///     delivery delay
+/// </summary>
+/// <typeparam name="TDbContext"></typeparam>
+public class SqlServerOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
+    where TDbContext : DbContext, IOutboxDbContext
 {
     public async Task<Outbox?> GetNextExclusiveOutboxWithoutDelay(TDbContext dbContext,
         CancellationToken cancellationToken = default)
@@ -15,7 +20,7 @@ public class SqlServerExclusiveOutboxProvider<TDbContext> : IOutboxProvider<TDbC
         //Get the next outbox message that is not delayed, ordered by the time it was added. Read past the locked ones.
         var query =
             $"SELECT TOP 1 * FROM {tableName} WITH (UPDLOCK, ROWLOCK, READPAST) " +
-            $"WHERE {nameof(Outbox.DeliveryDelayedUntil)} IS NULL OR {nameof(Outbox.DeliveryDelayedUntil)} < {{0}} " +
+            $"WHERE {nameof(Outbox.Lock)} IS NULL  AND ( {nameof(Outbox.DeliveryDelayedUntil)} IS NULL OR {nameof(Outbox.DeliveryDelayedUntil)} < {{0}} )" +
             $"ORDER BY {nameof(Outbox.AddedAt)}";
 
         var outbox = await dbContext.Set<Outbox>()

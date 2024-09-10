@@ -19,8 +19,8 @@
 
 
 	<ItemGroup>
+		<ProjectReference Include="..\ES.FX.Contracts\ES.FX.Contracts.csproj" />
 		<ProjectReference Include="..\ES.FX.Microsoft.EntityFrameworkCore\ES.FX.Microsoft.EntityFrameworkCore.csproj" />
-		<ProjectReference Include="..\ES.FX.TransactionalOutbox.Abstractions\ES.FX.TransactionalOutbox.Abstractions.csproj" />
 	</ItemGroup>
 
 </Project>

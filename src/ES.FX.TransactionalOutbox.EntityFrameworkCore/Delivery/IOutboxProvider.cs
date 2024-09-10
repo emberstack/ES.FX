@@ -7,7 +7,7 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 ///     Provider used to get the next exclusive (locked) <see cref="Outbox" /> which does not have a delivery delay
 /// </summary>
 /// <typeparam name="TDbContext"></typeparam>
-public interface IOutboxProvider<in TDbContext> where TDbContext : DbContext
+public interface IOutboxProvider<in TDbContext> where TDbContext : DbContext, IOutboxDbContext
 {
     /// <summary>
     ///     Returns the next exclusive (locked) <see cref="Outbox" /> which does not have a delivery delay

@@ -19,6 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\src\ES.FX.Contracts\ES.FX.Contracts.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Asp.Versioning\ES.FX.Ignite.Asp.Versioning.csproj" />
 		<ProjectReference
@@ -40,6 +41,7 @@
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Serilog\ES.FX.Ignite.Serilog.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.StackExchange.Redis\ES.FX.Ignite.StackExchange.Redis.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite\ES.FX.Ignite.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.MassTransit\ES.FX.MassTransit.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Serilog\ES.FX.Serilog.csproj" />
 		<ProjectReference
 			Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />

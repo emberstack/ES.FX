@@ -18,7 +18,7 @@ public class Outbox
     /// <summary>
     ///     Lock to be used by providers that require exclusive access to the outbox and do not want to use database locks
     /// </summary>
-    public Guid Lock { get; set; }
+    public Guid? Lock { get; set; }
 
     /// <summary>
     ///     Time until which the delivery of the outbox message is delayed
@@ -38,17 +38,15 @@ public class Outbox
             builder.HasKey(p => p.Id);
 
             builder.Property(p => p.AddedAt);
-            //This is required, otherwise Sql Server will escalate to page locks
-            builder.HasIndex(p => p.AddedAt);
-
-
             builder.Property(p => p.DeliveryDelayedUntil);
-            //This is required, otherwise Sql Server will escalate to page locks
-            builder.HasIndex(p => p.DeliveryDelayedUntil);
-
             builder.Property(p => p.Lock);
 
             builder.Property(p => p.RowVersion).IsRowVersion();
+
+            //This is required, otherwise Sql Server will escalate to page locks
+            builder.HasIndex(p => p.AddedAt);
+            builder.HasIndex(p => p.DeliveryDelayedUntil);
+            builder.HasIndex(p => p.Lock);
         }
     }
 }

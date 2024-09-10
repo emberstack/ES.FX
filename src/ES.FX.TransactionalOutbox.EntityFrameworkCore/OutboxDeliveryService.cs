@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
-using ES.FX.TransactionalOutbox.Abstractions.Messages;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,11 +21,12 @@ public class OutboxDeliveryService<TDbContext>(
     ILogger<OutboxDeliveryService<TDbContext>> logger,
     IServiceProvider serviceProvider)
     : BackgroundService
-    where TDbContext : DbContext
+    where TDbContext : DbContext, IOutboxDbContext
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogTrace("Starting");
+
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -42,7 +43,6 @@ public class OutboxDeliveryService<TDbContext>(
                 var options = scope.ServiceProvider
                     .GetRequiredService<IOptionsMonitor<OutboxDeliveryOptions<TDbContext>>>()
                     .CurrentValue;
-                var messageTypes = scope.ServiceProvider.GetServices<IOutboxMessageType>().ToArray();
                 var messageHandler = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandler>();
                 if (!await messageHandler.IsReadyAsync())
                 {
@@ -51,11 +51,10 @@ public class OutboxDeliveryService<TDbContext>(
                 }
 
                 if (options.DeliveryServiceEnabled == false) continue;
-                if (options.ExclusiveOutboxProvider is null)
-                    throw new NotSupportedException($"{nameof(options.ExclusiveOutboxProvider)} cannot be null." +
-                                                    "This should be set by the underlying database provider implementation.");
 
                 sleepInterval = options.PollingInterval;
+
+                OutboxPayloadTypeProvider.RegisterTypes(options.MessageTypes.ToArray());
 
                 dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
 
@@ -71,7 +70,7 @@ public class OutboxDeliveryService<TDbContext>(
 
                         try
                         {
-                            var outbox = await options.ExclusiveOutboxProvider
+                            var outbox = await options.OutboxProvider
                                 .GetNextExclusiveOutboxWithoutDelay(dbContext, timeout.Token)
                                 .ConfigureAwait(false);
 
@@ -86,7 +85,15 @@ public class OutboxDeliveryService<TDbContext>(
                             outbox.DeliveryDelayedUntil = null;
 
                             dbContext.Update((object)outbox);
-                            await dbContext.SaveChangesAsync(timeout.Token).ConfigureAwait(false);
+                            try
+                            {
+                                await dbContext.SaveChangesAsync(timeout.Token).ConfigureAwait(false);
+                            }
+                            catch (DbUpdateConcurrencyException)
+                            {
+                                logger.LogTrace("Outbox {OutboxId} is locked by another consumer", outbox.Id);
+                                return;
+                            }
 
                             logger.LogTrace("Processing outbox {OutboxId}", outbox.Id);
 
@@ -129,7 +136,7 @@ public class OutboxDeliveryService<TDbContext>(
                                 message.DeliveryAttempts++;
 
 
-                                if (await DeliverMessage(message, messageHandler, messageTypes, timeout.Token)
+                                if (await DeliverMessage(message, messageHandler, timeout.Token)
                                         .ConfigureAwait(false))
                                 {
                                     dbContext.Remove(message);
@@ -181,6 +188,7 @@ public class OutboxDeliveryService<TDbContext>(
                                 }
                             }
 
+                            outbox.Lock = null;
 
                             if (messages.Count == 0)
                             {
@@ -227,7 +235,6 @@ public class OutboxDeliveryService<TDbContext>(
 
     private async Task<bool> DeliverMessage(OutboxMessage message,
         IOutboxMessageHandler messageHandler,
-        IOutboxMessageType[] messageTypes,
         CancellationToken cancellationToken)
     {
         Activity? deliverMessageActivity = null;
@@ -253,17 +260,11 @@ public class OutboxDeliveryService<TDbContext>(
                     { "outbox.dbContext.type", typeof(TDbContext).FullName }
                 });
 
-            //Determines the payload type of the message. Order of precedence: MessageType attribute, PayloadType, PayloadOriginalType
-            var payloadType = messageTypes.FirstOrDefault(x =>
-                                  x.PayloadType.Equals(message.PayloadType,
-                                      StringComparison.InvariantCultureIgnoreCase))?.MessageType ??
-                              Type.GetType(message.PayloadType) ??
-                              Type.GetType(
+            var payloadType = OutboxPayloadTypeProvider.GetMessageTypeByPayloadType(message.PayloadType,
                                   headers.TryGetValue(OutboxMessageHeaders.Message.PayloadOriginalType, out var hint)
                                       ? hint ?? string.Empty
                                       : string.Empty) ??
                               throw new NotSupportedException("Could not determine the Type of the message");
-
 
             var payload = JsonSerializer.Deserialize(message.Payload, payloadType) ??
                           throw new NotSupportedException("Could not deserialize the message payload");

@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
-using ES.FX.TransactionalOutbox.Abstractions.Messages;
+using ES.FX.Contracts.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,7 +51,7 @@ public static class OutboxExtensions
     public static void AddOutboxMessage<TOutboxDbContext, TMessage>(this TOutboxDbContext dbContext, TMessage message,
         OutboxMessageOptions? deliveryOptions = default)
         where TOutboxDbContext : DbContext, IOutboxDbContext
-        where TMessage : class
+        where TMessage : class, IOutboxMessage
     {
         deliveryOptions ??= new OutboxMessageOptions();
         var headers = new Dictionary<string, string?>
@@ -59,15 +60,10 @@ public static class OutboxExtensions
             { OutboxMessageHeaders.Message.PayloadOriginalType, typeof(TMessage).AssemblyQualifiedName }
         };
 
-        var typeAttribute =
-            message.GetType().GetCustomAttribute(typeof(OutboxMessageTypeAttribute)) as OutboxMessageTypeAttribute;
-        var payloadType = typeAttribute?.MessageType ?? message.GetType().AssemblyQualifiedName!;
-
-
         dbContext.Set<OutboxMessage>().Add(new OutboxMessage
         {
             AddedAt = DateTimeOffset.UtcNow,
-            PayloadType = payloadType,
+            PayloadType = OutboxPayloadTypeProvider.GetPayloadType(message.GetType()),
             Payload = JsonSerializer.Serialize(message),
             DeliveryAttempts = 0,
             DeliveryFirstAttemptedAt = null,
@@ -82,36 +78,108 @@ public static class OutboxExtensions
         });
     }
 
-
     /// <summary>
     ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddOutboxMessageType(this IServiceCollection serviceCollection, Type messageType)
+    public static void AddMessageType<TDbContext, TMessageType>(this OutboxDeliveryOptions<TDbContext> options)
+        where TDbContext : DbContext, IOutboxDbContext
+        where TMessageType : class, IOutboxMessage
     {
-        if (!messageType.IsClass || messageType.IsAbstract)
-            throw new ArgumentException("Message type must be a non-abstract class", nameof(messageType));
-        serviceCollection.AddSingleton(typeof(IOutboxMessageType),
-            typeof(OutboxMessageType<>).MakeGenericType(messageType));
+        options.MessageTypes.Add(typeof(TMessageType));
     }
 
     /// <summary>
-    ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
+    ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddOutboxMessageType<TMessageType>(this IServiceCollection serviceCollection)
-        where TMessageType : class =>
-        serviceCollection.AddOutboxMessageType(typeof(TMessageType));
+    public static void AddMessageType<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
+        params Type[] messageTypes) where TDbContext : DbContext, IOutboxDbContext
+    {
+        foreach (var messageType in messageTypes) options.AddMessageType(messageType);
+    }
 
 
     /// <summary>
     ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddOutboxMessageTypes(this IServiceCollection serviceCollection, params Type[] types)
+    public static void AddMessageTypes<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
+        Func<Type, bool> filter,
+        params Assembly[] assemblies) where TDbContext : DbContext, IOutboxDbContext
     {
-        foreach (var type in types) serviceCollection.AddOutboxMessageType(type);
+        foreach (var assembly in assemblies)
+        {
+            var types = assembly.GetTypes().Where(t => t.IsAssignableTo(typeof(IOutboxMessage))).ToArray();
+            foreach (var type in types)
+                if (filter?.Invoke(type) ?? true)
+                    options.AddMessageType(type);
+        }
+    }
+
+    /// <summary>
+    ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
+    /// </summary>
+    public static void AddMessageTypes<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
+        params Assembly[] assemblies) where TDbContext : DbContext, IOutboxDbContext
+    {
+        options.AddMessageTypes(_ => true, assemblies);
     }
 
 
-    public static TracerProviderBuilder AddTransactionalOutboxInstrumentation(
+    /// <summary>
+    ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
+    /// </summary>
+    public static void AddMessageTypesFromAssemblyContaining<TDbContext>(
+        this OutboxDeliveryOptions<TDbContext> options, Type type, Func<Type, bool>? filter = null)
+        where TDbContext : DbContext, IOutboxDbContext
+    {
+        options.AddMessageTypes(filter ?? (_ => true), type.Assembly);
+    }
+
+
+    /// <summary>
+    ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
+    /// </summary>
+    public static void AddMessageType<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
+        Type messageType) where TDbContext : DbContext, IOutboxDbContext
+    {
+        if (!messageType.IsClass || messageType.IsAbstract)
+            throw new ArgumentException("Message type must be a non-abstract class", nameof(messageType));
+
+        if (!messageType.IsAssignableTo(typeof(IOutboxMessage)))
+            throw new ArgumentException($"Message type must implement {nameof(IOutboxMessage)}", nameof(messageType));
+
+        options.MessageTypes.Add(messageType);
+    }
+
+
+    public static TracerProviderBuilder AddOutboxInstrumentation(
         this TracerProviderBuilder builder) =>
         builder.AddSource(Diagnostics.ActivitySourceName);
+
+
+    /// <summary>
+    ///     Adds the outbox delivery service to the service collection. The <see cref="TMessageHandler" /> will be used to
+    ///     deliver the messages.
+    /// </summary>
+    /// <typeparam name="TDbContext">The type of <see cref="DbContext" /> for which to process messages</typeparam>
+    /// <typeparam name="TMessageHandler"> The type of <see cref="IOutboxMessageHandler" /> used to delivery messages </typeparam>
+    /// <param name="services">The <see cref="IServiceCollection" /> on which to register the required services</param>
+    /// <param name="configureOptions">
+    ///     The options used to configure the <see cref="OutboxDeliveryService{TDbContext}" />
+    /// </param>
+    public static IServiceCollection AddOutboxDeliveryService<TDbContext, TMessageHandler>(
+        this IServiceCollection services,
+        Action<OutboxDeliveryOptions<TDbContext>>? configureOptions = null
+    )
+        where TDbContext : DbContext, IOutboxDbContext
+        where TMessageHandler : class, IOutboxMessageHandler
+    {
+        services.AddOptions<OutboxDeliveryOptions<TDbContext>>().Configure(options =>
+        {
+            configureOptions?.Invoke(options);
+        });
+
+        services.AddHostedService<OutboxDeliveryService<TDbContext>>();
+        services.AddScoped<IOutboxMessageHandler, TMessageHandler>();
+        return services;
+    }
 }

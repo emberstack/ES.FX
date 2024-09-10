@@ -1,7 +1,7 @@
 ﻿#pragma warning disable CS9113 // Parameter is unread.
 
-using ES.FX.TransactionalOutbox.Abstractions.Messages;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 using Microsoft.EntityFrameworkCore;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;

@@ -34,7 +34,7 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.Property<DateTimeOffset?>("DeliveryDelayedUntil")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid>("Lock")
+                    b.Property<Guid?>("Lock")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
@@ -47,6 +47,8 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.HasIndex("AddedAt");
 
                     b.HasIndex("DeliveryDelayedUntil");
+
+                    b.HasIndex("Lock");
 
                     b.ToTable("__Outboxes", (string)null);
                 });

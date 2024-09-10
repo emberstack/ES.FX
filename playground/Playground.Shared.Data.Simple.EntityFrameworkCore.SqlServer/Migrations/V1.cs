@@ -16,7 +16,7 @@ public partial class V1 : Migration
             {
                 Id = table.Column<Guid>("uniqueidentifier", nullable: false),
                 AddedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false),
-                Lock = table.Column<Guid>("uniqueidentifier", nullable: false),
+                Lock = table.Column<Guid>("uniqueidentifier", nullable: true),
                 DeliveryDelayedUntil = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
                 RowVersion = table.Column<byte[]>("rowversion", rowVersion: true, nullable: true)
             },
@@ -83,6 +83,11 @@ public partial class V1 : Migration
             "IX___Outboxes_DeliveryDelayedUntil",
             "__Outboxes",
             "DeliveryDelayedUntil");
+
+        migrationBuilder.CreateIndex(
+            "IX___Outboxes_Lock",
+            "__Outboxes",
+            "Lock");
     }
 
     /// <inheritdoc />

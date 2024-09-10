@@ -1,4 +1,4 @@
-﻿namespace ES.FX.TransactionalOutbox.Abstractions.Messages;
+﻿namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 
 /// <summary>
 ///     Options for delivering the outbox message
