@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using ES.FX.Contracts.TransactionalOutbox;
 using ES.FX.Hosting.Lifetime;
 using ES.FX.Ignite.Asp.Versioning.Hosting;
 using ES.FX.Ignite.Azure.Data.Tables.Hosting;
@@ -141,6 +142,8 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             cfg.Publish<INotification>(p => p.Exclude = true);
             cfg.Publish<IRequest>(p => p.Exclude = true);
             cfg.Publish<IBaseRequest>(p => p.Exclude = true);
+            cfg.Publish<IOutboxMessage>(p => p.Exclude = true);
+
 
             cfg.MessageTopology.SetEntityNameFormatter(new AggregatePrefixEntityNameFormatter(
                 new MessageTypeEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
