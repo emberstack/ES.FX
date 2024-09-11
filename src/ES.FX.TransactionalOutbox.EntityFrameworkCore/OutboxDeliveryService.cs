@@ -92,6 +92,7 @@ public class OutboxDeliveryService<TDbContext>(
                             catch (DbUpdateConcurrencyException)
                             {
                                 logger.LogTrace("Outbox {OutboxId} is locked by another consumer", outbox.Id);
+                                sleep = false;
                                 return;
                             }
 
