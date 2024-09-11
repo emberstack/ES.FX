@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -9,7 +9,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
 		<ProjectReference Include="..\ES.FX.NSwag.AspNetCore\ES.FX.NSwag.AspNetCore.csproj" />
-		<PackageReference Include="oqo0.SwaggerThemes" Version="1.3.3" />
+		<PackageReference Include="oqo0.SwaggerThemes" />
 	</ItemGroup>
 
 </Project>

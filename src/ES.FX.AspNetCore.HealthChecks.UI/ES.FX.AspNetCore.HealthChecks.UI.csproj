@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -7,9 +7,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.2" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
 	</ItemGroup>
 
 </Project>

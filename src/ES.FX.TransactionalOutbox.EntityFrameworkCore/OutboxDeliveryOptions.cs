@@ -44,7 +44,7 @@ public class OutboxDeliveryOptions<TDbContext> where TDbContext : DbContext, IOu
 
 
     /// <summary>
-    /// List of known message types. This is used to determine the <see cref="Type" /> of the payload.
+    ///     List of known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
     public List<Type> MessageTypes { get; } = [];
 }

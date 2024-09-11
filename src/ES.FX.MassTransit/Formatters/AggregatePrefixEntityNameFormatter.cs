@@ -10,7 +10,7 @@ namespace ES.FX.MassTransit.Formatters;
 /// <param name="prefixProviders"> The prefix providers to aggregate</param>
 /// <param name="separator"> String separator added to prefixes</param>
 public class AggregatePrefixEntityNameFormatter(
-    IEntityNameFormatter entityNameFormatter, 
+    IEntityNameFormatter entityNameFormatter,
     string? separator = null,
     params Func<Type, string>[] prefixProviders) : IEntityNameFormatter
 {
@@ -21,7 +21,7 @@ public class AggregatePrefixEntityNameFormatter(
         {
             var format = prefixProvider(typeof(TMessage));
             stringBuilder.Append(format);
-            if(!string.IsNullOrWhiteSpace(separator))
+            if (!string.IsNullOrWhiteSpace(separator))
                 stringBuilder.Append(separator);
         }
 

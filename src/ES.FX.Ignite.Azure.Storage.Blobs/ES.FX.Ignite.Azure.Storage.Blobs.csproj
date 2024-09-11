@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -7,8 +7,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.Azure.Storage.Blobs" Version="8.0.1" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.21.2" />
+		<PackageReference Include="AspNetCore.HealthChecks.Azure.Storage.Blobs" />
+		<PackageReference Include="Azure.Storage.Blobs" />
 	</ItemGroup>
 
 	<ItemGroup>

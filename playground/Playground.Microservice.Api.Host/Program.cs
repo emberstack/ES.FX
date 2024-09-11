@@ -118,7 +118,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             traceBuilder.AddOutboxInstrumentation());
 
 
-    builder.Services.AddMediatR(cfg => 
+    builder.Services.AddMediatR(cfg =>
         cfg.RegisterServicesFromAssemblyContaining<Program>());
 
 
@@ -147,7 +147,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
             cfg.MessageTopology.SetEntityNameFormatter(new AggregatePrefixEntityNameFormatter(
                 new MessageTypeEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
-                separator: "__",
+                "__",
                 _ => nameof(Playground),
                 _ => "Events"
             ));
