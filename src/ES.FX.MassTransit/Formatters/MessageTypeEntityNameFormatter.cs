@@ -27,18 +27,18 @@ public class MessageTypeEntityNameFormatter(
     {
         if (typeof(TMessage).ClosesType(typeof(Fault<>), out Type[] messageTypes))
         {
-            var type = FaultMessageTypeAttribute.TypeFor(messageTypes.First());
+            var type = FaultMessageTypeAttribute.MessageTypeFor(messageTypes.First());
             if (type is not null) return type;
 
             if (faultFallbackToMessageType)
             {
-                type = MessageTypeAttribute.TypeFor(messageTypes.First());
+                type = MessageTypeAttribute.MessageTypeFor(messageTypes.First());
                 if (type is not null) return string.Format(faultFormat, type);
             }
         }
         else
         {
-            var type = MessageTypeAttribute.TypeFor(typeof(TMessage));
+            var type = MessageTypeAttribute.MessageTypeFor(typeof(TMessage));
             if (type is not null) return type;
         }
 

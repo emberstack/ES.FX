@@ -18,7 +18,7 @@ public class MessageTypeDefaultEndpointNameFormatter(
 {
     protected override string FormatName(Type message)
     {
-        var type = MessageTypeAttribute.TypeFor(message);
+        var type = MessageTypeAttribute.MessageTypeFor(message);
         if (string.IsNullOrWhiteSpace(type)) return base.FormatName(message);
         return string.IsNullOrWhiteSpace(Prefix) ? type : $"{Prefix}{type}";
     }

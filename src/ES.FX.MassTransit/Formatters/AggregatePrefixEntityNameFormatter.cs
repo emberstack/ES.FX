@@ -12,7 +12,7 @@ namespace ES.FX.MassTransit.Formatters;
 public class AggregatePrefixEntityNameFormatter(
     IEntityNameFormatter entityNameFormatter,
     string? separator = null,
-    params Func<Type, string>[] prefixProviders) : IEntityNameFormatter
+    params Func<Type, string?>[] prefixProviders) : IEntityNameFormatter
 {
     public string FormatEntityName<TMessage>()
     {
@@ -20,6 +20,7 @@ public class AggregatePrefixEntityNameFormatter(
         foreach (var prefixProvider in prefixProviders)
         {
             var format = prefixProvider(typeof(TMessage));
+            if(string.IsNullOrWhiteSpace(format)) continue;
             stringBuilder.Append(format);
             if (!string.IsNullOrWhiteSpace(separator))
                 stringBuilder.Append(separator);

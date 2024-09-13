@@ -8,7 +8,7 @@ internal static class OutboxPayloadTypeProvider
     private static readonly ConcurrentDictionary<string, Type?> MessageTypeByPayloadTypeDictionary = new();
 
     internal static string GetPayloadType(Type type) =>
-        MessageTypeAttribute.TypeFor(type) ?? type.AssemblyQualifiedName!;
+        MessageTypeAttribute.MessageTypeFor(type) ?? type.AssemblyQualifiedName!;
 
     internal static void RegisterTypes(params Type[] messageTypes)
     {

@@ -18,11 +18,10 @@ public class FaultMessageTypeAttribute(string type) : Attribute
 
     public string Type { get; } = type;
 
-    public static string? TypeFor(Type type)
+    public static string? MessageTypeFor(Type type)
     {
-        if (TypeAttributes.TryGetValue(type, out var attribute))
-            return attribute?.Type;
-        attribute = type.GetCustomAttribute(typeof(FaultMessageTypeAttribute)) as FaultMessageTypeAttribute;
+        if (TypeAttributes.TryGetValue(type, out var attribute)) return attribute?.Type;
+        attribute = type.GetCustomAttribute<FaultMessageTypeAttribute>();
         TypeAttributes.TryAdd(type, attribute);
         return attribute?.Type;
     }
