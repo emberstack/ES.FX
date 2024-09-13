@@ -43,8 +43,21 @@ public class OutboxDeliveryService<TDbContext>(
                 var options = scope.ServiceProvider
                     .GetRequiredService<IOptionsMonitor<OutboxDeliveryOptions<TDbContext>>>()
                     .CurrentValue;
+
+                using var handlerReadyTimeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
+                    new CancellationTokenSource(options.DeliveryTimeout).Token);
                 var messageHandler = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandler>();
-                if (!await messageHandler.IsReadyAsync())
+                bool handlerReady;
+                try
+                {
+                    handlerReady = await messageHandler.IsReadyAsync(handlerReadyTimeout.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    handlerReady = false;
+                }
+
+                if (!handlerReady)
                 {
                     logger.LogTrace("The message handler is not ready yet.");
                     continue;
@@ -61,17 +74,17 @@ public class OutboxDeliveryService<TDbContext>(
                 //Use an execution strategy to handle transient exceptions. This is required for SQL Server with retries enabled
                 await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
                     {
-                        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
+                        using var deliveryTimeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
                             new CancellationTokenSource(options.DeliveryTimeout).Token);
 
                         await using var transaction = await dbContext.Database
-                            .BeginTransactionAsync(options.TransactionIsolationLevel, timeout.Token)
+                            .BeginTransactionAsync(options.TransactionIsolationLevel, deliveryTimeout.Token)
                             .ConfigureAwait(false);
 
                         try
                         {
                             var outbox = await options.OutboxProvider
-                                .GetNextExclusiveOutboxWithoutDelay(dbContext, timeout.Token)
+                                .GetNextExclusiveOutboxWithoutDelay(dbContext, deliveryTimeout.Token)
                                 .ConfigureAwait(false);
 
                             if (outbox is null)
@@ -87,7 +100,7 @@ public class OutboxDeliveryService<TDbContext>(
                             dbContext.Update((object)outbox);
                             try
                             {
-                                await dbContext.SaveChangesAsync(timeout.Token).ConfigureAwait(false);
+                                await dbContext.SaveChangesAsync(deliveryTimeout.Token).ConfigureAwait(false);
                             }
                             catch (DbUpdateConcurrencyException)
                             {
@@ -103,7 +116,7 @@ public class OutboxDeliveryService<TDbContext>(
                                 .OrderBy(x => x.Id)
                                 .Take(options.BatchSize)
                                 .AsTracking()
-                                .ToListAsync(timeout.Token)
+                                .ToListAsync(deliveryTimeout.Token)
                                 .ConfigureAwait(false);
 
 
@@ -137,7 +150,7 @@ public class OutboxDeliveryService<TDbContext>(
                                 message.DeliveryAttempts++;
 
 
-                                if (await DeliverMessage(message, messageHandler, timeout.Token)
+                                if (await DeliverMessage(message, messageHandler, deliveryTimeout.Token)
                                         .ConfigureAwait(false))
                                 {
                                     dbContext.Remove(message);
@@ -197,8 +210,8 @@ public class OutboxDeliveryService<TDbContext>(
                                 dbContext.Remove((object)outbox);
                             }
 
-                            await dbContext.SaveChangesAsync(timeout.Token).ConfigureAwait(false);
-                            await transaction.CommitAsync(timeout.Token).ConfigureAwait(false);
+                            await dbContext.SaveChangesAsync(deliveryTimeout.Token).ConfigureAwait(false);
+                            await transaction.CommitAsync(deliveryTimeout.Token).ConfigureAwait(false);
                             sleep = false;
                         }
                         catch (OperationCanceledException)
