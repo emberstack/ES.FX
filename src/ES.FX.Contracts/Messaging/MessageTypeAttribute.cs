@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Reflection;
 using JetBrains.Annotations;
 
 namespace ES.FX.Contracts.Messaging;
@@ -20,15 +21,8 @@ public class MessageTypeAttribute(string type) : Attribute
 
     public static string? TypeFor(Type type)
     {
-        if (TypeAttributes.TryGetValue(type, out var attribute))
-            return attribute?.Type;
-
-        attribute = type.GetCustomAttributes(typeof(MessageTypeAttribute), true).Union(
-                type.GetInterfaces()
-                    .SelectMany(interfaceType =>
-                        interfaceType.GetCustomAttributes(typeof(MessageTypeAttribute), true)))
-            .Distinct().Cast<MessageTypeAttribute>().FirstOrDefault();
-
+        if (TypeAttributes.TryGetValue(type, out var attribute)) return attribute?.Type;
+        attribute = type.GetCustomAttribute<MessageTypeAttribute>();
         TypeAttributes.TryAdd(type, attribute);
         return attribute?.Type;
     }

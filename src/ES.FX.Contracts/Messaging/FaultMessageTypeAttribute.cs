@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Reflection;
 using JetBrains.Annotations;
 
 namespace ES.FX.Contracts.Messaging;
@@ -21,13 +22,7 @@ public class FaultMessageTypeAttribute(string type) : Attribute
     {
         if (TypeAttributes.TryGetValue(type, out var attribute))
             return attribute?.Type;
-
-        attribute = type.GetCustomAttributes(typeof(FaultMessageTypeAttribute), true).Union(
-                type.GetInterfaces()
-                    .SelectMany(interfaceType =>
-                        interfaceType.GetCustomAttributes(typeof(FaultMessageTypeAttribute), true)))
-            .Distinct().Cast<FaultMessageTypeAttribute>().FirstOrDefault();
-
+        attribute = type.GetCustomAttribute(typeof(FaultMessageTypeAttribute)) as FaultMessageTypeAttribute;
         TypeAttributes.TryAdd(type, attribute);
         return attribute?.Type;
     }
