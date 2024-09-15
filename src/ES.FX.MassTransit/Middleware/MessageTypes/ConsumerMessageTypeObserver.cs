@@ -1,4 +1,5 @@
 ﻿using ES.FX.MassTransit.Serialization;
+using JetBrains.Annotations;
 using MassTransit;
 
 namespace ES.FX.MassTransit.Middleware.MessageTypes;
@@ -6,7 +7,8 @@ namespace ES.FX.MassTransit.Middleware.MessageTypes;
 /// <summary>
 ///     Observer that registers all expected message types with the <see cref="MassTransitMessageTypeProvider" />
 /// </summary>
-public class MassTransitConsumerMessageTypeObserver : IConsumerConfigurationObserver
+[PublicAPI]
+public class ConsumerMessageTypeObserver : IConsumerConfigurationObserver
 {
     public void ConsumerConfigured<TConsumer>(IConsumerConfigurator<TConsumer> configurator)
         where TConsumer : class
