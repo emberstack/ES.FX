@@ -12,7 +12,7 @@ using Playground.Shared.Data.Simple.EntityFrameworkCore;
 namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
 {
     [DbContext(typeof(SimpleDbContext))]
-    [Migration("20240910103810_V1")]
+    [Migration("20240915102953_V1")]
     partial class V1
     {
         /// <inheritdoc />
@@ -175,6 +175,11 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.HasKey("Id");
 

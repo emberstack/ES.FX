@@ -20,7 +20,7 @@ public class AggregatePrefixEntityNameFormatter(
         foreach (var prefixProvider in prefixProviders)
         {
             var format = prefixProvider(typeof(TMessage));
-            if(string.IsNullOrWhiteSpace(format)) continue;
+            if (string.IsNullOrWhiteSpace(format)) continue;
             stringBuilder.Append(format);
             if (!string.IsNullOrWhiteSpace(separator))
                 stringBuilder.Append(separator);

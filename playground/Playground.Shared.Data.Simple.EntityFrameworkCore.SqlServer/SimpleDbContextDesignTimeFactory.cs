@@ -1,5 +1,7 @@
-﻿using ES.FX.Microsoft.EntityFrameworkCore.SqlServer.DesignTime;
+﻿using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
+using ES.FX.Microsoft.EntityFrameworkCore.SqlServer.DesignTime;
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
@@ -11,5 +13,11 @@ public class SimpleDbContextDesignTimeFactory : TestContainerDesignTimeFactory<S
     {
         base.ConfigureSqlServerOptions(builder);
         builder.MigrationsAssembly(GetType().Assembly.FullName);
+    }
+
+    protected override void ConfigureDbContextOptionsBuilder(DbContextOptionsBuilder<SimpleDbContext> builder)
+    {
+        base.ConfigureDbContextOptionsBuilder(builder);
+        builder.WithEntityConfigurationsFromAssembliesExtension(GetType().Assembly);
     }
 }

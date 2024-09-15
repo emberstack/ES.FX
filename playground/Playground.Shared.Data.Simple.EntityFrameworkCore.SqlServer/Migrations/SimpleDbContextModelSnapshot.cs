@@ -173,6 +173,11 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.HasKey("Id");
 
                     b.ToTable("SimpleUsers");

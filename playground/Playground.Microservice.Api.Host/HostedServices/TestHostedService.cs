@@ -30,7 +30,7 @@ internal class TestHostedService(
                     DelayBetweenAttempts = 5,
                     DelayBetweenAttemptsIsExponential = true
                 });
-                dbContext.SimpleUsers.Add(new SimpleUser { Id = Guid.NewGuid() });
+                dbContext.SimpleUsers.Add(new SimpleUser { Id = Guid.NewGuid(), Username = Guid.NewGuid().ToString()});
             }
 
             await dbContext.SaveChangesAsync(stoppingToken).ConfigureAwait(false);

@@ -9,20 +9,23 @@ namespace ES.FX.Contracts.Messaging;
 /// </summary>
 /// <remarks>
 /// </remarks>
-/// <param name="type">The type to use for the message</param>
+/// <param name="messageType">The type to use for the message</param>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
 [PublicAPI]
-public class FaultMessageTypeAttribute(string type) : Attribute
+public class FaultMessageTypeAttribute(string messageType) : Attribute
 {
     private static readonly ConcurrentDictionary<Type, FaultMessageTypeAttribute?> TypeAttributes = new();
 
-    public string Type { get; } = type;
+    public string MessageType { get; } = messageType;
 
     public static string? MessageTypeFor(Type type)
     {
-        if (TypeAttributes.TryGetValue(type, out var attribute)) return attribute?.Type;
+        if (TypeAttributes.TryGetValue(type, out var attribute)) return attribute?.MessageType;
         attribute = type.GetCustomAttribute<FaultMessageTypeAttribute>();
         TypeAttributes.TryAdd(type, attribute);
-        return attribute?.Type;
+        return attribute?.MessageType;
     }
+
+    public static string? MessageTypeFor<T>() =>
+        MessageTypeFor(typeof(T));
 }
