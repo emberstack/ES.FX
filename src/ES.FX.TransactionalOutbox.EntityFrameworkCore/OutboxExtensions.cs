@@ -107,7 +107,9 @@ public static class OutboxExtensions
     {
         foreach (var assembly in assemblies)
         {
-            var types = assembly.GetTypes().Where(t => t.IsAssignableTo(typeof(IOutboxMessage))).ToArray();
+            var types = assembly.GetTypes().Where(t =>
+                t.IsAssignableTo(typeof(IOutboxMessage)) &&
+                t is { IsClass: true, IsAbstract: false }).ToArray();
             foreach (var type in types)
                 if (filter?.Invoke(type) ?? true)
                     options.AddMessageType(type);
@@ -136,16 +138,28 @@ public static class OutboxExtensions
 
 
     /// <summary>
+    ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
+    /// </summary>
+    public static void AddMessageTypesFromAssemblyContaining<TDbContext, TType>(
+        this OutboxDeliveryOptions<TDbContext> options, Func<Type, bool>? filter = null)
+        where TDbContext : DbContext, IOutboxDbContext
+    {
+        options.AddMessageTypes(filter ?? (_ => true), typeof(Type).Assembly);
+    }
+
+    /// <summary>
     ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
     public static void AddMessageType<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
         Type messageType) where TDbContext : DbContext, IOutboxDbContext
     {
         if (!messageType.IsClass || messageType.IsAbstract)
-            throw new ArgumentException($"Cannot use {messageType}. Messages must be non-abstract classes.", nameof(messageType));
+            throw new ArgumentException($"Cannot use {messageType}. Messages must be non-abstract classes.",
+                nameof(messageType));
 
         if (!messageType.IsAssignableTo(typeof(IOutboxMessage)))
-            throw new ArgumentException($"Cannot use {messageType}. Messages must implement {nameof(IOutboxMessage)}", nameof(messageType));
+            throw new ArgumentException($"Cannot use {messageType}. Messages must implement {nameof(IOutboxMessage)}",
+                nameof(messageType));
 
         options.MessageTypes.Add(messageType);
     }
