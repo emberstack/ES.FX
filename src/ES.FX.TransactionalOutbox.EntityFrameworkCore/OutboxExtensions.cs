@@ -142,10 +142,10 @@ public static class OutboxExtensions
         Type messageType) where TDbContext : DbContext, IOutboxDbContext
     {
         if (!messageType.IsClass || messageType.IsAbstract)
-            throw new ArgumentException("Message type must be a non-abstract class", nameof(messageType));
+            throw new ArgumentException($"Cannot use {messageType}. Messages must be non-abstract classes.", nameof(messageType));
 
         if (!messageType.IsAssignableTo(typeof(IOutboxMessage)))
-            throw new ArgumentException($"Message type must implement {nameof(IOutboxMessage)}", nameof(messageType));
+            throw new ArgumentException($"Cannot use {messageType}. Messages must implement {nameof(IOutboxMessage)}", nameof(messageType));
 
         options.MessageTypes.Add(messageType);
     }
