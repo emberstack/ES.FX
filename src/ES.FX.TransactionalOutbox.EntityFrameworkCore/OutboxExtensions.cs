@@ -81,8 +81,7 @@ public static class OutboxExtensions
     /// <summary>
     ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddMessageType<TDbContext, TMessageType>(this OutboxDeliveryOptions<TDbContext> options)
-        where TDbContext : DbContext, IOutboxDbContext
+    public static void AddMessageType<TMessageType>(this OutboxDeliveryOptions options)
         where TMessageType : class, IOutboxMessage
     {
         options.MessageTypes.Add(typeof(TMessageType));
@@ -91,8 +90,8 @@ public static class OutboxExtensions
     /// <summary>
     ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddMessageType<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
-        params Type[] messageTypes) where TDbContext : DbContext, IOutboxDbContext
+    public static void AddMessageType(this OutboxDeliveryOptions options,
+        params Type[] messageTypes)
     {
         foreach (var messageType in messageTypes) options.AddMessageType(messageType);
     }
@@ -101,9 +100,8 @@ public static class OutboxExtensions
     /// <summary>
     ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddMessageTypes<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
-        Func<Type, bool> filter,
-        params Assembly[] assemblies) where TDbContext : DbContext, IOutboxDbContext
+    public static void AddMessageTypes(this OutboxDeliveryOptions options,
+        Func<Type, bool> filter, params Assembly[] assemblies)
     {
         foreach (var assembly in assemblies)
         {
@@ -119,8 +117,8 @@ public static class OutboxExtensions
     /// <summary>
     ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddMessageTypes<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
-        params Assembly[] assemblies) where TDbContext : DbContext, IOutboxDbContext
+    public static void AddMessageTypes(this OutboxDeliveryOptions options,
+        params Assembly[] assemblies)
     {
         options.AddMessageTypes(_ => true, assemblies);
     }
@@ -129,9 +127,8 @@ public static class OutboxExtensions
     /// <summary>
     ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddMessageTypesFromAssemblyContaining<TDbContext>(
-        this OutboxDeliveryOptions<TDbContext> options, Type type, Func<Type, bool>? filter = null)
-        where TDbContext : DbContext, IOutboxDbContext
+    public static void AddMessageTypesFromAssemblyContaining(this OutboxDeliveryOptions options,
+        Type type, Func<Type, bool>? filter = null)
     {
         options.AddMessageTypes(filter ?? (_ => true), type.Assembly);
     }
@@ -140,9 +137,8 @@ public static class OutboxExtensions
     /// <summary>
     ///     Registers known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddMessageTypesFromAssemblyContaining<TDbContext, TType>(
-        this OutboxDeliveryOptions<TDbContext> options, Func<Type, bool>? filter = null)
-        where TDbContext : DbContext, IOutboxDbContext
+    public static void AddMessageTypesFromAssemblyContaining<TType>(
+        this OutboxDeliveryOptions options, Func<Type, bool>? filter = null)
     {
         options.AddMessageTypes(filter ?? (_ => true), typeof(Type).Assembly);
     }
@@ -150,8 +146,7 @@ public static class OutboxExtensions
     /// <summary>
     ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
-    public static void AddMessageType<TDbContext>(this OutboxDeliveryOptions<TDbContext> options,
-        Type messageType) where TDbContext : DbContext, IOutboxDbContext
+    public static void AddMessageType(this OutboxDeliveryOptions options, Type messageType)
     {
         if (!messageType.IsClass || messageType.IsAbstract)
             throw new ArgumentException($"Cannot use {messageType}. Messages must be non-abstract classes.",

@@ -5,10 +5,9 @@ using Microsoft.EntityFrameworkCore;
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore;
 
 /// <summary>
-///     Options used by the <see cref="OutboxDeliveryService{TDbContext}" />
+///     Base class for the options used by the <see cref="OutboxDeliveryService{TDbContext}" />
 /// </summary>
-/// <typeparam name="TDbContext">The <see cref="OutboxDeliveryService{TDbContext}" /></typeparam>
-public class OutboxDeliveryOptions<TDbContext> where TDbContext : DbContext, IOutboxDbContext
+public abstract class OutboxDeliveryOptions
 {
     /// <summary>
     ///     The interval between polling for new messages. This will be interrupted by the signalling mechanism of new messages
@@ -38,13 +37,19 @@ public class OutboxDeliveryOptions<TDbContext> where TDbContext : DbContext, IOu
     public bool DeliveryServiceEnabled { get; set; } = true;
 
     /// <summary>
-    ///     The provider that will be used to acquire the outbox. This should be provided by the specific database provider.
-    /// </summary>
-    public IOutboxProvider<TDbContext> OutboxProvider { get; set; } = new DefaultOutboxProvider<TDbContext>();
-
-
-    /// <summary>
     ///     List of known message types. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
     public List<Type> MessageTypes { get; } = [];
+}
+
+/// <summary>
+///     Options used by the <see cref="OutboxDeliveryService{TDbContext}" />
+/// </summary>
+/// <typeparam name="TDbContext">The <see cref="OutboxDeliveryService{TDbContext}" /></typeparam>
+public class OutboxDeliveryOptions<TDbContext> : OutboxDeliveryOptions where TDbContext : DbContext, IOutboxDbContext
+{
+    /// <summary>
+    ///     The provider that will be used to acquire the outbox. This should be provided by the specific database provider.
+    /// </summary>
+    public IOutboxProvider<TDbContext> OutboxProvider { get; set; } = new DefaultOutboxProvider<TDbContext>();
 }
