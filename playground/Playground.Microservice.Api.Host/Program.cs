@@ -86,7 +86,8 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         configureDbContextOptionsBuilder: (_, dbContextOptionsBuilder) =>
         {
             dbContextOptionsBuilder.ConfigureWarnings(w => w.Ignore(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
-            dbContextOptionsBuilder.WithEntityConfigurationsFromAssembliesExtension(typeof(SimpleDbContext).Assembly);
+            dbContextOptionsBuilder.WithConfigureModelBuilderExtension((modelBuilder, _) =>
+                modelBuilder.ApplyConfigurationsFromAssembly(typeof(SimpleDbContext).Assembly));
         },
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {

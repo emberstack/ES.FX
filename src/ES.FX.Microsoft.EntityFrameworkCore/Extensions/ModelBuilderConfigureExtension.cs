@@ -1,19 +1,22 @@
-﻿using System.Reflection;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ES.FX.Microsoft.EntityFrameworkCore.Extensions;
 
 /// <summary>
-///     Custom extension to load <see cref="IEntityTypeConfiguration{TEntity}" /> implementations from assemblies.
-///     This is useful when the DbContext is in a separate assembly from the entity configurations and cannot reference the
-///     entity configurations assemblies directly.
+///     Custom extension to run <see cref="ModelBuilder" /> configuration functions.
+///     This is useful when the DbContext is in a separate assembly
 /// </summary>
-public class EntityConfigurationsFromAssembliesExtension : IDbContextOptionsExtension
+public class ModelBuilderConfigureExtension : IDbContextOptionsExtension
 {
-    public EntityConfigurationsFromAssembliesExtension() => Info = new ExtensionInfo(this);
-    public required Assembly[] Assemblies { get; init; }
+    public ModelBuilderConfigureExtension(params Action<ModelBuilder, DbContextOptions>[] configureActions)
+    {
+        ConfigureActions = configureActions;
+        Info = new ExtensionInfo(this);
+    }
+
+    public Action<ModelBuilder, DbContextOptions>[] ConfigureActions { get; }
 
     public void ApplyServices(IServiceCollection services)
     {

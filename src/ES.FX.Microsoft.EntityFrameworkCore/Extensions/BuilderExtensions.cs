@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace ES.FX.Microsoft.EntityFrameworkCore.Extensions;
@@ -7,35 +6,33 @@ namespace ES.FX.Microsoft.EntityFrameworkCore.Extensions;
 public static class BuilderExtensions
 {
     /// <summary>
-    ///     Registers an <see cref="EntityConfigurationsFromAssembliesExtension" /> to the
+    ///     Registers an <see cref="ModelBuilderConfigureExtension" /> to the
     ///     <see cref="DbContextOptionsBuilder" />.
-    ///     Provides a list of assemblies to scan for <see cref="IEntityTypeConfiguration{TEntity}" /> implementations.
-    ///     Requires the model builder to be configured with  />
     /// </summary>
     /// <param name="builder">The <see cref="DbContextOptionsBuilder" /></param>
-    /// <param name="assemblies">List of <see cref="Assembly" /> to scan</param>
-    public static void WithEntityConfigurationsFromAssembliesExtension(this DbContextOptionsBuilder builder,
-        params Assembly[] assemblies)
+    /// <param name="configureActions">Actions to run on the model builder</param>
+    public static void WithConfigureModelBuilderExtension(this DbContextOptionsBuilder builder,
+        params Action<ModelBuilder, DbContextOptions>[] configureActions)
     {
         ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
-            new EntityConfigurationsFromAssembliesExtension
-                { Assemblies = assemblies });
+            new ModelBuilderConfigureExtension(configureActions));
     }
 
 
     /// <summary>
-    ///     Applies the <see cref="IEntityTypeConfiguration{TEntity}" /> implementations from the assemblies registered in the
-    ///     <see cref="EntityConfigurationsFromAssembliesExtension" /> to the <see cref="ModelBuilder" />.
+    ///     Runs the actions registered in the <see cref="ModelBuilderConfigureExtension" />
+    ///     on the <see cref="ModelBuilder" />.
     /// </summary>
-    /// <param name="builder">The <see cref="ModelBuilder" /></param>
+    /// <param name="modelBuilder">The <see cref="ModelBuilder" /></param>
     /// <param name="options">
     ///     The <see cref="DbContextOptions" /> to load the
-    ///     <see cref="EntityConfigurationsFromAssembliesExtension" />> from
+    ///     <see cref="ModelBuilderConfigureExtension" />> from
     /// </param>
-    public static void ApplyConfigurationsFromAssembliesExtension(this ModelBuilder builder, DbContextOptions options)
+    public static void ConfigureFromExtension(this ModelBuilder modelBuilder,
+        DbContextOptions options)
     {
-        var extension = options.FindExtension<EntityConfigurationsFromAssembliesExtension>();
+        var extension = options.FindExtension<ModelBuilderConfigureExtension>();
         if (extension is null) return;
-        foreach (var assembly in extension.Assemblies) builder.ApplyConfigurationsFromAssembly(assembly);
+        foreach (var action in extension.ConfigureActions) action.Invoke(modelBuilder, options);
     }
 }

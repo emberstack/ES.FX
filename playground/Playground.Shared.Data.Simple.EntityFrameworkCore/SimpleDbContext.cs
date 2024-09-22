@@ -14,7 +14,7 @@ public class SimpleDbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.AddOutboxEntities();
-        modelBuilder.ApplyConfigurationsFromAssembliesExtension(dbContextOptions);
+        modelBuilder.ConfigureFromExtension(dbContextOptions);
         base.OnModelCreating(modelBuilder);
     }
 

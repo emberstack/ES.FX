@@ -18,6 +18,7 @@ public class SimpleDbContextDesignTimeFactory : TestContainerDesignTimeFactory<S
     protected override void ConfigureDbContextOptionsBuilder(DbContextOptionsBuilder<SimpleDbContext> builder)
     {
         base.ConfigureDbContextOptionsBuilder(builder);
-        builder.WithEntityConfigurationsFromAssembliesExtension(GetType().Assembly);
+        builder.WithConfigureModelBuilderExtension((modelBuilder, _) =>
+            modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly));
     }
 }
