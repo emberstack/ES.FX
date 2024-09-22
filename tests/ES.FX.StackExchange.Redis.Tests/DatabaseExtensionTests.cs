@@ -7,7 +7,7 @@ public class DatabaseExtensionTests
 {
     [Theory]
     [InlineData("pattern", 1000)]
-    public void KeysDelete_Input_Output_check(string pattern, uint batchSize)
+    public void KeysDelete_Input_Output_check(string pattern, int batchSize)
     {
         var database = new Mock<IDatabase>();
         database.Setup(database => database.ScriptEvaluate(It.IsAny<string>(),
@@ -25,7 +25,7 @@ public class DatabaseExtensionTests
 
     [Theory]
     [InlineData("pattern", 1000)]
-    public async Task KeysDeleteAsync_Input_Output_checkAsync(string pattern, uint batchSize)
+    public async Task KeysDeleteAsync_Input_Output_checkAsync(string pattern, int batchSize)
     {
         var database = new Mock<IDatabase>();
         database.Setup(database => database.ScriptEvaluateAsync(It.IsAny<string>(),

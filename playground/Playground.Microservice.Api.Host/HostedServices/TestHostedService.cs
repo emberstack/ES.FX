@@ -1,11 +1,14 @@
 ﻿#pragma warning disable CS9113 // Parameter is unread.
 
+using ES.FX.StackExchange.Redis;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 using Microsoft.EntityFrameworkCore;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.Entities;
+using StackExchange.Redis;
+using StackExchange.Redis.KeyspaceIsolation;
 
 namespace Playground.Microservice.Api.Host.HostedServices;
 
@@ -16,7 +19,6 @@ internal class TestHostedService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.CompletedTask;
-
 
         var factory = serviceProvider.GetRequiredService<IDbContextFactory<SimpleDbContext>>();
         while (true)
