@@ -34,7 +34,7 @@ internal class TestHostedService(
             }
 
             await dbContext.SaveChangesAsync(stoppingToken).ConfigureAwait(false);
-            await Task.Delay(10_000, stoppingToken).ConfigureAwait(false);
+            await Task.Delay(60_000, stoppingToken).ConfigureAwait(false);
         }
     }
 }

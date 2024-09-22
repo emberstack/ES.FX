@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection.PortableExecutable;
 using System.Text.Json;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using static ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages.OutboxMessageHeaders;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore;
 
@@ -37,8 +39,19 @@ public class OutboxDeliveryService<TDbContext>(
             var sleepInterval = TimeSpan.FromSeconds(10);
             TDbContext? dbContext = null;
             var scope = serviceProvider.CreateAsyncScope();
+
+            Activity? deliverOutboxActivity = null;
             try
             {
+                deliverOutboxActivity = Diagnostics.ActivitySource.StartActivity(
+                    Diagnostics.DeliverOutboxActivityName,
+                    ActivityKind.Server, null, new Dictionary<string, object?>
+                    {
+                        { "outbox.dbContext.type", typeof(TDbContext).FullName }
+                    }
+                );
+                deliverOutboxActivity?.Start();
+
                 //Create a new scope for each iteration to avoid memory leaks
                 var options = scope.ServiceProvider
                     .GetRequiredService<IOptionsMonitor<OutboxDeliveryOptions<TDbContext>>>()
@@ -239,6 +252,10 @@ public class OutboxDeliveryService<TDbContext>(
             }
             finally
             {
+
+                deliverOutboxActivity?.Stop();
+                deliverOutboxActivity?.Dispose();
+
                 if (dbContext != null)
                     await dbContext.DisposeAsync().ConfigureAwait(false);
                 await scope.DisposeAsync().ConfigureAwait(false);
@@ -247,7 +264,8 @@ public class OutboxDeliveryService<TDbContext>(
         }
     }
 
-    private async Task<bool> DeliverMessage(OutboxMessage message,
+    private async Task<bool> DeliverMessage(
+        OutboxMessage message,
         IOutboxMessageHandler messageHandler,
         CancellationToken cancellationToken)
     {
@@ -272,7 +290,7 @@ public class OutboxDeliveryService<TDbContext>(
                     { "outbox.message.addedAt", message.AddedAt },
                     { "outbox.message.attempt", message.DeliveryAttempts },
                     { "outbox.dbContext.type", typeof(TDbContext).FullName }
-                });
+                }, Activity.Current is null ? null : new[] { new ActivityLink(Activity.Current.Context) });
 
             var payloadType = OutboxPayloadTypeProvider.GetMessageTypeByPayloadType(message.PayloadType,
                                   headers.TryGetValue(OutboxMessageHeaders.Message.PayloadOriginalType, out var hint)
