@@ -19,7 +19,7 @@ public class DatabaseExtensionTests
             batchSize);
 
         database.Verify(database => database.ScriptEvaluate(It.IsAny<string>(),
-            It.Is<RedisKey[]>(x=>x.Contains(pattern)), 
+            It.Is<RedisKey[]>(x => x.Contains(pattern)),
             It.Is<RedisValue[]>(x => x.Contains(batchSize)),
             It.IsAny<CommandFlags>()), Times.Once);
     }

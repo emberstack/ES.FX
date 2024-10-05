@@ -27,6 +27,6 @@ public class MessageTypeAttribute(string messageType) : Attribute
         return attribute?.MessageType;
     }
 
-    public static string? MessageTypeFor<T>() => 
+    public static string? MessageTypeFor<T>() =>
         MessageTypeFor(typeof(T));
 }

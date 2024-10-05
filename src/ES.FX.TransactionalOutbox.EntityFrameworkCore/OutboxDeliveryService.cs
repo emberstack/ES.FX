@@ -250,7 +250,6 @@ public class OutboxDeliveryService<TDbContext>(
             }
             finally
             {
-
                 deliverOutboxActivity?.Stop();
                 deliverOutboxActivity?.Dispose();
 

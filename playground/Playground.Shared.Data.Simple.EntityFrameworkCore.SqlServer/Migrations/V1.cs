@@ -1,123 +1,109 @@
-﻿using System;
+﻿#nullable disable
+
 using Microsoft.EntityFrameworkCore.Migrations;
 
-#nullable disable
+namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations;
 
-namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
+/// <inheritdoc />
+public partial class V1 : Migration
 {
     /// <inheritdoc />
-    public partial class V1 : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.CreateTable(
-                name: "__Outboxes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AddedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    Lock = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DeliveryDelayedUntil = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK___Outboxes", x => x.Id);
-                });
+        migrationBuilder.CreateTable(
+            "__Outboxes",
+            table => new
+            {
+                Id = table.Column<Guid>("uniqueidentifier", nullable: false),
+                AddedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false),
+                Lock = table.Column<Guid>("uniqueidentifier", nullable: true),
+                DeliveryDelayedUntil = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                RowVersion = table.Column<byte[]>("rowversion", rowVersion: true, nullable: true)
+            },
+            constraints: table => { table.PrimaryKey("PK___Outboxes", x => x.Id); });
 
-            migrationBuilder.CreateTable(
-                name: "__OutboxMessageFaults",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false),
-                    OutboxId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AddedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    Headers = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PayloadType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Payload = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DeliveryAttempts = table.Column<int>(type: "int", nullable: false),
-                    DeliveryFirstAttemptedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeliveryLastAttemptedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeliveryLastAttemptError = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
-                    DeliveryNotBefore = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeliveryNotAfter = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    FaultedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK___OutboxMessageFaults", x => x.Id);
-                });
+        migrationBuilder.CreateTable(
+            "__OutboxMessageFaults",
+            table => new
+            {
+                Id = table.Column<long>("bigint", nullable: false),
+                OutboxId = table.Column<Guid>("uniqueidentifier", nullable: false),
+                AddedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false),
+                Headers = table.Column<string>("nvarchar(max)", nullable: false),
+                PayloadType = table.Column<string>("nvarchar(max)", nullable: false),
+                Payload = table.Column<string>("nvarchar(max)", nullable: false),
+                DeliveryAttempts = table.Column<int>("int", nullable: false),
+                DeliveryFirstAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                DeliveryLastAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                DeliveryLastAttemptError = table.Column<string>("nvarchar(4000)", maxLength: 4000, nullable: true),
+                DeliveryNotBefore = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                DeliveryNotAfter = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                FaultedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false)
+            },
+            constraints: table => { table.PrimaryKey("PK___OutboxMessageFaults", x => x.Id); });
 
-            migrationBuilder.CreateTable(
-                name: "__OutboxMessages",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    OutboxId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AddedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    Headers = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PayloadType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Payload = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DeliveryAttempts = table.Column<int>(type: "int", nullable: false),
-                    DeliveryMaxAttempts = table.Column<int>(type: "int", nullable: true),
-                    DeliveryFirstAttemptedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeliveryLastAttemptedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeliveryLastAttemptError = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
-                    DeliveryNotBefore = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeliveryNotAfter = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeliveryAttemptDelay = table.Column<int>(type: "int", nullable: false),
-                    DeliveryAttemptDelayIsExponential = table.Column<bool>(type: "bit", nullable: false),
-                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK___OutboxMessages", x => x.Id);
-                });
+        migrationBuilder.CreateTable(
+            "__OutboxMessages",
+            table => new
+            {
+                Id = table.Column<long>("bigint", nullable: false)
+                    .Annotation("SqlServer:Identity", "1, 1"),
+                OutboxId = table.Column<Guid>("uniqueidentifier", nullable: false),
+                AddedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false),
+                Headers = table.Column<string>("nvarchar(max)", nullable: false),
+                PayloadType = table.Column<string>("nvarchar(max)", nullable: false),
+                Payload = table.Column<string>("nvarchar(max)", nullable: false),
+                DeliveryAttempts = table.Column<int>("int", nullable: false),
+                DeliveryMaxAttempts = table.Column<int>("int", nullable: true),
+                DeliveryFirstAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                DeliveryLastAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                DeliveryLastAttemptError = table.Column<string>("nvarchar(4000)", maxLength: 4000, nullable: true),
+                DeliveryNotBefore = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                DeliveryNotAfter = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
+                DeliveryAttemptDelay = table.Column<int>("int", nullable: false),
+                DeliveryAttemptDelayIsExponential = table.Column<bool>("bit", nullable: false),
+                RowVersion = table.Column<byte[]>("rowversion", rowVersion: true, nullable: true)
+            },
+            constraints: table => { table.PrimaryKey("PK___OutboxMessages", x => x.Id); });
 
-            migrationBuilder.CreateTable(
-                name: "SimpleUsers",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Username = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SimpleUsers", x => x.Id);
-                });
+        migrationBuilder.CreateTable(
+            "SimpleUsers",
+            table => new
+            {
+                Id = table.Column<Guid>("uniqueidentifier", nullable: false),
+                Username = table.Column<string>("nvarchar(128)", maxLength: 128, nullable: false)
+            },
+            constraints: table => { table.PrimaryKey("PK_SimpleUsers", x => x.Id); });
 
-            migrationBuilder.CreateIndex(
-                name: "IX___Outboxes_AddedAt",
-                table: "__Outboxes",
-                column: "AddedAt");
+        migrationBuilder.CreateIndex(
+            "IX___Outboxes_AddedAt",
+            "__Outboxes",
+            "AddedAt");
 
-            migrationBuilder.CreateIndex(
-                name: "IX___Outboxes_DeliveryDelayedUntil",
-                table: "__Outboxes",
-                column: "DeliveryDelayedUntil");
+        migrationBuilder.CreateIndex(
+            "IX___Outboxes_DeliveryDelayedUntil",
+            "__Outboxes",
+            "DeliveryDelayedUntil");
 
-            migrationBuilder.CreateIndex(
-                name: "IX___Outboxes_Lock",
-                table: "__Outboxes",
-                column: "Lock");
-        }
+        migrationBuilder.CreateIndex(
+            "IX___Outboxes_Lock",
+            "__Outboxes",
+            "Lock");
+    }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropTable(
-                name: "__Outboxes");
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(
+            "__Outboxes");
 
-            migrationBuilder.DropTable(
-                name: "__OutboxMessageFaults");
+        migrationBuilder.DropTable(
+            "__OutboxMessageFaults");
 
-            migrationBuilder.DropTable(
-                name: "__OutboxMessages");
+        migrationBuilder.DropTable(
+            "__OutboxMessages");
 
-            migrationBuilder.DropTable(
-                name: "SimpleUsers");
-        }
+        migrationBuilder.DropTable(
+            "SimpleUsers");
     }
 }

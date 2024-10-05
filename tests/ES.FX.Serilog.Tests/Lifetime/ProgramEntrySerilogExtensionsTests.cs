@@ -18,6 +18,5 @@ public class ProgramEntrySerilogExtensionsTests
                 Assert.NotEmpty(InMemorySink.Instance.LogEvents);
                 return Task.FromResult(1);
             });
-
     }
 }
