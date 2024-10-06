@@ -3,7 +3,7 @@
 namespace ES.FX.OneOf.Types;
 
 [PublicAPI]
-public record struct InProgress;
+public record struct Deferred;
 
 [PublicAPI]
-public record struct InProgress<T>(T Value);
+public record struct Deferred<T>;
