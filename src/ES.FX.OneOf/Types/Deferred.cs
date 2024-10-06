@@ -6,4 +6,4 @@ namespace ES.FX.OneOf.Types;
 public record struct Deferred;
 
 [PublicAPI]
-public record struct Deferred<T>;
+public record struct Deferred<T>(T Value);

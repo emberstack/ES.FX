@@ -6,4 +6,4 @@ namespace ES.FX.OneOf.Types;
 public record struct Interrupted;
 
 [PublicAPI]
-public record struct Interrupted<T>;
+public record struct Interrupted<T>(T Value);

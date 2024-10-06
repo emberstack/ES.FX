@@ -6,4 +6,4 @@ namespace ES.FX.OneOf.Types;
 public record struct Unknown;
 
 [PublicAPI]
-public record struct Unknown<T>;
+public record struct Unknown<T>(T Value);
