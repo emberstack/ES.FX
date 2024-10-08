@@ -1,27 +1,27 @@
 ﻿using System.Collections.Concurrent;
-using ES.FX.Contracts.Messaging;
+using ES.FX.Contracts.Payloads;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 
 internal static class OutboxPayloadTypeProvider
 {
-    private static readonly ConcurrentDictionary<string, Type?> MessageTypeByPayloadTypeDictionary = new();
+    private static readonly ConcurrentDictionary<string, Type?> PayloadTypeDictionary = new();
 
     internal static string GetPayloadType(Type type) =>
-        MessageTypeAttribute.MessageTypeFor(type) ?? type.AssemblyQualifiedName!;
+        PayloadTypeAttribute.PayloadTypeFor(type) ?? type.AssemblyQualifiedName!;
 
     internal static void RegisterTypes(params Type[] messageTypes)
     {
-        foreach (var type in messageTypes) MessageTypeByPayloadTypeDictionary.TryAdd(GetPayloadType(type), type);
+        foreach (var type in messageTypes) PayloadTypeDictionary.TryAdd(GetPayloadType(type), type);
     }
 
 
     internal static Type? GetMessageTypeByPayloadType(string payloadType, string? assemblyQualifiedName)
     {
-        if (MessageTypeByPayloadTypeDictionary.TryGetValue(payloadType, out var type)) return type;
+        if (PayloadTypeDictionary.TryGetValue(payloadType, out var type)) return type;
         type = Type.GetType(payloadType) ??
                Type.GetType(assemblyQualifiedName ?? string.Empty);
-        MessageTypeByPayloadTypeDictionary.TryAdd(payloadType, type);
+        PayloadTypeDictionary.TryAdd(payloadType, type);
         return type;
     }
 }

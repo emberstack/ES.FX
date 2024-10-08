@@ -1,44 +1,44 @@
-﻿using ES.FX.Contracts.Messaging;
+﻿using ES.FX.Contracts.Payloads;
 using MassTransit;
 using MassTransit.Internals;
 
 namespace ES.FX.MassTransit.Formatters;
 
 /// <summary>
-///     Formatter that uses the <see cref="MessageTypeAttribute" /> to format the entity name. Uses
+///     Formatter that uses the <see cref="PayloadTypeAttribute" /> to format the entity name. Uses
 ///     <see cref="IEntityNameFormatter" /> as the base formatter
 /// </summary>
 /// <param name="entityNameFormatter"><see cref="IEndpointNameFormatter" /> to use as the base formatter</param>
-/// <param name="faultFallbackToMessageType">
-///     When set to true, the <see cref="MessageTypeAttribute" /> and
+/// <param name="faultFallbackToPayloadType">
+///     When set to true, the <see cref="PayloadTypeAttribute" /> and
 ///     <param name="faultFormat"></param>
 ///     will be used to determine the <see cref="Fault" /> message name
 /// </param>
 /// <param name="faultFormat">
-///     The format to use for the fault message type if <see cref="MessageTypeAttribute" /> is set
-///     but <see cref="FaultMessageTypeAttribute" /> is not set
+///     The format to use for the fault type if <see cref="PayloadTypeAttribute" /> is set
+///     but <see cref="FaultPayloadTypeAttribute" /> is not set
 /// </param>
-public class MessageTypeEntityNameFormatter(
+public class PayloadTypeEntityNameFormatter(
     IEntityNameFormatter entityNameFormatter,
-    bool faultFallbackToMessageType = true,
+    bool faultFallbackToPayloadType = true,
     string faultFormat = "{0}_fault") : IEntityNameFormatter
 {
     public string FormatEntityName<TMessage>()
     {
-        if (typeof(TMessage).ClosesType(typeof(Fault<>), out Type[] messageTypes))
+        if (typeof(TMessage).ClosesType(typeof(Fault<>), out Type[] payloadTypes))
         {
-            var type = FaultMessageTypeAttribute.MessageTypeFor(messageTypes.First());
+            var type = FaultPayloadTypeAttribute.PayloadTypeFor(payloadTypes.First());
             if (type is not null) return type;
 
-            if (faultFallbackToMessageType)
+            if (faultFallbackToPayloadType)
             {
-                type = MessageTypeAttribute.MessageTypeFor(messageTypes.First());
+                type = PayloadTypeAttribute.PayloadTypeFor(payloadTypes.First());
                 if (type is not null) return string.Format(faultFormat, type);
             }
         }
         else
         {
-            var type = MessageTypeAttribute.MessageTypeFor(typeof(TMessage));
+            var type = PayloadTypeAttribute.PayloadTypeFor(typeof(TMessage));
             if (type is not null) return type;
         }
 

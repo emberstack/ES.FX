@@ -147,14 +147,14 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
 
             cfg.MessageTopology.SetEntityNameFormatter(new AggregatePrefixEntityNameFormatter(
-                new MessageTypeEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
+                new PayloadTypeEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
                 "__",
                 _ => nameof(Playground),
                 _ => "Events"
             ));
 
             cfg.ConfigureEndpoints(context,
-                new MessageTypeDefaultEndpointNameFormatter(
+                new PayloadTypeDefaultEndpointNameFormatter(
                     prefix: $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__"));
         });
     }).AddOpenTelemetry().WithTracing(traceBuilder =>

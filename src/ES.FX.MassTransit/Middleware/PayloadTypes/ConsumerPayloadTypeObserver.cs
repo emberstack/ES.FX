@@ -2,13 +2,13 @@
 using JetBrains.Annotations;
 using MassTransit;
 
-namespace ES.FX.MassTransit.Middleware.MessageTypes;
+namespace ES.FX.MassTransit.Middleware.PayloadTypes;
 
 /// <summary>
-///     Observer that registers all expected message types with the <see cref="MassTransitMessageTypeProvider" />
+///     Observer that registers all expected payload types with the <see cref="MassTransitPayloadTypeProvider" />
 /// </summary>
 [PublicAPI]
-public class ConsumerMessageTypeObserver : IConsumerConfigurationObserver
+public class ConsumerPayloadTypeObserver : IConsumerConfigurationObserver
 {
     public void ConsumerConfigured<TConsumer>(IConsumerConfigurator<TConsumer> configurator)
         where TConsumer : class
@@ -20,6 +20,6 @@ public class ConsumerMessageTypeObserver : IConsumerConfigurationObserver
         where TConsumer : class
         where TMessage : class
     {
-        MassTransitMessageTypeProvider.RegisterTypes(typeof(TMessage));
+        MassTransitPayloadTypeProvider.RegisterTypes(typeof(TMessage));
     }
 }
