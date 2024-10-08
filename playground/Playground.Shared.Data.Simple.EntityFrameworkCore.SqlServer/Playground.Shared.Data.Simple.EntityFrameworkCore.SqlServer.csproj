@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -16,9 +16,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\src\ES.FX.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
-		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
-		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
+		<ProjectReference
+			Include="..\..\src\ES.FX.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
+		<ProjectReference
+			Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
+		<ProjectReference
+			Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 
 </Project>
