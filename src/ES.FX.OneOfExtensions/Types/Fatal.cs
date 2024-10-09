@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace ES.FX.OneOf.Types;
+namespace ES.FX.OneOfExtensions.Types;
 
 [PublicAPI]
 public record struct Fatal;
