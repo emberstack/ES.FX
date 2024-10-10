@@ -1,5 +1,4 @@
-﻿using ES.FX.ComponentModel.TransactionalOutbox;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
+﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;

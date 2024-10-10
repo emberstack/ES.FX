@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace ES.FX.ComponentModel.TransactionalOutbox;
+namespace ES.FX.TransactionalOutbox;
 
 /// <summary>
 ///     Interface used to define the transaction outbox messages

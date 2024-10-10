@@ -12,25 +12,27 @@ public static class DatabaseExtensions
     /// <summary>
     ///     LUA script to delete all keys matching a pattern in batches
     /// </summary>
-    private const string DeleteAllWithPatternBatchedScript = @"
-            local cursor = '0'
-            local batchSize = tonumber(ARGV[1])
-            local totalDeleted = 0
-            local keys
-            repeat
-                keys = {}
-                local result = redis.call('SCAN', cursor, 'MATCH', KEYS[1], 'COUNT', batchSize)
-                cursor = result[1]
-                for i, key in ipairs(result[2]) do
-                    table.insert(keys, key)
-                end
-                if #keys > 0 then
-                    redis.call('DEL', unpack(keys))
-                    totalDeleted = totalDeleted + #keys
-                end
-            until cursor == '0'
-            return totalDeleted
-        ";
+    private const string DeleteAllWithPatternBatchedScript = """
+                                                             
+                                                                         local cursor = '0'
+                                                                         local batchSize = tonumber(ARGV[1])
+                                                                         local totalDeleted = 0
+                                                                         local keys
+                                                                         repeat
+                                                                             keys = {}
+                                                                             local result = redis.call('SCAN', cursor, 'MATCH', KEYS[1], 'COUNT', batchSize)
+                                                                             cursor = result[1]
+                                                                             for i, key in ipairs(result[2]) do
+                                                                                 table.insert(keys, key)
+                                                                             end
+                                                                             if #keys > 0 then
+                                                                                 redis.call('DEL', unpack(keys))
+                                                                                 totalDeleted = totalDeleted + #keys
+                                                                             end
+                                                                         until cursor == '0'
+                                                                         return totalDeleted
+                                                                     
+                                                             """;
 
     private const string DeterminePrefixScript =
         "return string.sub(KEYS[1],1,string.len(KEYS[1])-string.len(ARGV[1]))";

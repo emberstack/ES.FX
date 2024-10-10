@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
-using ES.FX.ComponentModel.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;

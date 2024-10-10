@@ -1,5 +1,5 @@
-﻿using ES.FX.ComponentModel.TransactionalOutbox;
-using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
+﻿using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
+using ES.FX.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.Entities;

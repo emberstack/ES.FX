@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using ES.FX.ComponentModel.TransactionalOutbox;
 using ES.FX.Hosting.Lifetime;
 using ES.FX.Ignite.Asp.Versioning.Hosting;
 using ES.FX.Ignite.Azure.Data.Tables.Hosting;
@@ -19,6 +18,7 @@ using ES.FX.MassTransit.Formatters;
 using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.NSwag.AspNetCore.Generation;
 using ES.FX.Serilog.Lifetime;
+using ES.FX.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using HealthChecks.UI.Client;

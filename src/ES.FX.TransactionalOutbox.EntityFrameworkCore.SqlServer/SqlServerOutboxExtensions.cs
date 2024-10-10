@@ -1,5 +1,4 @@
-﻿using ES.FX.ComponentModel.TransactionalOutbox;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 

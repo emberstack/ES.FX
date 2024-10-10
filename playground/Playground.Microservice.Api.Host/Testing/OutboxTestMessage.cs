@@ -1,5 +1,5 @@
 ﻿using ES.FX.ComponentModel.DataAnnotations;
-using ES.FX.ComponentModel.TransactionalOutbox;
+using ES.FX.TransactionalOutbox;
 using MediatR;
 
 namespace Playground.Microservice.Api.Host.Testing;

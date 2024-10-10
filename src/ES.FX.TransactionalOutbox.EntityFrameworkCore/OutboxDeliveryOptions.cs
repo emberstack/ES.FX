@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using ES.FX.ComponentModel.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using Microsoft.EntityFrameworkCore;
 
