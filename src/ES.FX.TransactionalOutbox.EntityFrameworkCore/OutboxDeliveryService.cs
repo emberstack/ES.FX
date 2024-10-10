@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
+using ES.FX.ComponentModel.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
@@ -21,7 +22,7 @@ public class OutboxDeliveryService<TDbContext>(
     ILogger<OutboxDeliveryService<TDbContext>> logger,
     IServiceProvider serviceProvider)
     : BackgroundService
-    where TDbContext : DbContext, IOutboxDbContext
+    where TDbContext : DbContext, IOutboxContext
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

@@ -50,7 +50,7 @@ public static class OutboxExtensions
     /// <param name="deliveryOptions">The options used to configure the message delivery</param>
     public static void AddOutboxMessage<TOutboxDbContext, TMessage>(this TOutboxDbContext dbContext, TMessage message,
         OutboxMessageOptions? deliveryOptions = default)
-        where TOutboxDbContext : DbContext, IOutboxDbContext
+        where TOutboxDbContext : DbContext, IOutboxContext
         where TMessage : class, IOutboxMessage
     {
         deliveryOptions ??= new OutboxMessageOptions();
@@ -179,7 +179,7 @@ public static class OutboxExtensions
         this IServiceCollection services,
         Action<OutboxDeliveryOptions<TDbContext>>? configureOptions = null
     )
-        where TDbContext : DbContext, IOutboxDbContext
+        where TDbContext : DbContext, IOutboxContext
         where TMessageHandler : class, IOutboxMessageHandler
     {
         services.AddOptions<OutboxDeliveryOptions<TDbContext>>().Configure(options =>

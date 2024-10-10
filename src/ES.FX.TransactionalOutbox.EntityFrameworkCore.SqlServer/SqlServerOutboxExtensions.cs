@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ES.FX.ComponentModel.TransactionalOutbox;
+using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 
@@ -10,7 +11,7 @@ public static class SqlServerOutboxExtensions
     /// <typeparam name="TDbContext"><see cref="TDbContext" /> context for the options </typeparam>
     /// <param name="options">The <see cref="OutboxDeliveryOptions{TDbContext}" /> to configure</param>
     public static void UseSqlServer<TDbContext>(this OutboxDeliveryOptions<TDbContext> options)
-        where TDbContext : DbContext, IOutboxDbContext
+        where TDbContext : DbContext, IOutboxContext
     {
         options.OutboxProvider = new SqlServerOutboxProvider<TDbContext>();
     }
