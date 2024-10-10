@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using ES.FX.Contracts.Payloads;
+using ES.FX.ComponentModel.DataAnnotations;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 

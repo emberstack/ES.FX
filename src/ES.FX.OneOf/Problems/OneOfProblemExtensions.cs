@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using ES.FX.Problems.OneOfExtensions.Types;
+using ES.FX.Problems;
 using JetBrains.Annotations;
 
-namespace ES.FX.Problems.OneOfExtensions;
+namespace ES.FX.OneOfExtensions.Problems;
 
 public static class OneOfProblemExtensions
 {

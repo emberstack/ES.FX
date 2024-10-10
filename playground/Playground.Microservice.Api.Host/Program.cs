@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using ES.FX.Contracts.TransactionalOutbox;
+using ES.FX.ComponentModel.TransactionalOutbox;
 using ES.FX.Hosting.Lifetime;
 using ES.FX.Ignite.Asp.Versioning.Hosting;
 using ES.FX.Ignite.Azure.Data.Tables.Hosting;

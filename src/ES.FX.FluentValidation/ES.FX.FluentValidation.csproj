@@ -9,4 +9,7 @@
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="JetBrains.Annotations" />
 	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\ES.FX\ES.FX.csproj" />
+	</ItemGroup>
 </Project>

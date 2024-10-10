@@ -11,8 +11,4 @@
 		<PackageReference Include="JetBrains.Annotations" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="ValueRanges\" />
-	</ItemGroup>
-
 </Project>

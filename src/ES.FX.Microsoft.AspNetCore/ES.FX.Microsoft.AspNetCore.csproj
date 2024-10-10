@@ -14,4 +14,8 @@
 		<PackageReference Include="JetBrains.Annotations" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ES.FX\ES.FX.csproj" />
+	</ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 ﻿using OneOf;
 
-namespace ES.FX.Problems.OneOfExtensions.Types;
+namespace ES.FX.OneOfExtensions.Problems;
 
 public interface IOneOfWithProblem : IOneOf;

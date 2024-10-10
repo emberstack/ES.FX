@@ -1,11 +1,12 @@
 ﻿using System.Net;
 using System.Reflection;
+using ES.FX.Problems;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ES.FX.Problems.AspNetCore;
+namespace ES.FX.Microsoft.AspNetCore.Problems;
 
-public static class ProblemToProblemDetailsExtensions
+public static class ProblemExtensions
 {
     [PublicAPI]
     public static ProblemDetails ToProblemDetails(this Problem problem)
@@ -15,17 +16,18 @@ public static class ProblemToProblemDetailsExtensions
             nameof(Problem.Detail),
             nameof(Problem.Title),
             nameof(Problem.Type),
-            nameof(Problem.Instance)
+            nameof(Problem.Instance),
+            nameof(Problem.Status)
         };
 
         return new ProblemDetails
         {
-            Detail = problem.Detail,
-            Status = problem is ValidationProblem
-                ? (int)HttpStatusCode.BadRequest
-                : (int)HttpStatusCode.PreconditionFailed,
-            Title = problem.Title,
             Type = problem.Type,
+            Detail = problem.Detail,
+            Status = problem.Status ?? (problem is ValidationProblem
+                ? (int)HttpStatusCode.BadRequest
+                : (int)HttpStatusCode.PreconditionFailed),
+            Title = problem.Title,
             Instance = problem.Instance,
             Extensions = problem.GetType()
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)

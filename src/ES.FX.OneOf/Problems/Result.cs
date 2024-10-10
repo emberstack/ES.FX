@@ -1,7 +1,8 @@
-﻿using JetBrains.Annotations;
+﻿using ES.FX.Problems;
+using JetBrains.Annotations;
 using OneOf;
 
-namespace ES.FX.Problems.OneOfExtensions.Types;
+namespace ES.FX.OneOfExtensions.Problems;
 
 [GenerateOneOf]
 public partial class Result<T> : OneOfBase<T, Problem>, IOneOfWithProblem

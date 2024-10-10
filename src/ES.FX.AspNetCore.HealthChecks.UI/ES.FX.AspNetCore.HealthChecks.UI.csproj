@@ -12,4 +12,8 @@
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\ES.FX.Microsoft.AspNetCore\ES.FX.Microsoft.AspNetCore.csproj" />
+	</ItemGroup>
+
 </Project>

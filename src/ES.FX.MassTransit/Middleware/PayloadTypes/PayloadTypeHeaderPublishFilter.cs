@@ -1,4 +1,4 @@
-﻿using ES.FX.Contracts.Payloads;
+﻿using ES.FX.ComponentModel.DataAnnotations;
 using ES.FX.MassTransit.Serialization;
 using JetBrains.Annotations;
 using MassTransit;

@@ -1,4 +1,4 @@
-﻿using ES.FX.Contracts.Payloads;
+﻿using ES.FX.ComponentModel.DataAnnotations;
 using MassTransit;
 
 namespace ES.FX.MassTransit.Formatters;

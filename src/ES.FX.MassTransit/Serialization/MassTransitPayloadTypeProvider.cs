@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using ES.FX.Contracts.Payloads;
+using ES.FX.ComponentModel.DataAnnotations;
 using JetBrains.Annotations;
 using MassTransit;
 

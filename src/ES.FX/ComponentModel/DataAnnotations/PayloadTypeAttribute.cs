@@ -2,7 +2,7 @@
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace ES.FX.Contracts.Payloads;
+namespace ES.FX.ComponentModel.DataAnnotations;
 
 /// <summary>
 ///     Attribute used to specify a custom type for a payload.
