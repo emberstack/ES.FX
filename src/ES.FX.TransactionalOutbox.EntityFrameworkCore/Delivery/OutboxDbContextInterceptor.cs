@@ -89,7 +89,15 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
                 var matches = bag.RemoveAll(s => context.Equals(s?.Target));
                 if (matches > 0)
                     OutboxDeliverySignal.GetChannel(type).Writer.TryWrite(callerMemberName ?? nameof(OnOutboxSaved));
-                bag.RemoveAll(s => !s?.IsAlive ?? true);
+                try
+                {
+                    bag.RemoveAll(s => !s?.IsAlive ?? true);
+                }
+                catch
+                {
+                    // Ignored. This is a best-effort cleanup
+                }
+
                 return bag;
             });
     }
@@ -125,7 +133,15 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
             _ => [new WeakReference(context)],
             (_, bag) =>
             {
-                bag.RemoveAll(s => !s?.IsAlive ?? true);
+                try
+                {
+                    bag.RemoveAll(s => !s?.IsAlive ?? true);
+                }
+                catch
+                {
+                    // Ignored. This is a best-effort cleanup
+                }
+
                 bag.Add(new WeakReference(context));
                 return bag;
             });
