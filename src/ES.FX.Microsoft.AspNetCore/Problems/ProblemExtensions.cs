@@ -44,11 +44,11 @@ public static class ProblemExtensions
                              .Where(kvp => !PropertiesToSkip.Contains(kvp.Key))
                              .Select(x => new KeyValuePair<string, object?>(x.Key, x.Value))
                              .ToDictionary(x => x.Key, x => x.Value)
-                         ?? new Dictionary<string, object?>();
+                         ?? [];
         }
         catch
         {
-            extensions = new Dictionary<string, object?>();
+            extensions = [];
         }
 
 
