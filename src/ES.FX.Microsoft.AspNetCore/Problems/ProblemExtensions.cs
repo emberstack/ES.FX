@@ -16,7 +16,8 @@ public static class ProblemExtensions
     };
 
     /// <summary>
-    /// These properties are not included in the extensions dictionary of the ProblemDetails object. They are included as top-level properties.
+    ///     These properties are not included in the extensions dictionary of the ProblemDetails object. They are included as
+    ///     top-level properties.
     /// </summary>
     private static readonly HashSet<string> PropertiesToSkip = new(StringComparer.OrdinalIgnoreCase)
     {

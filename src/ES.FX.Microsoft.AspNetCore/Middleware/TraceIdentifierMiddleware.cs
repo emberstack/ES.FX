@@ -12,6 +12,6 @@ public class TraceIdentifierMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context)
     {
         await next(context);
-        context.Response.Headers.Add("X-Trace-Id", context.TraceIdentifier);
+        context.Response.Headers["X-Trace-Id"] = context.TraceIdentifier;
     }
 }

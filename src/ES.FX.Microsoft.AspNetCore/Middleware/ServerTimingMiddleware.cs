@@ -1,6 +1,6 @@
-﻿using JetBrains.Annotations;
+﻿using System.Diagnostics;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
-using System.Diagnostics;
 
 namespace ES.FX.Microsoft.AspNetCore.Middleware;
 
