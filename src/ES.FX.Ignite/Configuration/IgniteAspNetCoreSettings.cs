@@ -33,4 +33,14 @@ public class IgniteAspNetCoreSettings
     ///     Gets or sets a value indicating whether the <see cref="QueryStringToHeaderMiddleware" /> is enabled
     /// </summary>
     public bool QueryStringToHeaderMiddlewareEnabled { get; set; } = true;
+
+    /// <summary>
+    ///     Gets or sets a value indicating whether the <see cref="ServerTimingMiddleware" /> is enabled
+    /// </summary>
+    public bool ServerTimingMiddlewareEnabled { get; set; } = true;
+
+    /// <summary>
+    ///     Gets or sets a value indicating whether the <see cref="TraceIdentifierMiddleware" /> is enabled
+    /// </summary>
+    public bool TraceIdentifierMiddlewareEnabled { get; set; } = true;
 }

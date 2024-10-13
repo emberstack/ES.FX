@@ -160,7 +160,7 @@ public static class IgniteHostingExtensions
 
         if (host is WebApplication app)
         {
-            UseQueryStringToHeaderMiddleware(app, settings.AspNetCore);
+            UseStandardMiddleware(app, settings.AspNetCore);
             UseForwardedHeaders(app, settings.AspNetCore);
             UseHealthChecks(app, settings.HealthChecks);
         }
@@ -168,10 +168,16 @@ public static class IgniteHostingExtensions
         return host;
     }
 
-    private static void UseQueryStringToHeaderMiddleware(WebApplication app, IgniteAspNetCoreSettings settings)
+    private static void UseStandardMiddleware(WebApplication app, IgniteAspNetCoreSettings settings)
     {
-        if (!settings.QueryStringToHeaderMiddlewareEnabled) return;
-        app.UseMiddleware<QueryStringToHeaderMiddleware>();
+        if (settings.ServerTimingMiddlewareEnabled)
+            app.UseMiddleware<ServerTimingMiddleware>();
+
+        if (settings.QueryStringToHeaderMiddlewareEnabled)
+            app.UseMiddleware<QueryStringToHeaderMiddleware>();
+
+        if (settings.TraceIdentifierMiddlewareEnabled)
+            app.UseMiddleware<TraceIdentifierMiddleware>();
     }
 
     private static void UseForwardedHeaders(WebApplication app, IgniteAspNetCoreSettings settings)
