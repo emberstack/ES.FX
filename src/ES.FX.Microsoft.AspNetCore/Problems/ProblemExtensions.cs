@@ -2,10 +2,10 @@
 using System.Text.Json;
 using ES.FX.Problems;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using static Microsoft.AspNetCore.Http.TypedResults;
 using ValidationProblem = ES.FX.Problems.ValidationProblem;
 
 namespace ES.FX.Microsoft.AspNetCore.Problems;
@@ -32,9 +32,9 @@ public static class ProblemExtensions
     };
 
     /// <summary>
-    /// Formats a <see cref="Problem"/> as <see cref="ProblemDetails"/>
+    ///     Formats a <see cref="Problem" /> as <see cref="ProblemDetails" />
     /// </summary>
-    /// <param name="problem">The source <see cref="Problem"/></param>
+    /// <param name="problem">The source <see cref="Problem" /></param>
     [PublicAPI]
     public static ProblemDetails AsProblemDetails(this Problem problem)
     {
@@ -72,37 +72,37 @@ public static class ProblemExtensions
     }
 
     /// <summary>
-    /// Returns an <see cref="UnprocessableEntity{ProblemDetails}"/> result with the specified <see cref="Problem"/>
+    ///     Returns an <see cref="UnprocessableEntity{ProblemDetails}" /> result with the specified <see cref="Problem" />
     /// </summary>
     [PublicAPI]
     public static UnprocessableEntity<ProblemDetails> AsUnprocessableEntityResult(this Problem problem) =>
-        UnprocessableEntity(problem.AsProblemDetails());
+        TypedResults.UnprocessableEntity(problem.AsProblemDetails());
 
     /// <summary>
-    /// Returns a <see cref="BadRequest{ProblemDetails}"/> result with the specified <see cref="Problem"/>
+    ///     Returns a <see cref="BadRequest{ProblemDetails}" /> result with the specified <see cref="Problem" />
     /// </summary>
     [PublicAPI]
     public static BadRequest<ProblemDetails> AsBadRequestResult(this Problem problem) =>
-        BadRequest(problem.AsProblemDetails());
+        TypedResults.BadRequest(problem.AsProblemDetails());
 
     /// <summary>
-    /// Returns a <see cref="Conflict{ProblemDetails}"/> result with the specified <see cref="Problem"/>
+    ///     Returns a <see cref="Conflict{ProblemDetails}" /> result with the specified <see cref="Problem" />
     /// </summary>
     [PublicAPI]
     public static Conflict<ProblemDetails> AsConflictResult(this Problem problem) =>
-        Conflict(problem.AsProblemDetails());
+        TypedResults.Conflict(problem.AsProblemDetails());
 
     /// <summary>
-    /// Returns an <see cref="Ok{ProblemDetails}"/> result with the specified <see cref="Problem"/>
+    ///     Returns an <see cref="Ok{ProblemDetails}" /> result with the specified <see cref="Problem" />
     /// </summary>
     [PublicAPI]
     public static Ok<ProblemDetails> AsOkResult(this Problem problem) =>
-        Ok(problem.AsProblemDetails());
+        TypedResults.Ok(problem.AsProblemDetails());
 
     /// <summary>
-    /// Returns a <see cref="ProblemHttpResult"/> result with the specified <see cref="Problem"/>
+    ///     Returns a <see cref="ProblemHttpResult" /> result with the specified <see cref="Problem" />
     /// </summary>
     [PublicAPI]
     public static ProblemHttpResult AsProblemResult(this Problem problem) =>
-        Problem(problem.AsProblemDetails());
+        TypedResults.Problem(problem.AsProblemDetails());
 }
