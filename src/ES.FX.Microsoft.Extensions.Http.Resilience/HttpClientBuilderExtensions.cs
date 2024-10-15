@@ -28,6 +28,7 @@ public static class HttpClientBuilderExtensions
                     handlers.RemoveAt(i);
                     continue;
                 }
+
                 i++;
             }
         });
