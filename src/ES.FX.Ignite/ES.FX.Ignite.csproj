@@ -22,6 +22,7 @@
 		<ProjectReference Include="..\ES.FX.Hosting\ES.FX.Hosting.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
 		<ProjectReference Include="..\ES.FX.Microsoft.AspNetCore\ES.FX.Microsoft.AspNetCore.csproj" />
+		<ProjectReference Include="..\ES.FX.Microsoft.Extensions.Http.Resilience\ES.FX.Microsoft.Extensions.Http.Resilience.csproj" />
 	</ItemGroup>
 
 </Project>
