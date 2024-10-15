@@ -18,7 +18,7 @@
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
     <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
     <PackageVersion Include="Azure.Data.Tables" Version="12.9.1" />
-    <PackageVersion Include="Azure.Identity" Version="1.12.1" />
+    <PackageVersion Include="Azure.Identity" Version="1.13.0" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.2.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.6.0" />
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.22.2" />
