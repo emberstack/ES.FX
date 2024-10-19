@@ -10,6 +10,11 @@
 		<DebugSymbols>true</DebugSymbols>
 		<!--Set the solution directory to the parent directory of the build file.-->
 		<SolutionDir Condition="'$(SolutionDir)' == ''">$(MSBuildThisFileDirectory)..\</SolutionDir>
+		<!--Generate XML documentation file-->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!--Disable warnings from XML documentation - CS1591;CS1571;CS1573;CS1574;CS1723; - -->
+		<!--Disable warnings NuGet vulnerabilities - NU1901;NU1902;NU1903; - -->
+		<NoWarn>CS1591;CS1571;CS1573;CS1574;CS1723;NU1901;NU1902;NU1903;</NoWarn>
 	</PropertyGroup>
 	<!-- Package defaults  -->
 	<PropertyGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.StartsWith('ES.FX'))">

@@ -1,7 +1,7 @@
 ﻿using System.Text;
+using System.Text.Json;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.Fixtures;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.SUT.Endpoints;
-using Newtonsoft.Json;
 using Seq.Api;
 
 namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests;
@@ -18,8 +18,7 @@ public class FunctionalTests(SeqContainerFixture seqFixture) : IClassFixture<Seq
 
         var response = await client.PostAsync(
             SimpleEndpoint.RoutePattern,
-            new StringContent(
-                JsonConvert.SerializeObject(new SimpleEndpoint.Request(name)),
+            new StringContent(JsonSerializer.Serialize(new SimpleEndpoint.Request(name)),
                 Encoding.UTF8, "application/json"));
 
         var resultContent = await response.Content.ReadAsStringAsync();

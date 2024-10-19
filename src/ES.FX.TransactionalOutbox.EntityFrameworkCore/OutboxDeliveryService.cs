@@ -231,7 +231,7 @@ public class OutboxDeliveryService<TDbContext>(
                         }
                         catch (Exception exception)
                         {
-                            logger.LogError(exception, "Exception occured while processing outbox");
+                            logger.LogError(exception, "Exception occurred while processing outbox");
                             try
                             {
                                 await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
@@ -246,7 +246,7 @@ public class OutboxDeliveryService<TDbContext>(
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "Exception occured while acquiring an outbox");
+                logger.LogError(exception, "Exception occurred while acquiring an outbox");
             }
             finally
             {
@@ -309,7 +309,7 @@ public class OutboxDeliveryService<TDbContext>(
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Exception occured while delivering {outboxId}/{messageId}", message.OutboxId,
+            logger.LogError(exception, "Exception occurred while delivering {outboxId}/{messageId}", message.OutboxId,
                 message.Id);
             message.DeliveryLastAttemptError = exception.ToString().Take(4000).ToString();
             return false;

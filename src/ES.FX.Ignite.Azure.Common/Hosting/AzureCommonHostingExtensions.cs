@@ -70,7 +70,7 @@ public static class AzureCommonHostingExtensions
     {
         if (tracingSettings.Enabled)
             services.AddOpenTelemetry().WithTracing(traceBuilder =>
-                traceBuilder.AddSource([$"{typeof(TClient).Namespace}.*"]));
+                traceBuilder.AddSource($"{typeof(TClient).Namespace}.*"));
 
         if (healthCheckSettings.Enabled)
         {

@@ -18,7 +18,6 @@ public readonly record struct ValueRange<T> where T : IComparable<T>
 
     public ValueRange<T>? Intersect(ValueRange<T> other)
     {
-        ArgumentNullException.ThrowIfNull(other);
         var newMin = Min.CompareTo(other.Min) > 0 ? Min : other.Min;
         var newMax = Max.CompareTo(other.Max) < 0 ? Max : other.Max;
         return newMin.CompareTo(newMax) <= 0 ? new ValueRange<T>(newMin, newMax) : null;

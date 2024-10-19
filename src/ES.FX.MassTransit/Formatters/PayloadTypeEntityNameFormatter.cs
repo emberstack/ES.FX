@@ -38,7 +38,7 @@ public class PayloadTypeEntityNameFormatter(
         }
         else
         {
-            var type = PayloadTypeAttribute.PayloadTypeFor(typeof(TMessage));
+            var type = PayloadTypeAttribute.PayloadTypeFor<TMessage>();
             if (type is not null) return type;
         }
 

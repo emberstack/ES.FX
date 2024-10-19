@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests.Migrations
 {
     [DbContext(typeof(TestDbContext))]
-    [Migration("20240611164449_V1")]
+    [Migration("20241019145025_V1")]
     partial class V1
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("ProductVersion", "9.0.0-rc.2.24474.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
