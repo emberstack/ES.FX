@@ -11,7 +11,7 @@ public sealed class RedisContainerFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         Container = new RedisBuilder()
-            .WithName($"{nameof(RedisContainerFixture)}-{Guid.NewGuid()}")
+            .WithName($"{nameof(RedisContainerFixture)}-{Guid.CreateVersion7()}")
             .WithImage($"{Image}:{Tag}")
             .Build();
         await Container.StartAsync();

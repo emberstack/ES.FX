@@ -17,7 +17,7 @@ public class EnumerableExtensionsTests
     public void ManifestResource_ReturnsNullInfoForInvalidResourceName()
     {
         var assembly = typeof(EnumerableExtensionsTests).Assembly;
-        var resource = new ManifestResource(assembly, Guid.NewGuid().ToString());
+        var resource = new ManifestResource(assembly, Guid.CreateVersion7().ToString());
         Assert.Null(resource.Info);
     }
 
@@ -25,7 +25,7 @@ public class EnumerableExtensionsTests
     public void ManifestResource_ReturnsNullStreamForInvalidResourceName()
     {
         var assembly = typeof(EnumerableExtensionsTests).Assembly;
-        var resource = new ManifestResource(assembly, Guid.NewGuid().ToString());
+        var resource = new ManifestResource(assembly, Guid.CreateVersion7().ToString());
         Assert.Null(resource.GetStream());
     }
 
@@ -33,7 +33,7 @@ public class EnumerableExtensionsTests
     public void ManifestResource_ReturnsNullStreamReaderForInvalidResourceName()
     {
         var assembly = typeof(EnumerableExtensionsTests).Assembly;
-        var resource = new ManifestResource(assembly, Guid.NewGuid().ToString());
+        var resource = new ManifestResource(assembly, Guid.CreateVersion7().ToString());
         Assert.Null(resource.GetStreamReader());
     }
 
@@ -41,7 +41,7 @@ public class EnumerableExtensionsTests
     public void ManifestResource_ReturnsNullByteArrayForInvalidResourceName()
     {
         var assembly = typeof(EnumerableExtensionsTests).Assembly;
-        var resource = new ManifestResource(assembly, Guid.NewGuid().ToString());
+        var resource = new ManifestResource(assembly, Guid.CreateVersion7().ToString());
         var result = resource.ReadAllBytes();
         Assert.Null(result);
     }
@@ -50,7 +50,7 @@ public class EnumerableExtensionsTests
     public void ManifestResource_ReturnsNullTextForInvalidResourceName()
     {
         var assembly = typeof(EnumerableExtensionsTests).Assembly;
-        var resource = new ManifestResource(assembly, Guid.NewGuid().ToString());
+        var resource = new ManifestResource(assembly, Guid.CreateVersion7().ToString());
         var result = resource.ReadText();
         Assert.Null(result);
     }
@@ -59,7 +59,7 @@ public class EnumerableExtensionsTests
     public async Task ManifestResource_ReturnsNullTextAsyncForInvalidResourceName()
     {
         var assembly = typeof(EnumerableExtensionsTests).Assembly;
-        var resource = new ManifestResource(assembly, Guid.NewGuid().ToString());
+        var resource = new ManifestResource(assembly, Guid.CreateVersion7().ToString());
         var result = await resource.ReadTextAsync();
         Assert.Null(result);
     }

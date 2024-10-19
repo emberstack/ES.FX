@@ -14,7 +14,7 @@ public sealed class SeqContainerFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         Container = new ContainerBuilder()
-            .WithName($"{nameof(SeqContainerFixture)}-{Guid.NewGuid()}")
+            .WithName($"{nameof(SeqContainerFixture)}-{Guid.CreateVersion7()}")
             .WithImage($"{Registry}/{Image}:{Tag}")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request
                 .ForPath("/")))

@@ -105,7 +105,7 @@ public class OutboxDeliveryService<TDbContext>(
                             }
 
                             //Set the lock for providers that do not support native locks. This updates the RowVersion
-                            outbox.Lock = Guid.NewGuid();
+                            outbox.Lock = Guid.CreateVersion7();
                             outbox.DeliveryDelayedUntil = null;
 
                             dbContext.Update((object)outbox);

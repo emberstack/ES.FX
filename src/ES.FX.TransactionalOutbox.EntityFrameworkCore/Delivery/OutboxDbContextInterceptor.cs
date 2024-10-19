@@ -118,7 +118,7 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
                           context.Set<Outbox>().Add(new Outbox
                           {
                               AddedAt = DateTimeOffset.UtcNow,
-                              Id = Guid.NewGuid()
+                              Id = Guid.CreateVersion7()
                           });
 
 
