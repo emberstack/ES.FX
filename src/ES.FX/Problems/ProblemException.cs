@@ -5,7 +5,8 @@
 /// </summary>
 /// <param name="problem">The <see cref="Problem" /></param>
 public class ProblemException(Problem problem)
-    : Exception($"A problem of type '{problem.Type}' occured. See '{nameof(Problem)}' for more details")
+    : Exception($"A problem of type '{problem.Type}' occured. See '{nameof(Problem)}' for more details." +
+                $"{Environment.NewLine}{problem}{Environment.NewLine}")
 {
     /// <summary>
     ///     The source <see cref="Problem" />
