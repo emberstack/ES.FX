@@ -22,7 +22,7 @@ public readonly record struct ValueRange<T> where T : IComparable<T>
     public T Min { get; init; }
     public T Max { get; init; }
 
-    public bool IsExact => Min.CompareTo(Max) == 0;
+    public bool IsExact() => Min.CompareTo(Max) == 0;
 
     public bool IsInRange(T value) => value.CompareTo(Min) >= 0 && value.CompareTo(Max) <= 0;
 
