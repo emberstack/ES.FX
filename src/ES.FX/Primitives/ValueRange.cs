@@ -1,11 +1,19 @@
-﻿namespace ES.FX.Primitives;
+﻿using JetBrains.Annotations;
 
+namespace ES.FX.Primitives;
+
+[PublicAPI]
 public readonly record struct ValueRange<T> where T : IComparable<T>
 {
+    public ValueRange(T exact)
+    {
+        Min = exact;
+        Max = exact;
+    }
     public ValueRange(T min, T max)
     {
         if (min.CompareTo(max) > 0)
-            throw new ArgumentException("Min cannot be greater than Max.");
+            throw new ArgumentException($"{nameof(Min)} cannot be greater than {nameof(Max)}.");
 
         Min = min;
         Max = max;
@@ -13,6 +21,8 @@ public readonly record struct ValueRange<T> where T : IComparable<T>
 
     public T Min { get; init; }
     public T Max { get; init; }
+
+    public bool IsExact => Min.CompareTo(Max) == 0;
 
     public bool IsInRange(T value) => value.CompareTo(Min) >= 0 && value.CompareTo(Max) <= 0;
 
