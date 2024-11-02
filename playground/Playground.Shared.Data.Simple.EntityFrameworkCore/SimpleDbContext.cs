@@ -10,7 +10,7 @@ public class SimpleDbContext(
     DbContextOptions<SimpleDbContext> dbContextOptions) :
     DbContext(dbContextOptions), IOutboxContext
 {
-    public DbSet<SimpleUser> SimpleUsers { get; set; }
+    public required DbSet<SimpleUser> SimpleUsers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
