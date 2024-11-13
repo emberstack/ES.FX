@@ -43,7 +43,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.x'
-          dotnet-quality: 'preview'
 
       - name: tools - gitversion - install
         uses: gittools/actions/gitversion/setup@v3.0.0
