@@ -8,6 +8,22 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
 public partial class V1 : Migration
 {
     /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(
+            "__Outboxes");
+
+        migrationBuilder.DropTable(
+            "__OutboxMessageFaults");
+
+        migrationBuilder.DropTable(
+            "__OutboxMessages");
+
+        migrationBuilder.DropTable(
+            "SimpleUsers");
+    }
+
+    /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.CreateTable(
@@ -89,21 +105,5 @@ public partial class V1 : Migration
             "IX___Outboxes_Lock",
             "__Outboxes",
             "Lock");
-    }
-
-    /// <inheritdoc />
-    protected override void Down(MigrationBuilder migrationBuilder)
-    {
-        migrationBuilder.DropTable(
-            "__Outboxes");
-
-        migrationBuilder.DropTable(
-            "__OutboxMessageFaults");
-
-        migrationBuilder.DropTable(
-            "__OutboxMessages");
-
-        migrationBuilder.DropTable(
-            "SimpleUsers");
     }
 }
