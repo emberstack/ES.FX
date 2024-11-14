@@ -66,12 +66,14 @@ jobs:
               - 'src/**'
               - 'ES.FX.sln'
               - 'Directory.Build.props'
+              - 'Directory.Packages.props'
             build:
               - 'src/**'
               - 'playground/**'
               - 'tests/**'
               - 'ES.FX.sln'
               - 'Directory.Build.props'
+              - 'Directory.Packages.props'
 
       - name: tools - evaluate build flag
         if: steps.change_detection.outputs.build == 'true' ||
