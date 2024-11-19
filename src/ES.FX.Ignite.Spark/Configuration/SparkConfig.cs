@@ -9,38 +9,6 @@ public static class SparkConfig
     /// </summary>
     public const string Settings = "Settings";
 
-
-    /// <summary>
-    ///     Gets the name or the default if the name is null or empty.
-    /// </summary>
-    /// <param name="name">The spark name</param>
-    /// <param name="defaultName">The default spark name </param>
-    /// <returns></returns>
-    public static string Name(string? name, string defaultName)
-    {
-        name = name?.Trim();
-        defaultName = defaultName.Trim();
-
-        return name ?? defaultName;
-    }
-
-    /// <summary>
-    ///     Gets the configuration path for the service.
-    /// </summary>
-    /// <param name="serviceName">Name of the service</param>
-    /// <param name="sectionPath">Section path</param>
-    /// <returns></returns>
-    public static string Path(string? serviceName, string sectionPath)
-    {
-        sectionPath = sectionPath.Trim();
-
-        if (string.IsNullOrWhiteSpace(serviceName)) return sectionPath;
-        serviceName = serviceName.Trim();
-        var configPath = sectionPath == string.Empty ? serviceName : $"{sectionPath}:{serviceName}";
-
-        return configPath;
-    }
-
     /// <summary>
     ///     Gets the settings from the configuration.
     /// </summary>
@@ -77,5 +45,37 @@ public static class SparkConfig
         configureSettings?.Invoke(settings);
 
         return settings;
+    }
+
+
+    /// <summary>
+    ///     Gets the name or the default if the name is null or empty.
+    /// </summary>
+    /// <param name="name">The spark name</param>
+    /// <param name="defaultName">The default spark name </param>
+    /// <returns></returns>
+    public static string Name(string? name, string defaultName)
+    {
+        name = name?.Trim();
+        defaultName = defaultName.Trim();
+
+        return name ?? defaultName;
+    }
+
+    /// <summary>
+    ///     Gets the configuration path for the service.
+    /// </summary>
+    /// <param name="serviceName">Name of the service</param>
+    /// <param name="sectionPath">Section path</param>
+    /// <returns></returns>
+    public static string Path(string? serviceName, string sectionPath)
+    {
+        sectionPath = sectionPath.Trim();
+
+        if (string.IsNullOrWhiteSpace(serviceName)) return sectionPath;
+        serviceName = serviceName.Trim();
+        var configPath = sectionPath == string.Empty ? serviceName : $"{sectionPath}:{serviceName}";
+
+        return configPath;
     }
 }

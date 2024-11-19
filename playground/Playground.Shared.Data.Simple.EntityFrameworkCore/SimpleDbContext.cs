@@ -12,16 +12,16 @@ public class SimpleDbContext(
 {
     public required DbSet<SimpleUser> SimpleUsers { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.AddOutboxBehavior();
+        base.OnConfiguring(optionsBuilder);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.AddOutboxEntities();
         modelBuilder.ConfigureFromExtension(dbContextOptions);
         base.OnModelCreating(modelBuilder);
-    }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.AddOutboxBehavior();
-        base.OnConfiguring(optionsBuilder);
     }
 }

@@ -18,60 +18,22 @@ namespace ES.FX.Ignite.Tests;
 
 public class HostingTests
 {
-    [Fact]
-    public void Ignite_WhenCalled_ShouldAddServices()
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.Ignite();
-
-        var serviceProvider = builder.Build().Services;
-        Assert.NotNull(serviceProvider.GetRequiredService<IgniteSettings>());
-    }
-
-    [Fact]
-    public void Ignite_WhenCalled_ShouldAddAdditionalSettingsFiles()
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.Configuration.AddInMemoryCollection([
-            new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.Configuration)}:{nameof(IgniteConfigurationSettings.AdditionalJsonSettingsFiles)}:0",
-                "testAdditionalAppSettings.json")
-        ]);
-
-        builder.Ignite();
-
-        Assert.Equal("ExtraPropertyValue", builder.Configuration.GetValue<string>("ExtraPropertyHeader:ExtraProperty"));
-    }
-
-    [Fact]
-    public void Ignite_Should_be_allowed_once()
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.Ignite();
-
-        Assert.Throws<ReconfigurationNotSupportedException>(() => builder.Ignite());
-    }
-
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void CanDisableEnableOpenTelemetry(bool enable)
+    public void CanDisableEnableEndpointsApiExplorer(bool enable)
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.OpenTelemetry)}:{nameof(IgniteOpenTelemetrySettings.Enabled)}",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.AspNetCore)}:{nameof(IgniteAspNetCoreSettings.EndpointsApiExplorerEnabled)}",
                 enable.ToString())
         ]);
 
         builder.Ignite();
 
-        var app = builder.Build();
-        Assert.Equal(app.Services.GetService<TracerProvider>() != null, enable);
+        Assert.Equal(builder.Services.Any(s => s.ServiceType == typeof(IApiDescriptionProvider)), enable);
     }
 
     [Theory]
@@ -97,39 +59,41 @@ public class HostingTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void CanDisableEnableStandardResilienceHandler(bool enable)
+    public void CanDisableEnableJsonStringEnumConverter(bool enable)
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.HttpClient)}:{nameof(IgniteHttpClientSettings.StandardResilienceHandlerEnabled)}",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.AspNetCore)}:{nameof(IgniteAspNetCoreSettings.JsonStringEnumConverterEnabled)}",
+                enable.ToString())
+        ]);
+        builder.Ignite();
+
+        var app = builder.Build();
+        var jsonOptionsService = app.Services.GetRequiredService<IOptions<JsonOptions>>();
+        Assert.Equal(
+            jsonOptionsService.Value.SerializerOptions.Converters.Any(c =>
+                c.GetType() == typeof(JsonStringEnumConverter)), enable);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CanDisableEnableOpenTelemetry(bool enable)
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        builder.Configuration.AddInMemoryCollection([
+            new KeyValuePair<string, string?>(
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.OpenTelemetry)}:{nameof(IgniteOpenTelemetrySettings.Enabled)}",
                 enable.ToString())
         ]);
 
         builder.Ignite();
 
         var app = builder.Build();
-
-        Assert.Equal(app.Services.GetService<ResiliencePipelineBuilder>() != null, enable);
-    }
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void CanDisableEnableEndpointsApiExplorer(bool enable)
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.Configuration.AddInMemoryCollection([
-            new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.AspNetCore)}:{nameof(IgniteAspNetCoreSettings.EndpointsApiExplorerEnabled)}",
-                enable.ToString())
-        ]);
-
-        builder.Ignite();
-
-        Assert.Equal(builder.Services.Any(s => s.ServiceType == typeof(IApiDescriptionProvider)), enable);
+        Assert.Equal(app.Services.GetService<TracerProvider>() != null, enable);
     }
 
     [Theory]
@@ -153,21 +117,57 @@ public class HostingTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void CanDisableEnableJsonStringEnumConverter(bool enable)
+    public void CanDisableEnableStandardResilienceHandler(bool enable)
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.AspNetCore)}:{nameof(IgniteAspNetCoreSettings.JsonStringEnumConverterEnabled)}",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.HttpClient)}:{nameof(IgniteHttpClientSettings.StandardResilienceHandlerEnabled)}",
                 enable.ToString())
         ]);
+
         builder.Ignite();
 
         var app = builder.Build();
-        var jsonOptionsService = app.Services.GetRequiredService<IOptions<JsonOptions>>();
-        Assert.Equal(
-            jsonOptionsService.Value.SerializerOptions.Converters.Any(c =>
-                c.GetType() == typeof(JsonStringEnumConverter)), enable);
+
+        Assert.Equal(app.Services.GetService<ResiliencePipelineBuilder>() != null, enable);
+    }
+
+    [Fact]
+    public void Ignite_Should_be_allowed_once()
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        builder.Ignite();
+
+        Assert.Throws<ReconfigurationNotSupportedException>(() => builder.Ignite());
+    }
+
+    [Fact]
+    public void Ignite_WhenCalled_ShouldAddAdditionalSettingsFiles()
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        builder.Configuration.AddInMemoryCollection([
+            new KeyValuePair<string, string?>(
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.Configuration)}:{nameof(IgniteConfigurationSettings.AdditionalJsonSettingsFiles)}:0",
+                "testAdditionalAppSettings.json")
+        ]);
+
+        builder.Ignite();
+
+        Assert.Equal("ExtraPropertyValue", builder.Configuration.GetValue<string>("ExtraPropertyHeader:ExtraProperty"));
+    }
+
+    [Fact]
+    public void Ignite_WhenCalled_ShouldAddServices()
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        builder.Ignite();
+
+        var serviceProvider = builder.Build().Services;
+        Assert.NotNull(serviceProvider.GetRequiredService<IgniteSettings>());
     }
 }

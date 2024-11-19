@@ -9,6 +9,11 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
     public const string Tag = "2022-latest";
     public MsSqlContainer? Container { get; private set; }
 
+    public async Task DisposeAsync()
+    {
+        if (Container is not null) await Container.DisposeAsync();
+    }
+
     public async Task InitializeAsync()
     {
         Container = new MsSqlBuilder()
@@ -16,11 +21,6 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
             .WithImage($"{Registry}/{Image}:{Tag}")
             .Build();
         await Container.StartAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (Container is not null) await Container.DisposeAsync();
     }
 
     public string GetConnectionString() =>

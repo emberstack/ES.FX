@@ -15,6 +15,89 @@ namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 [PublicAPI]
 public static class SqlServerDbContextHostingExtensions
 {
+    private static void AddSqlServerDbContext<TDbContext>(this IHostApplicationBuilder builder,
+        string? name = null,
+        Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
+        Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
+        Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
+        Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder = null,
+        ServiceLifetime lifetime = ServiceLifetime.Transient,
+        string configurationSectionPath = DbContextSpark.ConfigurationSectionPath,
+        bool useFactory = false) where TDbContext : DbContext
+    {
+        builder.GuardConfigurationKey($"{DbContextSpark.Name}[{typeof(TDbContext).FullName}]");
+
+        name = SparkConfig.Name(name, typeof(TDbContext).Name);
+        var configPath = SparkConfig.Path(name, configurationSectionPath);
+
+        var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
+        builder.Services.AddSingleton(settings);
+
+        var optionsBuilder = builder.Services
+            .AddOptions<SqlServerDbContextSparkOptions<TDbContext>>()
+            .BindConfiguration(configPath);
+        if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
+
+        if (useFactory)
+            builder.Services.AddDbContextFactory<TDbContext>(ConfigureBuilder, lifetime);
+        else
+            builder.Services.AddDbContext<TDbContext>(ConfigureBuilder, lifetime);
+
+        ConfigureObservability(builder, name, settings);
+
+
+        return;
+
+        void ConfigureBuilder(IServiceProvider sp, DbContextOptionsBuilder dbContextOptionsBuilder) =>
+            ConfigureDbContextOptionsBuilder<TDbContext>(sp, dbContextOptionsBuilder,
+                configureDbContextOptionsBuilder,
+                configureSqlServerDbContextOptionsBuilder);
+    }
+
+
+    private static void ConfigureDbContextOptionsBuilder<TDbContext>(IServiceProvider serviceProvider,
+        DbContextOptionsBuilder dbContextOptionsBuilder,
+        Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptionsBuilder,
+        Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder)
+        where TDbContext : DbContext
+    {
+        var sqlServerDbContextSparkOptions = serviceProvider
+            .GetRequiredService<IOptionsMonitor<SqlServerDbContextSparkOptions<TDbContext>>>()
+            .CurrentValue;
+
+        var connectionStringBuilder = new SqlConnectionStringBuilder(sqlServerDbContextSparkOptions.ConnectionString);
+
+        dbContextOptionsBuilder
+            .UseSqlServer(connectionStringBuilder.ConnectionString, options =>
+            {
+                if (!sqlServerDbContextSparkOptions.DisableRetry) options.EnableRetryOnFailure();
+
+                if (sqlServerDbContextSparkOptions.CommandTimeout.HasValue)
+                    options.CommandTimeout(sqlServerDbContextSparkOptions.CommandTimeout.Value);
+
+                configureSqlServerDbContextOptionsBuilder?.Invoke(options);
+            })
+            .UseExceptionProcessor();
+        configureDbContextOptionsBuilder?.Invoke(serviceProvider, dbContextOptionsBuilder);
+    }
+
+
+    private static void ConfigureObservability<TContext>(
+        IHostApplicationBuilder builder,
+        string serviceName,
+        SqlServerDbContextSparkSettings<TContext> settings) where TContext : DbContext
+    {
+        if (settings.Tracing.Enabled)
+            builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
+                tracerProviderBuilder.AddSqlClientInstrumentation());
+
+        if (settings.HealthChecks.Enabled)
+            builder.Services.AddHealthChecks().AddDbContextCheck<TContext>(
+                $"{DbContextSpark.Name}.{serviceName.Trim()}",
+                settings.HealthChecks.FailureStatus,
+                [DbContextSpark.Name, ..settings.HealthChecks.Tags]);
+    }
+
     /// <summary>
     ///     Registers <see cref="TDbContext" /> as a service in the services provided by the
     ///     <paramref name="builder" />.
@@ -109,88 +192,4 @@ public static class SqlServerDbContextHostingExtensions
         builder.AddSqlServerDbContext(name, configureSettings, configureOptions,
             configureDbContextOptionsBuilder, configureSqlServerDbContextOptionsBuilder, lifetime,
             configurationSectionPath, true);
-
-
-    private static void AddSqlServerDbContext<TDbContext>(this IHostApplicationBuilder builder,
-        string? name = null,
-        Action<SqlServerDbContextSparkSettings<TDbContext>>? configureSettings = null,
-        Action<SqlServerDbContextSparkOptions<TDbContext>>? configureOptions = null,
-        Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptionsBuilder = null,
-        Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder = null,
-        ServiceLifetime lifetime = ServiceLifetime.Transient,
-        string configurationSectionPath = DbContextSpark.ConfigurationSectionPath,
-        bool useFactory = false) where TDbContext : DbContext
-    {
-        builder.GuardConfigurationKey($"{DbContextSpark.Name}[{typeof(TDbContext).FullName}]");
-
-        name = SparkConfig.Name(name, typeof(TDbContext).Name);
-        var configPath = SparkConfig.Path(name, configurationSectionPath);
-
-        var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
-        builder.Services.AddSingleton(settings);
-
-        var optionsBuilder = builder.Services
-            .AddOptions<SqlServerDbContextSparkOptions<TDbContext>>()
-            .BindConfiguration(configPath);
-        if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
-
-        if (useFactory)
-            builder.Services.AddDbContextFactory<TDbContext>(ConfigureBuilder, lifetime);
-        else
-            builder.Services.AddDbContext<TDbContext>(ConfigureBuilder, lifetime);
-
-        ConfigureObservability(builder, name, settings);
-
-
-        return;
-
-        void ConfigureBuilder(IServiceProvider sp, DbContextOptionsBuilder dbContextOptionsBuilder) =>
-            ConfigureDbContextOptionsBuilder<TDbContext>(sp, dbContextOptionsBuilder,
-                configureDbContextOptionsBuilder,
-                configureSqlServerDbContextOptionsBuilder);
-    }
-
-
-    private static void ConfigureDbContextOptionsBuilder<TDbContext>(IServiceProvider serviceProvider,
-        DbContextOptionsBuilder dbContextOptionsBuilder,
-        Action<IServiceProvider, DbContextOptionsBuilder>? configureDbContextOptionsBuilder,
-        Action<SqlServerDbContextOptionsBuilder>? configureSqlServerDbContextOptionsBuilder)
-        where TDbContext : DbContext
-    {
-        var sqlServerDbContextSparkOptions = serviceProvider
-            .GetRequiredService<IOptionsMonitor<SqlServerDbContextSparkOptions<TDbContext>>>()
-            .CurrentValue;
-
-        var connectionStringBuilder = new SqlConnectionStringBuilder(sqlServerDbContextSparkOptions.ConnectionString);
-
-        dbContextOptionsBuilder
-            .UseSqlServer(connectionStringBuilder.ConnectionString, options =>
-            {
-                if (!sqlServerDbContextSparkOptions.DisableRetry) options.EnableRetryOnFailure();
-
-                if (sqlServerDbContextSparkOptions.CommandTimeout.HasValue)
-                    options.CommandTimeout(sqlServerDbContextSparkOptions.CommandTimeout.Value);
-
-                configureSqlServerDbContextOptionsBuilder?.Invoke(options);
-            })
-            .UseExceptionProcessor();
-        configureDbContextOptionsBuilder?.Invoke(serviceProvider, dbContextOptionsBuilder);
-    }
-
-
-    private static void ConfigureObservability<TContext>(
-        IHostApplicationBuilder builder,
-        string serviceName,
-        SqlServerDbContextSparkSettings<TContext> settings) where TContext : DbContext
-    {
-        if (settings.Tracing.Enabled)
-            builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
-                tracerProviderBuilder.AddSqlClientInstrumentation());
-
-        if (settings.HealthChecks.Enabled)
-            builder.Services.AddHealthChecks().AddDbContextCheck<TContext>(
-                $"{DbContextSpark.Name}.{serviceName.Trim()}",
-                settings.HealthChecks.FailureStatus,
-                [DbContextSpark.Name, ..settings.HealthChecks.Tags]);
-    }
 }

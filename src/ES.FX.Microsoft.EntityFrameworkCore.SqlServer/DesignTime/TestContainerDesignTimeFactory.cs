@@ -8,7 +8,7 @@ using Testcontainers.MsSql;
 namespace ES.FX.Microsoft.EntityFrameworkCore.SqlServer.DesignTime;
 
 /// <summary>
-///     DbContext design time factory using MsSql Testcontainers
+///     DbContext design time factory using <see cref="Testcontainers.MsSql" />
 /// </summary>
 /// <typeparam name="TDbContext"> The <see cref="TDbContext" /> to create</typeparam>
 public class TestContainerDesignTimeFactory<TDbContext> : IDesignTimeDbContextFactory<TDbContext>
@@ -44,16 +44,16 @@ public class TestContainerDesignTimeFactory<TDbContext> : IDesignTimeDbContextFa
     }
 
     /// <summary>
-    ///     Configures the SqlServerDbContextOptionsBuilder before the DbContext is created
+    ///     Configures the MsSqlBuilder before the container is created
     /// </summary>
-    protected virtual void ConfigureSqlServerOptions(SqlServerDbContextOptionsBuilder builder)
+    protected virtual void ConfigureMsSqlContainerBuilder(MsSqlBuilder builder)
     {
     }
 
     /// <summary>
-    ///     Configures the MsSqlBuilder before the container is created
+    ///     Configures the SqlServerDbContextOptionsBuilder before the DbContext is created
     /// </summary>
-    protected virtual void ConfigureMsSqlContainerBuilder(MsSqlBuilder builder)
+    protected virtual void ConfigureSqlServerOptions(SqlServerDbContextOptionsBuilder builder)
     {
     }
 }

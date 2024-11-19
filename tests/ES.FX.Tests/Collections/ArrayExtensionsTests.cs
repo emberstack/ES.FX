@@ -5,11 +5,11 @@ namespace ES.FX.Tests.Collections;
 public class ArrayExtensionsTests
 {
     [Fact]
-    public void Array_NullOrEmpty_ReturnsTrueForNull()
+    public void Array_NullOrEmpty_ReturnsFalseForArrayWithElements()
     {
-        Array? array = null;
+        var array = new[] { 0 };
         var result = array.IsNullOrEmpty();
-        Assert.True(result);
+        Assert.False(result);
     }
 
     [Fact]
@@ -21,10 +21,10 @@ public class ArrayExtensionsTests
     }
 
     [Fact]
-    public void Array_NullOrEmpty_ReturnsFalseForArrayWithElements()
+    public void Array_NullOrEmpty_ReturnsTrueForNull()
     {
-        var array = new[] { 0 };
+        Array? array = null;
         var result = array.IsNullOrEmpty();
-        Assert.False(result);
+        Assert.True(result);
     }
 }

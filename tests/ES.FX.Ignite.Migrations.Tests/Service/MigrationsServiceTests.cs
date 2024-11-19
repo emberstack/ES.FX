@@ -10,28 +10,6 @@ namespace ES.FX.Ignite.Migrations.Tests.Service;
 public class MigrationsServiceTests
 {
     [Fact]
-    public async Task MigrationService_Settings_Check()
-    {
-        var loggerMock = new Mock<ILogger<MigrationsService>>();
-        var serviceCollection = new ServiceCollection();
-        serviceCollection.AddSingleton<IMigrationsTask, TestMigrationTask>();
-
-        var serviceProvider = serviceCollection.BuildServiceProvider();
-        var serviceProviderMock = new Mock<IServiceProvider>();
-        var configuration = new MigrationsServiceSparkSettings
-        {
-            Enabled = false
-        };
-
-        var migrationService = new MigrationsService(loggerMock.Object, configuration, serviceProvider);
-        await migrationService.StartAsync(CancellationToken.None);
-
-        var testMigration = serviceProvider.GetService<IMigrationsTask>() as TestMigrationTask;
-        Assert.NotNull(testMigration);
-        Assert.False(testMigration.ApplyMigrationsCalled);
-    }
-
-    [Fact]
     public async Task MigrationService_Apply()
     {
         var loggerMock = new Mock<ILogger<MigrationsService>>();
@@ -51,5 +29,27 @@ public class MigrationsServiceTests
         var testMigration = serviceProvider.GetService<IMigrationsTask>() as TestMigrationTask;
         Assert.NotNull(testMigration);
         Assert.True(testMigration.ApplyMigrationsCalled);
+    }
+
+    [Fact]
+    public async Task MigrationService_Settings_Check()
+    {
+        var loggerMock = new Mock<ILogger<MigrationsService>>();
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton<IMigrationsTask, TestMigrationTask>();
+
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+        var serviceProviderMock = new Mock<IServiceProvider>();
+        var configuration = new MigrationsServiceSparkSettings
+        {
+            Enabled = false
+        };
+
+        var migrationService = new MigrationsService(loggerMock.Object, configuration, serviceProvider);
+        await migrationService.StartAsync(CancellationToken.None);
+
+        var testMigration = serviceProvider.GetService<IMigrationsTask>() as TestMigrationTask;
+        Assert.NotNull(testMigration);
+        Assert.False(testMigration.ApplyMigrationsCalled);
     }
 }

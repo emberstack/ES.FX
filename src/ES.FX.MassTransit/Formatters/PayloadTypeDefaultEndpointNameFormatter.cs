@@ -16,6 +16,12 @@ public class PayloadTypeDefaultEndpointNameFormatter(
     bool includeNamespace = false)
     : DefaultEndpointNameFormatter(joinSeparator, prefix, includeNamespace)
 {
+    /// <summary>
+    ///     Formats the name of the message type using the <see cref="PayloadTypeAttribute" /> when available. Falls back to
+    ///     the base formatter
+    /// </summary>
+    /// <param name="message">The message type</param>
+    /// <returns>The entity name formatted</returns>
     protected override string FormatName(Type message)
     {
         var type = PayloadTypeAttribute.PayloadTypeFor(message);

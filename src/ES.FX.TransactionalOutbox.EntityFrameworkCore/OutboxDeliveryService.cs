@@ -23,6 +23,67 @@ public class OutboxDeliveryService<TDbContext>(
     : BackgroundService
     where TDbContext : DbContext, IOutboxContext
 {
+    private async Task<bool> DeliverMessage(
+        OutboxMessage message,
+        IOutboxMessageHandler messageHandler,
+        CancellationToken cancellationToken)
+    {
+        Activity? deliverMessageActivity = null;
+        var success = false;
+        try
+        {
+            logger.LogTrace("Delivering outbox/message:{outboxId}/{messageId} - Attempt {attempt}/{maxAttempts}",
+                message.OutboxId, message.Id, message.DeliveryAttempts, message.DeliveryMaxAttempts ?? 1);
+
+            var headers =
+                JsonSerializer.Deserialize<Dictionary<string, string?>>(message.Headers) ?? [];
+
+            deliverMessageActivity = Diagnostics.ActivitySource.StartActivity(
+                Diagnostics.DeliverMessageActivityName,
+                ActivityKind.Server,
+                headers.GetValueOrDefault(OutboxMessageHeaders.Diagnostics.ActivityId),
+                new Dictionary<string, object?>
+                {
+                    { "outbox.id", message.OutboxId },
+                    { "outbox.message.id", message.Id },
+                    { "outbox.message.addedAt", message.AddedAt },
+                    { "outbox.message.attempt", message.DeliveryAttempts },
+                    { "outbox.dbContext.type", typeof(TDbContext).FullName }
+                }, Activity.Current is null ? null : new[] { new ActivityLink(Activity.Current.Context) });
+
+            var payloadType = OutboxPayloadTypeProvider.GetMessageTypeByPayloadType(message.PayloadType,
+                                  headers.TryGetValue(OutboxMessageHeaders.Message.PayloadOriginalType, out var hint)
+                                      ? hint ?? string.Empty
+                                      : string.Empty) ??
+                              throw new NotSupportedException("Could not determine the Type of the message");
+
+            var payload = JsonSerializer.Deserialize(message.Payload, payloadType) ??
+                          throw new NotSupportedException("Could not deserialize the message payload");
+            success = await messageHandler
+                .HandleAsync(new OutboxMessageHandlerContext(payloadType, payload), cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!success)
+                logger.LogWarning(
+                    "Outbox/message {outboxId}/{messageId} could not be delivered. Handler reported failure.",
+                    message.OutboxId, message.Id);
+            return success;
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Exception occurred while delivering {outboxId}/{messageId}", message.OutboxId,
+                message.Id);
+            message.DeliveryLastAttemptError = exception.ToString().Take(4000).ToString();
+            return false;
+        }
+        finally
+        {
+            deliverMessageActivity?.SetStatus(success ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
+            deliverMessageActivity?.Stop();
+            deliverMessageActivity?.Dispose();
+        }
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogTrace("Starting");
@@ -258,67 +319,6 @@ public class OutboxDeliveryService<TDbContext>(
                 await scope.DisposeAsync().ConfigureAwait(false);
                 if (sleep) await Sleep(sleepInterval, stoppingToken).ConfigureAwait(false);
             }
-        }
-    }
-
-    private async Task<bool> DeliverMessage(
-        OutboxMessage message,
-        IOutboxMessageHandler messageHandler,
-        CancellationToken cancellationToken)
-    {
-        Activity? deliverMessageActivity = null;
-        var success = false;
-        try
-        {
-            logger.LogTrace("Delivering outbox/message:{outboxId}/{messageId} - Attempt {attempt}/{maxAttempts}",
-                message.OutboxId, message.Id, message.DeliveryAttempts, message.DeliveryMaxAttempts ?? 1);
-
-            var headers =
-                JsonSerializer.Deserialize<Dictionary<string, string?>>(message.Headers) ?? [];
-
-            deliverMessageActivity = Diagnostics.ActivitySource.StartActivity(
-                Diagnostics.DeliverMessageActivityName,
-                ActivityKind.Server,
-                headers.GetValueOrDefault(OutboxMessageHeaders.Diagnostics.ActivityId),
-                new Dictionary<string, object?>
-                {
-                    { "outbox.id", message.OutboxId },
-                    { "outbox.message.id", message.Id },
-                    { "outbox.message.addedAt", message.AddedAt },
-                    { "outbox.message.attempt", message.DeliveryAttempts },
-                    { "outbox.dbContext.type", typeof(TDbContext).FullName }
-                }, Activity.Current is null ? null : new[] { new ActivityLink(Activity.Current.Context) });
-
-            var payloadType = OutboxPayloadTypeProvider.GetMessageTypeByPayloadType(message.PayloadType,
-                                  headers.TryGetValue(OutboxMessageHeaders.Message.PayloadOriginalType, out var hint)
-                                      ? hint ?? string.Empty
-                                      : string.Empty) ??
-                              throw new NotSupportedException("Could not determine the Type of the message");
-
-            var payload = JsonSerializer.Deserialize(message.Payload, payloadType) ??
-                          throw new NotSupportedException("Could not deserialize the message payload");
-            success = await messageHandler
-                .HandleAsync(new OutboxMessageHandlerContext(payloadType, payload), cancellationToken)
-                .ConfigureAwait(false);
-
-            if (!success)
-                logger.LogWarning(
-                    "Outbox/message {outboxId}/{messageId} could not be delivered. Handler reported failure.",
-                    message.OutboxId, message.Id);
-            return success;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(exception, "Exception occurred while delivering {outboxId}/{messageId}", message.OutboxId,
-                message.Id);
-            message.DeliveryLastAttemptError = exception.ToString().Take(4000).ToString();
-            return false;
-        }
-        finally
-        {
-            deliverMessageActivity?.SetStatus(success ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
-            deliverMessageActivity?.Stop();
-            deliverMessageActivity?.Dispose();
         }
     }
 

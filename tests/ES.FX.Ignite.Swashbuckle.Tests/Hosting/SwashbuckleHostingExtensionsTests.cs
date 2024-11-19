@@ -9,16 +9,6 @@ namespace ES.FX.Ignite.Swashbuckle.Tests.Hosting;
 public class SwashbuckleHostingExtensionsTests
 {
     [Fact]
-    public void IgniteDoesNotAllowReconfiguration()
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.IgniteSwashbuckle();
-
-        Assert.Throws<ReconfigurationNotSupportedException>(() => builder.IgniteSwashbuckle());
-    }
-
-    [Fact]
     public void CanOverride_Settings()
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
@@ -38,5 +28,15 @@ public class SwashbuckleHostingExtensionsTests
 
             settings.SwaggerEnabled = false;
         }
+    }
+
+    [Fact]
+    public void IgniteDoesNotAllowReconfiguration()
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        builder.IgniteSwashbuckle();
+
+        Assert.Throws<ReconfigurationNotSupportedException>(() => builder.IgniteSwashbuckle());
     }
 }

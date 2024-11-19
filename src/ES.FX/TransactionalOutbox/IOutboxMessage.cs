@@ -6,6 +6,4 @@ namespace ES.FX.TransactionalOutbox;
 ///     Interface used to define the transaction outbox messages
 /// </summary>
 [PublicAPI]
-public interface IOutboxMessage
-{
-}
+public interface IOutboxMessage;

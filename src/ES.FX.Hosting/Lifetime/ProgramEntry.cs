@@ -13,6 +13,13 @@ public sealed class ProgramEntry(
     IReadOnlyList<Func<ProgramEntryOptions, Task>> exitActions,
     ProgramEntryOptions options)
 {
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ProgramEntryBuilder" /> class with preconfigured defaults.
+    /// </summary>
+    /// <param name="args">The command line arguments.</param>
+    /// <returns>The <see cref="ProgramEntryBuilder" />.</returns>
+    public static ProgramEntryBuilder CreateBuilder(string[] args) => new(new ProgramEntryOptions { Args = args });
+
     public async Task<int> RunAsync(Func<ProgramEntryOptions, Task<int>> action)
     {
         try
@@ -38,12 +45,4 @@ public sealed class ProgramEntry(
             foreach (var exitAction in exitActions) await exitAction(options).ConfigureAwait(false);
         }
     }
-
-
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="ProgramEntryBuilder" /> class with preconfigured defaults.
-    /// </summary>
-    /// <param name="args">The command line arguments.</param>
-    /// <returns>The <see cref="ProgramEntryBuilder" />.</returns>
-    public static ProgramEntryBuilder CreateBuilder(string[] args) => new(new ProgramEntryOptions { Args = args });
 }

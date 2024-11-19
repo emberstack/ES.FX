@@ -12,6 +12,37 @@ namespace ES.FX.Ignite.FluentValidation.Tests;
 public class HostingTests
 {
     [Fact]
+    public void CanOverride_Settings()
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        builder.Configuration.AddInMemoryCollection([
+            new KeyValuePair<string, string?>(
+                $"{FluentValidationSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(FluentValidationSparkSettings.MvcAutoValidationEnabled)}",
+                true.ToString())
+        ]);
+
+        builder.IgniteFluentValidation(ConfigureSettings);
+
+        var app = builder.Build();
+
+        var resolvedSettings = app.Services.GetRequiredService<FluentValidationSparkSettings>();
+        Assert.False(resolvedSettings.EndpointsAutoValidationEnabled);
+
+        return;
+
+        static void ConfigureSettings(FluentValidationSparkSettings settings)
+        {
+            //Settings should have correct value from configuration
+            Assert.True(settings.EndpointsAutoValidationEnabled);
+
+
+            //Change the settings
+            settings.EndpointsAutoValidationEnabled = false;
+        }
+    }
+
+    [Fact]
     public void IgniteDoesNotAllowReconfiguration()
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
@@ -55,36 +86,5 @@ public class HostingTests
         var serviceProvider = builder.Build().Services;
         Assert.NotNull(serviceProvider.GetRequiredService<FluentValidationSparkSettings>());
         Assert.NotNull(serviceProvider.GetService(typeof(IFluentValidationAutoValidationResultFactory)));
-    }
-
-    [Fact]
-    public void CanOverride_Settings()
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.Configuration.AddInMemoryCollection([
-            new KeyValuePair<string, string?>(
-                $"{FluentValidationSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(FluentValidationSparkSettings.MvcAutoValidationEnabled)}",
-                true.ToString())
-        ]);
-
-        builder.IgniteFluentValidation(ConfigureSettings);
-
-        var app = builder.Build();
-
-        var resolvedSettings = app.Services.GetRequiredService<FluentValidationSparkSettings>();
-        Assert.False(resolvedSettings.EndpointsAutoValidationEnabled);
-
-        return;
-
-        static void ConfigureSettings(FluentValidationSparkSettings settings)
-        {
-            //Settings should have correct value from configuration
-            Assert.True(settings.EndpointsAutoValidationEnabled);
-
-
-            //Change the settings
-            settings.EndpointsAutoValidationEnabled = false;
-        }
     }
 }

@@ -13,6 +13,8 @@ namespace ES.FX.Ignite.AspNetCore.HealthChecks.UI.Interceptors;
 // ReSharper disable once InconsistentNaming
 public class IPv6LoopbackAddressInterceptor(IServer server) : IHealthCheckCollectorInterceptor
 {
+    public ValueTask OnCollectExecuted(UIHealthReport report) => ValueTask.CompletedTask;
+
     public ValueTask OnCollectExecuting(HealthCheckConfiguration configuration)
     {
         Uri.TryCreate(configuration.Uri, UriKind.Absolute, out var absoluteUri);
@@ -37,6 +39,4 @@ public class IPv6LoopbackAddressInterceptor(IServer server) : IHealthCheckCollec
 
         return ValueTask.CompletedTask;
     }
-
-    public ValueTask OnCollectExecuted(UIHealthReport report) => ValueTask.CompletedTask;
 }

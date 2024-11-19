@@ -34,6 +34,16 @@ public class ManifestResource(Assembly assembly, string name)
 
 
     /// <summary>
+    ///     Returns a <see cref="StreamReader"></see> initialized with the manifest resource content <see cref="Stream" />
+    /// </summary>
+    public StreamReader? GetStreamReader()
+    {
+        var stream = GetStream();
+        return stream is not null ? new StreamReader(stream) : null;
+    }
+
+
+    /// <summary>
     ///     Reads all bytes for the manifest resource
     /// </summary>
     public byte[]? ReadAllBytes()
@@ -71,15 +81,5 @@ public class ManifestResource(Assembly assembly, string name)
         using var reader = GetStreamReader();
         if (reader is null) return null;
         return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-
-    /// <summary>
-    ///     Returns a <see cref="StreamReader"></see> initialized with the manifest resource content <see cref="Stream" />
-    /// </summary>
-    public StreamReader? GetStreamReader()
-    {
-        var stream = GetStream();
-        return stream is not null ? new StreamReader(stream) : null;
     }
 }

@@ -5,6 +5,9 @@ namespace ES.FX.FluentValidation.Results;
 
 public static class ValidationResultExtensions
 {
+    /// <summary>
+    ///     Converts the <see cref="ValidationResult" /> to a dictionary of validation errors
+    /// </summary>
     [PublicAPI]
     public static IDictionary<string, string[]> ToValidationErrors(this ValidationResult validationResult)
     {

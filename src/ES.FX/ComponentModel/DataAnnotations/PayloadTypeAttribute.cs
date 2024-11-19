@@ -12,10 +12,21 @@ namespace ES.FX.ComponentModel.DataAnnotations;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
 public class PayloadTypeAttribute(string type) : Attribute
 {
+    /// <summary>
+    ///     Keeps a cache of the attributes for each type
+    /// </summary>
     private static readonly ConcurrentDictionary<Type, PayloadTypeAttribute?> TypeAttributes = new();
 
+    /// <summary>
+    ///     The custom type for the payload
+    /// </summary>
     public string PayloadType { get; } = type;
 
+    /// <summary>
+    ///     Gets the custom payload type for the specified type
+    /// </summary>
+    /// <param name="type">The type to get the custom payload type for</param>
+    /// <returns>The custom payload type</returns>
     public static string? PayloadTypeFor(Type type)
     {
         if (TypeAttributes.TryGetValue(type, out var attribute)) return attribute?.PayloadType;
@@ -24,6 +35,11 @@ public class PayloadTypeAttribute(string type) : Attribute
         return attribute?.PayloadType;
     }
 
+    /// <summary>
+    ///     Gets the custom payload type for the specified type
+    /// </summary>
+    /// <typeparam name="T">The type to get the custom payload type for</typeparam>
+    /// <returns>The custom payload type</returns>
     [PublicAPI]
     public static string? PayloadTypeFor<T>() => PayloadTypeFor(typeof(T));
 }

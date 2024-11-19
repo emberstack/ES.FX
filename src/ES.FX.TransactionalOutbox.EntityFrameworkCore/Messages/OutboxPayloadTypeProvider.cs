@@ -7,14 +7,6 @@ internal static class OutboxPayloadTypeProvider
 {
     private static readonly ConcurrentDictionary<string, Type?> PayloadTypeDictionary = new();
 
-    internal static string GetPayloadType(Type type) =>
-        PayloadTypeAttribute.PayloadTypeFor(type) ?? type.AssemblyQualifiedName!;
-
-    internal static void RegisterTypes(params Type[] messageTypes)
-    {
-        foreach (var type in messageTypes) PayloadTypeDictionary.TryAdd(GetPayloadType(type), type);
-    }
-
 
     internal static Type? GetMessageTypeByPayloadType(string payloadType, string? assemblyQualifiedName)
     {
@@ -23,5 +15,13 @@ internal static class OutboxPayloadTypeProvider
                Type.GetType(assemblyQualifiedName ?? string.Empty);
         PayloadTypeDictionary.TryAdd(payloadType, type);
         return type;
+    }
+
+    internal static string GetPayloadType(Type type) =>
+        PayloadTypeAttribute.PayloadTypeFor(type) ?? type.AssemblyQualifiedName!;
+
+    internal static void RegisterTypes(params Type[] messageTypes)
+    {
+        foreach (var type in messageTypes) PayloadTypeDictionary.TryAdd(GetPayloadType(type), type);
     }
 }

@@ -10,8 +10,8 @@ public partial class OperationResult<T> : OneOfBase<T, Problem>, IOneOfWithProbl
     [PublicAPI] public T AsResult => AsT0;
 
     [PublicAPI]
-    public bool TryPickResult(out T result) => TryPickT0(out result, out _);
+    public bool TryPickProblem(out Problem problem, out T result) => TryPickT1(out problem, out result);
 
     [PublicAPI]
-    public bool TryPickProblem(out Problem problem, out T result) => TryPickT1(out problem, out result);
+    public bool TryPickResult(out T result) => TryPickT0(out result, out _);
 }

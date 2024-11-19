@@ -6,6 +6,23 @@ namespace ES.FX.Ignite.Spark.Tests.Configuration;
 public class SparkConfigTests
 {
     [Fact]
+    public void GetSettings_ReturnsSettings()
+    {
+        var myConfiguration = new Dictionary<string, string?>
+        {
+            { "Key1", "Value1" }, { "Nested:Settings:Key1", "NestedValue1" }, { "Nested:Settings:Key2", "NestedValue2" }
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(myConfiguration.ToList())
+            .Build();
+
+        var nestedSettings = SparkConfig.GetSettings<NestedSettings>(configuration, "Nested");
+        Assert.False(string.IsNullOrEmpty(nestedSettings.Key1));
+        Assert.False(string.IsNullOrEmpty(nestedSettings.Key2));
+    }
+
+    [Fact]
     public void Name_UsesDefaultIfNull()
     {
         const string defaultName = "default";
@@ -24,16 +41,6 @@ public class SparkConfigTests
         Assert.Equal(serviceName, name);
     }
 
-
-    [Fact]
-    public void Path_UsesNameIfSectionIsNull()
-    {
-        const string name = "name";
-        var configPath = SparkConfig.Path(name, string.Empty);
-
-        Assert.Equal(name, configPath);
-    }
-
     [Fact]
     public void Path_UsesNameAndSection()
     {
@@ -44,21 +51,14 @@ public class SparkConfigTests
         Assert.Equal($"{section}:{name}", configPath);
     }
 
+
     [Fact]
-    public void GetSettings_ReturnsSettings()
+    public void Path_UsesNameIfSectionIsNull()
     {
-        var myConfiguration = new Dictionary<string, string?>
-        {
-            { "Key1", "Value1" }, { "Nested:Settings:Key1", "NestedValue1" }, { "Nested:Settings:Key2", "NestedValue2" }
-        };
+        const string name = "name";
+        var configPath = SparkConfig.Path(name, string.Empty);
 
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(myConfiguration.ToList())
-            .Build();
-
-        var nestedSettings = SparkConfig.GetSettings<NestedSettings>(configuration, "Nested");
-        Assert.False(string.IsNullOrEmpty(nestedSettings.Key1));
-        Assert.False(string.IsNullOrEmpty(nestedSettings.Key2));
+        Assert.Equal(name, configPath);
     }
 
     internal class NestedSettings

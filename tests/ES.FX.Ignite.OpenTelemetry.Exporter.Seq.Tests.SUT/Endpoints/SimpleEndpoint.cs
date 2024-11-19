@@ -8,11 +8,6 @@ public class SimpleEndpoint
 {
     public const string RoutePattern = "/simpleEndpoint";
 
-    public static void MapRoutes(IEndpointRouteBuilder builder)
-    {
-        builder.MapPost(RoutePattern, Handle);
-    }
-
     public static async Task<Results<Ok<Response>, BadRequest<ProblemDetails>>> Handle(
         ILogger<SimpleEndpoint> logger,
         [FromBody] Request request,
@@ -20,6 +15,11 @@ public class SimpleEndpoint
     {
         await Task.CompletedTask;
         return Ok(new Response(request.Name));
+    }
+
+    public static void MapRoutes(IEndpointRouteBuilder builder)
+    {
+        builder.MapPost(RoutePattern, Handle);
     }
 
     public record Request(string Name);

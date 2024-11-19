@@ -20,6 +20,28 @@ namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 [PublicAPI]
 public static class SeqOpenTelemetryExporterHostingExtensions
 {
+    private static void ConfigureObservability(IHostApplicationBuilder builder, string? name,
+        SeqOpenTelemetryExporterSparkSettings settings)
+    {
+        if (settings.HealthChecks.Enabled)
+        {
+            var healthCheckName =
+                $"{SeqOpenTelemetryExporterSpark.Name}{(string.IsNullOrWhiteSpace(name) ? string.Empty : $"[{name}]")}";
+            builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName, sp =>
+                {
+                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>()
+                        .Get(name);
+                    return new HttpGetHealthCheck(new HttpGetHealthCheckOptions
+                    {
+                        Uri = options.HealthUrl ?? string.Empty
+                    });
+                },
+                settings.HealthChecks.FailureStatus,
+                [SeqOpenTelemetryExporterSpark.Name, .. settings.HealthChecks.Tags],
+                settings.HealthChecks.Timeout));
+        }
+    }
+
     public static void IgniteSeqOpenTelemetryExporter(this IHostApplicationBuilder builder,
         string? name = null,
         Action<SeqOpenTelemetryExporterSparkSettings>? configureSettings = null,
@@ -92,28 +114,6 @@ public static class SeqOpenTelemetryExporterHostingExtensions
                 options.OtlpTraceExporter.Headers = string.IsNullOrEmpty(options.OtlpTraceExporter.Headers)
                     ? $"X-Seq-ApiKey={options.ApiKey}"
                     : $"{options.OtlpTraceExporter.Headers},X-Seq-ApiKey={options.ApiKey}";
-        }
-    }
-
-    private static void ConfigureObservability(IHostApplicationBuilder builder, string? name,
-        SeqOpenTelemetryExporterSparkSettings settings)
-    {
-        if (settings.HealthChecks.Enabled)
-        {
-            var healthCheckName =
-                $"{SeqOpenTelemetryExporterSpark.Name}{(string.IsNullOrWhiteSpace(name) ? string.Empty : $"[{name}]")}";
-            builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName, sp =>
-                {
-                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>()
-                        .Get(name);
-                    return new HttpGetHealthCheck(new HttpGetHealthCheckOptions
-                    {
-                        Uri = options.HealthUrl ?? string.Empty
-                    });
-                },
-                settings.HealthChecks.FailureStatus,
-                [SeqOpenTelemetryExporterSpark.Name, .. settings.HealthChecks.Tags],
-                settings.HealthChecks.Timeout));
         }
     }
 }

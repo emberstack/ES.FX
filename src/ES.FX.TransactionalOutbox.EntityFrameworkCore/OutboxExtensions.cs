@@ -15,69 +15,6 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore;
 public static class OutboxExtensions
 {
     /// <summary>
-    ///     Adds the required Outbox entities to the model builder
-    /// </summary>
-    /// <param name="modelBuilder">The <see cref="ModelBuilder" /> to configure </param>
-    public static void AddOutboxEntities(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Outbox>().ToTable("__Outboxes");
-        modelBuilder.ApplyConfiguration(new Outbox.EntityTypeConfiguration());
-
-        modelBuilder.Entity<OutboxMessage>().ToTable("__OutboxMessages");
-        modelBuilder.ApplyConfiguration(new OutboxMessage.EntityTypeConfiguration());
-
-        modelBuilder.Entity<OutboxMessageFault>().ToTable("__OutboxMessageFaults");
-        modelBuilder.ApplyConfiguration(new OutboxMessageFault.EntityTypeConfiguration());
-    }
-
-    /// <summary>
-    ///     Adds the Outbox behavior to the <see cref="DbContextOptionsBuilder" />. This enables signaling for delivery and
-    ///     grouping of messages in outboxes.
-    /// </summary>
-    /// <param name="optionsBuilder"></param>
-    public static void AddOutboxBehavior(this DbContextOptionsBuilder optionsBuilder) =>
-        optionsBuilder.AddInterceptors(new OutboxDbContextInterceptor());
-
-
-    /// <summary>
-    ///     Adds a message to the outbox. Use the <see cref="OutboxMessageOptions" /> to configure the delivery options.
-    /// </summary>
-    /// <typeparam name="TOutboxDbContext">The <see cref="TOutboxDbContext" /> used to add the message</typeparam>
-    /// <typeparam name="TMessage"> <see cref="TMessage" /> type of message payload</typeparam>
-    /// <param name="dbContext"> <see cref="TOutboxDbContext" /> instance to add the message to</param>
-    /// <param name="message">The message payload</param>
-    /// <param name="deliveryOptions">The options used to configure the message delivery</param>
-    public static void AddOutboxMessage<TOutboxDbContext, TMessage>(this TOutboxDbContext dbContext, TMessage message,
-        OutboxMessageOptions? deliveryOptions = default)
-        where TOutboxDbContext : DbContext, IOutboxContext
-        where TMessage : class, IOutboxMessage
-    {
-        deliveryOptions ??= new OutboxMessageOptions();
-        var headers = new Dictionary<string, string?>
-        {
-            { OutboxMessageHeaders.Diagnostics.ActivityId, Activity.Current?.Id },
-            { OutboxMessageHeaders.Message.PayloadOriginalType, typeof(TMessage).AssemblyQualifiedName }
-        };
-
-        dbContext.Set<OutboxMessage>().Add(new OutboxMessage
-        {
-            AddedAt = DateTimeOffset.UtcNow,
-            PayloadType = OutboxPayloadTypeProvider.GetPayloadType(message.GetType()),
-            Payload = JsonSerializer.Serialize(message),
-            DeliveryAttempts = 0,
-            DeliveryFirstAttemptedAt = null,
-            DeliveryLastAttemptError = null,
-            DeliveryLastAttemptedAt = null,
-            DeliveryNotBefore = deliveryOptions.NotBefore,
-            DeliveryNotAfter = deliveryOptions.NotAfter,
-            Headers = JsonSerializer.Serialize(headers),
-            DeliveryMaxAttempts = deliveryOptions.MaxAttempts,
-            DeliveryAttemptDelay = deliveryOptions.DelayBetweenAttempts,
-            DeliveryAttemptDelayIsExponential = deliveryOptions.DelayBetweenAttemptsIsExponential
-        });
-    }
-
-    /// <summary>
     ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
     public static void AddMessageType<TMessageType>(this OutboxDeliveryOptions options)
@@ -93,6 +30,22 @@ public static class OutboxExtensions
         params Type[] messageTypes)
     {
         foreach (var messageType in messageTypes) options.AddMessageType(messageType);
+    }
+
+    /// <summary>
+    ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
+    /// </summary>
+    public static void AddMessageType(this OutboxDeliveryOptions options, Type messageType)
+    {
+        if (!messageType.IsClass || messageType.IsAbstract)
+            throw new ArgumentException($"Cannot use {messageType}. Messages must be non-abstract classes.",
+                nameof(messageType));
+
+        if (!messageType.IsAssignableTo(typeof(IOutboxMessage)))
+            throw new ArgumentException($"Cannot use {messageType}. Messages must implement {nameof(IOutboxMessage)}",
+                nameof(messageType));
+
+        options.MessageTypes.Add(messageType);
     }
 
 
@@ -143,25 +96,12 @@ public static class OutboxExtensions
     }
 
     /// <summary>
-    ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
+    ///     Adds the Outbox behavior to the <see cref="DbContextOptionsBuilder" />. This enables signaling for delivery and
+    ///     grouping of messages in outboxes.
     /// </summary>
-    public static void AddMessageType(this OutboxDeliveryOptions options, Type messageType)
-    {
-        if (!messageType.IsClass || messageType.IsAbstract)
-            throw new ArgumentException($"Cannot use {messageType}. Messages must be non-abstract classes.",
-                nameof(messageType));
-
-        if (!messageType.IsAssignableTo(typeof(IOutboxMessage)))
-            throw new ArgumentException($"Cannot use {messageType}. Messages must implement {nameof(IOutboxMessage)}",
-                nameof(messageType));
-
-        options.MessageTypes.Add(messageType);
-    }
-
-
-    public static TracerProviderBuilder AddOutboxInstrumentation(
-        this TracerProviderBuilder builder) =>
-        builder.AddSource(Diagnostics.ActivitySourceName);
+    /// <param name="optionsBuilder"></param>
+    public static void AddOutboxBehavior(this DbContextOptionsBuilder optionsBuilder) =>
+        optionsBuilder.AddInterceptors(new OutboxDbContextInterceptor());
 
 
     /// <summary>
@@ -189,5 +129,65 @@ public static class OutboxExtensions
         services.AddHostedService<OutboxDeliveryService<TDbContext>>();
         services.AddScoped<IOutboxMessageHandler, TMessageHandler>();
         return services;
+    }
+
+    /// <summary>
+    ///     Adds the required Outbox entities to the model builder
+    /// </summary>
+    /// <param name="modelBuilder">The <see cref="ModelBuilder" /> to configure </param>
+    public static void AddOutboxEntities(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Outbox>().ToTable("__Outboxes");
+        modelBuilder.ApplyConfiguration(new Outbox.EntityTypeConfiguration());
+
+        modelBuilder.Entity<OutboxMessage>().ToTable("__OutboxMessages");
+        modelBuilder.ApplyConfiguration(new OutboxMessage.EntityTypeConfiguration());
+
+        modelBuilder.Entity<OutboxMessageFault>().ToTable("__OutboxMessageFaults");
+        modelBuilder.ApplyConfiguration(new OutboxMessageFault.EntityTypeConfiguration());
+    }
+
+
+    public static TracerProviderBuilder AddOutboxInstrumentation(
+        this TracerProviderBuilder builder) =>
+        builder.AddSource(Diagnostics.ActivitySourceName);
+
+
+    /// <summary>
+    ///     Adds a message to the outbox. Use the <see cref="OutboxMessageOptions" /> to configure the delivery options.
+    /// </summary>
+    /// <typeparam name="TOutboxDbContext">The <see cref="TOutboxDbContext" /> used to add the message</typeparam>
+    /// <typeparam name="TMessage"> <see cref="TMessage" /> type of message payload</typeparam>
+    /// <param name="dbContext"> <see cref="TOutboxDbContext" /> instance to add the message to</param>
+    /// <param name="message">The message payload</param>
+    /// <param name="deliveryOptions">The options used to configure the message delivery</param>
+    public static void AddOutboxMessage<TOutboxDbContext, TMessage>(this TOutboxDbContext dbContext, TMessage message,
+        OutboxMessageOptions? deliveryOptions = default)
+        where TOutboxDbContext : DbContext, IOutboxContext
+        where TMessage : class, IOutboxMessage
+    {
+        deliveryOptions ??= new OutboxMessageOptions();
+        var headers = new Dictionary<string, string?>
+        {
+            { OutboxMessageHeaders.Diagnostics.ActivityId, Activity.Current?.Id },
+            { OutboxMessageHeaders.Message.PayloadOriginalType, typeof(TMessage).AssemblyQualifiedName }
+        };
+
+        dbContext.Set<OutboxMessage>().Add(new OutboxMessage
+        {
+            AddedAt = DateTimeOffset.UtcNow,
+            PayloadType = OutboxPayloadTypeProvider.GetPayloadType(message.GetType()),
+            Payload = JsonSerializer.Serialize(message),
+            DeliveryAttempts = 0,
+            DeliveryFirstAttemptedAt = null,
+            DeliveryLastAttemptError = null,
+            DeliveryLastAttemptedAt = null,
+            DeliveryNotBefore = deliveryOptions.NotBefore,
+            DeliveryNotAfter = deliveryOptions.NotAfter,
+            Headers = JsonSerializer.Serialize(headers),
+            DeliveryMaxAttempts = deliveryOptions.MaxAttempts,
+            DeliveryAttemptDelay = deliveryOptions.DelayBetweenAttempts,
+            DeliveryAttemptDelayIsExponential = deliveryOptions.DelayBetweenAttemptsIsExponential
+        });
     }
 }

@@ -14,6 +14,7 @@ public class AggregatePrefixEntityNameFormatter(
     string? separator = null,
     params Func<Type, string?>[] prefixProviders) : IEntityNameFormatter
 {
+    /// <inheritdoc cref="IEntityNameFormatter.FormatEntityName{TMessage}" />
     public string FormatEntityName<TMessage>()
     {
         var stringBuilder = new StringBuilder();

@@ -15,6 +15,19 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
 {
     private static readonly ConcurrentDictionary<Type, List<WeakReference?>> DbContextDictionary = new();
 
+    public void TransactionCommitted(DbTransaction transaction, TransactionEndEventData eventData)
+    {
+        OnOutboxSaved(eventData.Context, true);
+    }
+
+
+    public Task TransactionCommittedAsync(DbTransaction transaction, TransactionEndEventData eventData,
+        CancellationToken cancellationToken = new())
+    {
+        OnOutboxSaved(eventData.Context, true);
+        return Task.CompletedTask;
+    }
+
 
     public InterceptionResult TransactionCommitting(DbTransaction transaction, TransactionEventData eventData,
         InterceptionResult result)
@@ -31,17 +44,17 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
         return ValueTask.FromResult(result);
     }
 
-    public void TransactionCommitted(DbTransaction transaction, TransactionEndEventData eventData)
+    public int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
-        OnOutboxSaved(eventData.Context, true);
+        OnOutboxSaved(eventData.Context);
+        return result;
     }
 
-
-    public Task TransactionCommittedAsync(DbTransaction transaction, TransactionEndEventData eventData,
-        CancellationToken cancellationToken = new())
+    public ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result,
+        CancellationToken cancellationToken = default)
     {
-        OnOutboxSaved(eventData.Context, true);
-        return Task.CompletedTask;
+        OnOutboxSaved(eventData.Context);
+        return ValueTask.FromResult(result);
     }
 
     public InterceptionResult<int> SavingChanges(DbContextEventData eventData,
@@ -57,19 +70,6 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
     {
         OnOutboxSaving(eventData.Context);
         return ValueTask.FromResult(result);
-    }
-
-    public ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result,
-        CancellationToken cancellationToken = default)
-    {
-        OnOutboxSaved(eventData.Context);
-        return ValueTask.FromResult(result);
-    }
-
-    public int SavedChanges(SaveChangesCompletedEventData eventData, int result)
-    {
-        OnOutboxSaved(eventData.Context);
-        return result;
     }
 
 
