@@ -12,10 +12,10 @@ public abstract class CachedPropertyEnricher : ILogEventEnricher
         logEvent.AddPropertyIfAbsent(GetLogEventProperty(propertyFactory));
     }
 
+    protected abstract LogEventProperty CreateProperty(ILogEventPropertyFactory propertyFactory);
+
     private LogEventProperty GetLogEventProperty(ILogEventPropertyFactory propertyFactory)
     {
         return _cachedProperty ??= CreateProperty(propertyFactory);
     }
-
-    protected abstract LogEventProperty CreateProperty(ILogEventPropertyFactory propertyFactory);
 }

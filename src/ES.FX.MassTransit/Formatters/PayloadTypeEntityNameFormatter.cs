@@ -23,6 +23,12 @@ public class PayloadTypeEntityNameFormatter(
     bool faultFallbackToPayloadType = true,
     string faultFormat = "{0}_fault") : IEntityNameFormatter
 {
+    /// <summary>
+    ///     Formats the entity name for the specified message. Uses the <see cref="PayloadTypeAttribute" /> to determine the
+    ///     name.
+    /// </summary>
+    /// <typeparam name="TMessage">The message type</typeparam>
+    /// <returns>The formatted message name</returns>
     public string FormatEntityName<TMessage>()
     {
         if (typeof(TMessage).ClosesType(typeof(Fault<>), out Type[] payloadTypes))
@@ -30,11 +36,9 @@ public class PayloadTypeEntityNameFormatter(
             var type = FaultPayloadTypeAttribute.PayloadTypeFor(payloadTypes.First());
             if (type is not null) return type;
 
-            if (faultFallbackToPayloadType)
-            {
-                type = PayloadTypeAttribute.PayloadTypeFor(payloadTypes.First());
-                if (type is not null) return string.Format(faultFormat, type);
-            }
+            if (!faultFallbackToPayloadType) return entityNameFormatter.FormatEntityName<TMessage>();
+            type = PayloadTypeAttribute.PayloadTypeFor(payloadTypes.First());
+            if (type is not null) return string.Format(faultFormat, type);
         }
         else
         {

@@ -23,12 +23,12 @@ public class ModelBuilderConfigureExtension : IDbContextOptionsExtension
         //No services required
     }
 
+    public DbContextOptionsExtensionInfo Info { get; }
+
     public void Validate(IDbContextOptions options)
     {
         // No-op. No validation required
     }
-
-    public DbContextOptionsExtensionInfo Info { get; }
 
 
     public sealed class ExtensionInfo(IDbContextOptionsExtension extension)
@@ -36,11 +36,12 @@ public class ModelBuilderConfigureExtension : IDbContextOptionsExtension
     {
         public override bool IsDatabaseProvider => false;
         public override string LogFragment => string.Empty;
-        public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other) => true;
         public override int GetServiceProviderHashCode() => 0;
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo)
         {
         }
+
+        public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other) => true;
     }
 }

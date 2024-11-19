@@ -32,6 +32,27 @@ public static class ProblemExtensions
     };
 
     /// <summary>
+    ///     Returns a <see cref="BadRequest{ProblemDetails}" /> result with the specified <see cref="Problem" />
+    /// </summary>
+    [PublicAPI]
+    public static BadRequest<ProblemDetails> AsBadRequestResult(this Problem problem) =>
+        TypedResults.BadRequest(problem.AsProblemDetails());
+
+    /// <summary>
+    ///     Returns a <see cref="Conflict{ProblemDetails}" /> result with the specified <see cref="Problem" />
+    /// </summary>
+    [PublicAPI]
+    public static Conflict<ProblemDetails> AsConflictResult(this Problem problem) =>
+        TypedResults.Conflict(problem.AsProblemDetails());
+
+    /// <summary>
+    ///     Returns an <see cref="Ok{ProblemDetails}" /> result with the specified <see cref="Problem" />
+    /// </summary>
+    [PublicAPI]
+    public static Ok<ProblemDetails> AsOkResult(this Problem problem) =>
+        TypedResults.Ok(problem.AsProblemDetails());
+
+    /// <summary>
     ///     Formats a <see cref="Problem" /> as <see cref="ProblemDetails" />
     /// </summary>
     /// <param name="problem">The source <see cref="Problem" /></param>
@@ -72,37 +93,16 @@ public static class ProblemExtensions
     }
 
     /// <summary>
-    ///     Returns an <see cref="UnprocessableEntity{ProblemDetails}" /> result with the specified <see cref="Problem" />
-    /// </summary>
-    [PublicAPI]
-    public static UnprocessableEntity<ProblemDetails> AsUnprocessableEntityResult(this Problem problem) =>
-        TypedResults.UnprocessableEntity(problem.AsProblemDetails());
-
-    /// <summary>
-    ///     Returns a <see cref="BadRequest{ProblemDetails}" /> result with the specified <see cref="Problem" />
-    /// </summary>
-    [PublicAPI]
-    public static BadRequest<ProblemDetails> AsBadRequestResult(this Problem problem) =>
-        TypedResults.BadRequest(problem.AsProblemDetails());
-
-    /// <summary>
-    ///     Returns a <see cref="Conflict{ProblemDetails}" /> result with the specified <see cref="Problem" />
-    /// </summary>
-    [PublicAPI]
-    public static Conflict<ProblemDetails> AsConflictResult(this Problem problem) =>
-        TypedResults.Conflict(problem.AsProblemDetails());
-
-    /// <summary>
-    ///     Returns an <see cref="Ok{ProblemDetails}" /> result with the specified <see cref="Problem" />
-    /// </summary>
-    [PublicAPI]
-    public static Ok<ProblemDetails> AsOkResult(this Problem problem) =>
-        TypedResults.Ok(problem.AsProblemDetails());
-
-    /// <summary>
     ///     Returns a <see cref="ProblemHttpResult" /> result with the specified <see cref="Problem" />
     /// </summary>
     [PublicAPI]
     public static ProblemHttpResult AsProblemResult(this Problem problem) =>
         TypedResults.Problem(problem.AsProblemDetails());
+
+    /// <summary>
+    ///     Returns an <see cref="UnprocessableEntity{ProblemDetails}" /> result with the specified <see cref="Problem" />
+    /// </summary>
+    [PublicAPI]
+    public static UnprocessableEntity<ProblemDetails> AsUnprocessableEntityResult(this Problem problem) =>
+        TypedResults.UnprocessableEntity(problem.AsProblemDetails());
 }

@@ -13,6 +13,14 @@ public class ExceptionExtensionsTests
     }
 
     [Fact]
+    public void Exception_InnerMost_ReturnsNullForANullException()
+    {
+        Exception? exception = null;
+        var result = exception.InnermostException<ArgumentException>();
+        Assert.Null(result);
+    }
+
+    [Fact]
     public void Exception_InnerMost_ReturnsSelfIfNoInnerException()
     {
         var exception = new Exception("Outer");
@@ -40,14 +48,6 @@ public class ExceptionExtensionsTests
                 new ArgumentException("Innermost",
                     new Exception("Last"))));
         var result = exception.InnermostException<NullReferenceException>();
-        Assert.Null(result);
-    }
-
-    [Fact]
-    public void Exception_InnerMost_ReturnsNullForANullException()
-    {
-        Exception? exception = null;
-        var result = exception.InnermostException<ArgumentException>();
         Assert.Null(result);
     }
 }

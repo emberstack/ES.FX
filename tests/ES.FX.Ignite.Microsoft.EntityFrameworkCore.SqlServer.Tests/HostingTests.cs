@@ -177,42 +177,37 @@ public class HostingTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void CanOverride_Settings(bool useFactory)
+    public void CanOverride_DbContextOptions(bool useFactory)
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
-        builder.Configuration.AddInMemoryCollection([
-            new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.Tracing)}:{nameof(TracingSettings.Enabled)}",
-                true.ToString()),
-            new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}",
-                true.ToString())
-        ]);
-
         if (useFactory)
-            builder.IgniteSqlServerDbContextFactory<TestDbContext>(configureSettings: ConfigureSettings);
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>(
+                configureDbContextOptionsBuilder: ConfigureDbContextOptionsBuilder);
         else
-            builder.IgniteSqlServerDbContext<TestDbContext>(configureSettings: ConfigureSettings);
+            builder.IgniteSqlServerDbContext<TestDbContext>(
+                configureDbContextOptionsBuilder: ConfigureDbContextOptionsBuilder);
 
 
         var app = builder.Build();
 
-        var resolvedSettings = app.Services.GetRequiredService<SqlServerDbContextSparkSettings<TestDbContext>>();
-        Assert.False(resolvedSettings.Tracing.Enabled);
-        Assert.True(resolvedSettings.HealthChecks.Enabled);
+        var context = app.Services.GetRequiredService<TestDbContext>();
+        Assert.True(context.Options.FindExtension<CoreOptionsExtension>()?.IsSensitiveDataLoggingEnabled);
 
+        if (useFactory)
+        {
+            var factory = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
+            context = factory.CreateDbContext();
+            Assert.True(context.Options.FindExtension<CoreOptionsExtension>()?.IsSensitiveDataLoggingEnabled);
+        }
 
         return;
 
-        static void ConfigureSettings(SqlServerDbContextSparkSettings<TestDbContext> settings)
+        static void ConfigureDbContextOptionsBuilder(IServiceProvider _,
+            DbContextOptionsBuilder dbContextOptionsBuilder)
         {
-            //Settings should have correct value from configuration
-            Assert.True(settings.Tracing.Enabled);
-            Assert.True(settings.HealthChecks.Enabled);
-
-            //Change the settings
-            settings.Tracing.Enabled = false;
+            //Enable sensitive data logging
+            dbContextOptionsBuilder.EnableSensitiveDataLogging();
         }
     }
 
@@ -289,37 +284,42 @@ public class HostingTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void CanOverride_DbContextOptions(bool useFactory)
+    public void CanOverride_Settings(bool useFactory)
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
+        builder.Configuration.AddInMemoryCollection([
+            new KeyValuePair<string, string?>(
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.Tracing)}:{nameof(TracingSettings.Enabled)}",
+                true.ToString()),
+            new KeyValuePair<string, string?>(
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{SparkConfig.Settings}:{nameof(SqlServerDbContextSparkSettings<TestDbContext>.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}",
+                true.ToString())
+        ]);
+
         if (useFactory)
-            builder.IgniteSqlServerDbContextFactory<TestDbContext>(
-                configureDbContextOptionsBuilder: ConfigureDbContextOptionsBuilder);
+            builder.IgniteSqlServerDbContextFactory<TestDbContext>(configureSettings: ConfigureSettings);
         else
-            builder.IgniteSqlServerDbContext<TestDbContext>(
-                configureDbContextOptionsBuilder: ConfigureDbContextOptionsBuilder);
+            builder.IgniteSqlServerDbContext<TestDbContext>(configureSettings: ConfigureSettings);
 
 
         var app = builder.Build();
 
-        var context = app.Services.GetRequiredService<TestDbContext>();
-        Assert.True(context.Options.FindExtension<CoreOptionsExtension>()?.IsSensitiveDataLoggingEnabled);
+        var resolvedSettings = app.Services.GetRequiredService<SqlServerDbContextSparkSettings<TestDbContext>>();
+        Assert.False(resolvedSettings.Tracing.Enabled);
+        Assert.True(resolvedSettings.HealthChecks.Enabled);
 
-        if (useFactory)
-        {
-            var factory = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
-            context = factory.CreateDbContext();
-            Assert.True(context.Options.FindExtension<CoreOptionsExtension>()?.IsSensitiveDataLoggingEnabled);
-        }
 
         return;
 
-        static void ConfigureDbContextOptionsBuilder(IServiceProvider _,
-            DbContextOptionsBuilder dbContextOptionsBuilder)
+        static void ConfigureSettings(SqlServerDbContextSparkSettings<TestDbContext> settings)
         {
-            //Enable sensitive data logging
-            dbContextOptionsBuilder.EnableSensitiveDataLogging();
+            //Settings should have correct value from configuration
+            Assert.True(settings.Tracing.Enabled);
+            Assert.True(settings.HealthChecks.Enabled);
+
+            //Change the settings
+            settings.Tracing.Enabled = false;
         }
     }
 

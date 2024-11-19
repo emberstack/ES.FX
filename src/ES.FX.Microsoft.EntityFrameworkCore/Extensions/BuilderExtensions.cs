@@ -6,20 +6,6 @@ namespace ES.FX.Microsoft.EntityFrameworkCore.Extensions;
 public static class BuilderExtensions
 {
     /// <summary>
-    ///     Registers an <see cref="ModelBuilderConfigureExtension" /> to the
-    ///     <see cref="DbContextOptionsBuilder" />.
-    /// </summary>
-    /// <param name="builder">The <see cref="DbContextOptionsBuilder" /></param>
-    /// <param name="configureActions">Actions to run on the model builder</param>
-    public static void WithConfigureModelBuilderExtension(this DbContextOptionsBuilder builder,
-        params Action<ModelBuilder, DbContextOptions>[] configureActions)
-    {
-        ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
-            new ModelBuilderConfigureExtension(configureActions));
-    }
-
-
-    /// <summary>
     ///     Runs the actions registered in the <see cref="ModelBuilderConfigureExtension" />
     ///     on the <see cref="ModelBuilder" />.
     /// </summary>
@@ -34,5 +20,18 @@ public static class BuilderExtensions
         var extension = options.FindExtension<ModelBuilderConfigureExtension>();
         if (extension is null) return;
         foreach (var action in extension.ConfigureActions) action.Invoke(modelBuilder, options);
+    }
+
+    /// <summary>
+    ///     Registers an <see cref="ModelBuilderConfigureExtension" /> to the
+    ///     <see cref="DbContextOptionsBuilder" />.
+    /// </summary>
+    /// <param name="builder">The <see cref="DbContextOptionsBuilder" /></param>
+    /// <param name="configureActions">Actions to run on the model builder</param>
+    public static void WithConfigureModelBuilderExtension(this DbContextOptionsBuilder builder,
+        params Action<ModelBuilder, DbContextOptions>[] configureActions)
+    {
+        ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(
+            new ModelBuilderConfigureExtension(configureActions));
     }
 }

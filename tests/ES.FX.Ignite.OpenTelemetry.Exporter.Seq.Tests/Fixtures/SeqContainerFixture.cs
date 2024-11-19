@@ -11,6 +11,12 @@ public sealed class SeqContainerFixture : IAsyncLifetime
     public SeqSutFactory? WebApplicationFactory;
     public IContainer? Container { get; private set; }
 
+    public async Task DisposeAsync()
+    {
+        if (Container is not null) await Container.DisposeAsync();
+        if (WebApplicationFactory is not null) await WebApplicationFactory.DisposeAsync();
+    }
+
     public async Task InitializeAsync()
     {
         Container = new ContainerBuilder()
@@ -24,12 +30,6 @@ public sealed class SeqContainerFixture : IAsyncLifetime
         await Container.StartAsync();
 
         WebApplicationFactory = new SeqSutFactory(GetConnectionString());
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (Container is not null) await Container.DisposeAsync();
-        if (WebApplicationFactory is not null) await WebApplicationFactory.DisposeAsync();
     }
 
     public string GetConnectionString() => $"http://{Container?.Hostname}:{Container?.GetMappedPublicPort(80)}";

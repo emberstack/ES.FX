@@ -14,53 +14,36 @@ namespace ES.FX.Ignite.StackExchange.Redis.Tests;
 public class HostingTests
 {
     [Fact]
-    public void IgniteDoesNotAllowReconfiguration()
+    public void CanOverride_Options()
     {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.IgniteRedisClient();
-
-        Assert.Throws<ReconfigurationNotSupportedException>(() => { builder.IgniteRedisClient(); });
-    }
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void IgniteShouldAddTheServicesTracing(bool tracingEnabled)
-    {
+        const string name = "database";
+        var initialConnectionString = "InitialConnectionString";
+        var changedConnectionString = "ChangedConnectionString";
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{RedisSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.Tracing)}:{nameof(RedisSparkSettings.Tracing.Enabled)}",
-                tracingEnabled.ToString())
+                $"{RedisSpark.ConfigurationSectionPath}:{name}:{nameof(RedisSparkOptions.ConnectionString)}",
+                initialConnectionString)
         ]);
 
-        builder.IgniteRedisClient();
+        builder.IgniteRedisClient(name, configureOptions: ConfigureOptions);
 
-        var serviceProvider = builder.Build().Services;
-        Assert.NotNull(serviceProvider.GetRequiredService<RedisSparkSettings>());
-        Assert.Equal(serviceProvider.GetService(typeof(StackExchangeRedisInstrumentation)) != null, tracingEnabled);
-    }
+        var app = builder.Build();
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void IgniteShouldAddTheServicesHealthChecks(bool tracingEnabled)
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
+        var resolvedOptions = app.Services.GetRequiredService<IOptions<RedisSparkOptions>>();
+        Assert.Equal(changedConnectionString, resolvedOptions.Value.ConnectionString);
 
-        builder.Configuration.AddInMemoryCollection([
-            new KeyValuePair<string, string?>(
-                $"{RedisSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.HealthChecks)}:{nameof(RedisSparkSettings.HealthChecks.Enabled)}",
-                tracingEnabled.ToString())
-        ]);
+        return;
 
-        builder.IgniteRedisClient();
+        void ConfigureOptions(RedisSparkOptions options)
+        {
+            //Options should have correct value from configuration
+            Assert.Equal(initialConnectionString, options.ConnectionString);
 
-        var serviceProvider = builder.Build().Services;
-        Assert.NotNull(serviceProvider.GetRequiredService<RedisSparkSettings>());
-        Assert.Equal(serviceProvider.GetService(typeof(HealthCheckService)) != null, tracingEnabled);
+            //Change the options
+            options.ConnectionString = changedConnectionString;
+        }
     }
 
     [Fact]
@@ -95,35 +78,52 @@ public class HostingTests
     }
 
     [Fact]
-    public void CanOverride_Options()
+    public void IgniteDoesNotAllowReconfiguration()
     {
-        const string name = "database";
-        var initialConnectionString = "InitialConnectionString";
-        var changedConnectionString = "ChangedConnectionString";
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        builder.IgniteRedisClient();
+
+        Assert.Throws<ReconfigurationNotSupportedException>(() => { builder.IgniteRedisClient(); });
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void IgniteShouldAddTheServicesHealthChecks(bool tracingEnabled)
+    {
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{RedisSpark.ConfigurationSectionPath}:{name}:{nameof(RedisSparkOptions.ConnectionString)}",
-                initialConnectionString)
+                $"{RedisSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.HealthChecks)}:{nameof(RedisSparkSettings.HealthChecks.Enabled)}",
+                tracingEnabled.ToString())
         ]);
 
-        builder.IgniteRedisClient(name, configureOptions: ConfigureOptions);
+        builder.IgniteRedisClient();
 
-        var app = builder.Build();
+        var serviceProvider = builder.Build().Services;
+        Assert.NotNull(serviceProvider.GetRequiredService<RedisSparkSettings>());
+        Assert.Equal(serviceProvider.GetService(typeof(HealthCheckService)) != null, tracingEnabled);
+    }
 
-        var resolvedOptions = app.Services.GetRequiredService<IOptions<RedisSparkOptions>>();
-        Assert.Equal(changedConnectionString, resolvedOptions.Value.ConnectionString);
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void IgniteShouldAddTheServicesTracing(bool tracingEnabled)
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
 
-        return;
+        builder.Configuration.AddInMemoryCollection([
+            new KeyValuePair<string, string?>(
+                $"{RedisSpark.ConfigurationSectionPath}:{SparkConfig.Settings}:{nameof(RedisSparkSettings.Tracing)}:{nameof(RedisSparkSettings.Tracing.Enabled)}",
+                tracingEnabled.ToString())
+        ]);
 
-        void ConfigureOptions(RedisSparkOptions options)
-        {
-            //Options should have correct value from configuration
-            Assert.Equal(initialConnectionString, options.ConnectionString);
+        builder.IgniteRedisClient();
 
-            //Change the options
-            options.ConnectionString = changedConnectionString;
-        }
+        var serviceProvider = builder.Build().Services;
+        Assert.NotNull(serviceProvider.GetRequiredService<RedisSparkSettings>());
+        Assert.Equal(serviceProvider.GetService(typeof(StackExchangeRedisInstrumentation)) != null, tracingEnabled);
     }
 }

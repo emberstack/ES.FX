@@ -6,7 +6,15 @@ namespace ES.FX.Ignite.Spark.Configuration;
 public static class KeyedConfigurationGuard
 {
     public static string AlreadyConfiguredError(string key) => $"{key} already configured";
-    private static string GuardConfigurationKey(string key) => $"{nameof(KeyedConfigurationGuard)}-{key}";
+
+
+    /// <summary>
+    ///     Checks if the spark is already guarded
+    /// </summary>
+    /// <param name="builder"> The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
+    /// <param name="key"> The key to guard</param>
+    public static bool ConfigurationKeyGuardSet(this IHostApplicationBuilder builder, string key) =>
+        builder.Properties.ContainsKey(GuardConfigurationKey(key));
 
     /// <summary>
     ///     Prevent reconfiguration by throwing an exception if the key is already configured
@@ -24,12 +32,5 @@ public static class KeyedConfigurationGuard
         builder.Properties.Add(GuardConfigurationKey(key), string.Empty);
     }
 
-
-    /// <summary>
-    ///     Checks if the spark is already guarded
-    /// </summary>
-    /// <param name="builder"> The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
-    /// <param name="key"> The key to guard</param>
-    public static bool ConfigurationKeyGuardSet(this IHostApplicationBuilder builder, string key) =>
-        builder.Properties.ContainsKey(GuardConfigurationKey(key));
+    private static string GuardConfigurationKey(string key) => $"{nameof(KeyedConfigurationGuard)}-{key}";
 }

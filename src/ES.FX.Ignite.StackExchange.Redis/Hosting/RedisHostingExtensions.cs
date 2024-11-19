@@ -14,6 +14,33 @@ namespace ES.FX.Ignite.StackExchange.Redis.Hosting;
 [PublicAPI]
 public static class RedisHostingExtensions
 {
+    private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey,
+        RedisSparkSettings settings)
+    {
+        if (settings.Tracing.Enabled)
+            builder.Services.AddOpenTelemetry().WithTracing(t =>
+            {
+                t.AddSource($"{typeof(StackExchangeRedisInstrumentation).Namespace}");
+                t.ConfigureRedisInstrumentation(_ => { });
+                t.AddInstrumentation(sp => sp.GetRequiredService<StackExchangeRedisInstrumentation>());
+            });
+
+        if (settings.HealthChecks.Enabled)
+        {
+            var healthCheckName =
+                $"{RedisSpark.Name}{(serviceKey is null ? string.Empty : $"[{serviceKey}]")}";
+            builder.Services.AddHealthChecks().AddRedis(
+                sp =>
+                    serviceKey is null
+                        ? sp.GetRequiredService<IConnectionMultiplexer>()
+                        : sp.GetRequiredKeyedService<IConnectionMultiplexer>(serviceKey),
+                healthCheckName,
+                settings.HealthChecks.FailureStatus,
+                [nameof(Redis), .. settings.HealthChecks.Tags],
+                settings.HealthChecks.Timeout);
+        }
+    }
+
     /// <summary>
     ///     Registers <see cref="IConnectionMultiplexer" /> as a service in the services provided by the
     ///     <paramref name="builder" />.
@@ -80,32 +107,5 @@ public static class RedisHostingExtensions
         });
 
         ConfigureObservability(builder, serviceKey, settings);
-    }
-
-    private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey,
-        RedisSparkSettings settings)
-    {
-        if (settings.Tracing.Enabled)
-            builder.Services.AddOpenTelemetry().WithTracing(t =>
-            {
-                t.AddSource($"{typeof(StackExchangeRedisInstrumentation).Namespace}");
-                t.ConfigureRedisInstrumentation(_ => { });
-                t.AddInstrumentation(sp => sp.GetRequiredService<StackExchangeRedisInstrumentation>());
-            });
-
-        if (settings.HealthChecks.Enabled)
-        {
-            var healthCheckName =
-                $"{RedisSpark.Name}{(serviceKey is null ? string.Empty : $"[{serviceKey}]")}";
-            builder.Services.AddHealthChecks().AddRedis(
-                sp =>
-                    serviceKey is null
-                        ? sp.GetRequiredService<IConnectionMultiplexer>()
-                        : sp.GetRequiredKeyedService<IConnectionMultiplexer>(serviceKey),
-                healthCheckName,
-                settings.HealthChecks.FailureStatus,
-                [nameof(Redis), .. settings.HealthChecks.Tags],
-                settings.HealthChecks.Timeout);
-        }
     }
 }

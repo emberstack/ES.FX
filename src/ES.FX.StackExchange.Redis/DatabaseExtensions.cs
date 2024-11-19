@@ -68,22 +68,6 @@ public static class DatabaseExtensions
         return long.Parse(result.ToString());
     }
 
-    /// <summary>
-    ///     Deletes all keys matching a pattern in batches
-    /// </summary>
-    /// <param name="database">The <see cref="IDatabase" /></param>
-    /// <param name="pattern">Pattern to MATCH keys</param>
-    /// <param name="batchSize">The batch size</param>
-    /// <returns>The deleted key count</returns>
-    public static async Task<long> KeysDeleteAsync(this IDatabase database, string pattern, int batchSize = 1000)
-    {
-        var result = await database.ScriptEvaluateAsync(
-                DeleteAllWithPatternBatchedScript,
-                [pattern], [batchSize])
-            .ConfigureAwait(false);
-        return long.Parse(result.ToString());
-    }
-
 
     /// <summary>
     ///     Deletes all keys
@@ -103,4 +87,20 @@ public static class DatabaseExtensions
     /// <returns>The deleted key count</returns>
     public static async Task<long> KeysDeleteAllAsync(this IDatabase database, int batchSize = 1000) =>
         await database.KeysDeleteAsync("*", batchSize);
+
+    /// <summary>
+    ///     Deletes all keys matching a pattern in batches
+    /// </summary>
+    /// <param name="database">The <see cref="IDatabase" /></param>
+    /// <param name="pattern">Pattern to MATCH keys</param>
+    /// <param name="batchSize">The batch size</param>
+    /// <returns>The deleted key count</returns>
+    public static async Task<long> KeysDeleteAsync(this IDatabase database, string pattern, int batchSize = 1000)
+    {
+        var result = await database.ScriptEvaluateAsync(
+                DeleteAllWithPatternBatchedScript,
+                [pattern], [batchSize])
+            .ConfigureAwait(false);
+        return long.Parse(result.ToString());
+    }
 }

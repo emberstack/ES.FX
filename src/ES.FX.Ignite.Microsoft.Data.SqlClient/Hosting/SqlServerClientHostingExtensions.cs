@@ -16,6 +16,77 @@ namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 [PublicAPI]
 public static class SqlServerClientHostingExtensions
 {
+    private static void AddSqlServerClient(this IHostApplicationBuilder builder,
+        string name,
+        string? serviceKey = null,
+        Action<SqlServerClientSparkSettings>? configureSettings = null,
+        Action<SqlServerClientSparkOptions>? configureOptions = null,
+        ServiceLifetime lifetime = ServiceLifetime.Transient,
+        string configurationSectionPath = SqlServerClientSpark.ConfigurationSectionPath,
+        bool useFactory = false)
+    {
+        builder.GuardConfigurationKey($"{SqlServerClientSpark.Name}[{serviceKey}]");
+
+        var configPath = SparkConfig.Path(name, configurationSectionPath);
+
+        var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
+        builder.Services.AddKeyedSingleton(serviceKey, settings);
+
+        var optionsBuilder = builder.Services
+            .AddOptions<SqlServerClientSparkOptions>(serviceKey ?? Options.DefaultName)
+            .BindConfiguration(configPath);
+
+        if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
+
+
+        if (useFactory)
+            builder.Services.Add(new ServiceDescriptor(typeof(ISqlConnectionFactory), serviceKey,
+                (provider, key) => new DelegateSqlConnectionFactory(provider, sp => ResolveSqlConnection(sp, key)),
+                lifetime));
+
+        builder.Services.Add(new ServiceDescriptor(typeof(SqlConnection), serviceKey, ResolveSqlConnection, lifetime));
+
+
+        ConfigureObservability(builder, serviceKey, settings);
+
+        return;
+
+        static SqlConnection ResolveSqlConnection(IServiceProvider sp, object? key)
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>().Get(key as string);
+            return new SqlConnection(options.ConnectionString);
+        }
+    }
+
+    private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey,
+        SqlServerClientSparkSettings settings)
+    {
+        if (settings.Tracing.Enabled)
+            builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
+            {
+                tracerProviderBuilder.AddSqlClientInstrumentation();
+            });
+
+        if (settings.HealthChecks.Enabled)
+        {
+            var healthCheckName =
+                $"{SqlServerClientSpark.Name}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"[{serviceKey}]")}";
+            builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName, serviceProvider =>
+                {
+                    var options = serviceProvider
+                        .GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>()
+                        .Get(serviceKey);
+                    return new SqlServerHealthCheck(new SqlServerHealthCheckOptions
+                    {
+                        ConnectionString = options.ConnectionString ?? string.Empty
+                    });
+                },
+                settings.HealthChecks.FailureStatus,
+                [SqlServerClientSpark.Name, ..settings.HealthChecks.Tags],
+                settings.HealthChecks.Timeout));
+        }
+    }
+
     /// <summary>
     ///     Registers <see cref="SqlConnection" /> as a service in the services provided by the
     ///     <paramref name="builder" />.
@@ -91,76 +162,4 @@ public static class SqlServerClientHostingExtensions
         string configurationSectionPath = SqlServerClientSpark.ConfigurationSectionPath) =>
         AddSqlServerClient(builder, name, serviceKey, configureSettings, configureOptions, lifetime,
             configurationSectionPath, true);
-
-
-    private static void AddSqlServerClient(this IHostApplicationBuilder builder,
-        string name,
-        string? serviceKey = null,
-        Action<SqlServerClientSparkSettings>? configureSettings = null,
-        Action<SqlServerClientSparkOptions>? configureOptions = null,
-        ServiceLifetime lifetime = ServiceLifetime.Transient,
-        string configurationSectionPath = SqlServerClientSpark.ConfigurationSectionPath,
-        bool useFactory = false)
-    {
-        builder.GuardConfigurationKey($"{SqlServerClientSpark.Name}[{serviceKey}]");
-
-        var configPath = SparkConfig.Path(name, configurationSectionPath);
-
-        var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
-        builder.Services.AddKeyedSingleton(serviceKey, settings);
-
-        var optionsBuilder = builder.Services
-            .AddOptions<SqlServerClientSparkOptions>(serviceKey ?? Options.DefaultName)
-            .BindConfiguration(configPath);
-
-        if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
-
-
-        if (useFactory)
-            builder.Services.Add(new ServiceDescriptor(typeof(ISqlConnectionFactory), serviceKey,
-                (provider, key) => new DelegateSqlConnectionFactory(provider, sp => ResolveSqlConnection(sp, key)),
-                lifetime));
-
-        builder.Services.Add(new ServiceDescriptor(typeof(SqlConnection), serviceKey, ResolveSqlConnection, lifetime));
-
-
-        ConfigureObservability(builder, serviceKey, settings);
-
-        return;
-
-        static SqlConnection ResolveSqlConnection(IServiceProvider sp, object? key)
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>().Get(key as string);
-            return new SqlConnection(options.ConnectionString);
-        }
-    }
-
-    private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey,
-        SqlServerClientSparkSettings settings)
-    {
-        if (settings.Tracing.Enabled)
-            builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
-            {
-                tracerProviderBuilder.AddSqlClientInstrumentation();
-            });
-
-        if (settings.HealthChecks.Enabled)
-        {
-            var healthCheckName =
-                $"{SqlServerClientSpark.Name}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"[{serviceKey}]")}";
-            builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName, serviceProvider =>
-                {
-                    var options = serviceProvider
-                        .GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>()
-                        .Get(serviceKey);
-                    return new SqlServerHealthCheck(new SqlServerHealthCheckOptions
-                    {
-                        ConnectionString = options.ConnectionString ?? string.Empty
-                    });
-                },
-                settings.HealthChecks.FailureStatus,
-                [SqlServerClientSpark.Name, ..settings.HealthChecks.Tags],
-                settings.HealthChecks.Timeout));
-        }
-    }
 }

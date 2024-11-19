@@ -14,11 +14,6 @@ public class SimpleValidationEndpoint
         services.AddTransient<IValidator<Request>, TestValidator>();
     }
 
-    public static void MapRoutes(IEndpointRouteBuilder builder)
-    {
-        builder.MapPost(RoutePattern, Handle);
-    }
-
 
     public static async Task<Results<Ok<Response>, ValidationProblem, BadRequest<ProblemDetails>>> Handle(
         ILogger<SimpleValidationEndpoint> logger,
@@ -27,6 +22,11 @@ public class SimpleValidationEndpoint
     {
         await Task.CompletedTask;
         return Ok(new Response(request.Name));
+    }
+
+    public static void MapRoutes(IEndpointRouteBuilder builder)
+    {
+        builder.MapPost(RoutePattern, Handle);
     }
 
     public record Request(string Name);

@@ -13,33 +13,6 @@ public class FunctionalTests(RedisContainerFixture redisFixture)
     : IClassFixture<RedisContainerFixture>
 {
     [Theory]
-    [InlineData("my-key", "my-value")]
-    public async Task CanConnect(string key, string value)
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.IgniteRedisClient("database", configureOptions: ConfigureOptions);
-
-        var app = builder.Build();
-
-        var connection = app.Services.GetRequiredService<IConnectionMultiplexer>();
-        Assert.NotNull(connection);
-
-        var database = connection.GetDatabase();
-        await database.StringSetAsync(key, value);
-
-        var actualValue = await database.StringGetAsync(key);
-        Assert.Equal(actualValue, value);
-
-        return;
-
-        void ConfigureOptions(RedisSparkOptions options)
-        {
-            options.ConnectionString = redisFixture.GetConnectionString();
-        }
-    }
-
-    [Theory]
     //Defaults
     [InlineData(null)]
     //Keyed
@@ -70,6 +43,33 @@ public class FunctionalTests(RedisContainerFixture redisFixture)
 
         Assert.NotSame(connection1, connection2);
         Assert.Equal(connection1.Configuration, connection2.Configuration);
+
+        void ConfigureOptions(RedisSparkOptions options)
+        {
+            options.ConnectionString = redisFixture.GetConnectionString();
+        }
+    }
+
+    [Theory]
+    [InlineData("my-key", "my-value")]
+    public async Task CanConnect(string key, string value)
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        builder.IgniteRedisClient("database", configureOptions: ConfigureOptions);
+
+        var app = builder.Build();
+
+        var connection = app.Services.GetRequiredService<IConnectionMultiplexer>();
+        Assert.NotNull(connection);
+
+        var database = connection.GetDatabase();
+        await database.StringSetAsync(key, value);
+
+        var actualValue = await database.StringGetAsync(key);
+        Assert.Equal(actualValue, value);
+
+        return;
 
         void ConfigureOptions(RedisSparkOptions options)
         {

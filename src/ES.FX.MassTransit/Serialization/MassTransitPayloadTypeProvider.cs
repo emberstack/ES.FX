@@ -11,7 +11,7 @@ namespace ES.FX.MassTransit.Serialization;
 [PublicAPI]
 public static class MassTransitPayloadTypeProvider
 {
-    public const string Header = "X-ES-FX-MassTransit-PayloadType";
+    public const string Header = $"X-{nameof(ES)}-{nameof(FX)}-{nameof(MassTransit)}-PayloadType";
 
     private static readonly ConcurrentDictionary<string, Type> TypeMap = new();
 

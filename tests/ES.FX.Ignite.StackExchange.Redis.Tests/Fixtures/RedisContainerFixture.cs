@@ -8,6 +8,11 @@ public sealed class RedisContainerFixture : IAsyncLifetime
     public const string Tag = "latest";
     public RedisContainer? Container { get; private set; }
 
+    public async Task DisposeAsync()
+    {
+        if (Container is not null) await Container.DisposeAsync();
+    }
+
     public async Task InitializeAsync()
     {
         Container = new RedisBuilder()
@@ -15,11 +20,6 @@ public sealed class RedisContainerFixture : IAsyncLifetime
             .WithImage($"{Image}:{Tag}")
             .Build();
         await Container.StartAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (Container is not null) await Container.DisposeAsync();
     }
 
     public string GetConnectionString() =>

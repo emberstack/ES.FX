@@ -25,24 +25,35 @@ namespace ES.FX.Ignite.Hosting;
 [PublicAPI]
 public static class IgniteHostingExtensions
 {
-    public static void Ignite(this IHostApplicationBuilder builder,
-        Action<IgniteSettings>? configureSettings = null,
-        string configurationSectionPath = IgniteConfigurationSections.Ignite)
+    private static void AddAspNetServices(IHostApplicationBuilder builder, IgniteAspNetCoreSettings settings)
     {
-        builder.GuardConfigurationKey(nameof(FX.Ignite));
+        if (settings.ForwardedHeadersEnabled)
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.RequireHeaderSymmetry = false;
+                options.ForwardedHeaders = ForwardedHeaders.All;
+                options.ForwardLimit = null;
+                options.KnownProxies.Clear();
+                options.KnownNetworks.Clear();
+            });
 
-        var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
-        builder.Services.AddSingleton(settings);
+        if (settings.EndpointsApiExplorerEnabled)
+            builder.Services.AddEndpointsApiExplorer();
 
-        AddConfiguration(builder, settings.Configuration);
+        if (settings.ProblemDetailsEnabled)
+            builder.Services.AddProblemDetails();
 
-        AddOpenTelemetry(builder, settings.OpenTelemetry);
-
-        AddHealthChecks(builder, settings.HealthChecks);
-
-        AddHttpClient(builder, settings.HttpClient);
-
-        AddAspNetServices(builder, settings.AspNetCore);
+        if (settings.JsonStringEnumConverterEnabled)
+        {
+            builder.Services.ConfigureHttpJsonOptions(options =>
+            {
+                options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+            builder.Services.Configure<JsonOptions>(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+        }
     }
 
     private static void AddConfiguration(IHostApplicationBuilder builder, IgniteConfigurationSettings settings)
@@ -59,6 +70,26 @@ public static class IgniteHostingExtensions
             builder.Configuration
                 .AddJsonFile($"appsettings.{builder.Environment}.{appSettingsOverride}.json",
                     true, true);
+    }
+
+    private static void AddHealthChecks(IHostApplicationBuilder builder, IgniteHealthChecksSettings settings)
+    {
+        var healthCheckKey = builder.Environment.ApplicationName;
+        var healthCheckBuilder = builder.Services.AddHealthChecks();
+        if (settings.ApplicationStatusCheckEnabled)
+            healthCheckBuilder.AddApplicationStatus(healthCheckKey, tags: [HealthChecksTags.Live, nameof(Host)]);
+    }
+
+    private static void AddHttpClient(IHostApplicationBuilder builder, IgniteHttpClientSettings settings)
+    {
+        if (settings.StandardResilienceHandlerEnabled)
+            builder.Services.ConfigureHttpClientDefaults(http =>
+            {
+                // Turn on resilience by default
+                http.AddStandardResilienceHandler();
+            });
+
+        builder.Services.AddHttpClient();
     }
 
     private static void AddOpenTelemetry(IHostApplicationBuilder builder, IgniteOpenTelemetrySettings settings)
@@ -102,55 +133,24 @@ public static class IgniteHostingExtensions
             });
     }
 
-    private static void AddHealthChecks(IHostApplicationBuilder builder, IgniteHealthChecksSettings settings)
+    public static void Ignite(this IHostApplicationBuilder builder,
+        Action<IgniteSettings>? configureSettings = null,
+        string configurationSectionPath = IgniteConfigurationSections.Ignite)
     {
-        var healthCheckKey = builder.Environment.ApplicationName;
-        var healthCheckBuilder = builder.Services.AddHealthChecks();
-        if (settings.ApplicationStatusCheckEnabled)
-            healthCheckBuilder.AddApplicationStatus(healthCheckKey, tags: [HealthChecksTags.Live, nameof(Host)]);
-    }
+        builder.GuardConfigurationKey(nameof(FX.Ignite));
 
-    private static void AddHttpClient(IHostApplicationBuilder builder, IgniteHttpClientSettings settings)
-    {
-        if (settings.StandardResilienceHandlerEnabled)
-            builder.Services.ConfigureHttpClientDefaults(http =>
-            {
-                // Turn on resilience by default
-                http.AddStandardResilienceHandler();
-            });
+        var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
+        builder.Services.AddSingleton(settings);
 
-        builder.Services.AddHttpClient();
-    }
+        AddConfiguration(builder, settings.Configuration);
 
-    private static void AddAspNetServices(IHostApplicationBuilder builder, IgniteAspNetCoreSettings settings)
-    {
-        if (settings.ForwardedHeadersEnabled)
-            builder.Services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.RequireHeaderSymmetry = false;
-                options.ForwardedHeaders = ForwardedHeaders.All;
-                options.ForwardLimit = null;
-                options.KnownProxies.Clear();
-                options.KnownNetworks.Clear();
-            });
+        AddOpenTelemetry(builder, settings.OpenTelemetry);
 
-        if (settings.EndpointsApiExplorerEnabled)
-            builder.Services.AddEndpointsApiExplorer();
+        AddHealthChecks(builder, settings.HealthChecks);
 
-        if (settings.ProblemDetailsEnabled)
-            builder.Services.AddProblemDetails();
+        AddHttpClient(builder, settings.HttpClient);
 
-        if (settings.JsonStringEnumConverterEnabled)
-        {
-            builder.Services.ConfigureHttpJsonOptions(options =>
-            {
-                options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            });
-            builder.Services.Configure<JsonOptions>(options =>
-            {
-                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            });
-        }
+        AddAspNetServices(builder, settings.AspNetCore);
     }
 
 
@@ -166,18 +166,6 @@ public static class IgniteHostingExtensions
         }
 
         return host;
-    }
-
-    private static void UseStandardMiddleware(WebApplication app, IgniteAspNetCoreSettings settings)
-    {
-        if (settings.ServerTimingMiddlewareEnabled)
-            app.UseMiddleware<ServerTimingMiddleware>();
-
-        if (settings.QueryStringToHeaderMiddlewareEnabled)
-            app.UseMiddleware<QueryStringToHeaderMiddleware>();
-
-        if (settings.TraceIdentifierMiddlewareEnabled)
-            app.UseMiddleware<TraceIdentifierMiddleware>();
     }
 
     private static void UseForwardedHeaders(WebApplication app, IgniteAspNetCoreSettings settings)
@@ -209,5 +197,17 @@ public static class IgniteHostingExtensions
 
         app.MapHealthChecks(settings.ReadinessEndpointPath, readinessHealthCheckOptions);
         app.MapHealthChecks(settings.LivenessEndpointPath, livenessHealthCheckOptions);
+    }
+
+    private static void UseStandardMiddleware(WebApplication app, IgniteAspNetCoreSettings settings)
+    {
+        if (settings.ServerTimingMiddlewareEnabled)
+            app.UseMiddleware<ServerTimingMiddleware>();
+
+        if (settings.QueryStringToHeaderMiddlewareEnabled)
+            app.UseMiddleware<QueryStringToHeaderMiddleware>();
+
+        if (settings.TraceIdentifierMiddlewareEnabled)
+            app.UseMiddleware<TraceIdentifierMiddleware>();
     }
 }

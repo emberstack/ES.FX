@@ -7,10 +7,13 @@ namespace ES.FX.Microsoft.Data.SqlClient;
 public static class SqlConnectionStringBuilderExtensions
 {
     /// <summary>
-    ///     Changes the InitialCatalog to the "master" database
+    ///     Creates a new instance of <see cref="SqlConnectionStringBuilder" /> with
+    ///     <see cref="SqlConnectionStringBuilder.InitialCatalog" /> set to "master"
     /// </summary>
-    public static SqlConnectionStringBuilder SetInitialCatalogToMaster(this SqlConnectionStringBuilder builder) =>
-        builder.SetInitialCatalog("master");
+    /// <param name="builder"></param>
+    /// <returns>The cloned <see cref="SqlConnectionStringBuilder" /></returns>
+    public static SqlConnectionStringBuilder CloneForMaster(this SqlConnectionStringBuilder builder) =>
+        new SqlConnectionStringBuilder(builder.ConnectionString).SetInitialCatalogToMaster();
 
 
     /// <summary>
@@ -24,13 +27,9 @@ public static class SqlConnectionStringBuilderExtensions
         return builder;
     }
 
-
     /// <summary>
-    ///     Creates a new instance of <see cref="SqlConnectionStringBuilder" /> with
-    ///     <see cref="SqlConnectionStringBuilder.InitialCatalog" /> set to "master"
+    ///     Changes the InitialCatalog to the "master" database
     /// </summary>
-    /// <param name="builder"></param>
-    /// <returns>The cloned <see cref="SqlConnectionStringBuilder" /></returns>
-    public static SqlConnectionStringBuilder CloneForMaster(this SqlConnectionStringBuilder builder) =>
-        new SqlConnectionStringBuilder(builder.ConnectionString).SetInitialCatalogToMaster();
+    public static SqlConnectionStringBuilder SetInitialCatalogToMaster(this SqlConnectionStringBuilder builder) =>
+        builder.SetInitialCatalog("master");
 }

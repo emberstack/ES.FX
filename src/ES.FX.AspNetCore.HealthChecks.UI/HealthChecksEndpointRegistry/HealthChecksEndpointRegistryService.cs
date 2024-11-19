@@ -19,6 +19,15 @@ public class HealthChecksEndpointRegistryService(
 {
     private readonly ConcurrentBag<HealthCheckConfiguration> _healthCheckConfigurations = [];
 
+    /// <summary>
+    ///     Adds a health check configuration to the registry.
+    /// </summary>
+    /// <param name="configuration"> The health check configuration. </param>
+    public void AddHealthCheckConfiguration(HealthCheckConfiguration configuration)
+    {
+        _healthCheckConfigurations.Add(configuration);
+    }
+
 
     /// <summary>
     ///     Adds a health check endpoint to the registry.
@@ -32,15 +41,6 @@ public class HealthChecksEndpointRegistryService(
             Name = name,
             Uri = uri
         });
-    }
-
-    /// <summary>
-    ///     Adds a health check configuration to the registry.
-    /// </summary>
-    /// <param name="configuration"> The health check configuration. </param>
-    public void AddHealthCheckConfiguration(HealthCheckConfiguration configuration)
-    {
-        _healthCheckConfigurations.Add(configuration);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)

@@ -14,27 +14,6 @@ namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Tests;
 public class HostingTests
 {
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void IgniteDoesNotAllowReconfiguration(bool useFactory)
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        if (!useFactory)
-            builder.IgniteSqlServerClient("database");
-        else
-            builder.IgniteSqlServerClientFactory("database");
-
-        Assert.Throws<ReconfigurationNotSupportedException>(() =>
-        {
-            if (!useFactory)
-                builder.IgniteSqlServerClient("database");
-            else
-                builder.IgniteSqlServerClientFactory("database");
-        });
-    }
-
-    [Theory]
     //Defaults
     [InlineData(false, null, ServiceLifetime.Transient)]
     [InlineData(true, null, ServiceLifetime.Transient)]
@@ -133,6 +112,79 @@ public class HostingTests
         }
     }
 
+    [Theory]
+    //Defaults
+    [InlineData(false, null)]
+    [InlineData(true, null)]
+    //Keyed
+    [InlineData(false, "keyed")]
+    [InlineData(true, "keyed")]
+    public void CanAdd_Guard_ReconfigurationNotSupported(bool useFactory, string? serviceKey)
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        if (useFactory)
+        {
+            builder.IgniteSqlServerClientFactory("database", serviceKey);
+
+            // Adding the factory again is not supported
+            var notSupported = false;
+            try
+            {
+                builder.IgniteSqlServerClientFactory("database", serviceKey);
+            }
+            catch (ReconfigurationNotSupportedException)
+            {
+                notSupported = true;
+            }
+
+            Assert.True(notSupported);
+
+            // Adding the client after the factory is not supported
+            notSupported = false;
+            try
+            {
+                builder.IgniteSqlServerClient("database", serviceKey);
+            }
+            catch (ReconfigurationNotSupportedException)
+            {
+                notSupported = true;
+            }
+
+            Assert.True(notSupported);
+        }
+        else
+        {
+            builder.IgniteSqlServerClient("database", serviceKey);
+
+            // Adding the client again is not supported
+            var notSupported = false;
+            try
+            {
+                builder.IgniteSqlServerClient("database", serviceKey);
+            }
+            catch (ReconfigurationNotSupportedException)
+            {
+                notSupported = true;
+            }
+
+            Assert.True(notSupported);
+
+            // Adding the factory after the client is not supported
+            notSupported = false;
+            try
+            {
+                builder.IgniteSqlServerClientFactory("database", serviceKey);
+            }
+            catch (ReconfigurationNotSupportedException)
+            {
+                notSupported = true;
+            }
+
+            Assert.True(notSupported);
+        }
+    }
+
 
     [Theory]
     //Defaults
@@ -211,124 +263,6 @@ public class HostingTests
     }
 
     [Theory]
-    //Defaults
-    [InlineData(false, null)]
-    [InlineData(true, null)]
-    //Keyed
-    [InlineData(false, "keyed")]
-    [InlineData(true, "keyed")]
-    public void CanAdd_Guard_ReconfigurationNotSupported(bool useFactory, string? serviceKey)
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        if (useFactory)
-        {
-            builder.IgniteSqlServerClientFactory("database", serviceKey);
-
-            // Adding the factory again is not supported
-            var notSupported = false;
-            try
-            {
-                builder.IgniteSqlServerClientFactory("database", serviceKey);
-            }
-            catch (ReconfigurationNotSupportedException)
-            {
-                notSupported = true;
-            }
-
-            Assert.True(notSupported);
-
-            // Adding the client after the factory is not supported
-            notSupported = false;
-            try
-            {
-                builder.IgniteSqlServerClient("database", serviceKey);
-            }
-            catch (ReconfigurationNotSupportedException)
-            {
-                notSupported = true;
-            }
-
-            Assert.True(notSupported);
-        }
-        else
-        {
-            builder.IgniteSqlServerClient("database", serviceKey);
-
-            // Adding the client again is not supported
-            var notSupported = false;
-            try
-            {
-                builder.IgniteSqlServerClient("database", serviceKey);
-            }
-            catch (ReconfigurationNotSupportedException)
-            {
-                notSupported = true;
-            }
-
-            Assert.True(notSupported);
-
-            // Adding the factory after the client is not supported
-            notSupported = false;
-            try
-            {
-                builder.IgniteSqlServerClientFactory("database", serviceKey);
-            }
-            catch (ReconfigurationNotSupportedException)
-            {
-                notSupported = true;
-            }
-
-            Assert.True(notSupported);
-        }
-    }
-
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void CanOverride_Settings(bool useFactory)
-    {
-        const string name = "database";
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        //Configure settings
-        builder.Configuration.AddInMemoryCollection([
-            new KeyValuePair<string, string?>(
-                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.Tracing)}:{nameof(TracingSettings.Enabled)}",
-                true.ToString()),
-            new KeyValuePair<string, string?>(
-                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}",
-                true.ToString())
-        ]);
-
-        if (useFactory)
-            builder.IgniteSqlServerClientFactory(name, configureSettings: ConfigureSettings);
-        else
-            builder.IgniteSqlServerClient(name, configureSettings: ConfigureSettings);
-
-
-        var app = builder.Build();
-
-        var resolvedSettings = app.Services.GetRequiredService<SqlServerClientSparkSettings>();
-        Assert.False(resolvedSettings.Tracing.Enabled);
-        Assert.True(resolvedSettings.HealthChecks.Enabled);
-
-
-        return;
-
-        void ConfigureSettings(SqlServerClientSparkSettings settings)
-        {
-            //Settings should have correct value from configuration
-            Assert.True(settings.Tracing.Enabled);
-            Assert.True(settings.HealthChecks.Enabled);
-
-            //Change the settings
-            settings.Tracing.Enabled = false;
-        }
-    }
-
-    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void CanOverride_Options(bool useFactory)
@@ -387,5 +321,71 @@ public class HostingTests
             //Change the options
             options.ConnectionString = changedConnectionString;
         }
+    }
+
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CanOverride_Settings(bool useFactory)
+    {
+        const string name = "database";
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        //Configure settings
+        builder.Configuration.AddInMemoryCollection([
+            new KeyValuePair<string, string?>(
+                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.Tracing)}:{nameof(TracingSettings.Enabled)}",
+                true.ToString()),
+            new KeyValuePair<string, string?>(
+                $"{SqlServerClientSpark.ConfigurationSectionPath}:{name}:{SparkConfig.Settings}:{nameof(SqlServerClientSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}",
+                true.ToString())
+        ]);
+
+        if (useFactory)
+            builder.IgniteSqlServerClientFactory(name, configureSettings: ConfigureSettings);
+        else
+            builder.IgniteSqlServerClient(name, configureSettings: ConfigureSettings);
+
+
+        var app = builder.Build();
+
+        var resolvedSettings = app.Services.GetRequiredService<SqlServerClientSparkSettings>();
+        Assert.False(resolvedSettings.Tracing.Enabled);
+        Assert.True(resolvedSettings.HealthChecks.Enabled);
+
+
+        return;
+
+        void ConfigureSettings(SqlServerClientSparkSettings settings)
+        {
+            //Settings should have correct value from configuration
+            Assert.True(settings.Tracing.Enabled);
+            Assert.True(settings.HealthChecks.Enabled);
+
+            //Change the settings
+            settings.Tracing.Enabled = false;
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void IgniteDoesNotAllowReconfiguration(bool useFactory)
+    {
+        var builder = Host.CreateEmptyApplicationBuilder(null);
+
+        if (!useFactory)
+            builder.IgniteSqlServerClient("database");
+        else
+            builder.IgniteSqlServerClientFactory("database");
+
+        Assert.Throws<ReconfigurationNotSupportedException>(() =>
+        {
+            if (!useFactory)
+                builder.IgniteSqlServerClient("database");
+            else
+                builder.IgniteSqlServerClientFactory("database");
+        });
     }
 }
