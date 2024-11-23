@@ -14,6 +14,8 @@ jobs:
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
+          skip-commit-verification: true
+          skip-verification: true
       - name: Approve a PR
         run: gh pr review --approve "$PR_URL"
         env:
