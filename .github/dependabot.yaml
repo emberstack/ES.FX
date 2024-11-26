@@ -28,14 +28,3 @@ updates:
       all-dependencies:
         patterns:
           - "*"
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 5
-    labels:
-      - "area-dependencies"
-    groups:
-      all-dependencies:
-        patterns:
-          - "*"
