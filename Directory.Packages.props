@@ -7,16 +7,16 @@
 		<PackageVersion Include="Asp.Versioning.Http" Version="8.1.0" />
 		<PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.0" />
 		<PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
-		<PackageVersion Include="AspNetCore.HealthChecks.ApplicationStatus" Version="8.0.1" />
-		<PackageVersion Include="AspNetCore.HealthChecks.Azure.Data.Tables" Version="8.0.1" />
-		<PackageVersion Include="AspNetCore.HealthChecks.Azure.KeyVault.Secrets" Version="8.0.1" />
-		<PackageVersion Include="AspNetCore.HealthChecks.Azure.Storage.Blobs" Version="8.0.1" />
-		<PackageVersion Include="AspNetCore.HealthChecks.Azure.Storage.Queues" Version="8.0.1" />
-		<PackageVersion Include="AspNetCore.HealthChecks.Redis" Version="8.0.1" />
-		<PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="8.0.2" />
-		<PackageVersion Include="AspNetCore.HealthChecks.UI" Version="8.0.2" />
-		<PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
-		<PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
+		<PackageVersion Include="AspNetCore.HealthChecks.ApplicationStatus" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.Azure.Data.Tables" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.Azure.KeyVault.Secrets" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.Azure.Storage.Blobs" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.Azure.Storage.Queues" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+		<PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
 		<PackageVersion Include="Azure.Data.Tables" Version="12.9.1" />
 		<PackageVersion Include="Azure.Identity" Version="1.13.1" />
 		<PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.2.0" />
