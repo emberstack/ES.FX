@@ -5,6 +5,8 @@ on:
     branches:
       - '**'  # Matches all branches
   pull_request:
+    branches:
+      - '**'  # Matches all branches
 
   workflow_dispatch:
     inputs:
@@ -68,9 +70,9 @@ jobs:
               - 'Directory.Build.props'
               - 'Directory.Packages.props'
             build:
-              - 'src/**'
               - 'playground/**'
               - 'tests/**'
+              - 'src/**'
               - 'ES.FX.sln'
               - 'Directory.Build.props'
               - 'Directory.Packages.props'
