@@ -1,6 +1,16 @@
 name: Dependabot auto-approve
-on: pull_request
-
+on: 
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Forces a build even if no changes are detected'
+        required: true
+        default: 'false'
+      force_publish:
+        description: 'Forces a publish even if no changes are detected'
+        required: true
+        default: 'false'
 permissions:
   pull-requests: write
 
