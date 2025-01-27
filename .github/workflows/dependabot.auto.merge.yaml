@@ -14,7 +14,7 @@ jobs:
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
-          github-token: "${{ secrets.ES_GITHUB_PAT }}"
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
           skip-commit-verification: true
           skip-verification: true
       - name: Enable auto-merge for Dependabot PRs
