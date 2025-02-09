@@ -19,7 +19,8 @@ jobs:
           skip-verification: true
       - name: Enable auto-merge for Dependabot PRs
         # if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
-        run: gh pr merge --auto --squash "$PR_URL"
+        run: |
+          echo ${{ secrets.ES_GITHUB_PAT }} | gh auth login --with-token
+          gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
-          GH_TOKEN: ${{ secrets.ES_GITHUB_PAT }}
