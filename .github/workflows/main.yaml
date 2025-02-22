@@ -154,7 +154,7 @@ jobs:
         run: |
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/emberstack/index.json"
           for pkg in .artifacts/nuget/*.nupkg; do
-            dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} 
+            dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} --skip-duplicate
           done
 
       - name: dotnet nuget push - NuGet
