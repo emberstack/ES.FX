@@ -27,6 +27,11 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
+	<!-- JetBrains.Annotations -->
+	<ItemGroup>
+		<PackageReference Include="JetBrains.Annotations" PrivateAssets="All" />
+	</ItemGroup>
+
 	<!--Test projects-->
 	<ItemGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.Contains('.Tests'))">
 		<AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
