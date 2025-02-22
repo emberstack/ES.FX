@@ -150,13 +150,18 @@ jobs:
           name: artifacts-nuget-${{env.semVer}}
           path: .artifacts/nuget
 
-      - name: dotnet nuget add source
-        run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/emberstack/index.json"
-
-      - name: dotnet nuget push
+      - name: dotnet nuget push - GitHub
         run: |
+          dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/emberstack/index.json"
           for pkg in .artifacts/nuget/*.nupkg; do
             dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} 
+          done
+
+      - name: dotnet nuget push - NuGet
+        if: github.ref == 'refs/heads/main'
+        run: |
+          for pkg in .artifacts/nuget/*.nupkg; do
+            dotnet nuget push "$pkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.ES_NUGET_APIKEY }} --skip-duplicate
           done
 
       - name: checkout
