@@ -12,6 +12,7 @@ internal static class OutboxDeliverySignal
 
     public static Channel<string> GetChannel(Type type)
     {
+        Channel.CreateUnbounded<string>(new UnboundedChannelOptions { });
         return Channels.GetOrAdd(type, _ => Channel.CreateUnbounded<string>());
     }
 

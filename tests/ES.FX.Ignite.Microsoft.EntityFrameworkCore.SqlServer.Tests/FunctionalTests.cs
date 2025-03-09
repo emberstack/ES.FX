@@ -97,14 +97,14 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
         var healthCheckContext = new HealthCheckContext();
 
         var healthCheckResult = await migrationsHealthChecks.CheckHealthAsync(healthCheckContext);
-        Assert.True(healthCheckResult.Status == HealthStatus.Unhealthy);
+        Assert.Equal(HealthStatus.Unhealthy, healthCheckResult.Status);
 
         await context.Database.MigrateAsync();
         var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
         Assert.Empty(pendingMigrations);
 
         healthCheckResult = await migrationsHealthChecks.CheckHealthAsync(healthCheckContext);
-        Assert.True(healthCheckResult.Status == HealthStatus.Healthy);
+        Assert.Equal(HealthStatus.Healthy, healthCheckResult.Status);
         return;
 
         void ConfigureOptions(SqlServerDbContextSparkOptions<TestDbContext> options)

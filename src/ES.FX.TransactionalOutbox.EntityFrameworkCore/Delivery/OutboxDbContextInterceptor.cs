@@ -123,9 +123,11 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
 
 
         // Find all OutboxMessage entities that are being added
-        addedMessages = context.ChangeTracker.Entries<OutboxMessage>()
-            .Where(e => e.State == EntityState.Added && e.Entity.OutboxId == Guid.Empty)
-            .ToList();
+        addedMessages =
+        [
+            .. context.ChangeTracker.Entries<OutboxMessage>()
+                .Where(e => e.State == EntityState.Added && e.Entity.OutboxId == Guid.Empty)
+        ];
 
         foreach (var message in addedMessages) message.Entity.OutboxId = outboxEntry.Entity.Id;
 
