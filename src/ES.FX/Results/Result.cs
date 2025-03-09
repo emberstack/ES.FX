@@ -34,7 +34,7 @@ public class Result : Result<bool>
 /// </summary>
 /// <typeparam name="T">Type of result</typeparam>
 [PublicAPI]
-public class Result<T>
+public class Result<T> : IResult
 {
     private readonly Problem? _problem;
     private readonly T? _result;
@@ -58,11 +58,6 @@ public class Result<T>
         _problem = problem;
         IsResult = false;
     }
-
-    /// <summary>
-    ///     Gets the result's value. Can be either a <typeparamref name="T" /> or <see cref="Problem" />
-    /// </summary>
-    public object Value => IsResult ? _result : _problem;
 
     /// <summary>
     ///     Gets a boolean indicating if the <see cref="Value" />> is a <typeparamref name="T" />
@@ -91,6 +86,11 @@ public class Result<T>
     public Problem AsProblem => IsProblem
         ? _problem ?? throw new NullReferenceException()
         : throw new InvalidOperationException("Cannot return as problem.");
+
+    /// <summary>
+    ///     Gets the result's value. Can be either a <typeparamref name="T" /> or <see cref="Problem" />
+    /// </summary>
+    public object Value => IsResult ? _result : _problem;
 
     /// <summary>
     ///     Returns true if the <see cref="Result{T}" /> can be returned as a <typeparamref name="T" />

@@ -10,7 +10,7 @@
 	<ItemGroup>
 		<PackageReference Include="OneOf" />
 		<PackageReference Include="OneOf.Extended" />
-		<PackageReference Include="OneOf.SourceGenerator" />
+		<PackageReference Include="OneOf.SourceGenerator" PrivateAssets="All" />
 	</ItemGroup>
 
 	<ItemGroup>
