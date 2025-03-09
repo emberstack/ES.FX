@@ -58,7 +58,7 @@ public static class KubernetesClientHostingExtensions
         Func<IServiceProvider, KubernetesClientConfiguration>? kubernetesClientConfigurationFactory = null,
         Action<IServiceProvider, KubernetesClientConfiguration>? configureKubernetesClientConfiguration = null,
         DelegatingHandler[]? kubernetesClientDelegatingHandlers = null,
-        ServiceLifetime lifetime = ServiceLifetime.Transient,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
         string configurationSectionPath = KubernetesClientSpark.ConfigurationSectionPath)
     {
         builder.GuardConfigurationKey($"{KubernetesClientSpark.Name}[{serviceKey}]");
