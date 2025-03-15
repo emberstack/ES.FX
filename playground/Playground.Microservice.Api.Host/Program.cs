@@ -15,6 +15,8 @@ using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
 using ES.FX.MassTransit.Formatters;
+using ES.FX.MassTransit.MediatR.Consumers;
+using ES.FX.MassTransit.TransactionalOutbox;
 using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.NSwag.AspNetCore.Generation;
 using ES.FX.Serilog.Lifetime;
@@ -23,11 +25,11 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using HealthChecks.UI.Client;
 using MassTransit;
+using MassTransit.Configuration;
 using MassTransit.Logging;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Playground.Microservice.Api.Host.HostedServices;
-using Playground.Microservice.Api.Host.Outbox;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
@@ -110,7 +112,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddHostedService<TestHostedService>();
 
 
-    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitOutboxRelay>(options =>
+    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitOutboxMessageHandler>(options =>
         {
             options.AddMessageTypes(typeof(Program).Assembly);
             options.UseSqlServer();
@@ -120,12 +122,39 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
 
     builder.Services.AddMediatR(cfg =>
-        cfg.RegisterServicesFromAssemblyContaining<Program>());
+    {
+        cfg.RegisterServicesFromAssemblyContaining<Program>();
+        
+    });
+
+
+    //registration.
+    builder.Services.RegisterConsumer<MediatorBatchConsumer<OutboxTestMessage>>()
+        .AddConfigureAction<MediatorBatchConsumer<OutboxTestMessage>>(
+        (context, configurator) =>
+        {
+            
+            configurator.Options<BatchOptions>(options => options
+                .SetMessageLimit(100)
+                .SetTimeLimit(s: 1)
+                .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
+                .SetConcurrencyLimit(10));
+        });
+
 
 
     builder.Services.AddMassTransit(x =>
     {
-        x.AddConsumer<MediatorGenericConsumer<OutboxTestMessage>>();
+        //x.AddConsumer<MediatorBatchConsumer<OutboxTestMessage>>((context, configurator) =>
+        //{
+        //    configurator.Options<BatchOptions>(options => options
+        //        .SetMessageLimit(100)
+        //        .SetTimeLimit(s: 1)
+        //        .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
+        //        .SetConcurrencyLimit(10));
+        //});
+
+
 
         x.UsingRabbitMq((context, cfg) =>
         {
@@ -189,3 +218,5 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     await app.RunAsync();
     return 0;
 });
+
+

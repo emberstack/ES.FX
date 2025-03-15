@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ES.FX.MassTransit\ES.FX.MassTransit.csproj" />
+    <ProjectReference Include="..\ES.FX.MediatR\ES.FX.MediatR.csproj" />
+  </ItemGroup>
+
+</Project>

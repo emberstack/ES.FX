@@ -1,8 +1,11 @@
-﻿namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
+﻿using JetBrains.Annotations;
+
+namespace ES.FX.TransactionalOutbox.Delivery;
 
 /// <summary>
-///     Handles outbox messages
+///     Defines a <see cref="TransactionalOutbox"/> message handler
 /// </summary>
+[PublicAPI]
 public interface IOutboxMessageHandler
 {
     /// <summary>
