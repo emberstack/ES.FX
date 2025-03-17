@@ -1,4 +1,4 @@
-﻿using ES.FX.MediatR.Contracts;
+﻿using ES.FX.MediatR.Abstractions.Contracts;
 using MediatR;
 
 namespace Playground.Microservice.Api.Host.Testing;

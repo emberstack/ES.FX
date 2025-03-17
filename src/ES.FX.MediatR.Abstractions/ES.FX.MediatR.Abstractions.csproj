@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" />
+    <PackageReference Include="MediatR.Contracts" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ES.FX.MediatR.Abstractions\ES.FX.MediatR.Abstractions.csproj" />
+    <ProjectReference Include="..\ES.FX\ES.FX.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿using ES.FX.MediatR.Contracts;
+﻿using ES.FX.MediatR.Abstractions.Contracts;
 using JetBrains.Annotations;
 using MassTransit;
 using MediatR;

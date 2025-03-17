@@ -28,7 +28,7 @@
 	</PropertyGroup>
 
 	<!-- JetBrains.Annotations -->
-	<ItemGroup>
+	<ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">
 		<PackageReference Include="JetBrains.Annotations" PrivateAssets="All" />
 	</ItemGroup>
 
