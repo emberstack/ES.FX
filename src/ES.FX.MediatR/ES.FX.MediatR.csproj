@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MediatR" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" />
+	</ItemGroup>
 
 
 	<ItemGroup>
-    <ProjectReference Include="..\ES.FX.MediatR.Abstractions\ES.FX.MediatR.Abstractions.csproj" />
-  </ItemGroup>
+		<ProjectReference Include="..\ES.FX.MediatR.Abstractions\ES.FX.MediatR.Abstractions.csproj" />
+	</ItemGroup>
 
 </Project>

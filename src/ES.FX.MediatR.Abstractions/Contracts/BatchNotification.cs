@@ -4,7 +4,7 @@ using MediatR;
 namespace ES.FX.MediatR.Abstractions.Contracts;
 
 /// <summary>
-/// A notification containing a batch of items
+///     A notification containing a batch of items
 /// </summary>
 /// <typeparam name="T">Item type</typeparam>
 /// <param name="Items">Enumerable of items</param>

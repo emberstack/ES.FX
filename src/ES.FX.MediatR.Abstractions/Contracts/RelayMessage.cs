@@ -5,7 +5,7 @@ using MediatR;
 namespace ES.FX.MediatR.Abstractions.Contracts;
 
 /// <summary>
-/// Represents a request to relay a message via a messenger
+///     Represents a request to relay a message via a messenger
 /// </summary>
 [PublicAPI]
 public record RelayMessage : IRequest

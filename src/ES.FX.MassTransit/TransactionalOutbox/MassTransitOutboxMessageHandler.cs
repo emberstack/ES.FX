@@ -6,9 +6,9 @@ using MassTransit;
 namespace ES.FX.MassTransit.TransactionalOutbox;
 
 /// <summary>
-/// Message handler that uses <see cref="MassTransit"/> to publish <see cref="IOutboxMessage"/>
+///     Message handler that uses <see cref="MassTransit" /> to publish <see cref="IOutboxMessage" />
 /// </summary>
-/// <param name="busControl">The <see cref="IBusControl"/> used to check if the handler can publish messages</param>
+/// <param name="busControl">The <see cref="IBusControl" /> used to check if the handler can publish messages</param>
 /// <param name="publishEndpoint">The endpoint used to publish messages</param>
 [PublicAPI]
 public class MassTransitOutboxMessageHandler(IBusControl busControl, IPublishEndpoint publishEndpoint)

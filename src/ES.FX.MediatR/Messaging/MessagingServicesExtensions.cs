@@ -10,16 +10,18 @@ namespace ES.FX.MediatR.Messaging;
 public static class MessagingServicesExtensions
 {
     /// <summary>
-    /// Registers the <see cref="MessengerRelayMessageHandler"/> service.
-    /// Used to handle <see cref="RelayMessage"/> sending via <see cref="IMessenger"/>
+    ///     Registers the <see cref="MessengerRelayMessageHandler" /> service.
+    ///     Used to handle <see cref="RelayMessage" /> sending via <see cref="IMessenger" />
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
     /// <param name="lifetime">
     ///     The lifetime of the <see cref="MessengerRelayMessageHandler" />. Default is
     ///     <see cref="ServiceLifetime.Singleton" />.
     /// </param>
-    public static void AddMessengerHandler(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Singleton)
+    public static void AddMessengerHandler(this IServiceCollection services,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton)
     {
-        services.Add(new ServiceDescriptor(typeof(IRequestHandler<RelayMessage>),typeof(MessengerRelayMessageHandler), lifetime));
+        services.Add(new ServiceDescriptor(typeof(IRequestHandler<RelayMessage>), typeof(MessengerRelayMessageHandler),
+            lifetime));
     }
 }

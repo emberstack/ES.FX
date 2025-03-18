@@ -6,7 +6,7 @@ using MediatR;
 namespace ES.FX.MassTransit.MediatR.Consumers;
 
 /// <summary>
-/// MassTransit consumer that uses <see cref="IMediator"/> to publish/send the consumed message batches
+///     MassTransit consumer that uses <see cref="IMediator" /> to publish/send the consumed message batches
 /// </summary>
 /// <typeparam name="TMessage">The type of the message</typeparam>
 /// <param name="mediator">Mediator used to publish/send the batch of messages</param>

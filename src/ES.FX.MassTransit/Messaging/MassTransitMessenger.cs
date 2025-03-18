@@ -4,9 +4,9 @@ using MassTransit;
 namespace ES.FX.MassTransit.Messaging;
 
 /// <summary>
-/// Default <see cref="MassTransit" /> implementation of <see cref="IMessenger"/>
+///     Default <see cref="MassTransit" /> implementation of <see cref="IMessenger" />
 /// </summary>
-/// <param name="publishEndpoint">The <see cref="IPublishEndpoint"/> used to send the <see cref="IMessage"/></param>
+/// <param name="publishEndpoint">The <see cref="IPublishEndpoint" /> used to send the <see cref="IMessage" /></param>
 public class MassTransitMessenger(IPublishEndpoint publishEndpoint) : IMessenger
 {
     public void Send(IMessage message, CancellationToken cancellationToken = default)

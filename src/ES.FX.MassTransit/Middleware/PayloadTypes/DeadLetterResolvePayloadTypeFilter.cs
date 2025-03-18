@@ -1,7 +1,7 @@
 ﻿using ES.FX.MassTransit.Serialization;
-using MassTransit.Serialization;
-using MassTransit;
 using JetBrains.Annotations;
+using MassTransit;
+using MassTransit.Serialization;
 
 namespace ES.FX.MassTransit.Middleware.PayloadTypes;
 

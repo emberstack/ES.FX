@@ -3,7 +3,7 @@
 namespace ES.FX.TransactionalOutbox.Delivery;
 
 /// <summary>
-///     Defines a <see cref="TransactionalOutbox"/> message handler
+///     Defines a <see cref="TransactionalOutbox" /> message handler
 /// </summary>
 [PublicAPI]
 public interface IOutboxMessageHandler

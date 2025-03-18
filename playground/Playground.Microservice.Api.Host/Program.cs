@@ -121,26 +121,20 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             traceBuilder.AddOutboxInstrumentation());
 
 
-    builder.Services.AddMediatR(cfg =>
-    {
-        cfg.RegisterServicesFromAssemblyContaining<Program>();
-        
-    });
+    builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
 
 
     //registration.
     builder.Services.RegisterConsumer<MediatorBatchConsumer<OutboxTestMessage>>()
         .AddConfigureAction<MediatorBatchConsumer<OutboxTestMessage>>(
-        (context, configurator) =>
-        {
-            
-            configurator.Options<BatchOptions>(options => options
-                .SetMessageLimit(100)
-                .SetTimeLimit(s: 1)
-                .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
-                .SetConcurrencyLimit(10));
-        });
-
+            (context, configurator) =>
+            {
+                configurator.Options<BatchOptions>(options => options
+                    .SetMessageLimit(100)
+                    .SetTimeLimit(s: 1)
+                    .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
+                    .SetConcurrencyLimit(10));
+            });
 
 
     builder.Services.AddMassTransit(x =>
@@ -153,7 +147,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         //        .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
         //        .SetConcurrencyLimit(10));
         //});
-
 
 
         x.UsingRabbitMq((context, cfg) =>
@@ -218,5 +211,3 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     await app.RunAsync();
     return 0;
 });
-
-
