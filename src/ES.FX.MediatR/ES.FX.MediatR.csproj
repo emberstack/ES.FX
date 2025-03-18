@@ -8,9 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
 
-  <ItemGroup>
+
+	<ItemGroup>
     <ProjectReference Include="..\ES.FX.MediatR.Abstractions\ES.FX.MediatR.Abstractions.csproj" />
   </ItemGroup>
 
