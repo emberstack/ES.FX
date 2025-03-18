@@ -145,10 +145,13 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     //registration.
     builder.Services.RegisterConsumer<MediatorConsumer<OutboxTestMessage>>();
 
+    builder.Services.AddMassTransit(x =>
+    {
+        x.AddConsumer<MediatorConsumer<OutboxTestMessage>>().Endpoint(e => e.PrefetchCount = 4);
+    });
 
     builder.Services.AddMassTransit(x =>
     {
-
         x.AddConfigureEndpointsCallback((_, receiveEndpointConfigurator) =>
         {
             //Attempt to fix message type and resend the message if possible. Otherwise, log and move to dead-letter
