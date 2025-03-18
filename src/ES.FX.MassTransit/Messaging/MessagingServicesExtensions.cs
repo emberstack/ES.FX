@@ -13,10 +13,10 @@ public static class MessagingServicesExtensions
     /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
     /// <param name="lifetime">
     ///     The lifetime of the <see cref="MassTransitMessenger" />. Default is
-    ///     <see cref="ServiceLifetime.Singleton" />.
+    ///     <see cref="ServiceLifetime.Transient" />.
     /// </param>
     public static void AddMassTransitMessenger(this IServiceCollection services,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        ServiceLifetime lifetime = ServiceLifetime.Transient)
     {
         services.Add(new ServiceDescriptor(typeof(IMessenger), typeof(MassTransitMessenger), lifetime));
     }

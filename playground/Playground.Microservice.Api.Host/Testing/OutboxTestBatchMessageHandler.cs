@@ -8,5 +8,7 @@ public class OutboxTestBatchMessageHandler : INotificationHandler<BatchNotificat
     public async Task Handle(BatchNotification<OutboxTestMessage> notification, CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
+
+        //throw new Exception("Something went wrong");
     }
 }

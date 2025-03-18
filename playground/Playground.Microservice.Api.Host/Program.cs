@@ -16,6 +16,8 @@ using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
 using ES.FX.MassTransit.Formatters;
 using ES.FX.MassTransit.MediatR.Consumers;
+using ES.FX.MassTransit.Middleware;
+using ES.FX.MassTransit.Middleware.PayloadTypes;
 using ES.FX.MassTransit.TransactionalOutbox;
 using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.NSwag.AspNetCore.Generation;
@@ -24,9 +26,11 @@ using ES.FX.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using HealthChecks.UI.Client;
+using Humanizer.Configuration;
 using MassTransit;
 using MassTransit.Configuration;
 using MassTransit.Logging;
+using MassTransit.Middleware;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Playground.Microservice.Api.Host.HostedServices;
@@ -124,30 +128,43 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
 
 
+    ////registration.
+    //builder.Services.RegisterConsumer<MediatorBatchConsumer<OutboxTestMessage>>()
+    //    .AddConfigureAction<MediatorBatchConsumer<OutboxTestMessage>>(
+    //        (context, configurator) =>
+    //        {
+    //            configurator.Options<BatchOptions>(options => options
+    //                .SetMessageLimit(100)
+    //                .SetTimeLimit(s: 1)
+    //                .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
+    //                .SetConcurrencyLimit(10));
+
+    //            configurator.UseMessageRetry((cfg)=> cfg.Interval(5,TimeSpan.FromSeconds(5)));
+    //        });
+
     //registration.
-    builder.Services.RegisterConsumer<MediatorBatchConsumer<OutboxTestMessage>>()
-        .AddConfigureAction<MediatorBatchConsumer<OutboxTestMessage>>(
-            (context, configurator) =>
-            {
-                configurator.Options<BatchOptions>(options => options
-                    .SetMessageLimit(100)
-                    .SetTimeLimit(s: 1)
-                    .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
-                    .SetConcurrencyLimit(10));
-            });
+    builder.Services.RegisterConsumer<MediatorConsumer<OutboxTestMessage>>();
 
 
     builder.Services.AddMassTransit(x =>
     {
-        //x.AddConsumer<MediatorBatchConsumer<OutboxTestMessage>>((context, configurator) =>
-        //{
-        //    configurator.Options<BatchOptions>(options => options
-        //        .SetMessageLimit(100)
-        //        .SetTimeLimit(s: 1)
-        //        .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
-        //        .SetConcurrencyLimit(10));
-        //});
 
+        x.AddConfigureEndpointsCallback((_, receiveEndpointConfigurator) =>
+        {
+            //Attempt to fix message type and resend the message if possible. Otherwise, log and move to dead-letter
+            receiveEndpointConfigurator.ConfigureDeadLetter(pipe =>
+                pipe.UseFilter(new DeadLetterResolvePayloadTypeFilter()));
+
+            //Use in-process retry with a limit before sending it back to the broker.
+            //This prevents poison messages from overwhelming the system
+            receiveEndpointConfigurator.UseMessageRetry(retryCfg => retryCfg.Interval(2, TimeSpan.FromSeconds(10)));
+
+            //Rethrow faulted messages. This will cause the message to be redelivered.
+            receiveEndpointConfigurator.RethrowFaultedMessages();
+
+            //Leave this in place. Normally it will not be used if RethrowFaultedMessages is used
+            receiveEndpointConfigurator.ConfigureDefaultDeadLetterTransport();
+        });
 
         x.UsingRabbitMq((context, cfg) =>
         {
