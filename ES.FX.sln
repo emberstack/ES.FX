@@ -191,6 +191,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.MediatR.Abstractions"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.MassTransit.RabbitMQ", "src\ES.FX.MassTransit.RabbitMQ\ES.FX.MassTransit.RabbitMQ.csproj", "{01615F67-AD9B-4696-8E0E-C394CA996DF9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ES.FX.Microsoft.Extensions.Identity.Core", "src\ES.FX.Microsoft.Extensions.Identity.Core\ES.FX.Microsoft.Extensions.Identity.Core.csproj", "{31EC2F9D-0EA2-4991-9881-FF3B65C95C01}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -529,6 +531,10 @@ Global
 		{01615F67-AD9B-4696-8E0E-C394CA996DF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01615F67-AD9B-4696-8E0E-C394CA996DF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01615F67-AD9B-4696-8E0E-C394CA996DF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31EC2F9D-0EA2-4991-9881-FF3B65C95C01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31EC2F9D-0EA2-4991-9881-FF3B65C95C01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31EC2F9D-0EA2-4991-9881-FF3B65C95C01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31EC2F9D-0EA2-4991-9881-FF3B65C95C01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -622,6 +628,7 @@ Global
 		{8C0B9211-3957-41A2-A87A-3A58F506DFFC} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 		{23AFFF1E-98DE-481D-A28F-55CFB37B813F} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 		{01615F67-AD9B-4696-8E0E-C394CA996DF9} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
+		{31EC2F9D-0EA2-4991-9881-FF3B65C95C01} = {F8538BCE-36D3-4317-8C3C-7540117B99A7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {388473D0-FE20-4821-BFE4-C3CD3E184C8F}
