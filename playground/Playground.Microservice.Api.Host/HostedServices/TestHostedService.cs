@@ -20,20 +20,23 @@ internal class TestHostedService(
         var factory = serviceProvider.GetRequiredService<IDbContextFactory<SimpleDbContext>>();
         while (true)
         {
-            //await using var dbContext = await factory.CreateDbContextAsync(stoppingToken).ConfigureAwait(false);
-            //for (var i = 0; i < 50; i++)
-            //{
-            //    dbContext.AddOutboxMessage(new OutboxTestMessage("Property"), new OutboxMessageOptions
-            //    {
-            //        MaxAttempts = 5,
-            //        DelayBetweenAttempts = 5,
-            //        DelayBetweenAttemptsIsExponential = true
-            //    });
-            //    dbContext.SimpleUsers.Add(new SimpleUser
-            //        { Id = Guid.CreateVersion7(), Username = Guid.CreateVersion7().ToString() });
-            //}
+            await using var dbContext = await factory.CreateDbContextAsync(stoppingToken).ConfigureAwait(false);
+            for (var i = 0; i < 50; i++)
+            {
+                dbContext.AddOutboxMessage(new OutboxTestMessage
+                {
+                    SomeProp = "Property"
+                }, new OutboxMessageOptions
+                {
+                    MaxAttempts = 5,
+                    DelayBetweenAttempts = 5,
+                    DelayBetweenAttemptsIsExponential = true
+                });
+                dbContext.SimpleUsers.Add(new SimpleUser
+                { Id = Guid.CreateVersion7(), Username = Guid.CreateVersion7().ToString() });
+            }
 
-            //await dbContext.SaveChangesAsync(stoppingToken).ConfigureAwait(false);
+            await dbContext.SaveChangesAsync(stoppingToken).ConfigureAwait(false);
             await Task.Delay(60_000, stoppingToken).ConfigureAwait(false);
         }
     }

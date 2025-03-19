@@ -14,9 +14,9 @@ using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
+using ES.FX.MassTransit.Extensions;
 using ES.FX.MassTransit.Formatters;
 using ES.FX.MassTransit.MediatR.Consumers;
-using ES.FX.MassTransit.Middleware;
 using ES.FX.MassTransit.Middleware.PayloadTypes;
 using ES.FX.MassTransit.TransactionalOutbox;
 using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
@@ -26,11 +26,8 @@ using ES.FX.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using HealthChecks.UI.Client;
-using Humanizer.Configuration;
 using MassTransit;
-using MassTransit.Configuration;
 using MassTransit.Logging;
-using MassTransit.Middleware;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Playground.Microservice.Api.Host.HostedServices;
@@ -128,36 +125,22 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
 
 
-    ////registration.
-    //builder.Services.RegisterConsumer<MediatorBatchConsumer<OutboxTestMessage>>()
-    //    .AddConfigureAction<MediatorBatchConsumer<OutboxTestMessage>>(
-    //        (context, configurator) =>
-    //        {
-    //            configurator.Options<BatchOptions>(options => options
-    //                .SetMessageLimit(100)
-    //                .SetTimeLimit(s: 1)
-    //                .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
-    //                .SetConcurrencyLimit(10));
-
-    //            configurator.UseMessageRetry((cfg)=> cfg.Interval(5,TimeSpan.FromSeconds(5)));
-    //        });
-
-    //registration.
-    builder.Services.RegisterConsumer<MediatorConsumer<OutboxTestMessage>>();
-
     builder.Services.AddMassTransit(x =>
     {
-        x.AddConsumer<MediatorConsumer<OutboxTestMessage>>().Endpoint(e => e.PrefetchCount = 4);
+        x.AddConsumer<MediatorConsumer<OutboxTestMessage>>((_, cfg) =>
+        {
+            //cfg.Options<BatchOptions>(options => options.SetMessageLimit(10));
+        }).Endpoint(e => e.PrefetchCount = 4);
     });
 
     builder.Services.AddMassTransit(x =>
     {
+
         x.AddConfigureEndpointsCallback((_, receiveEndpointConfigurator) =>
         {
-            //Attempt to fix message type and resend the message if possible. Otherwise, log and move to dead-letter
+            //Attempt to fix message type and resend the message if possible.Otherwise, log and move to dead - letter
             receiveEndpointConfigurator.ConfigureDeadLetter(pipe =>
-                pipe.UseFilter(new DeadLetterResolvePayloadTypeFilter()));
-
+                pipe.UseFilter(new TryResendUsingPayloadTypeFilter()));
             //Use in-process retry with a limit before sending it back to the broker.
             //This prevents poison messages from overwhelming the system
             receiveEndpointConfigurator.UseMessageRetry(retryCfg => retryCfg.Interval(2, TimeSpan.FromSeconds(10)));
@@ -168,7 +151,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             //Leave this in place. Normally it will not be used if RethrowFaultedMessages is used
             receiveEndpointConfigurator.ConfigureDefaultDeadLetterTransport();
         });
-
         x.UsingRabbitMq((context, cfg) =>
         {
             cfg.Host("rabbitmq://rabbitmq.localenv.io/localenv", h =>
@@ -180,6 +162,9 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             });
             cfg.SendTopology.ConfigureErrorSettings =
                 settings => settings.SetQueueArgument("x-message-ttl", TimeSpan.FromDays(7));
+
+
+            cfg.UsePayloadType(context);
 
 
             cfg.Publish<INotification>(p => p.Exclude = true);
@@ -219,7 +204,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     {
         var dbContext = serviceProvider.GetRequiredService<SimpleDbContext>();
         //using var tx = dbContext.Database.BeginTransaction();
-        dbContext.AddOutboxMessage(new OutboxTestMessage("test"));
+        dbContext.AddOutboxMessage(new OutboxTestMessage { SomeProp = "Test Prop" });
         dbContext.SaveChanges();
         //Task.Delay(5000).Wait();
         //tx.Commit();

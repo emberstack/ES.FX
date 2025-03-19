@@ -9,7 +9,7 @@ namespace ES.FX.MassTransit.Middleware.PayloadTypes;
 ///     Filter that attempts to fix the message type and resend the message
 /// </summary>
 [PublicAPI]
-public class DeadLetterResolvePayloadTypeFilter : IFilter<ReceiveContext>
+public class TryResendUsingPayloadTypeFilter : IFilter<ReceiveContext>
 {
     Task IFilter<ReceiveContext>.Send(ReceiveContext context, IPipe<ReceiveContext> next)
     {
@@ -24,6 +24,6 @@ public class DeadLetterResolvePayloadTypeFilter : IFilter<ReceiveContext>
 
     void IProbeSite.Probe(ProbeContext context)
     {
-        context.CreateFilterScope(nameof(DeadLetterResolvePayloadTypeFilter));
+        context.CreateFilterScope(nameof(TryResendUsingPayloadTypeFilter));
     }
 }

@@ -7,8 +7,7 @@ namespace ES.FX.MassTransit.Middleware.PayloadTypes;
 /// <summary>
 ///     Observer that registers all expected payload types with the <see cref="MassTransitPayloadTypeProvider" />
 /// </summary>
-[PublicAPI]
-public class ConsumerPayloadTypeObserver : IConsumerConfigurationObserver
+public class PayloadTypeConsumerConfigurationObserver : IConsumerConfigurationObserver
 {
     public void ConsumerConfigured<TConsumer>(IConsumerConfigurator<TConsumer> configurator)
         where TConsumer : class
