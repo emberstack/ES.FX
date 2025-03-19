@@ -15,4 +15,10 @@ public class IgniteConfigurationSettings
     ///     configuration on change
     /// </summary>
     public string[] AdditionalJsonAppSettingsOverrides { get; set; } = [];
+
+
+    /// <summary>
+    ///     Environment variable prefixes for configuration
+    /// </summary>
+    public string[] EnvironmentVariablePrefixes { get; set; } = [];
 }

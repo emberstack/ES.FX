@@ -70,6 +70,10 @@ public static class IgniteHostingExtensions
             builder.Configuration
                 .AddJsonFile($"appsettings.{builder.Environment}.{appSettingsOverride}.json",
                     true, true);
+
+        // Add additional environment variables
+        foreach (var variablePrefix in settings.EnvironmentVariablePrefixes) 
+            builder.Configuration.AddEnvironmentVariables(variablePrefix);
     }
 
     private static void AddHealthChecks(IHostApplicationBuilder builder, IgniteHealthChecksSettings settings)
