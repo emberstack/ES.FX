@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using ES.FX.Messaging;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,7 +47,7 @@ public abstract class OutboxDeliveryOptions
 ///     Options used by the <see cref="OutboxDeliveryService{TDbContext}" />
 /// </summary>
 /// <typeparam name="TDbContext">The <see cref="OutboxDeliveryService{TDbContext}" /></typeparam>
-public class OutboxDeliveryOptions<TDbContext> : OutboxDeliveryOptions where TDbContext : DbContext, IOutboxContext
+public class OutboxDeliveryOptions<TDbContext> : OutboxDeliveryOptions where TDbContext : DbContext, IMessageStore
 {
     /// <summary>
     ///     The provider that will be used to acquire the outbox. This should be provided by the specific database provider.

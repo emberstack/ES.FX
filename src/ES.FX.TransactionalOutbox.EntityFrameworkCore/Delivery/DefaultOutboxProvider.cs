@@ -1,10 +1,11 @@
-﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
+﻿using ES.FX.Messaging;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 
 public class DefaultOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
-    where TDbContext : DbContext, IOutboxContext
+    where TDbContext : DbContext, IMessageStore
 {
     public Task<Outbox?> GetNextExclusiveOutboxWithoutDelay(TDbContext dbContext,
         CancellationToken cancellationToken = default)

@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
-using ES.FX.TransactionalOutbox.Delivery;
+using ES.FX.Messaging;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
@@ -22,11 +22,11 @@ public class OutboxDeliveryService<TDbContext>(
     ILogger<OutboxDeliveryService<TDbContext>> logger,
     IServiceProvider serviceProvider)
     : BackgroundService
-    where TDbContext : DbContext, IOutboxContext
+    where TDbContext : DbContext, IMessageStore
 {
     private async Task<bool> DeliverMessage(
         OutboxMessage message,
-        IOutboxMessageHandler messageHandler,
+        IMessageHandler messageHandler,
         CancellationToken cancellationToken)
     {
         Activity? deliverMessageActivity = null;
@@ -61,7 +61,7 @@ public class OutboxDeliveryService<TDbContext>(
             var payload = JsonSerializer.Deserialize(message.Payload, payloadType) ??
                           throw new NotSupportedException("Could not deserialize the message payload");
             success = await messageHandler
-                .HandleAsync(new OutboxMessageHandlerContext(payloadType, payload), cancellationToken)
+                .HandleAsync((IMessage)payload, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!success)
@@ -119,7 +119,7 @@ public class OutboxDeliveryService<TDbContext>(
 
                 using var handlerReadyTimeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
                     new CancellationTokenSource(options.DeliveryTimeout).Token);
-                var messageHandler = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandler>();
+                var messageHandler = scope.ServiceProvider.GetRequiredService<IMessageHandler>();
                 bool handlerReady;
                 try
                 {

@@ -2,8 +2,8 @@ using Asp.Versioning;
 using ES.FX.Extensions.MassTransit.Extensions;
 using ES.FX.Extensions.MassTransit.Formatters;
 using ES.FX.Extensions.MassTransit.MediatR.Consumers;
+using ES.FX.Extensions.MassTransit.Messaging;
 using ES.FX.Extensions.MassTransit.Middleware.PayloadTypes;
-using ES.FX.Extensions.MassTransit.TransactionalOutbox;
 using ES.FX.Extensions.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.Extensions.NSwag.AspNetCore.Generation;
 using ES.FX.Extensions.Serilog.Lifetime;
@@ -22,7 +22,7 @@ using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
-using ES.FX.TransactionalOutbox;
+using ES.FX.Messaging;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using HealthChecks.UI.Client;
@@ -113,7 +113,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddHostedService<TestHostedService>();
 
 
-    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitOutboxMessageHandler>(options =>
+    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitMessageHandler>(options =>
         {
             options.AddMessageTypes(typeof(Program).Assembly);
             options.UseSqlServer();
@@ -135,7 +135,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     builder.Services.AddMassTransit(x =>
     {
-
         x.AddConfigureEndpointsCallback((_, receiveEndpointConfigurator) =>
         {
             //Attempt to fix message type and resend the message if possible.Otherwise, log and move to dead - letter
@@ -170,7 +169,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             cfg.Publish<INotification>(p => p.Exclude = true);
             cfg.Publish<IRequest>(p => p.Exclude = true);
             cfg.Publish<IBaseRequest>(p => p.Exclude = true);
-            cfg.Publish<IOutboxMessage>(p => p.Exclude = true);
+            cfg.Publish<IMessage>(p => p.Exclude = true);
 
 
             cfg.MessageTopology.SetEntityNameFormatter(new AggregatePrefixEntityNameFormatter(

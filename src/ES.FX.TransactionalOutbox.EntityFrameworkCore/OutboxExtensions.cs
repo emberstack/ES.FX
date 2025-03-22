@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
-using ES.FX.TransactionalOutbox.Delivery;
+using ES.FX.Messaging;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
@@ -19,7 +19,7 @@ public static class OutboxExtensions
     ///     Registers a message type as a known type. This is used to determine the <see cref="Type" /> of the payload.
     /// </summary>
     public static void AddMessageType<TMessageType>(this OutboxDeliveryOptions options)
-        where TMessageType : class, IOutboxMessage
+        where TMessageType : class, IMessage
     {
         options.MessageTypes.Add(typeof(TMessageType));
     }
@@ -42,8 +42,8 @@ public static class OutboxExtensions
             throw new ArgumentException($"Cannot use {messageType}. Messages must be non-abstract classes.",
                 nameof(messageType));
 
-        if (!messageType.IsAssignableTo(typeof(IOutboxMessage)))
-            throw new ArgumentException($"Cannot use {messageType}. Messages must implement {nameof(IOutboxMessage)}",
+        if (!messageType.IsAssignableTo(typeof(IMessage)))
+            throw new ArgumentException($"Cannot use {messageType}. Messages must implement {nameof(IMessage)}",
                 nameof(messageType));
 
         options.MessageTypes.Add(messageType);
@@ -59,7 +59,7 @@ public static class OutboxExtensions
         foreach (var assembly in assemblies)
         {
             var types = assembly.GetTypes().Where(t =>
-                t.IsAssignableTo(typeof(IOutboxMessage)) &&
+                t.IsAssignableTo(typeof(IMessage)) &&
                 t is { IsClass: true, IsAbstract: false }).ToArray();
             foreach (var type in types)
                 if (filter?.Invoke(type) ?? true)
@@ -119,8 +119,8 @@ public static class OutboxExtensions
         this IServiceCollection services,
         Action<OutboxDeliveryOptions<TDbContext>>? configureOptions = null
     )
-        where TDbContext : DbContext, IOutboxContext
-        where TMessageHandler : class, IOutboxMessageHandler
+        where TDbContext : DbContext, IMessageStore
+        where TMessageHandler : class, IMessageHandler
     {
         services.AddOptions<OutboxDeliveryOptions<TDbContext>>().Configure(options =>
         {
@@ -128,7 +128,7 @@ public static class OutboxExtensions
         });
 
         services.AddHostedService<OutboxDeliveryService<TDbContext>>();
-        services.AddScoped<IOutboxMessageHandler, TMessageHandler>();
+        services.AddScoped<IMessageHandler, TMessageHandler>();
         return services;
     }
 
@@ -163,9 +163,9 @@ public static class OutboxExtensions
     /// <param name="message">The message payload</param>
     /// <param name="deliveryOptions">The options used to configure the message delivery</param>
     public static void AddOutboxMessage<TOutboxDbContext, TMessage>(this TOutboxDbContext dbContext, TMessage message,
-        OutboxMessageOptions? deliveryOptions = default)
-        where TOutboxDbContext : DbContext, IOutboxContext
-        where TMessage : class, IOutboxMessage
+        OutboxMessageOptions? deliveryOptions = null)
+        where TOutboxDbContext : DbContext, IMessageStore
+        where TMessage : class, IMessage
     {
         deliveryOptions ??= new OutboxMessageOptions();
         var headers = new Dictionary<string, string?>

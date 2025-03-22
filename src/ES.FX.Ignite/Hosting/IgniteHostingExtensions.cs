@@ -72,7 +72,7 @@ public static class IgniteHostingExtensions
                     true, true);
 
         // Add additional environment variables
-        foreach (var variablePrefix in settings.EnvironmentVariablePrefixes) 
+        foreach (var variablePrefix in settings.EnvironmentVariablePrefixes)
             builder.Configuration.AddEnvironmentVariables(variablePrefix);
     }
 

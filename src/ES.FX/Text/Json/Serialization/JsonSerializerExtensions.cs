@@ -8,12 +8,14 @@ namespace ES.FX.Text.Json.Serialization;
 public static class JsonSerializerExtensions
 {
     /// <summary>
-    /// <inheritdoc cref="JsonSerializer.Deserialize{TValue}(string,System.Text.Json.JsonSerializerOptions?)"/>
+    ///     <inheritdoc cref="JsonSerializer.Deserialize{TValue}(string,System.Text.Json.JsonSerializerOptions?)" />
     /// </summary>
     /// <remarks>
-    /// This uses <see cref="JsonSerializerOptions.Web"/> by if no value is supplied for <param name="options"/>
+    ///     This uses <see cref="JsonSerializerOptions.Web" /> by if no value is supplied for
+    ///     <param name="options" />
     /// </remarks>
-    public static bool TryDeserialize<T>([StringSyntax(StringSyntaxAttribute.Json)] this string json, out T? result, JsonSerializerOptions? options = null)
+    public static bool TryDeserialize<T>([StringSyntax(StringSyntaxAttribute.Json)] this string json, out T? result,
+        JsonSerializerOptions? options = null)
     {
         try
         {
@@ -28,12 +30,14 @@ public static class JsonSerializerExtensions
     }
 
     /// <summary>
-    /// <inheritdoc cref="JsonSerializer.Deserialize{TValue}(Stream,System.Text.Json.JsonSerializerOptions?)"/>
+    ///     <inheritdoc cref="JsonSerializer.Deserialize{TValue}(Stream,System.Text.Json.JsonSerializerOptions?)" />
     /// </summary>
     /// <remarks>
-    /// This uses <see cref="JsonSerializerOptions.Web"/> by if no value is supplied for <param name="options"/>
+    ///     This uses <see cref="JsonSerializerOptions.Web" /> by if no value is supplied for
+    ///     <param name="options" />
     /// </remarks>
-    public static bool TryDeserialize<T>(this Stream utf8Json, [NotNullWhen(true)] out T? result, JsonSerializerOptions? options = null)
+    public static bool TryDeserialize<T>(this Stream utf8Json, [NotNullWhen(true)] out T? result,
+        JsonSerializerOptions? options = null)
     {
         try
         {

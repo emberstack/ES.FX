@@ -1,20 +1,19 @@
 ﻿using JetBrains.Annotations;
 
-namespace ES.FX.TransactionalOutbox.Delivery;
+namespace ES.FX.Messaging;
 
 /// <summary>
-///     Defines a <see cref="TransactionalOutbox" /> message handler
+///     Interface used to define a <see cref="IMessageHandler" /> that handles <see cref="IMessage" />
 /// </summary>
 [PublicAPI]
-public interface IOutboxMessageHandler
+public interface IMessageHandler
 {
     /// <summary>
     ///     Handles the outbox message.
     /// </summary>
-    /// <param name="context">The message context</param>
     /// <param name="cancellationToken"> Delivery cancellation token</param>
-    /// <returns> True if the message was successfully handled, false otherwise (the message delivery will be retried)</returns>
-    public ValueTask<bool> HandleAsync(OutboxMessageHandlerContext context,
+    /// <returns> True if the message was successfully handled, false otherwise</returns>
+    public ValueTask<bool> HandleAsync(IMessage message,
         CancellationToken cancellationToken = default);
 
     /// <summary>
