@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
-    <ProjectReference Include="..\ES.FX.Microsoft.EntityFrameworkCore\ES.FX.Microsoft.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\ES.FX.Migrations\ES.FX.Migrations.csproj" />
   </ItemGroup>
 

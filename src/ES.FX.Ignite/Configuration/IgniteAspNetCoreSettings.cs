@@ -1,6 +1,4 @@
-﻿using ES.FX.Microsoft.AspNetCore.Middleware;
-
-namespace ES.FX.Ignite.Configuration;
+﻿namespace ES.FX.Ignite.Configuration;
 
 /// <summary>
 ///     Settings for AspNetCore

@@ -15,7 +15,6 @@
 
 
 	<ItemGroup>
-		<ProjectReference Include="..\ES.FX.Microsoft.EntityFrameworkCore\ES.FX.Microsoft.EntityFrameworkCore.csproj" />
 		<ProjectReference Include="..\ES.FX\ES.FX.csproj" />
 	</ItemGroup>
 

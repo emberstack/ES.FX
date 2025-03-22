@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\ES.FX.Extensions.Serilog\ES.FX.Extensions.Serilog.csproj" />
     <ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
-    <ProjectReference Include="..\..\src\ES.FX.Serilog\ES.FX.Serilog.csproj" />
   </ItemGroup>
 
 </Project>

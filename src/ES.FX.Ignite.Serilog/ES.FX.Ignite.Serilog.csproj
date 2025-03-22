@@ -15,7 +15,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\ES.FX.Extensions.Serilog\ES.FX.Extensions.Serilog.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
-		<ProjectReference Include="..\ES.FX.Serilog\ES.FX.Serilog.csproj" />
 	</ItemGroup>
 </Project>

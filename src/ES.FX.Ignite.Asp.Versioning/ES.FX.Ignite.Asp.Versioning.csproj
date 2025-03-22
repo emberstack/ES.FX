@@ -7,7 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\ES.FX.Asp.Versioning\ES.FX.Asp.Versioning.csproj" />
+		<ProjectReference Include="..\ES.FX.Extensions.Asp.Versioning\ES.FX.Extensions.Asp.Versioning.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
 	</ItemGroup>
 

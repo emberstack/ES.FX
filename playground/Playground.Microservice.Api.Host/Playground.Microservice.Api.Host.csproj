@@ -11,14 +11,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MassTransit.RabbitMQ" />
-		<PackageReference Include="MediatR" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
 		<PackageReference Include="Swashbuckle.AspNetCore" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\src\ES.FX.Extensions.MassTransit.MediatR\ES.FX.Extensions.MassTransit.MediatR.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Extensions.MassTransit.RabbitMQ\ES.FX.Extensions.MassTransit.RabbitMQ.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Extensions.MassTransit\ES.FX.Extensions.MassTransit.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Asp.Versioning\ES.FX.Ignite.Asp.Versioning.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
@@ -35,9 +36,6 @@
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Serilog\ES.FX.Ignite.Serilog.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.StackExchange.Redis\ES.FX.Ignite.StackExchange.Redis.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite\ES.FX.Ignite.csproj" />
-		<ProjectReference Include="..\..\src\ES.FX.MassTransit.MediatR\ES.FX.MassTransit.MediatR.csproj" />
-		<ProjectReference Include="..\..\src\ES.FX.MassTransit\ES.FX.MassTransit.csproj" />
-		<ProjectReference Include="..\..\src\ES.FX.Serilog\ES.FX.Serilog.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />

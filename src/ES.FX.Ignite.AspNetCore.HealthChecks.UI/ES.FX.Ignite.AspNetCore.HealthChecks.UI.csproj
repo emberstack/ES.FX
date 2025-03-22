@@ -17,7 +17,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\ES.FX.AspNetCore.HealthChecks.UI\ES.FX.AspNetCore.HealthChecks.UI.csproj" />
+		<ProjectReference Include="..\ES.FX.Extensions.AspNetCore.HealthChecks.UI\ES.FX.Extensions.AspNetCore.HealthChecks.UI.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
 		<ProjectReference Include="..\ES.FX\ES.FX.csproj" />
 	</ItemGroup>

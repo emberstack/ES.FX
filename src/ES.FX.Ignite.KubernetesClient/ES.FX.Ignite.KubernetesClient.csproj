@@ -7,8 +7,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\ES.FX.Extensions.KubernetesClient\ES.FX.Extensions.KubernetesClient.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
-		<ProjectReference Include="..\ES.FX.KubernetesClient\ES.FX.KubernetesClient.csproj" />
 	</ItemGroup>
 
 </Project>

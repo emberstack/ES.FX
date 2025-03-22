@@ -13,8 +13,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\ES.FX.Extensions.Microsoft.Data.SqlClient\ES.FX.Extensions.Microsoft.Data.SqlClient.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
-		<ProjectReference Include="..\ES.FX.Microsoft.Data.SqlClient\ES.FX.Microsoft.Data.SqlClient.csproj" />
 	</ItemGroup>
 
 </Project>

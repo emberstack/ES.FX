@@ -1,6 +1,6 @@
-﻿using ES.FX.Ignite.KubernetesClient.Configuration;
+﻿using ES.FX.Extensions.KubernetesClient.HealthChecks;
+using ES.FX.Ignite.KubernetesClient.Configuration;
 using ES.FX.Ignite.Spark.Configuration;
-using ES.FX.KubernetesClient.HealthChecks;
 using JetBrains.Annotations;
 using k8s;
 using Microsoft.Extensions.DependencyInjection;

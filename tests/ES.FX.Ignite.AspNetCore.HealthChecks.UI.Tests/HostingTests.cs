@@ -1,4 +1,4 @@
-﻿using ES.FX.AspNetCore.HealthChecks.UI.HealthChecksEndpointRegistry;
+﻿using ES.FX.Extensions.AspNetCore.HealthChecks.UI.HealthChecksEndpointRegistry;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Configuration;
 using ES.FX.Ignite.AspNetCore.HealthChecks.UI.Hosting;
 using ES.FX.Ignite.Spark.Configuration;

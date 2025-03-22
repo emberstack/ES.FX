@@ -1,7 +1,7 @@
-﻿using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
+﻿using ES.FX.Extensions.Microsoft.Data.SqlClient.Abstractions;
+using ES.FX.Extensions.Microsoft.Data.SqlClient.Factories;
+using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 using ES.FX.Ignite.Spark.Configuration;
-using ES.FX.Microsoft.Data.SqlClient.Abstractions;
-using ES.FX.Microsoft.Data.SqlClient.Factories;
 using HealthChecks.SqlServer;
 using JetBrains.Annotations;
 using Microsoft.Data.SqlClient;

@@ -1,5 +1,5 @@
-﻿using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.Context;
-using ES.FX.Microsoft.EntityFrameworkCore.SqlServer.DesignTime;
+﻿using ES.FX.Extensions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime;
+using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.Context;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 

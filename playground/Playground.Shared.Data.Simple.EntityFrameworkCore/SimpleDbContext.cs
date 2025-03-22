@@ -1,4 +1,4 @@
-﻿using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
+﻿using ES.FX.Extensions.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.TransactionalOutbox;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

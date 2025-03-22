@@ -1,6 +1,6 @@
-﻿using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
+﻿using ES.FX.Extensions.Microsoft.Extensions.Diagnostics.HealthChecks;
+using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
 using ES.FX.Ignite.Spark.Configuration;
-using ES.FX.Microsoft.Extensions.Diagnostics.HealthChecks;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;

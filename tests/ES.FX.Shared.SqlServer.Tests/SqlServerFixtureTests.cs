@@ -1,4 +1,4 @@
-using ES.FX.Microsoft.Data.SqlClient.Queries;
+using ES.FX.Extensions.Microsoft.Data.SqlClient.Queries;
 using ES.FX.Shared.SqlServer.Tests.Fixtures;
 using Microsoft.Data.SqlClient;
 

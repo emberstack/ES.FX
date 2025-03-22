@@ -1,5 +1,5 @@
-﻿using ES.FX.Microsoft.EntityFrameworkCore.Extensions;
-using ES.FX.Microsoft.EntityFrameworkCore.SqlServer.DesignTime;
+﻿using ES.FX.Extensions.Microsoft.EntityFrameworkCore.Extensions;
+using ES.FX.Extensions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;

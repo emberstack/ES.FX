@@ -28,8 +28,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\src\ES.FX.Extensions.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Extensions.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
-		<ProjectReference Include="..\..\src\ES.FX.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests\ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.csproj" />
 		<ProjectReference Include="..\ES.FX.Shared.SqlServer.Tests\ES.FX.Shared.SqlServer.Tests.csproj" />
 	</ItemGroup>

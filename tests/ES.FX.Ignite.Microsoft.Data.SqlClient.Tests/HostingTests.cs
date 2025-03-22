@@ -1,8 +1,8 @@
+using ES.FX.Extensions.Microsoft.Data.SqlClient.Abstractions;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.Exceptions;
-using ES.FX.Microsoft.Data.SqlClient.Abstractions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

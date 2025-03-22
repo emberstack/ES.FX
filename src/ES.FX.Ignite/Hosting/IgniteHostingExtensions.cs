@@ -1,10 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using ES.FX.Extensions.Microsoft.AspNetCore.Middleware;
 using ES.FX.Ignite.Configuration;
 using ES.FX.Ignite.OpenTelemetry.AspNetCore;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.HealthChecks;
-using ES.FX.Microsoft.AspNetCore.Middleware;
 using HealthChecks.ApplicationStatus.DependencyInjection;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;

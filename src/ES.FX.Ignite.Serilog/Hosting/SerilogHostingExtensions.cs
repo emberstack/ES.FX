@@ -1,5 +1,5 @@
-﻿using ES.FX.Ignite.Spark.Configuration;
-using ES.FX.Serilog.Enrichers;
+﻿using ES.FX.Extensions.Serilog.Enrichers;
+using ES.FX.Ignite.Spark.Configuration;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
