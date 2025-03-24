@@ -205,7 +205,7 @@ public static class JsonSerializerExtensions
 
         try
         {
-            var json = JsonSerializer.Serialize(source, options ?? _defaultSerializerOptions);
+            var json = source as string ?? JsonSerializer.Serialize(source, options ?? _defaultSerializerOptions);
             return JsonSerializer.Deserialize<T>(json, options ?? _defaultSerializerOptions) ?? defaultValue;
         }
         catch (Exception)
