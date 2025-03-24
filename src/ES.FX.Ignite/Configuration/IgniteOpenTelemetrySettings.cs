@@ -29,7 +29,7 @@ public class IgniteOpenTelemetrySettings
     /// <summary>
     ///     Gets or sets a value indicating whether ASP.NET Core metrics are enabled
     /// </summary>
-    public bool AspNetCoreMetricsEnabled { get; set; } = true;
+    public bool AspNetCoreMetricsEnabled { get; set; } = false;
 
     /// <summary>
     ///     Gets or sets a value indicating whether ASP.NET Core tracing is enabled
@@ -39,12 +39,12 @@ public class IgniteOpenTelemetrySettings
     /// <summary>
     ///     Gets or sets a value indicating whether ASP.NET Core tracing will filter out health checks requests
     /// </summary>
-    public bool AspNetCoreTracingHealthChecksRequestsFiltered { get; set; } = false;
+    public bool AspNetCoreTracingHealthChecksRequestsFiltered { get; set; } = true;
 
     /// <summary>
     ///     Gets or sets a value indicating whether HttpClient metrics are enabled
     /// </summary>
-    public bool HttpClientMetricsEnabled { get; set; } = true;
+    public bool HttpClientMetricsEnabled { get; set; } = false;
 
     /// <summary>
     ///     Gets or sets a value indicating whether HttpClient tracing is enabled
@@ -54,7 +54,7 @@ public class IgniteOpenTelemetrySettings
     /// <summary>
     ///     Gets or sets a value indicating whether Runtime metrics are enabled
     /// </summary>
-    public bool RuntimeMetricsEnabled { get; set; } = true;
+    public bool RuntimeMetricsEnabled { get; set; } = false;
 
     /// <summary>
     ///     Gets or sets a value indicating whether the OpenTelemetry Protocol (OTLP) exporter is enabled
