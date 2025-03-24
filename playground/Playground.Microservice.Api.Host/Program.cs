@@ -44,7 +44,11 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Logging.ClearProviders();
     builder.IgniteSerilog();
 
-    builder.Ignite(settings => { settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse; });
+    builder.Ignite(settings =>
+    {
+        settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
+        settings.AspNetCore.JsonStringEnumConverterEnabled = true;
+    });
 
     //Add Seq
     builder.IgniteSeqOpenTelemetryExporter();
@@ -201,13 +205,18 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     root.MapGet("test", (IServiceProvider serviceProvider) =>
     {
-        var dbContext = serviceProvider.GetRequiredService<SimpleDbContext>();
-        //using var tx = dbContext.Database.BeginTransaction();
-        dbContext.AddOutboxMessage(new OutboxTestMessage { SomeProp = "Test Prop" });
-        dbContext.SaveChanges();
-        //Task.Delay(5000).Wait();
-        //tx.Commit();
-        return Results.Ok();
+        //var dbContext = serviceProvider.GetRequiredService<SimpleDbContext>();
+        ////using var tx = dbContext.Database.BeginTransaction();
+        //dbContext.AddOutboxMessage(new OutboxTestMessage { SomeProp = "Test Prop" });
+        //dbContext.SaveChanges();
+        ////Task.Delay(5000).Wait();
+        ////tx.Commit();
+        //return Results.Ok();
+
+        return Results.Ok(new ReturnValue
+        {
+            CardIssuer = CardIssuer.MasterCard
+        });
     });
 
     //app.IgniteHealthChecksUi();
@@ -215,3 +224,16 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     await app.RunAsync();
     return 0;
 });
+
+
+public class ReturnValue
+{
+    public CardIssuer CardIssuer { get; set; }
+}
+
+public enum CardIssuer
+{
+    Visa,
+    MasterCard,
+    Unknown
+}
