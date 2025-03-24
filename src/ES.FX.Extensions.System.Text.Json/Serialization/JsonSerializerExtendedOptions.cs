@@ -9,6 +9,6 @@ public static class JsonSerializerExtendedOptions
 {
     public static JsonSerializerOptions WebApi { get; } = new(JsonSerializerDefaults.Web)
     {
-        Converters = { new JsonStringEnumConverter(JsonSerializerOptions.Web.PropertyNamingPolicy) }
+        Converters = { new JsonStringEnumConverter(JsonSerializerOptions.Web.PropertyNamingPolicy, false) }
     };
 }
