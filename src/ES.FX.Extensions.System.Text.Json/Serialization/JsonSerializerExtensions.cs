@@ -10,14 +10,16 @@ namespace ES.FX.Extensions.System.Text.Json.Serialization;
 [PublicAPI]
 public static class JsonSerializerExtensions
 {
+    private static JsonSerializerOptions _defaultSerializerOptions = JsonSerializerOptions.Web;
+
     /// <summary>
     ///     Attempts to deserialize the specified JSON string into an instance of type <typeparamref name="T" />.
     /// </summary>
-    /// <typeparam name="T">The type into which to deserialize the JSON.</typeparam>
-    /// <param name="json">A string containing JSON data.</param>
+    /// <typeparam name="T">The type into which to deserialize the JSON data.</typeparam>
+    /// <param name="utf8Json">A JSON string to deserialize.</param>
     /// <param name="result">
     ///     When this method returns, contains the deserialized object of type <typeparamref name="T" />,
-    ///     if the deserialization succeeded, or the default value of <typeparamref name="T" /> if it failed.
+    ///     if the deserialization succeeded; otherwise, the default value of <typeparamref name="T" />.
     /// </param>
     /// <param name="options">
     ///     The <see cref="JsonSerializerOptions" /> to use during deserialization. If <c>null</c>,
@@ -32,13 +34,19 @@ public static class JsonSerializerExtensions
     /// </remarks>
     public static bool TryDeserialize<T>(
         [StringSyntax(StringSyntaxAttribute.Json)]
-        this string json,
-        out T? result,
+        this string? utf8Json,
+        [NotNullWhen(true)] out T? result,
         JsonSerializerOptions? options = null)
     {
+        if (utf8Json is null)
+        {
+            result = default;
+            return false;
+        }
+
         try
         {
-            result = JsonSerializer.Deserialize<T>(json, options ?? JsonSerializerOptions.Web);
+            result = JsonSerializer.Deserialize<T>(utf8Json, options ?? _defaultSerializerOptions);
             return result is not null;
         }
         catch (Exception)
@@ -49,14 +57,14 @@ public static class JsonSerializerExtensions
     }
 
     /// <summary>
-    ///     Attempts to deserialize the JSON data from the specified UTF-8 encoded stream into an instance of type
+    ///     Attempts to deserialize JSON data from the specified UTF-8 encoded stream into an instance of type
     ///     <typeparamref name="T" />.
     /// </summary>
-    /// <typeparam name="T">The type into which to deserialize the JSON.</typeparam>
+    /// <typeparam name="T">The type into which to deserialize the JSON data.</typeparam>
     /// <param name="utf8Json">A stream containing UTF-8 encoded JSON data.</param>
     /// <param name="result">
     ///     When this method returns, contains the deserialized object of type <typeparamref name="T" />,
-    ///     if the deserialization succeeded, or the default value of <typeparamref name="T" /> if it failed.
+    ///     if the deserialization succeeded; otherwise, the default value of <typeparamref name="T" />.
     /// </param>
     /// <param name="options">
     ///     The <see cref="JsonSerializerOptions" /> to use during deserialization. If <c>null</c>,
@@ -70,19 +78,139 @@ public static class JsonSerializerExtensions
     ///     This method catches any exceptions thrown during deserialization and returns <c>false</c> in such cases.
     /// </remarks>
     public static bool TryDeserialize<T>(
-        this Stream utf8Json,
+        this Stream? utf8Json,
         [NotNullWhen(true)] out T? result,
         JsonSerializerOptions? options = null)
     {
+        if (utf8Json is null)
+        {
+            result = default;
+            return false;
+        }
+
         try
         {
-            result = JsonSerializer.Deserialize<T>(utf8Json, options ?? JsonSerializerOptions.Web);
+            result = JsonSerializer.Deserialize<T>(utf8Json, options ?? _defaultSerializerOptions);
             return result is not null;
         }
         catch (Exception)
         {
             result = default;
             return false;
+        }
+    }
+
+    /// <summary>
+    ///     Deserializes the specified JSON string into an instance of type <typeparamref name="T" />,
+    ///     or returns the specified default value if deserialization fails.
+    /// </summary>
+    /// <typeparam name="T">The type into which to deserialize the JSON data.</typeparam>
+    /// <param name="utf8Json">A JSON string to deserialize.</param>
+    /// <param name="defaultValue">
+    ///     The default value to return if deserialization fails.
+    /// </param>
+    /// <param name="options">
+    ///     The <see cref="JsonSerializerOptions" /> to use during deserialization. If <c>null</c>,
+    ///     <see cref="JsonSerializerOptions.Web" /> is used.
+    /// </param>
+    /// <returns>
+    ///     The deserialized object of type <typeparamref name="T" />, or <paramref name="defaultValue" />
+    ///     if deserialization fails.
+    /// </returns>
+    [return: NotNullIfNotNull(nameof(defaultValue))]
+    public static T? DeserializeOrDefault<T>(
+        this string? utf8Json,
+        T? defaultValue = default,
+        JsonSerializerOptions? options = null)
+    {
+        if (utf8Json is null) return defaultValue;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(utf8Json, options ?? _defaultSerializerOptions) ?? defaultValue;
+        }
+        catch (Exception)
+        {
+            return defaultValue;
+        }
+    }
+
+    /// <summary>
+    ///     Deserializes JSON data from the specified UTF-8 encoded stream into an instance of type <typeparamref name="T" />,
+    ///     or returns the specified default value if deserialization fails.
+    /// </summary>
+    /// <typeparam name="T">The type into which to deserialize the JSON data.</typeparam>
+    /// <param name="utf8Json">A stream containing UTF-8 encoded JSON data.</param>
+    /// <param name="defaultValue">
+    ///     The default value to return if deserialization fails.
+    /// </param>
+    /// <param name="options">
+    ///     The <see cref="JsonSerializerOptions" /> to use during deserialization. If <c>null</c>,
+    ///     <see cref="JsonSerializerOptions.Web" /> is used.
+    /// </param>
+    /// <returns>
+    ///     The deserialized object of type <typeparamref name="T" />, or <paramref name="defaultValue" />
+    ///     if deserialization fails.
+    /// </returns>
+    [return: NotNullIfNotNull(nameof(defaultValue))]
+    public static T? DeserializeOrDefault<T>(
+        this Stream? utf8Json,
+        T? defaultValue = default,
+        JsonSerializerOptions? options = null)
+    {
+        if (utf8Json is null) return defaultValue;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(utf8Json, options ?? _defaultSerializerOptions) ?? defaultValue;
+        }
+        catch (Exception)
+        {
+            return defaultValue;
+        }
+    }
+
+
+    /// <summary>
+    ///     Converts the specified object to an instance of type <typeparamref name="T" /> by serializing it to JSON
+    ///     and then deserializing it as <typeparamref name="T" />. If the source is <c>null</c> or conversion fails,
+    ///     returns the specified default value.
+    /// </summary>
+    /// <typeparam name="T">The target type into which to convert the object.</typeparam>
+    /// <param name="source">
+    ///     The object to convert. If <c>null</c>, the method returns <paramref name="defaultValue" />.
+    /// </param>
+    /// <param name="defaultValue">
+    ///     The default value to return if conversion fails or if the source is <c>null</c>.
+    /// </param>
+    /// <param name="options">
+    ///     The <see cref="JsonSerializerOptions" /> to use during serialization and deserialization.
+    ///     If <c>null</c>, the default options (<see cref="_defaultSerializerOptions" />) are used.
+    /// </param>
+    /// <returns>
+    ///     An instance of type <typeparamref name="T" /> converted from the source object, or <paramref name="defaultValue" />
+    ///     if conversion fails or the source is <c>null</c>.
+    /// </returns>
+    /// <remarks>
+    ///     This method performs a deep conversion by serializing the source object to JSON and then deserializing it
+    ///     into the target type. It is useful for converting between types that have compatible JSON representations.
+    /// </remarks>
+    [return: NotNullIfNotNull(nameof(defaultValue))]
+    public static T? ConvertViaJson<T>(
+        this object? source,
+        T? defaultValue = default,
+        JsonSerializerOptions? options = null)
+    {
+        if (source is null) return defaultValue;
+
+        try
+        {
+            var json = JsonSerializer.Serialize(source, options ?? _defaultSerializerOptions);
+            return JsonSerializer.Deserialize<T>(json, options ?? _defaultSerializerOptions) ?? defaultValue;
+        }
+        catch (Exception)
+        {
+            return defaultValue;
         }
     }
 }
