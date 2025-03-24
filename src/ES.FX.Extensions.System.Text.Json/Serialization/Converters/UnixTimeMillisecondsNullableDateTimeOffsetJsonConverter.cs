@@ -14,7 +14,7 @@ namespace ES.FX.Extensions.System.Text.Json.Serialization.Converters;
 ///     When encountering a JSON null or an empty string, the converter returns <c>null</c>.
 /// </remarks>
 [PublicAPI]
-public class UnixTimeDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset?>
+public class UnixTimeMillisecondsNullableDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset?>
 {
     public override DateTimeOffset? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -29,12 +29,12 @@ public class UnixTimeDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset?
                 if (string.IsNullOrEmpty(stringValue)) return null;
                 if (!long.TryParse(stringValue, out var unixTime))
                     throw new JsonException($"Invalid Unix epoch time string: {stringValue}");
-                return DateTimeOffset.FromUnixTimeSeconds(unixTime);
+                return DateTimeOffset.FromUnixTimeMilliseconds(unixTime);
             }
             case { TokenType: JsonTokenType.Number }:
             {
                 var unixTime = reader.GetInt64();
-                return DateTimeOffset.FromUnixTimeSeconds(unixTime);
+                return DateTimeOffset.FromUnixTimeMilliseconds(unixTime);
             }
             default:
                 throw new JsonException("Invalid token type for Unix epoch time");
@@ -45,7 +45,7 @@ public class UnixTimeDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset?
     {
         if (value.HasValue)
         {
-            var unixTime = value.Value.ToUnixTimeSeconds();
+            var unixTime = value.Value.ToUnixTimeMilliseconds();
             writer.WriteNumberValue(unixTime);
         }
         else

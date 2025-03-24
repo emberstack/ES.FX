@@ -14,7 +14,7 @@ namespace ES.FX.Extensions.System.Text.Json.Serialization.Converters;
 ///     When encountering a JSON null or an empty string, the converter returns <c>null</c>.
 /// </remarks>
 [PublicAPI]
-public class UnixTimeDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset?>
+public class UnixTimeSecondsNullableDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset?>
 {
     public override DateTimeOffset? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

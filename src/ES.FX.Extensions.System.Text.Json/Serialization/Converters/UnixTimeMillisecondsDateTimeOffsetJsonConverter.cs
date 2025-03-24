@@ -11,7 +11,7 @@ namespace ES.FX.Extensions.System.Text.Json.Serialization.Converters;
 ///     Unix time is defined as the number of seconds that have elapsed since 00:00:00 UTC on 1 January 1970 (the Unix
 ///     epoch).
 ///     This converter supports Unix time values represented either as JSON numbers or as strings.
-///     When encountering a JSON null or an empty string, the converter throws a <see cref="JsonException"/>
+///     When encountering a JSON null or an empty string, the converter throws a <see cref="JsonException" />
 /// </remarks>
 [PublicAPI]
 public class UnixTimeMillisecondsDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset>
@@ -20,11 +20,10 @@ public class UnixTimeMillisecondsDateTimeOffsetJsonConverter : JsonConverter<Dat
     {
         switch (reader)
         {
-            
-            case { TokenType: JsonTokenType.String } :
+            case { TokenType: JsonTokenType.String }:
             {
                 var stringValue = reader.GetString();
-                if (string.IsNullOrEmpty(stringValue)) 
+                if (string.IsNullOrEmpty(stringValue))
                     throw new JsonException("Invalid token type for Unix epoch time");
                 if (!long.TryParse(stringValue, out var unixTime))
                     throw new JsonException($"Invalid Unix epoch time string: {stringValue}");
