@@ -32,7 +32,7 @@ public static class JsonSerializerExtensions
     /// <remarks>
     ///     This method catches any exceptions thrown during deserialization and returns <c>false</c> in such cases.
     /// </remarks>
-    public static bool TryDeserialize<T>(
+    public static bool TryJsonDeserialize<T>(
         [StringSyntax(StringSyntaxAttribute.Json)]
         this string? utf8Json,
         [NotNullWhen(true)] out T? result,
@@ -77,7 +77,7 @@ public static class JsonSerializerExtensions
     /// <remarks>
     ///     This method catches any exceptions thrown during deserialization and returns <c>false</c> in such cases.
     /// </remarks>
-    public static bool TryDeserialize<T>(
+    public static bool TryJsonDeserialize<T>(
         this Stream? utf8Json,
         [NotNullWhen(true)] out T? result,
         JsonSerializerOptions? options = null)
@@ -118,7 +118,7 @@ public static class JsonSerializerExtensions
     ///     if deserialization fails.
     /// </returns>
     [return: NotNullIfNotNull(nameof(defaultValue))]
-    public static T? DeserializeOrDefault<T>(
+    public static T? JsonDeserializeOrDefault<T>(
         this string? utf8Json,
         T? defaultValue = default,
         JsonSerializerOptions? options = null)
@@ -153,7 +153,7 @@ public static class JsonSerializerExtensions
     ///     if deserialization fails.
     /// </returns>
     [return: NotNullIfNotNull(nameof(defaultValue))]
-    public static T? DeserializeOrDefault<T>(
+    public static T? JsonDeserializeOrDefault<T>(
         this Stream? utf8Json,
         T? defaultValue = default,
         JsonSerializerOptions? options = null)
