@@ -66,14 +66,14 @@ jobs:
           filters: |
             src:
               - 'src/**'
-              - 'ES.FX.sln'
+              - 'ES.FX.slnx'
               - 'Directory.Build.props'
               - 'Directory.Packages.props'
             build:
               - 'playground/**'
               - 'tests/**'
               - 'src/**'
-              - 'ES.FX.sln'
+              - 'ES.FX.slnx'
               - 'Directory.Build.props'
               - 'Directory.Packages.props'
 
