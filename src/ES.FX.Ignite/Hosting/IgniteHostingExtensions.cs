@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -54,26 +53,6 @@ public static class IgniteHostingExtensions
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
         }
-    }
-
-    private static void AddConfiguration(IHostApplicationBuilder builder, IgniteConfigurationSettings settings)
-    {
-        // Add additional configuration files
-        // Useful when mounting a configuration file from a secret manager or a configuration provider.
-        foreach (var appSettingsFile in settings.AdditionalJsonSettingsFiles)
-            builder.Configuration
-                .AddJsonFile(appSettingsFile, true, true);
-
-        // Add additional app settings overrides
-        // Useful when mounting a configuration file from a secret manager or a configuration provider.
-        foreach (var appSettingsOverride in settings.AdditionalJsonAppSettingsOverrides)
-            builder.Configuration
-                .AddJsonFile($"appsettings.{builder.Environment}.{appSettingsOverride}.json",
-                    true, true);
-
-        // Add additional environment variables
-        foreach (var variablePrefix in settings.EnvironmentVariablePrefixes)
-            builder.Configuration.AddEnvironmentVariables(variablePrefix);
     }
 
     private static void AddHealthChecks(IHostApplicationBuilder builder, IgniteHealthChecksSettings settings)
@@ -145,8 +124,6 @@ public static class IgniteHostingExtensions
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);
-
-        AddConfiguration(builder, settings.Configuration);
 
         AddOpenTelemetry(builder, settings.OpenTelemetry);
 

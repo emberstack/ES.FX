@@ -1,0 +1,110 @@
+<Solution>
+  <Folder Name="/..Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/.src/" />
+  <Folder Name="/.src/Extensions/">
+    <Project Path="src/ES.FX.Extensions.Asp.Versioning/ES.FX.Extensions.Asp.Versioning.csproj" />
+    <Project Path="src/ES.FX.Extensions.AspNetCore.HealthChecks.UI/ES.FX.Extensions.AspNetCore.HealthChecks.UI.csproj" />
+    <Project Path="src/ES.FX.Extensions.FluentValidation/ES.FX.Extensions.FluentValidation.csproj" />
+    <Project Path="src/ES.FX.Extensions.KubernetesClient/ES.FX.Extensions.KubernetesClient.csproj" />
+    <Project Path="src/ES.FX.Extensions.MassTransit.MediatR/ES.FX.Extensions.MassTransit.MediatR.csproj" />
+    <Project Path="src/ES.FX.Extensions.MassTransit.RabbitMQ/ES.FX.Extensions.MassTransit.RabbitMQ.csproj" />
+    <Project Path="src/ES.FX.Extensions.MassTransit/ES.FX.Extensions.MassTransit.csproj" />
+    <Project Path="src/ES.FX.Extensions.MediatR.Abstractions/ES.FX.Extensions.MediatR.Abstractions.csproj" />
+    <Project Path="src/ES.FX.Extensions.MediatR/ES.FX.Extensions.MediatR.csproj" />
+    <Project Path="src/ES.FX.Extensions.Microsoft.AspNetCore/ES.FX.Extensions.Microsoft.AspNetCore.csproj" />
+    <Project Path="src/ES.FX.Extensions.Microsoft.Data.SqlClient/ES.FX.Extensions.Microsoft.Data.SqlClient.csproj" />
+    <Project Path="src/ES.FX.Extensions.Microsoft.EntityFrameworkCore.SqlServer/ES.FX.Extensions.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
+    <Project Path="src/ES.FX.Extensions.Microsoft.EntityFrameworkCore/ES.FX.Extensions.Microsoft.EntityFrameworkCore.csproj" />
+    <Project Path="src/ES.FX.Extensions.Microsoft.Extensions.Diagnostics.HealthChecks/ES.FX.Extensions.Microsoft.Extensions.Diagnostics.HealthChecks.csproj" />
+    <Project Path="src/ES.FX.Extensions.Microsoft.Extensions.Identity.Core/ES.FX.Extensions.Microsoft.Extensions.Identity.Core.csproj" />
+    <Project Path="src/ES.FX.Extensions.Newtonsoft.Json/ES.FX.Extensions.Newtonsoft.Json.csproj" />
+    <Project Path="src/ES.FX.Extensions.NSwag.AspNetCore/ES.FX.Extensions.NSwag.AspNetCore.csproj" />
+    <Project Path="src/ES.FX.Extensions.OneOf/ES.FX.Extensions.OneOf.csproj" />
+    <Project Path="src/ES.FX.Extensions.Serilog/ES.FX.Extensions.Serilog.csproj" />
+    <Project Path="src/ES.FX.Extensions.StackExchange.Redis/ES.FX.Extensions.StackExchange.Redis.csproj" />
+  </Folder>
+  <Folder Name="/.src/FX/">
+    <Project Path="src/ES.FX.Hosting/ES.FX.Hosting.csproj" />
+    <Project Path="src/ES.FX.Migrations/ES.FX.Migrations.csproj" />
+    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
+    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
+    <Project Path="src/ES.FX/ES.FX.csproj" />
+  </Folder>
+  <Folder Name="/.src/Ignite/">
+    <Project Path="src/ES.FX.Ignite.Spark/ES.FX.Ignite.Spark.csproj" />
+    <Project Path="src/ES.FX.Ignite/ES.FX.Ignite.csproj" />
+  </Folder>
+  <Folder Name="/.src/Ignite/Sparks/">
+    <Project Path="src/ES.FX.Ignite.Asp.Versioning/ES.FX.Ignite.Asp.Versioning.csproj" />
+    <Project Path="src/ES.FX.Ignite.AspNetCore.HealthChecks.UI/ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
+    <Project Path="src/ES.FX.Ignite.Azure.Common/ES.FX.Ignite.Azure.Common.csproj" />
+    <Project Path="src/ES.FX.Ignite.Azure.Data.Tables/ES.FX.Ignite.Azure.Data.Tables.csproj" />
+    <Project Path="src/ES.FX.Ignite.Azure.Security.KeyVault.Secrets/ES.FX.Ignite.Azure.Security.KeyVault.Secrets.csproj" />
+    <Project Path="src/ES.FX.Ignite.Azure.Storage.Blobs/ES.FX.Ignite.Azure.Storage.Blobs.csproj" />
+    <Project Path="src/ES.FX.Ignite.Azure.Storage.Queues/ES.FX.Ignite.Azure.Storage.Queues.csproj" />
+    <Project Path="src/ES.FX.Ignite.FluentValidation/ES.FX.Ignite.FluentValidation.csproj" />
+    <Project Path="src/ES.FX.Ignite.KubernetesClient/ES.FX.Ignite.KubernetesClient.csproj" />
+    <Project Path="src/ES.FX.Ignite.Microsoft.Data.SqlClient/ES.FX.Ignite.Microsoft.Data.SqlClient.csproj" />
+    <Project Path="src/ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer/ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
+    <Project Path="src/ES.FX.Ignite.Microsoft.EntityFrameworkCore/ES.FX.Ignite.Microsoft.EntityFrameworkCore.csproj" />
+    <Project Path="src/ES.FX.Ignite.Migrations/ES.FX.Ignite.Migrations.csproj" />
+    <Project Path="src/ES.FX.Ignite.NSwag/ES.FX.Ignite.NSwag.csproj" />
+    <Project Path="src/ES.FX.Ignite.OpenTelemetry.Exporter.Seq/ES.FX.Ignite.OpenTelemetry.Exporter.Seq.csproj" />
+    <Project Path="src/ES.FX.Ignite.Serilog/ES.FX.Ignite.Serilog.csproj" />
+    <Project Path="src/ES.FX.Ignite.StackExchange.Redis/ES.FX.Ignite.StackExchange.Redis.csproj" />
+    <Project Path="src/ES.FX.Ignite.Swashbuckle/ES.FX.Ignite.Swashbuckle.csproj" />
+  </Folder>
+  <Folder Name="/playground/">
+    <Project Path="playground/Playground.Microservice.Api.Host/Playground.Microservice.Api.Host.csproj" />
+    <Project Path="playground/Playground.Microservice.Worker.Host/Playground.Microservice.Worker.Host.csproj" />
+    <Project Path="playground/Playground.SimpleConsole/Playground.SimpleConsole.csproj" />
+  </Folder>
+  <Folder Name="/playground/Shared/">
+    <Project Path="playground/Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer/Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
+    <Project Path="playground/Playground.Shared.Data.Simple.EntityFrameworkCore/Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/.Shared/">
+    <Project Path="tests/ES.FX.Shared.SqlServer.Tests/ES.FX.Shared.SqlServer.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Extensions/">
+    <Project Path="tests/ES.FX.Extensions.Asp.Versioning.Tests/ES.FX.Extensions.Asp.Versioning.Tests.csproj" />
+    <Project Path="tests/ES.FX.Extensions.Microsoft.Data.SqlClient.Tests/ES.FX.Extensions.Microsoft.Data.SqlClient.Tests.csproj" />
+    <Project Path="tests/ES.FX.Extensions.Microsoft.EntityFrameworkCore.Tests/ES.FX.Extensions.Microsoft.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/ES.FX.Extensions.NSwag.AspNetCore.Tests/ES.FX.Extensions.NSwag.AspNetCore.Tests.csproj" />
+    <Project Path="tests/ES.FX.Extensions.Serilog.Tests/ES.FX.Extensions.Serilog.Tests.csproj" />
+    <Project Path="tests/ES.FX.Extensions.StackExchange.Redis.Tests/ES.FX.Extensions.StackExchange.Redis.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/FX/">
+    <Project Path="tests/ES.FX.Hosting.Tests/ES.FX.Hosting.Tests.csproj" />
+    <Project Path="tests/ES.FX.Tests/ES.FX.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Ignite/">
+    <Project Path="tests/ES.FX.Ignite.Asp.Versioning.Tests/ES.FX.Ignite.Asp.Versioning.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT.csproj" />
+    <Project Path="tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Azure.Data.Tables.Tests/ES.FX.Ignite.Azure.Data.Tables.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests/ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Azure.Storage.Blobs.Tests/ES.FX.Ignite.Azure.Storage.Blobs.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Azure.Storage.Queues.Tests/ES.FX.Ignite.Azure.Storage.Queues.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.FluentValidation.Tests.SUT/ES.FX.Ignite.FluentValidation.Tests.SUT.csproj" />
+    <Project Path="tests/ES.FX.Ignite.FluentValidation.Tests/ES.FX.Ignite.FluentValidation.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Microsoft.Data.SqlClient.Tests/ES.FX.Ignite.Microsoft.Data.SqlClient.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests/ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests/ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Migrations.Tests/ES.FX.Ignite.Migrations.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.NSwag.Tests.SUT/ES.FX.Ignite.NSwag.Tests.SUT.csproj" />
+    <Project Path="tests/ES.FX.Ignite.NSwag.Tests/ES.FX.Ignite.NSwag.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.SUT/ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.SUT.csproj" />
+    <Project Path="tests/ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests/ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Serilog.Tests/ES.FX.Ignite.Serilog.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Spark.Tests/ES.FX.Ignite.Spark.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.StackExchange.Redis.Tests/ES.FX.Ignite.StackExchange.Redis.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Swashbuckle.Tests.SUT/ES.FX.Ignite.Swashbuckle.Tests.SUT.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Swashbuckle.Tests/ES.FX.Ignite.Swashbuckle.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Tests/ES.FX.Ignite.Tests.csproj" />
+  </Folder>
+</Solution>

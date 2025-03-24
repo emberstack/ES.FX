@@ -145,22 +145,6 @@ public class HostingTests
     }
 
     [Fact]
-    public void Ignite_WhenCalled_ShouldAddAdditionalSettingsFiles()
-    {
-        var builder = Host.CreateEmptyApplicationBuilder(null);
-
-        builder.Configuration.AddInMemoryCollection([
-            new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.Configuration)}:{nameof(IgniteConfigurationSettings.AdditionalJsonSettingsFiles)}:0",
-                "testAdditionalAppSettings.json")
-        ]);
-
-        builder.Ignite();
-
-        Assert.Equal("ExtraPropertyValue", builder.Configuration.GetValue<string>("ExtraPropertyHeader:ExtraProperty"));
-    }
-
-    [Fact]
     public void Ignite_WhenCalled_ShouldAddServices()
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);

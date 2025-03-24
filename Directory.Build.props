@@ -30,8 +30,8 @@
 	</PropertyGroup>
 	<!-- Package defaults  -->
 	<ItemGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.StartsWith('ES.FX'))">
-		<None Include="..\..\package.icon.png" Pack="true" PackagePath=""/>
-		<None Include="..\..\README.md" Pack="true" PackagePath=""/>
+		<None Include="..\..\package.icon.png" Pack="true" PackagePath="" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 	<!-- JetBrains.Annotations -->

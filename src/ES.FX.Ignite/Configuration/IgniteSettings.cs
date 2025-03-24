@@ -6,11 +6,6 @@
 public class IgniteSettings
 {
     /// <summary>
-    ///     Settings for Configuration
-    /// </summary>
-    public IgniteConfigurationSettings Configuration { get; } = new();
-
-    /// <summary>
     ///     Settings for HealthChecks
     /// </summary>
     public IgniteHealthChecksSettings HealthChecks { get; } = new();
