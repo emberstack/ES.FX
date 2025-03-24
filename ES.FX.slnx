@@ -4,7 +4,7 @@
     <File Path="Directory.Packages.props" />
   </Folder>
   <Folder Name="/.src/" />
-  <Folder Name="/.src/Extensions/">
+  <Folder Name="/.src/Extensions/" Id="ca4adef4-8e99-2e1e-befd-6b794a966590">
     <Project Path="src/ES.FX.Extensions.Asp.Versioning/ES.FX.Extensions.Asp.Versioning.csproj" />
     <Project Path="src/ES.FX.Extensions.AspNetCore.HealthChecks.UI/ES.FX.Extensions.AspNetCore.HealthChecks.UI.csproj" />
     <Project Path="src/ES.FX.Extensions.FluentValidation/ES.FX.Extensions.FluentValidation.csproj" />
@@ -25,19 +25,20 @@
     <Project Path="src/ES.FX.Extensions.OneOf/ES.FX.Extensions.OneOf.csproj" />
     <Project Path="src/ES.FX.Extensions.Serilog/ES.FX.Extensions.Serilog.csproj" />
     <Project Path="src/ES.FX.Extensions.StackExchange.Redis/ES.FX.Extensions.StackExchange.Redis.csproj" />
+    <Project Path="src/ES.FX.Extensions.System.Text.Json/ES.FX.Extensions.System.Text.Json.csproj" Id="feaf5ec3-e89c-4d28-ade9-8c62493854ba" />
   </Folder>
-  <Folder Name="/.src/FX/">
+  <Folder Name="/.src/FX/" Id="6c57dcf2-5875-e004-b4b7-05590194ebc7">
     <Project Path="src/ES.FX.Hosting/ES.FX.Hosting.csproj" />
     <Project Path="src/ES.FX.Migrations/ES.FX.Migrations.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX/ES.FX.csproj" />
   </Folder>
-  <Folder Name="/.src/Ignite/">
+  <Folder Name="/.src/Ignite/" Id="df8f5824-b526-a52c-768d-42965f35432e">
     <Project Path="src/ES.FX.Ignite.Spark/ES.FX.Ignite.Spark.csproj" />
     <Project Path="src/ES.FX.Ignite/ES.FX.Ignite.csproj" />
   </Folder>
-  <Folder Name="/.src/Ignite/Sparks/">
+  <Folder Name="/.src/Ignite/Sparks/" Id="e4b657f5-3b92-34a8-1931-f9af4da8e383">
     <Project Path="src/ES.FX.Ignite.Asp.Versioning/ES.FX.Ignite.Asp.Versioning.csproj" />
     <Project Path="src/ES.FX.Ignite.AspNetCore.HealthChecks.UI/ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
     <Project Path="src/ES.FX.Ignite.Azure.Common/ES.FX.Ignite.Azure.Common.csproj" />
@@ -62,15 +63,15 @@
     <Project Path="playground/Playground.Microservice.Worker.Host/Playground.Microservice.Worker.Host.csproj" />
     <Project Path="playground/Playground.SimpleConsole/Playground.SimpleConsole.csproj" />
   </Folder>
-  <Folder Name="/playground/Shared/">
+  <Folder Name="/playground/Shared/" Id="1759419d-07c9-0a61-f142-32c9ad8b81a6">
     <Project Path="playground/Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer/Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="playground/Playground.Shared.Data.Simple.EntityFrameworkCore/Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
   </Folder>
   <Folder Name="/tests/" />
-  <Folder Name="/tests/.Shared/">
+  <Folder Name="/tests/.Shared/" Id="7f5447eb-72d9-7961-8f6e-7585bdd0ffbb">
     <Project Path="tests/ES.FX.Shared.SqlServer.Tests/ES.FX.Shared.SqlServer.Tests.csproj" />
   </Folder>
-  <Folder Name="/tests/Extensions/">
+  <Folder Name="/tests/Extensions/" Id="7f613cad-9b76-dc9e-2608-e50cfd9fdd33">
     <Project Path="tests/ES.FX.Extensions.Asp.Versioning.Tests/ES.FX.Extensions.Asp.Versioning.Tests.csproj" />
     <Project Path="tests/ES.FX.Extensions.Microsoft.Data.SqlClient.Tests/ES.FX.Extensions.Microsoft.Data.SqlClient.Tests.csproj" />
     <Project Path="tests/ES.FX.Extensions.Microsoft.EntityFrameworkCore.Tests/ES.FX.Extensions.Microsoft.EntityFrameworkCore.Tests.csproj" />
@@ -78,11 +79,11 @@
     <Project Path="tests/ES.FX.Extensions.Serilog.Tests/ES.FX.Extensions.Serilog.Tests.csproj" />
     <Project Path="tests/ES.FX.Extensions.StackExchange.Redis.Tests/ES.FX.Extensions.StackExchange.Redis.Tests.csproj" />
   </Folder>
-  <Folder Name="/tests/FX/">
+  <Folder Name="/tests/FX/" Id="096c92b2-3ef6-9c10-b679-df1bff358703">
     <Project Path="tests/ES.FX.Hosting.Tests/ES.FX.Hosting.Tests.csproj" />
     <Project Path="tests/ES.FX.Tests/ES.FX.Tests.csproj" />
   </Folder>
-  <Folder Name="/tests/Ignite/">
+  <Folder Name="/tests/Ignite/" Id="c0ca5190-70a9-bf62-1a47-62926dbddde3">
     <Project Path="tests/ES.FX.Ignite.Asp.Versioning.Tests/ES.FX.Ignite.Asp.Versioning.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT.csproj" />
     <Project Path="tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.csproj" />
