@@ -2,7 +2,7 @@
 using System.Text.Json;
 using JetBrains.Annotations;
 
-namespace ES.FX.Text.Json.Serialization;
+namespace ES.FX.Extensions.System.Text.Json.Serialization;
 
 [PublicAPI]
 public static class JsonSerializerExtensions
@@ -30,7 +30,7 @@ public static class JsonSerializerExtensions
     }
 
     /// <summary>
-    ///     <inheritdoc cref="JsonSerializer.Deserialize{TValue}(Stream,System.Text.Json.JsonSerializerOptions?)" />
+    ///     <inheritdoc cref="JsonSerializer.Deserialize{TValue}(System.IO.Stream,System.Text.Json.JsonSerializerOptions?)" />
     /// </summary>
     /// <remarks>
     ///     This uses <see cref="JsonSerializerOptions.Web" /> by if no value is supplied for
