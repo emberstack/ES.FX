@@ -213,4 +213,53 @@ public static class JsonSerializerExtensions
             return defaultValue;
         }
     }
+
+
+    /// <summary>
+    /// Attempts to convert the specified object to an instance of type <typeparamref name="T"/> by serializing it to JSON
+    /// and then deserializing it as <typeparamref name="T"/>. If the conversion succeeds, the result is output;
+    /// otherwise, the method returns <c>false</c> and the result is set to the default value.
+    /// </summary>
+    /// <typeparam name="T">The target type into which to convert the object.</typeparam>
+    /// <param name="source">
+    /// The object to convert. If <c>null</c>, the method returns <c>false</c> and <paramref name="result"/> is set to the default value.
+    /// </param>
+    /// <param name="result">
+    /// When this method returns, contains the deserialized object of type <typeparamref name="T"/>,
+    /// if the conversion succeeded; otherwise, the default value of <typeparamref name="T"/>.
+    /// </param>
+    /// <param name="options">
+    /// The <see cref="JsonSerializerOptions"/> to use during serialization and deserialization.
+    /// If <c>null</c>, the default options (<see cref="_defaultSerializerOptions"/>) are used.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> if the object was successfully converted to an instance of <typeparamref name="T"/>; otherwise, <c>false</c>.
+    /// </returns>
+    /// <remarks>
+    /// This method performs a deep conversion by serializing the source object to JSON and then deserializing it into the target type.
+    /// If the source object is already a JSON string, that string is used directly.
+    /// </remarks>
+    public static bool TryConvertViaJson<T>(
+        this object? source,
+        [NotNullWhen(true)] out T? result,
+        JsonSerializerOptions? options = null)
+    {
+        if (source is null)
+        {
+            result = default;
+            return false;
+        }
+
+        try
+        {
+            var json = source as string ?? JsonSerializer.Serialize(source, options ?? _defaultSerializerOptions);
+            result = JsonSerializer.Deserialize<T>(json, options ?? _defaultSerializerOptions);
+            return result is not null;
+        }
+        catch (Exception)
+        {
+            result = default;
+            return false;
+        }
+    }
 }
