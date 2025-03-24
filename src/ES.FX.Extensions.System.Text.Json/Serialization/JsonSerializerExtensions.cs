@@ -10,7 +10,7 @@ namespace ES.FX.Extensions.System.Text.Json.Serialization;
 [PublicAPI]
 public static class JsonSerializerExtensions
 {
-    private static JsonSerializerOptions _defaultSerializerOptions = JsonSerializerExtendedOptions.WebApi;
+    private static JsonSerializerOptions _defaultSerializerOptions = JsonSerializerOptionsExtended.WebApi;
 
     /// <summary>
     ///     Attempts to deserialize the specified JSON string into an instance of type <typeparamref name="T" />.
@@ -23,7 +23,7 @@ public static class JsonSerializerExtensions
     /// </param>
     /// <param name="options">
     ///     The <see cref="JsonSerializerOptions" /> to use during deserialization. If <c>null</c>,
-    ///     <see cref="JsonSerializerExtendedOptions.WebApi" /> is used.
+    ///     <see cref="JsonSerializerOptionsExtended.WebApi" /> is used.
     /// </param>
     /// <returns>
     ///     <c>true</c> if the JSON string was successfully deserialized into an instance of <typeparamref name="T" />;
@@ -68,7 +68,7 @@ public static class JsonSerializerExtensions
     /// </param>
     /// <param name="options">
     ///     The <see cref="JsonSerializerOptions" /> to use during deserialization. If <c>null</c>,
-    ///     <see cref="JsonSerializerExtendedOptions.WebApi" /> is used.
+    ///     <see cref="JsonSerializerOptionsExtended.WebApi" /> is used.
     /// </param>
     /// <returns>
     ///     <c>true</c> if the JSON stream was successfully deserialized into an instance of <typeparamref name="T" />;
@@ -111,7 +111,7 @@ public static class JsonSerializerExtensions
     /// </param>
     /// <param name="options">
     ///     The <see cref="JsonSerializerOptions" /> to use during deserialization. If <c>null</c>,
-    ///     <see cref="JsonSerializerExtendedOptions.WebApi" /> is used.
+    ///     <see cref="JsonSerializerOptionsExtended.WebApi" /> is used.
     /// </param>
     /// <returns>
     ///     The deserialized object of type <typeparamref name="T" />, or <paramref name="defaultValue" />
@@ -146,7 +146,7 @@ public static class JsonSerializerExtensions
     /// </param>
     /// <param name="options">
     ///     The <see cref="JsonSerializerOptions" /> to use during deserialization. If <c>null</c>,
-    ///     <see cref="JsonSerializerExtendedOptions.WebApi" /> is used.
+    ///     <see cref="JsonSerializerOptionsExtended.WebApi" /> is used.
     /// </param>
     /// <returns>
     ///     The deserialized object of type <typeparamref name="T" />, or <paramref name="defaultValue" />
