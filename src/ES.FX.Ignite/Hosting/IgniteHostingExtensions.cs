@@ -41,31 +41,7 @@ public static class IgniteHostingExtensions
 
 
         if (settings.AddProblemDetails)
-            builder.Services.AddProblemDetails(options =>
-                options.CustomizeProblemDetails = (context) =>
-                {
-
-
-
-                    //var mathErrorFeature = context.HttpContext.Features
-                    //    .Get<MathErrorFeature>();
-                    //if (mathErrorFeature is not null)
-                    //{
-                    //    (string Detail, string Type) details = mathErrorFeature.MathError switch
-                    //    {
-                    //        MathErrorType.DivisionByZeroError =>
-                    //            ("Divison by zero is not defined.",
-                    //                "https://wikipedia.org/wiki/Division_by_zero"),
-                    //        _ => ("Negative or complex numbers are not valid input.",
-                    //            "https://wikipedia.org/wiki/Square_root")
-                    //    };
-
-                    //    context.ProblemDetails.Type = details.Type;
-                    //    context.ProblemDetails.Title = "Bad Input";
-                    //    context.ProblemDetails.Detail = details.Detail;
-                    //}
-                }
-            );
+            builder.Services.AddProblemDetails();
 
 
         if (settings.JsonStringEnumConverterEnabled)
@@ -169,7 +145,6 @@ public static class IgniteHostingExtensions
 
         if (host is WebApplication app)
         {
-
             if (settings.AspNetCore.UseExceptionHandler)
                 app.UseExceptionHandler();
 
@@ -190,7 +165,16 @@ public static class IgniteHostingExtensions
     private static void UseForwardedHeaders(WebApplication app, IgniteAspNetCoreSettings settings)
     {
         if (!settings.ForwardedHeadersEnabled) return;
-        app.UseForwardedHeaders();
+
+        var forwardingOptions = new ForwardedHeadersOptions
+        {
+            RequireHeaderSymmetry = false,
+            ForwardedHeaders = ForwardedHeaders.All,
+            ForwardLimit = null
+        };
+        forwardingOptions.KnownNetworks.Clear();
+        forwardingOptions.KnownProxies.Clear();
+        app.UseForwardedHeaders(forwardingOptions);
     }
 
     private static void UseHealthChecks(WebApplication app, IgniteHealthChecksSettings settings)
@@ -220,13 +204,13 @@ public static class IgniteHostingExtensions
 
     private static void UseStandardMiddleware(WebApplication app, IgniteAspNetCoreSettings settings)
     {
-        if (settings.ServerTimingMiddlewareEnabled)
+        if (settings.UseServerTimingMiddleware)
             app.UseMiddleware<ServerTimingMiddleware>();
 
-        if (settings.QueryStringToHeaderMiddlewareEnabled)
+        if (settings.UseQueryStringToHeaderMiddleware)
             app.UseMiddleware<QueryStringToHeaderMiddleware>();
 
-        if (settings.TraceIdentifierMiddlewareEnabled)
-            app.UseMiddleware<TraceIdentifierMiddleware>();
+        if (settings.UseTraceIdResponseHeader)
+            app.UseMiddleware<TraceIdResponseHeaderMiddleware>();
     }
 }

@@ -197,7 +197,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     app.IgniteNSwag();
 
-   
 
     var root = app
         .MapGroup("v{version:apiVersion}")

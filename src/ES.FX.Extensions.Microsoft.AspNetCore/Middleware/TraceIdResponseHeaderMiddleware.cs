@@ -6,7 +6,7 @@ namespace ES.FX.Extensions.Microsoft.AspNetCore.Middleware;
 /// <summary>
 ///     Middleware that sets the X-Trace-Id header with the TraceIdentifier of the request
 /// </summary>
-public class TraceIdentifierMiddleware(RequestDelegate next)
+public class TraceIdResponseHeaderMiddleware(RequestDelegate next)
 {
     [PublicAPI]
     public async Task InvokeAsync(HttpContext context)
