@@ -47,12 +47,12 @@ public static class IgniteHostingExtensions
             builder.Services.ConfigureHttpJsonOptions(options =>
             {
                 options.SerializerOptions.Converters.Add(
-                    new JsonStringEnumConverter(options.SerializerOptions.PropertyNamingPolicy));
+                    new JsonStringEnumConverter());
             });
             builder.Services.Configure<JsonOptions>(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(
-                    new JsonStringEnumConverter(options.JsonSerializerOptions.PropertyNamingPolicy));
+                    new JsonStringEnumConverter());
             });
         }
     }

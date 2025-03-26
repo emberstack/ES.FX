@@ -1,5 +1,6 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿using System.Collections.Concurrent;
+using System.Net;
+using System.Reflection;
 using ES.FX.Problems;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
@@ -12,24 +13,16 @@ namespace ES.FX.Extensions.Microsoft.AspNetCore.Problems;
 
 public static class ProblemExtensions
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DictionaryKeyPolicy = JsonNamingPolicy.CamelCase
-    };
+    // Cache the ProblemDetails properties (excluding Extensions) once.
+    private static readonly HashSet<string> ProblemDetailsProperties = new(
+        typeof(ProblemDetails)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Select(p => p.Name)
+            .Where(name => !string.Equals(name, nameof(ProblemDetails.Extensions), StringComparison.OrdinalIgnoreCase)),
+        StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>
-    ///     These properties are not included in the extensions dictionary of the ProblemDetails object. They are included as
-    ///     top-level properties.
-    /// </summary>
-    private static readonly HashSet<string> PropertiesToSkip = new(StringComparer.OrdinalIgnoreCase)
-    {
-        nameof(Problem.Detail),
-        nameof(Problem.Title),
-        nameof(Problem.Type),
-        nameof(Problem.Instance),
-        nameof(Problem.Status)
-    };
+    // Cache the properties for Problem types so reflection occurs only once
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> ProblemPropertiesCache = new();
 
     /// <summary>
     ///     Returns a <see cref="BadRequest{ProblemDetails}" /> result with the specified <see cref="Problem" />
@@ -52,6 +45,7 @@ public static class ProblemExtensions
     public static Ok<ProblemDetails> AsOkResult(this Problem problem) =>
         TypedResults.Ok(problem.AsProblemDetails());
 
+
     /// <summary>
     ///     Formats a <see cref="Problem" /> as <see cref="ProblemDetails" />
     /// </summary>
@@ -63,23 +57,11 @@ public static class ProblemExtensions
             ? (int)HttpStatusCode.BadRequest
             : (int)HttpStatusCode.UnprocessableEntity);
 
-        Dictionary<string, object?> extensions;
-        try
-        {
-            //Serialize and deserialize to ensure that the object is JSON safe. This also sets the correct casing for the keys and properties.
-            var jsonSafeExtensions = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
-                JsonSerializer.Serialize(problem as object, JsonSerializerOptions), JsonSerializerOptions);
-            extensions = jsonSafeExtensions?
-                             .Where(kvp => !PropertiesToSkip.Contains(kvp.Key))
-                             .Select(x => new KeyValuePair<string, object?>(x.Key, x.Value))
-                             .ToDictionary(x => x.Key, x => x.Value)
-                         ?? [];
-        }
-        catch
-        {
-            extensions = [];
-        }
-
+        var problemType = problem.GetType();
+        var properties = ProblemPropertiesCache.GetOrAdd(problemType, type =>
+            type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead && !ProblemDetailsProperties.Contains(p.Name))
+                .ToArray());
 
         return new ProblemDetails
         {
@@ -88,9 +70,10 @@ public static class ProblemExtensions
             Status = statusCode,
             Title = problem.Title,
             Instance = problem.Instance,
-            Extensions = extensions
+            Extensions = properties.ToDictionary(p => p.Name, p => p.GetValue(problem))
         };
     }
+
 
     /// <summary>
     ///     Returns a <see cref="ProblemHttpResult" /> result with the specified <see cref="Problem" />
