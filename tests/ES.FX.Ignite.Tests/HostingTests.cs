@@ -105,7 +105,7 @@ public class HostingTests
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.AspNetCore)}:{nameof(IgniteAspNetCoreSettings.ProblemDetailsEnabled)}",
+                $"{IgniteConfigurationSections.Ignite}:{SparkConfig.Settings}:{nameof(IgniteSettings.AspNetCore)}:{nameof(IgniteAspNetCoreSettings.AddProblemDetails)}",
                 enable.ToString())
         ]);
         builder.Ignite();

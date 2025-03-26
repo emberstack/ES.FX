@@ -39,8 +39,34 @@ public static class IgniteHostingExtensions
         if (settings.EndpointsApiExplorerEnabled)
             builder.Services.AddEndpointsApiExplorer();
 
-        if (settings.ProblemDetailsEnabled)
-            builder.Services.AddProblemDetails();
+
+        if (settings.AddProblemDetails)
+            builder.Services.AddProblemDetails(options =>
+                options.CustomizeProblemDetails = (context) =>
+                {
+
+
+
+                    //var mathErrorFeature = context.HttpContext.Features
+                    //    .Get<MathErrorFeature>();
+                    //if (mathErrorFeature is not null)
+                    //{
+                    //    (string Detail, string Type) details = mathErrorFeature.MathError switch
+                    //    {
+                    //        MathErrorType.DivisionByZeroError =>
+                    //            ("Divison by zero is not defined.",
+                    //                "https://wikipedia.org/wiki/Division_by_zero"),
+                    //        _ => ("Negative or complex numbers are not valid input.",
+                    //            "https://wikipedia.org/wiki/Square_root")
+                    //    };
+
+                    //    context.ProblemDetails.Type = details.Type;
+                    //    context.ProblemDetails.Title = "Bad Input";
+                    //    context.ProblemDetails.Detail = details.Detail;
+                    //}
+                }
+            );
+
 
         if (settings.JsonStringEnumConverterEnabled)
         {
@@ -143,6 +169,16 @@ public static class IgniteHostingExtensions
 
         if (host is WebApplication app)
         {
+
+            if (settings.AspNetCore.UseExceptionHandler)
+                app.UseExceptionHandler();
+
+            if (settings.AspNetCore.UseStatusCodePages)
+                app.UseStatusCodePages();
+
+            if (settings.AspNetCore.UseDeveloperExceptionPage && app.Environment.IsDevelopment())
+                app.UseDeveloperExceptionPage();
+
             UseStandardMiddleware(app, settings.AspNetCore);
             UseForwardedHeaders(app, settings.AspNetCore);
             UseHealthChecks(app, settings.HealthChecks);

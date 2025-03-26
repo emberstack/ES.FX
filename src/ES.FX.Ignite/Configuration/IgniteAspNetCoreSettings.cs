@@ -11,9 +11,26 @@ public class IgniteAspNetCoreSettings
     public bool EndpointsApiExplorerEnabled { get; set; } = true;
 
     /// <summary>
+    ///     Gets or sets a value indicating whether the Exception Handling Middleware is enabled
+    /// </summary>
+    public bool UseExceptionHandler { get; set; } = true;
+
+
+    /// <summary>
+    ///     Gets or sets a value indicating the StatusCodePages middleware is enabled
+    /// </summary>
+    public bool UseStatusCodePages { get; set; } = true;
+
+    /// <summary>
+    ///     Gets or sets a value indicating the DeveloperExceptionPage middleware is enabled on the Development environment
+    /// </summary>
+    public bool UseDeveloperExceptionPage { get; set; } = true;
+
+
+    /// <summary>
     ///     Gets or sets a value indicating whether the ProblemDetails middleware is enabled
     /// </summary>
-    public bool ProblemDetailsEnabled { get; set; } = true;
+    public bool AddProblemDetails { get; set; } = true;
 
     /// <summary>
     ///     Gets or sets a value indicating whether the JsonStringEnumConverter is enabled
@@ -41,4 +58,6 @@ public class IgniteAspNetCoreSettings
     ///     Gets or sets a value indicating whether the <see cref="TraceIdentifierMiddleware" /> is enabled
     /// </summary>
     public bool TraceIdentifierMiddlewareEnabled { get; set; } = true;
+
+  
 }

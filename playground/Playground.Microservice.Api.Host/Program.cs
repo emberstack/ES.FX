@@ -23,6 +23,7 @@ using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
 using ES.FX.Messaging;
+using ES.FX.Problems;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using HealthChecks.UI.Client;
@@ -196,6 +197,8 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     app.IgniteNSwag();
 
+   
+
     var root = app
         .MapGroup("v{version:apiVersion}")
         .AddFluentValidationAutoValidation()
@@ -213,10 +216,18 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         ////tx.Commit();
         //return Results.Ok();
 
-        return Results.Ok(new ReturnValue
-        {
-            CardIssuer = CardIssuer.MasterCard
-        });
+        //return Results.Ok(new ReturnValue
+        //{
+        //    CardIssuer = CardIssuer.MasterCard
+        //});
+
+        //var a = new CustomProblem
+        //{
+        //    Issuer = CardIssuer.MasterCard
+        //};
+        //return a.AsUnprocessableEntityResult();
+
+        throw new NotImplementedException();
     });
 
     //app.IgniteHealthChecksUi();
@@ -224,6 +235,12 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     await app.RunAsync();
     return 0;
 });
+
+
+public record CustomProblem : Problem
+{
+    public CardIssuer Issuer { get; init; }
+}
 
 
 public class ReturnValue
