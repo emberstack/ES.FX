@@ -33,6 +33,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Instrumentation.StackExchangeRedis;
 using OpenTelemetry.Trace;
 using Playground.Microservice.Api.Host.HostedServices;
 using Playground.Microservice.Api.Host.Testing;
@@ -119,6 +120,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.IgniteAzureTableServiceClient();
     // Add Redis
     builder.IgniteRedisClient();
+
 
 
     builder.Services.AddHostedService<TestHostedService>();

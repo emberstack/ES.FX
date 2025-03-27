@@ -28,7 +28,7 @@ public class SparkGuardTests
 
         builderMock.Object.GuardConfigurationKey(key, message);
 
-        Assert.True(builderMock.Object.ConfigurationKeyGuardSet(key));
+        Assert.True(builderMock.Object.IsGuardConfigurationKeySet(key));
     }
 
     [Fact]

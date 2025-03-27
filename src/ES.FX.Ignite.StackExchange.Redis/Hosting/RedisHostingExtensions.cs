@@ -18,12 +18,26 @@ public static class RedisHostingExtensions
         RedisSparkSettings settings)
     {
         if (settings.Tracing.Enabled)
+        {
             builder.Services.AddOpenTelemetry().WithTracing(t =>
             {
                 t.AddSource($"{typeof(StackExchangeRedisInstrumentation).Namespace}");
                 t.ConfigureRedisInstrumentation(_ => { });
                 t.AddInstrumentation(sp => sp.GetRequiredService<StackExchangeRedisInstrumentation>());
             });
+
+            // Configure StackExchangeRedisInstrumentationOptions once 
+            const string configureOnceKey = $"{RedisSpark.Name}.Global.Tracing.Configure";
+            if (!builder.IsGuardConfigurationKeySet(configureOnceKey))
+            {
+                builder.GuardConfigurationKey(configureOnceKey);
+
+                // Disable EnrichActivityWithTimingEvents as the activity is already timed
+                // Enabling this leads to logs that get registered with each span
+                builder.Services.AddOptions<StackExchangeRedisInstrumentationOptions>()
+                    .Configure(s => s.EnrichActivityWithTimingEvents = false);
+            }
+        }
 
         if (settings.HealthChecks.Enabled)
         {
@@ -85,6 +99,8 @@ public static class RedisHostingExtensions
         if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
 
 
+
+
         builder.Services.AddKeyedSingleton<IConnectionMultiplexer>(serviceKey, (sp, _) =>
         {
             var options = sp.GetRequiredService<IOptionsMonitor<RedisSparkOptions>>()
@@ -101,7 +117,11 @@ public static class RedisHostingExtensions
             var instanceSettings = sp.GetRequiredKeyedService<RedisSparkSettings>(serviceKey);
 
             if (instanceSettings.Tracing.Enabled)
+            {
                 sp.GetRequiredService<StackExchangeRedisInstrumentation>().AddConnection(connection);
+
+
+            }
 
             return connection;
         });
