@@ -305,10 +305,12 @@ public class OutboxDeliveryService<TDbContext>(
                         }
                     }
                 ).ConfigureAwait(false);
+                deliverOutboxActivity?.SetStatus(ActivityStatusCode.Ok);
             }
             catch (Exception exception)
             {
                 logger.LogError(exception, "Exception occurred while acquiring an outbox");
+                deliverOutboxActivity?.SetStatus(ActivityStatusCode.Error);
             }
             finally
             {
