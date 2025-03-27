@@ -19,7 +19,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HTTP_PORTS": "8080",
-        "OTEL_RESOURCE_ATTRIBUTES":"service.instance.id=spn-updates-api-5966db5b75-b6rpm,k8s.pod.name=spn-updates-api-5966db5b75-b6rpm,k8s.pod.uid=4b7c958a-d120-4f94-b9bf-4236ebd385e7,k8s.namespace.name=latest,k8s.node.name=aks-nodepool1-32158127-vmss000000"
+        "OTEL_RESOURCE_ATTRIBUTES":"service.instance.id=local-instance,k8s.pod.name=local-pod,k8s.pod.uid=local-pod-id,k8s.namespace.name=local-namespace,k8s.node.name=local-node"
       },
       "applicationUrl": "http://0.0.0.0:50001",
       "dotnetRunMessages": false,

@@ -105,7 +105,7 @@ public class OutboxDeliveryService<TDbContext>(
             {
                 deliverOutboxActivity = Diagnostics.ActivitySource.StartActivity(
                     Diagnostics.DeliverOutboxActivityName,
-                    ActivityKind.Server, null, new Dictionary<string, object?>
+                    ActivityKind.Client, null, new Dictionary<string, object?>
                     {
                         { "outbox.dbContext.type", typeof(TDbContext).FullName }
                     }

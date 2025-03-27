@@ -24,17 +24,24 @@ using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
 using ES.FX.Messaging;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore.Messages;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using HealthChecks.UI.Client;
 using MassTransit;
 using MassTransit.Logging;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using Playground.Microservice.Api.Host.HostedServices;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
+using Playground.Shared.Data.Simple.EntityFrameworkCore.Entities;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
+using StackExchange.Redis;
+using System.Diagnostics;
 
 return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(async _ =>
 {
@@ -190,6 +197,11 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     }).AddOpenTelemetry().WithTracing(traceBuilder =>
         traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
 
+    builder.Services.AddOpenTelemetry().WithTracing(tracing =>
+    {
+        tracing.SetSampler(new CustomSampler());
+    });
+
 
     var app = builder.Build();
     app.Ignite();
@@ -204,9 +216,30 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             .ReportApiVersions()
             .Build());
 
-    root.MapGet("test", (IServiceProvider serviceProvider) =>
+    root.MapGet("test", async (IServiceProvider serviceProvider) =>
     {
-        throw new NotImplementedException();
+
+        var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<SimpleDbContext>>();
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
+
+        dbContext.AddOutboxMessage(new OutboxTestMessage
+        {
+            SomeProp = "Property"
+        }, new OutboxMessageOptions
+        {
+            MaxAttempts = 5,
+            DelayBetweenAttempts = 5,
+            DelayBetweenAttemptsIsExponential = true
+        });
+        dbContext.SimpleUsers.Add(new SimpleUser
+        { Id = Guid.CreateVersion7(), Username = Guid.CreateVersion7().ToString() });
+
+        await dbContext.SaveChangesAsync().ConfigureAwait(false);
+
+
+        var redisMultiplexer = serviceProvider.GetRequiredService<IConnectionMultiplexer>();
+        var redisDatabase = redisMultiplexer.GetDatabase();
+        await redisDatabase.StringGetAsync("something");
     });
 
     //app.IgniteHealthChecksUi();
@@ -214,3 +247,19 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     await app.RunAsync();
     return 0;
 });
+
+
+public class CustomSampler : Sampler
+{
+    public override SamplingResult ShouldSample(in SamplingParameters parameters)
+    {
+        //// Only record spans whose name contains "MyOperation"
+        //if (parameters.Name.Contains(Diagnostics.DeliverOutboxActivityName))
+        //{
+        //    return new SamplingResult(SamplingDecision.Drop);
+
+        //}
+        return new SamplingResult(SamplingDecision.RecordAndSample);
+
+    }
+}
