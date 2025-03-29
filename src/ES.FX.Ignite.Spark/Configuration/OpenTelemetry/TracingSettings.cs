@@ -1,4 +1,4 @@
-﻿namespace ES.FX.Ignite.Spark.Configuration;
+﻿namespace ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
 
 public class TracingSettings
 {

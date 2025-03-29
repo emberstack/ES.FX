@@ -2,6 +2,7 @@ using ES.FX.Extensions.Microsoft.Data.SqlClient.Abstractions;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
 using ES.FX.Ignite.Spark.Exceptions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;

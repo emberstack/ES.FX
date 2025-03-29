@@ -2,7 +2,7 @@
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ES.FX.Extensions.Microsoft.AspNetCore.Middleware;
 using ES.FX.Ignite.Configuration;
-using ES.FX.Ignite.OpenTelemetry.AspNetCore;
+using ES.FX.Ignite.Configuration.AspNetCore;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.HealthChecks;
 using HealthChecks.ApplicationStatus.DependencyInjection;
@@ -14,7 +14,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OpenTelemetry;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -24,7 +26,7 @@ namespace ES.FX.Ignite.Hosting;
 [PublicAPI]
 public static class IgniteHostingExtensions
 {
-    private static void AddAspNetServices(IHostApplicationBuilder builder, IgniteAspNetCoreSettings settings)
+    private static void AddAspNetServices(IHostApplicationBuilder builder, AspNetCoreSettings settings)
     {
         if (settings.ForwardedHeadersEnabled)
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -36,7 +38,7 @@ public static class IgniteHostingExtensions
                 options.KnownNetworks.Clear();
             });
 
-        if (settings.EndpointsApiExplorerEnabled)
+        if (settings.AddEndpointsApiExplorer)
             builder.Services.AddEndpointsApiExplorer();
 
 
@@ -59,15 +61,15 @@ public static class IgniteHostingExtensions
         }
     }
 
-    private static void AddHealthChecks(IHostApplicationBuilder builder, IgniteHealthChecksSettings settings)
+    private static void AddHealthChecks(IHostApplicationBuilder builder, IgniteSettings settings)
     {
         var healthCheckKey = builder.Environment.ApplicationName;
         var healthCheckBuilder = builder.Services.AddHealthChecks();
-        if (settings.ApplicationStatusCheckEnabled)
+        if (settings.AspNetCore.HealthChecks.ApplicationStatusCheckEnabled)
             healthCheckBuilder.AddApplicationStatus(healthCheckKey, tags: [HealthChecksTags.Live, nameof(Host)]);
     }
 
-    private static void AddHttpClient(IHostApplicationBuilder builder, IgniteHttpClientSettings settings)
+    private static void AddHttpClient(IHostApplicationBuilder builder, HttpClientSettings settings)
     {
         if (settings.StandardResilienceHandlerEnabled)
             builder.Services.ConfigureHttpClientDefaults(http =>
@@ -79,44 +81,50 @@ public static class IgniteHostingExtensions
         builder.Services.AddHttpClient();
     }
 
-    private static void AddOpenTelemetry(IHostApplicationBuilder builder, IgniteOpenTelemetrySettings settings)
+    private static void AddOpenTelemetry(IHostApplicationBuilder builder, IgniteSettings settings)
     {
-        if (!settings.Enabled) return;
+        if (!settings.OpenTelemetry.Enabled) return;
 
-        if (settings.LoggingEnabled)
+        if (settings.OpenTelemetry.LoggingEnabled)
             builder.Logging.AddOpenTelemetry(logging =>
             {
-                logging.IncludeFormattedMessage = settings.LoggingIncludeFormattedMessage;
-                logging.IncludeScopes = settings.LoggingIncludeScopes;
+                logging.IncludeFormattedMessage = settings.OpenTelemetry.LoggingIncludeFormattedMessage;
+                logging.IncludeScopes = settings.OpenTelemetry.LoggingIncludeScopes;
             });
 
         builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics =>
             {
-                if (settings.RuntimeMetricsEnabled) metrics.AddRuntimeInstrumentation();
-                if (settings.HttpClientMetricsEnabled) metrics.AddHttpClientInstrumentation();
-                if (settings.AspNetCoreMetricsEnabled) metrics.AddAspNetCoreInstrumentation();
+                if (settings.Runtime.Metrics.Enabled) metrics.AddRuntimeInstrumentation();
+                if (settings.HttpClient.Metrics.Enabled) metrics.AddHttpClientInstrumentation();
+                if (settings.AspNetCore.Metrics.Enabled) metrics.AddAspNetCoreInstrumentation();
             })
             .WithTracing(tracing =>
             {
-                if (settings.HttpClientTracingEnabled) tracing.AddHttpClientInstrumentation();
-                if (settings.AspNetCoreTracingEnabled)
-                    tracing.AddAspNetCoreInstrumentation(options =>
-                    {
-                        if (settings.AspNetCoreTracingHealthChecksRequestsFiltered)
-                            options.Filter = IgnoreHealthChecksRequests.Filter;
-                    });
+                if (settings.HttpClient.Tracing.Enabled) tracing.AddHttpClientInstrumentation();
+                if (settings.AspNetCore.Tracing.Enabled) tracing.AddAspNetCoreInstrumentation();
             });
 
-        if (settings.OtlpExporterEnabled) builder.Services.AddOpenTelemetry().UseOtlpExporter();
-        if (settings.AzureMonitorExporterEnabled) builder.Services.AddOpenTelemetry().UseAzureMonitor();
 
-        //This must be called last, after AzureMonitor so attributes don't get overridden
+        if (settings.OpenTelemetry.UseOtlpExporter) builder.Services.AddOpenTelemetry().UseOtlpExporter();
+        if (settings.OpenTelemetry.UseAzureMonitor) builder.Services.AddOpenTelemetry().UseAzureMonitor();
+
+        //This must be called after AzureMonitor so attributes don't get overridden
         builder.Services.AddOpenTelemetry()
             .ConfigureResource(r =>
             {
                 r.AddService(builder.Environment.ApplicationName);
                 r.AddEnvironmentVariableDetector();
+            });
+
+        // Configure default options for AspNetCore tracing based on settings.
+        // This is added here because the instrumentation can be added multiple times (ex: default and AzureMonitor can add the instrumentation)
+        if (settings.AspNetCore.HealthChecks.Enabled && settings.AspNetCore.Tracing.HealthChecksFiltered)
+            builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(Options.DefaultName, o =>
+            {
+                o.Filter = context =>
+                    !context.Request.Path.StartsWithSegments(settings.AspNetCore.HealthChecks.LivenessEndpointPath) &&
+                    !context.Request.Path.StartsWithSegments(settings.AspNetCore.HealthChecks.ReadinessEndpointPath);
             });
     }
 
@@ -129,9 +137,9 @@ public static class IgniteHostingExtensions
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
         builder.Services.AddSingleton(settings);
 
-        AddOpenTelemetry(builder, settings.OpenTelemetry);
+        AddOpenTelemetry(builder, settings);
 
-        AddHealthChecks(builder, settings.HealthChecks);
+        AddHealthChecks(builder, settings);
 
         AddHttpClient(builder, settings.HttpClient);
 
@@ -156,13 +164,13 @@ public static class IgniteHostingExtensions
 
             UseStandardMiddleware(app, settings.AspNetCore);
             UseForwardedHeaders(app, settings.AspNetCore);
-            UseHealthChecks(app, settings.HealthChecks);
+            UseHealthChecks(app, settings);
         }
 
         return host;
     }
 
-    private static void UseForwardedHeaders(WebApplication app, IgniteAspNetCoreSettings settings)
+    private static void UseForwardedHeaders(WebApplication app, AspNetCoreSettings settings)
     {
         if (!settings.ForwardedHeadersEnabled) return;
 
@@ -177,9 +185,9 @@ public static class IgniteHostingExtensions
         app.UseForwardedHeaders(forwardingOptions);
     }
 
-    private static void UseHealthChecks(WebApplication app, IgniteHealthChecksSettings settings)
+    private static void UseHealthChecks(WebApplication app, IgniteSettings settings)
     {
-        if (!settings.EndpointEnabled) return;
+        if (!settings.AspNetCore.HealthChecks.Enabled) return;
 
         //Readiness checks are used to determine if the app is ready to accept traffic after starting
         //All health checks must pass for app to be considered ready
@@ -192,17 +200,22 @@ public static class IgniteHostingExtensions
             Predicate = r => r.Tags.Contains(HealthChecksTags.Live)
         };
 
-        if (settings.ResponseWriter is not null)
+        if (settings.AspNetCore.HealthChecks.ResponseWriter is not null)
         {
-            readinessHealthCheckOptions.ResponseWriter = settings.ResponseWriter;
-            livenessHealthCheckOptions.ResponseWriter = settings.ResponseWriter;
+            readinessHealthCheckOptions.ResponseWriter = settings.AspNetCore.HealthChecks.ResponseWriter;
+            livenessHealthCheckOptions.ResponseWriter = settings.AspNetCore.HealthChecks.ResponseWriter;
         }
 
-        app.MapHealthChecks(settings.ReadinessEndpointPath, readinessHealthCheckOptions);
-        app.MapHealthChecks(settings.LivenessEndpointPath, livenessHealthCheckOptions);
+        var readinessEndpointBuilder = app.MapHealthChecks(
+            settings.AspNetCore.HealthChecks.ReadinessEndpointPath, readinessHealthCheckOptions);
+        if (settings.AspNetCore.Metrics.HealthChecksFiltered) readinessEndpointBuilder.DisableHttpMetrics();
+
+        var livenessEndpointBuilder = app.MapHealthChecks(
+            settings.AspNetCore.HealthChecks.LivenessEndpointPath, livenessHealthCheckOptions);
+        if (settings.AspNetCore.Metrics.HealthChecksFiltered) livenessEndpointBuilder.DisableHttpMetrics();
     }
 
-    private static void UseStandardMiddleware(WebApplication app, IgniteAspNetCoreSettings settings)
+    private static void UseStandardMiddleware(WebApplication app, AspNetCoreSettings settings)
     {
         if (settings.UseServerTimingMiddleware)
             app.UseMiddleware<ServerTimingMiddleware>();

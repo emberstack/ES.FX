@@ -1,5 +1,6 @@
 ﻿using Azure.Core.Extensions;
 using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;

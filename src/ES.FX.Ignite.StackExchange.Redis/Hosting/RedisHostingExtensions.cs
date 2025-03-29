@@ -99,8 +99,6 @@ public static class RedisHostingExtensions
         if (configureOptions is not null) optionsBuilder.Configure(configureOptions);
 
 
-
-
         builder.Services.AddKeyedSingleton<IConnectionMultiplexer>(serviceKey, (sp, _) =>
         {
             var options = sp.GetRequiredService<IOptionsMonitor<RedisSparkOptions>>()
@@ -117,11 +115,7 @@ public static class RedisHostingExtensions
             var instanceSettings = sp.GetRequiredKeyedService<RedisSparkSettings>(serviceKey);
 
             if (instanceSettings.Tracing.Enabled)
-            {
                 sp.GetRequiredService<StackExchangeRedisInstrumentation>().AddConnection(connection);
-
-
-            }
 
             return connection;
         });

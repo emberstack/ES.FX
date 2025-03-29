@@ -32,9 +32,6 @@ using MassTransit.Logging;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using OpenTelemetry;
-using OpenTelemetry.Instrumentation.StackExchangeRedis;
-using OpenTelemetry.Trace;
 using Playground.Microservice.Api.Host.HostedServices;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
@@ -42,7 +39,6 @@ using Playground.Shared.Data.Simple.EntityFrameworkCore.Entities;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using StackExchange.Redis;
-using System.Diagnostics;
 
 return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(async _ =>
 {
@@ -54,7 +50,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     builder.Ignite(settings =>
     {
-        settings.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
+        settings.AspNetCore.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
         settings.AspNetCore.JsonStringEnumConverterEnabled = true;
     });
 
@@ -120,7 +116,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.IgniteAzureTableServiceClient();
     // Add Redis
     builder.IgniteRedisClient();
-
 
 
     builder.Services.AddHostedService<TestHostedService>();
@@ -199,11 +194,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     }).AddOpenTelemetry().WithTracing(traceBuilder =>
         traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
 
-    builder.Services.AddOpenTelemetry().WithTracing(tracing =>
-    {
-        tracing.SetSampler(new CustomSampler());
-    });
-
 
     var app = builder.Build();
     app.Ignite();
@@ -213,6 +203,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     var root = app
         .MapGroup("v{version:apiVersion}")
+        .DisableHttpMetrics()
         .AddFluentValidationAutoValidation()
         .WithApiVersionSet(app.NewApiVersionSet()
             .ReportApiVersions()
@@ -220,7 +211,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     root.MapGet("test", async (IServiceProvider serviceProvider) =>
     {
-
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<SimpleDbContext>>();
         await using var dbContext = await dbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
 
@@ -234,7 +224,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             DelayBetweenAttemptsIsExponential = true
         });
         dbContext.SimpleUsers.Add(new SimpleUser
-        { Id = Guid.CreateVersion7(), Username = Guid.CreateVersion7().ToString() });
+            { Id = Guid.CreateVersion7(), Username = Guid.CreateVersion7().ToString() });
 
         await dbContext.SaveChangesAsync().ConfigureAwait(false);
 
@@ -249,19 +239,3 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     await app.RunAsync();
     return 0;
 });
-
-
-public class CustomSampler : Sampler
-{
-    public override SamplingResult ShouldSample(in SamplingParameters parameters)
-    {
-        //// Only record spans whose name contains "MyOperation"
-        //if (parameters.Name.Contains(Diagnostics.DeliverOutboxActivityName))
-        //{
-        //    return new SamplingResult(SamplingDecision.Drop);
-
-        //}
-        return new SamplingResult(SamplingDecision.RecordAndSample);
-
-    }
-}

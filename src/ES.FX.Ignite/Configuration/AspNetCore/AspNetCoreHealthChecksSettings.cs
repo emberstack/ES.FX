@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace ES.FX.Ignite.Configuration;
+namespace ES.FX.Ignite.Configuration.AspNetCore;
 
 /// <summary>
 ///     Settings for HealthChecks
 /// </summary>
-public class IgniteHealthChecksSettings
+public class AspNetCoreHealthChecksSettings
 {
     /// <summary>
-    ///     Gets or sets a value indicating whether the health checks endpoint is enabled
+    ///     Gets or sets a value indicating whether the health checks are enabled
     /// </summary>
-    public bool EndpointEnabled { get; set; } = true;
+    public bool Enabled { get; set; } = true;
 
     /// <summary>
     ///     Gets or sets the readiness endpoint path

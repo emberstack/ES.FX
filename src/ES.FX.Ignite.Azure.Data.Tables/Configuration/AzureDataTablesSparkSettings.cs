@@ -1,5 +1,6 @@
 ﻿using Azure.Data.Tables;
 using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
 
 namespace ES.FX.Ignite.Azure.Data.Tables.Configuration;
 

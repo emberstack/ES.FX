@@ -1,5 +1,6 @@
 ﻿using Azure.Security.KeyVault.Secrets;
 using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
 
 namespace ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Configuration;
 

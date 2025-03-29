@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Queues;
 using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
 
 namespace ES.FX.Ignite.Azure.Storage.Queues.Configuration;
 

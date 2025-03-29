@@ -1,4 +1,7 @@
-﻿namespace ES.FX.Ignite.Configuration;
+﻿using ES.FX.Ignite.Configuration.AspNetCore;
+using ES.FX.Ignite.Configuration.Runtime;
+
+namespace ES.FX.Ignite.Configuration;
 
 /// <summary>
 ///     Settings used to configure the Ignite services
@@ -6,9 +9,9 @@
 public class IgniteSettings
 {
     /// <summary>
-    ///     Settings for HealthChecks
+    ///     Settings for Runtime
     /// </summary>
-    public IgniteHealthChecksSettings HealthChecks { get; } = new();
+    public RuntimeSettings Runtime { get; } = new();
 
     /// <summary>
     ///     Settings for OpenTelemetry
@@ -18,11 +21,11 @@ public class IgniteSettings
     /// <summary>
     ///     Settings for HttpClient
     /// </summary>
-    public IgniteHttpClientSettings HttpClient { get; } = new();
+    public HttpClientSettings HttpClient { get; } = new();
 
 
     /// <summary>
     ///     Settings for AspNetCore
     /// </summary>
-    public IgniteAspNetCoreSettings AspNetCore { get; } = new();
+    public AspNetCoreSettings AspNetCore { get; } = new();
 }

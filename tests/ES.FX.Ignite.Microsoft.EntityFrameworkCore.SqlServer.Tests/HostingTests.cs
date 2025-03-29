@@ -2,6 +2,7 @@ using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.Context;
 using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
 using ES.FX.Ignite.Spark.Exceptions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;

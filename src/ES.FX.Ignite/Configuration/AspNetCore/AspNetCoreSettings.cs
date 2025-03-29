@@ -1,14 +1,14 @@
-﻿namespace ES.FX.Ignite.Configuration;
+﻿namespace ES.FX.Ignite.Configuration.AspNetCore;
 
 /// <summary>
 ///     Settings for AspNetCore
 /// </summary>
-public class IgniteAspNetCoreSettings
+public class AspNetCoreSettings
 {
     /// <summary>
     ///     Gets or sets a value indicating whether the Endpoints API Explorer is enabled
     /// </summary>
-    public bool EndpointsApiExplorerEnabled { get; set; } = true;
+    public bool AddEndpointsApiExplorer { get; set; } = true;
 
     /// <summary>
     ///     Gets or sets a value indicating whether the Exception Handling Middleware is enabled
@@ -58,4 +58,20 @@ public class IgniteAspNetCoreSettings
     ///     Gets or sets a value indicating whether the <see cref="TraceIdResponseHeaderMiddleware" /> is enabled
     /// </summary>
     public bool UseTraceIdResponseHeader { get; set; } = true;
+
+    /// <summary>
+    ///     Settings for HealthChecks
+    /// </summary>
+    public AspNetCoreHealthChecksSettings HealthChecks { get; } = new();
+
+
+    /// <summary>
+    ///     <inheritdoc cref="AspNetCoreTracingSettings" />
+    /// </summary>
+    public AspNetCoreTracingSettings Tracing { get; set; } = new();
+
+    /// <summary>
+    ///     <inheritdoc cref="AspNetCoreMetricsSettings" />
+    /// </summary>
+    public AspNetCoreMetricsSettings Metrics { get; set; } = new();
 }

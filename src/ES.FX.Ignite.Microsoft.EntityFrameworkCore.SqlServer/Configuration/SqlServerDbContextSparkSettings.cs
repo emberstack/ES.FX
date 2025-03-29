@@ -1,4 +1,5 @@
 ﻿using ES.FX.Ignite.Spark.Configuration;
+using ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Configuration;
