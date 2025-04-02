@@ -7,5 +7,5 @@ public class RuntimeSettings
     /// <summary>
     ///     <inheritdoc cref="MetricsSettings" />
     /// </summary>
-    public MetricsSettings Metrics { get; set; } = new();
+    public MetricsSettings Metrics { get; set; } = new() { Enabled = false };
 }
