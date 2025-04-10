@@ -2,11 +2,10 @@
 
 namespace ES.FX.Problems
 {
-
     /// <summary>
     ///     Represents an error detail with a message and an error code.
     /// </summary>
-    [PublicAPI] // Marking this class as part of a public API
+    [PublicAPI]
     public class ErrorDetail
     {
         /// <summary>
