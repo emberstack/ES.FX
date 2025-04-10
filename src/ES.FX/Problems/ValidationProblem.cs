@@ -4,6 +4,6 @@
 ///     A <see cref="Problem" /> that represents one or more validation errors.
 /// </summary>
 /// <param name="Errors"></param>
-public record ValidationProblem(IDictionary<string, string[]> Errors) :
+public record ValidationProblem(IDictionary<string, List<ErrorDetail>> Errors) :
     Problem("https://tools.ietf.org/html/rfc9110#section-15.5.1",
         "One or more validation errors occurred.");
