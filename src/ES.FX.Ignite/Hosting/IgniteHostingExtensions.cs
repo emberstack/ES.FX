@@ -119,13 +119,13 @@ public static class IgniteHostingExtensions
 
         // Configure default options for AspNetCore tracing based on settings.
         // This is added here because the instrumentation can be added multiple times (ex: default and AzureMonitor can add the instrumentation)
-        if (settings.AspNetCore.HealthChecks.Enabled && settings.AspNetCore.Tracing.HealthChecksFiltered)
-            builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(Options.DefaultName, o =>
-            {
+        builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(Options.DefaultName, o =>
+        {
+            if (settings.AspNetCore.HealthChecks.Enabled && settings.AspNetCore.Tracing.HealthChecksFiltered)
                 o.Filter = context =>
                     !context.Request.Path.StartsWithSegments(settings.AspNetCore.HealthChecks.LivenessEndpointPath) &&
                     !context.Request.Path.StartsWithSegments(settings.AspNetCore.HealthChecks.ReadinessEndpointPath);
-            });
+        });
     }
 
     public static void Ignite(this IHostApplicationBuilder builder,
