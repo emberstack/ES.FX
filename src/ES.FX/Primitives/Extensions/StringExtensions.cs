@@ -2,7 +2,7 @@
 using System.Globalization;
 using JetBrains.Annotations;
 
-namespace ES.FX.Primitives;
+namespace ES.FX.Primitives.Extensions;
 
 [PublicAPI]
 public static class StringExtensions
