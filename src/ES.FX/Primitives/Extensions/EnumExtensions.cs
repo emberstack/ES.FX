@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace ES.FX.Primitives;
+namespace ES.FX.Primitives.Extensions;
 
 [PublicAPI]
 public static class EnumExtensions
