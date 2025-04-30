@@ -34,7 +34,7 @@ public class Result : Result<bool>
 /// </summary>
 /// <typeparam name="T">Type of result</typeparam>
 [PublicAPI]
-public class Result<T> : IResult
+public class Result<T> : IResult where T : notnull
 {
     private readonly Problem? _problem;
     private readonly T? _result;
