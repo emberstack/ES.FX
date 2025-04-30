@@ -103,8 +103,8 @@ public class Result<T> : IResult
     /// </summary>
     public bool TryPickResult([NotNullWhen(true)] out T? result, [NotNullWhen(false)] out Problem? problem)
     {
-        result = IsResult ? AsResult : default;
-        problem = IsProblem ? AsProblem : null;
+        result = IsResult ? _result : default;
+        problem = IsProblem ? _problem : null;
         return IsResult;
     }
 
@@ -119,8 +119,8 @@ public class Result<T> : IResult
     /// </summary>
     public bool TryPickProblem([NotNullWhen(true)] out Problem? problem, [NotNullWhen(false)] out T? result)
     {
-        result = IsResult ? AsResult : default;
-        problem = IsProblem ? AsProblem : null;
+        result = IsResult ? _result : default;
+        problem = IsProblem ? _problem : null;
         return IsProblem;
     }
 

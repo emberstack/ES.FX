@@ -5,6 +5,24 @@ namespace ES.FX.Tests.Results;
 
 public class ResultsTests
 {
+
+    [Fact]
+    public void TypedResult_CanBe_Null()
+    {
+        var result = TypedResultAsNull();
+        Assert.True(result.IsResult);
+
+        if(result.TryPickResult(out var resultValue))
+        {
+            Assert.Null(resultValue);
+        }
+
+        if (!result.TryPickProblem(out var problemValue))
+        {
+            Assert.Null(problemValue);
+        }
+    }
+
     [Fact]
     public void Result_CanBe_Success()
     {
@@ -103,4 +121,7 @@ public class ResultsTests
 
     private static Result<string> TypedResultAsProblem() => new Problem();
     private static Result<string> TypedResultAsValue() => string.Empty;
+    private static Result<object?> TypedResultAsNull() => (object?)null;
+
+
 }
