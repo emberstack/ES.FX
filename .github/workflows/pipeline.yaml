@@ -1,0 +1,206 @@
+name: Pipeline
+
+on:
+  push:
+    branches:
+      - '**'  # Matches all branches
+  pull_request:
+    branches:
+      - '**'  # Matches all branches
+
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Forces a build even if no changes are detected"
+        required: true
+        default: "false"
+      force_release:
+        description: "Forces a release even if no changes are detected"
+        required: true
+        default: "false"
+
+concurrency:
+  group: pipeline-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pathsFilter_src: ${{ steps.pathsFilter.outputs.src }}
+      gitVersion_SemVer: ${{ steps.gitversion.outputs.GitVersion_SemVer }}
+      gitVersion_AssemblySemFileVer: ${{ steps.gitversion.outputs.GitVersion_AssemblySemFileVer }}
+      build: ${{ steps.evaluate_build.outputs.result }}
+      build_push: ${{ steps.evaluate_build_push.outputs.result }}
+      build_configuration: ${{ steps.evaluate_build_configuration.outputs.result }}
+      release: ${{ steps.evaluate_release.outputs.result }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: tools - dotnet - install
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.x"
+
+      - name: tools - gitversion - install
+        uses: gittools/actions/gitversion/setup@v3.2.1
+        with:
+          versionSpec: "5.x"
+          preferLatestVersion: true
+
+      - name: gitversion - execute
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3.2.1
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yaml
+
+      - name: tools - detect changes
+        id: pathsFilter
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            src:
+              - '*.sln'
+              - '*.slnx'
+              - '*.props'
+              - 'src/**'
+            build:
+              - '*.sln'
+              - '*.slnx'
+              - '*.props'
+              - 'src/**'
+              - 'tests/**'
+              - 'playground/**'
+
+      - name: evaluate - build
+        id: evaluate_build
+        env:
+          RESULT: ${{ steps.pathsFilter.outputs.build == 'true' || github.event.inputs.force_build == 'true' || github.event.inputs.force_release == 'true' }}
+        run: echo "result=$RESULT" >> $GITHUB_OUTPUT
+
+      - name: evaluate - build_push
+        id: evaluate_build_push
+        env:
+          RESULT: ${{ github.event_name != 'pull_request' && (steps.pathsFilter.outputs.src == 'true' || github.event.inputs.force_build == 'true') }}
+        run: echo "result=$RESULT" >> $GITHUB_OUTPUT
+
+      - name: evaluate - build_configuration
+        id: evaluate_build_configuration
+        env:
+          RESULT: ${{ github.ref == 'refs/heads/main' && 'Release' || 'Debug' }}
+        run: echo "result=$RESULT" >> $GITHUB_OUTPUT
+
+      - name: evaluate - release
+        id: evaluate_release
+        env:
+          RESULT: ${{ github.ref == 'refs/heads/main' || github.event.inputs.force_release == 'true' }}
+        run: echo "result=$RESULT" >> $GITHUB_OUTPUT
+
+  build:
+    name: build
+    if: ${{ needs.discovery.outputs.build == 'true' }}
+    needs: [discovery]
+    runs-on: ubuntu-latest
+    env:
+      build: ${{ needs.discovery.outputs.build }}
+      build_push: ${{ needs.discovery.outputs.build_push }}
+      build_configuration: ${{ needs.discovery.outputs.build_configuration }}
+      gitVersion_SemVer: ${{ needs.discovery.outputs.gitVersion_SemVer }}
+      gitVersion_AssemblySemFileVer: ${{ needs.discovery.outputs.gitVersion_AssemblySemFileVer }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: tools - dotnet - install
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+
+      - name: tools - dotnet - install
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.x"
+
+      - name: dotnet - restore
+        run: dotnet restore
+
+      - name: dotnet - build
+        run: dotnet build --no-restore --configuration ${{ env.build_configuration }} /p:Version=${{ env.gitVersion_SemVer }} /p:AssemblyVersion=${{env.gitVersion_AssemblySemFileVer}} /p:NuGetVersion=${{env.gitVersion_SemVer}}
+
+      - name: dotnet - test
+        run: dotnet test --no-build --configuration ${{ env.build_configuration }} --verbosity normal
+
+      - name: tests - report
+        uses: dorny/test-reporter@v2
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        with:
+          name: Test Results
+          path: .artifacts/TestResults/*.trx
+          reporter: dotnet-trx
+          fail-on-empty: "false"
+
+      - name: artifacts - nuget - gather
+        run: |
+          mkdir -p .artifacts/nuget
+          find . -name "*.nupkg" -exec cp {} .artifacts/nuget/ \;
+
+      - name: artifacts - nuget - upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-nuget-${{env.GitVersion_SemVer}}
+          path: .artifacts/nuget/*.nupkg
+
+      - name: dotnet nuget push - GitHub
+        if: ${{ env.build_push == 'true' }}
+        run: |
+          dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/emberstack/index.json"
+          for pkg in .artifacts/nuget/*.nupkg; do
+            dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} --skip-duplicate
+          done
+
+  release:
+    name: release
+    if: ${{ needs.discovery.outputs.release == 'true' && github.ref == 'refs/heads/main' }}
+    needs: [discovery, build]
+    runs-on: ubuntu-latest
+    env:
+      gitVersion_SemVer: ${{ needs.discovery.outputs.gitVersion_SemVer }}
+      gitVersion_AssemblySemFileVer: ${{ needs.discovery.outputs.gitVersion_AssemblySemFileVer }}
+    steps:
+      - name: artifacts - nuget - download
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts-nuget-${{env.semVer}}
+          path: .artifacts/nuget
+
+      - name: dotnet nuget push - GitHub
+        run: |
+          dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/emberstack/index.json"
+          for pkg in .artifacts/nuget/*.nupkg; do
+            dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} --skip-duplicate
+          done
+
+      - name: dotnet nuget push - NuGet
+        if: github.ref == 'refs/heads/main'
+        run: |
+          for pkg in .artifacts/nuget/*.nupkg; do
+            dotnet nuget push "$pkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.ES_NUGET_APIKEY }} --skip-duplicate
+          done
+
+      - name: github - release - create
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: ${{ github.repository }}
+          name: v${{ env.gitVersion_SemVer }}
+          tag_name: v${{ env.gitVersion_SemVer }}
+          body: The release process is automated.
+          generate_release_notes: true
+          token: ${{ secrets.ES_GITHUB_PAT }}

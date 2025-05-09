@@ -7,7 +7,7 @@ public sealed class SeqContainerFixture : IAsyncLifetime
 {
     public const string Registry = "datalust";
     public const string Image = "seq";
-    public const string Tag = "latest";
+    public const string Tag = "preview";
     public SeqSutFactory? WebApplicationFactory;
     public IContainer? Container { get; private set; }
 
