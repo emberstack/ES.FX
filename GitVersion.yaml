@@ -55,6 +55,16 @@ branches:
     is-release-branch: true
     is-mainline: false
     pre-release-weight: 30000
+  # ← insert this right above your “feature:” entry
+  dependabot:
+    regex: '^dependabot/.*'
+    mode: ContinuousDelivery
+    tag: 'dependabot'
+    increment: Patch
+    prevent-increment-of-merged-branch-version: true
+    track-merge-target: false
+    source-branches: [ main, develop ]
+    pre-release-weight: 20000
   feature:
     mode: ContinuousDelivery
     tag: '{BranchName}'
