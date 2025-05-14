@@ -96,6 +96,11 @@ public enum DurationUnit
     Week,
 
     /// <summary>
+    ///     One weekend (2 days).
+    /// </summary>
+    Weekend,
+
+    /// <summary>
     ///     One calendar month (28–31 days).
     /// </summary>
     Month,
