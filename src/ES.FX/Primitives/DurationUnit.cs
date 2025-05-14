@@ -46,11 +46,6 @@ namespace ES.FX.Primitives;
 public enum DurationUnit
 {
     /// <summary>
-    ///     No duration unit.
-    /// </summary>
-    None,
-
-    /// <summary>
     ///     A 100-nanosecond interval.
     /// </summary>
     Tick,
