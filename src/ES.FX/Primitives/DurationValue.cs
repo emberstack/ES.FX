@@ -11,7 +11,7 @@ public readonly record struct DurationValue : IComparable<DurationValue>
     /// <summary>
     ///   The number of units.
     /// </summary>
-    public long Count { get; init; }
+    public long Value { get; init; }
 
     /// <summary>
     ///   The unit of time for this duration.
@@ -19,24 +19,24 @@ public readonly record struct DurationValue : IComparable<DurationValue>
     public DurationUnit Unit { get; init; }
 
     /// <summary>
-    ///   Initializes a new <see cref="DurationValue"/> with the specified count and unit,
-    ///   enforcing non-negative counts.
+    ///   Initializes a new <see cref="DurationValue"/> with the specified value and unit,
+    ///   enforcing non-negative values.
     /// </summary>
-    /// <param name="count">The number of units. Must be non-negative.</param>
+    /// <param name="value">The number of units. Must be non-negative.</param>
     /// <param name="unit">The duration unit.</param>
-    public DurationValue(long count, DurationUnit unit)
+    public DurationValue(long value, DurationUnit unit)
     {
-        if (count < 0)
-            throw new ArgumentOutOfRangeException(nameof(count), "Count must be non-negative");
+        if (value < 0)
+            throw new ArgumentOutOfRangeException(nameof(value), "Value must be non-negative");
 
-        Count = count;
+        Value = value;
         Unit = unit;
     }
 
     /// <summary>
     ///   Returns a string such as "7 Days".
     /// </summary>
-    public override string ToString() => $"{Count} {Unit}{(Count == 1 ? string.Empty : "s")}";
+    public override string ToString() => $"{Value} {Unit}{(Value == 1 ? string.Empty : "s")}";
 
     /// <summary>
     ///   Compares two durations of the same unit.
@@ -47,6 +47,6 @@ public readonly record struct DurationValue : IComparable<DurationValue>
         if (Unit != other.Unit)
             throw new InvalidOperationException("Cannot compare durations of different units.");
 
-        return Count.CompareTo(other.Count);
+        return Value.CompareTo(other.Value);
     }
 }
