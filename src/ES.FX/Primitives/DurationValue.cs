@@ -3,24 +3,14 @@
 namespace ES.FX.Primitives;
 
 /// <summary>
-///   Represents a quantity of time, in a specified unit.
+///     Represents a quantity of time, in a specified unit.
 /// </summary>
 [PublicAPI]
 public readonly record struct DurationValue : IComparable<DurationValue>
 {
     /// <summary>
-    ///   The number of units.
-    /// </summary>
-    public long Value { get; init; }
-
-    /// <summary>
-    ///   The unit of time for this duration.
-    /// </summary>
-    public DurationUnit Unit { get; init; }
-
-    /// <summary>
-    ///   Initializes a new <see cref="DurationValue"/> with the specified value and unit,
-    ///   enforcing non-negative values.
+    ///     Initializes a new <see cref="DurationValue" /> with the specified value and unit,
+    ///     enforcing non-negative values.
     /// </summary>
     /// <param name="value">The number of units. Must be non-negative.</param>
     /// <param name="unit">The duration unit.</param>
@@ -34,13 +24,18 @@ public readonly record struct DurationValue : IComparable<DurationValue>
     }
 
     /// <summary>
-    ///   Returns a string such as "7 Days".
+    ///     The number of units.
     /// </summary>
-    public override string ToString() => $"{Value} {Unit}{(Value == 1 ? string.Empty : "s")}";
+    public long Value { get; init; }
 
     /// <summary>
-    ///   Compares two durations of the same unit.
-    ///   Comparing different units is not supported.
+    ///     The unit of time for this duration.
+    /// </summary>
+    public DurationUnit Unit { get; init; }
+
+    /// <summary>
+    ///     Compares two durations of the same unit.
+    ///     Comparing different units is not supported.
     /// </summary>
     public int CompareTo(DurationValue other)
     {
@@ -49,4 +44,21 @@ public readonly record struct DurationValue : IComparable<DurationValue>
 
         return Value.CompareTo(other.Value);
     }
+
+    /// <summary>
+    ///     Returns a string such as "7 Days".
+    /// </summary>
+    public override string ToString() => $"{Value} {Unit}{(Value == 1 ? string.Empty : "s")}";
+
+    public static bool operator >(DurationValue left, DurationValue right) =>
+        left.CompareTo(right) > 0;
+
+    public static bool operator <(DurationValue left, DurationValue right) =>
+        left.CompareTo(right) < 0;
+
+    public static bool operator >=(DurationValue left, DurationValue right) =>
+        left.CompareTo(right) >= 0;
+
+    public static bool operator <=(DurationValue left, DurationValue right) =>
+        left.CompareTo(right) <= 0;
 }

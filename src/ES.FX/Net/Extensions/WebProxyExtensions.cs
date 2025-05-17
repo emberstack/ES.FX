@@ -7,10 +7,10 @@ namespace ES.FX.Net.Extensions;
 public static class WebProxyExtensions
 {
     /// <summary>
-    /// Builds an <see cref="IWebProxy"/> instance from the specified <see cref="BasicHttpProxyOptions"/>.
+    ///     Builds an <see cref="IWebProxy" /> instance from the specified <see cref="BasicHttpProxyOptions" />.
     /// </summary>
     /// <param name="options">The proxy options to use for building the proxy.</param>
-    /// <returns>A configured <see cref="IWebProxy"/> instance, or <c>null</c> if no address is specified.</returns>
+    /// <returns>A configured <see cref="IWebProxy" /> instance, or <c>null</c> if no address is specified.</returns>
     public static IWebProxy? BuildBasicHttpProxy(this BasicHttpProxyOptions? options)
     {
         if (options == null || string.IsNullOrWhiteSpace(options.Address))
