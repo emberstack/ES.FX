@@ -61,36 +61,34 @@ public static class SeqOpenTelemetryExporterHostingExtensions
         if (!settings.Enabled) return;
 
         if (settings.LogExporterEnabled)
-            builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddProcessor(
-                sp =>
-                {
-                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>()
-                        .Get(name);
-                    ConfigureOtlpExporterOptions(options, options.OtlpLogExporter, "/ingest/otlp/v1/logs");
+            builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddProcessor(sp =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>()
+                    .Get(name);
+                ConfigureOtlpExporterOptions(options, options.OtlpLogExporter, "/ingest/otlp/v1/logs");
 
-                    var exporter = new OtlpLogExporter(options.OtlpLogExporter);
-                    return options.OtlpLogExporter.ExportProcessorType switch
-                    {
-                        ExportProcessorType.Batch => new BatchLogRecordExportProcessor(exporter),
-                        _ => new SimpleLogRecordExportProcessor(exporter)
-                    };
-                }));
+                var exporter = new OtlpLogExporter(options.OtlpLogExporter);
+                return options.OtlpLogExporter.ExportProcessorType switch
+                {
+                    ExportProcessorType.Batch => new BatchLogRecordExportProcessor(exporter),
+                    _ => new SimpleLogRecordExportProcessor(exporter)
+                };
+            }));
 
         if (settings.TracesExporterEnabled)
-            builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(
-                sp =>
-                {
-                    var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>()
-                        .Get(name);
-                    ConfigureOtlpExporterOptions(options, options.OtlpTraceExporter, "/ingest/otlp/v1/traces");
+            builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(sp =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<SeqOpenTelemetryExporterSparkOptions>>()
+                    .Get(name);
+                ConfigureOtlpExporterOptions(options, options.OtlpTraceExporter, "/ingest/otlp/v1/traces");
 
-                    var exporter = new OtlpTraceExporter(options.OtlpTraceExporter);
-                    return options.OtlpTraceExporter.ExportProcessorType switch
-                    {
-                        ExportProcessorType.Batch => new BatchActivityExportProcessor(exporter),
-                        _ => new SimpleActivityExportProcessor(exporter)
-                    };
-                }));
+                var exporter = new OtlpTraceExporter(options.OtlpTraceExporter);
+                return options.OtlpTraceExporter.ExportProcessorType switch
+                {
+                    ExportProcessorType.Batch => new BatchActivityExportProcessor(exporter),
+                    _ => new SimpleActivityExportProcessor(exporter)
+                };
+            }));
 
 
         ConfigureObservability(builder, name, settings);

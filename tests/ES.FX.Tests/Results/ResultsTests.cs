@@ -5,7 +5,6 @@ namespace ES.FX.Tests.Results;
 
 public class ResultsTests
 {
-
     [Fact]
     public void TypedResult_CanBe_Null()
     {
@@ -85,7 +84,7 @@ public class ResultsTests
         Assert.Equal(Result.Success, Result.Success);
         Assert.NotEqual(Result.Success, new Result(new Problem()));
         Assert.Equal(new Result(new Problem()), new Result(new Problem()));
-        Assert.NotEqual(new Result(new Problem(Title: string.Empty)), new Result(new Problem(Title: "something")));
+        Assert.NotEqual(new Result(new Problem(title: string.Empty)), new Result(new Problem(title: "something")));
 
         Assert.Equal(new Result<bool>(true), new Result<bool>(true));
         Assert.NotEqual(new Result<bool>(true), new Result<bool>(false));
@@ -112,6 +111,4 @@ public class ResultsTests
     private static Result<string> TypedResultAsProblem() => new Problem();
     private static Result<string> TypedResultAsValue() => string.Empty;
     private static Result<object>? TypedResultAsNull() => null;
-
-
 }

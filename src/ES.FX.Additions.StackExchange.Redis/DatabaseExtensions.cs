@@ -13,7 +13,7 @@ public static class DatabaseExtensions
     ///     LUA script to delete all keys matching a pattern in batches
     /// </summary>
     private const string DeleteAllWithPatternBatchedScript = """
-                                                             
+
                                                                          local cursor = '0'
                                                                          local batchSize = tonumber(ARGV[1])
                                                                          local totalDeleted = 0

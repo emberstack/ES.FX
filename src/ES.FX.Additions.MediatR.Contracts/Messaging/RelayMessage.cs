@@ -10,10 +10,8 @@ namespace ES.FX.Additions.MediatR.Contracts.Messaging;
 [PublicAPI]
 public record RelayMessage : IRequest
 {
-    public RelayMessage()
-    {
-    }
-
-    public RelayMessage(IMessage message) => Message = message;
+    /// <summary>
+    ///     The message to be relayed
+    /// </summary>
     public required IMessage Message { get; init; }
 }

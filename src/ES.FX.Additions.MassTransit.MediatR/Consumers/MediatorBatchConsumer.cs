@@ -20,9 +20,15 @@ public class MediatorBatchConsumer<TMessage>(IMediator mediator) : IConsumer<Bat
         var messages = context.Message.Select(s => s.Message).ToArray();
 
         if (typeof(TMessage).IsAssignableTo(typeof(INotification)))
-            await mediator.Publish(new BatchNotification<TMessage>(messages));
+            await mediator.Publish(new BatchNotification<TMessage>
+            {
+                Items = messages
+            });
         else if (typeof(TMessage).IsAssignableTo(typeof(IRequest)))
-            await mediator.Send(new BatchRequest<TMessage>(messages));
+            await mediator.Send(new BatchRequest<TMessage>
+            {
+                Items = messages
+            });
         else
             throw new InvalidOperationException(
                 $"Message type {typeof(TMessage).Name} is not supported. " +

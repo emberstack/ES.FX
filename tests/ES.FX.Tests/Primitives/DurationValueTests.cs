@@ -4,7 +4,6 @@ namespace ES.FX.Tests.Primitives;
 
 public class DurationValueTests
 {
-
     [Fact]
     public void DurationValue_CanBe_Equal()
     {

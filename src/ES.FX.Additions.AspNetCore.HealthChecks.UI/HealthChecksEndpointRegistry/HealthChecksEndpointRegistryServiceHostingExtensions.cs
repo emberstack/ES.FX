@@ -13,7 +13,7 @@ public static class HealthChecksEndpointRegistryServiceHostingExtensions
     public static void AddHealthChecksEndpointRegistry(this IHostApplicationBuilder builder)
     {
         builder.Services.TryAddSingleton<HealthChecksEndpointRegistryService>();
-        builder.Services.AddHostedService(
-            provider => provider.GetRequiredService<HealthChecksEndpointRegistryService>());
+        builder.Services.AddHostedService(provider =>
+            provider.GetRequiredService<HealthChecksEndpointRegistryService>());
     }
 }
