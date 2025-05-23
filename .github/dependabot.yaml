@@ -1,15 +1,10 @@
 version: 2
-registries:
-  public-nuget:
-    type: nuget-feed
-    url: https://api.nuget.org/v3/index.json
 updates:
   - package-ecosystem: nuget
     directory: "/"
-    registries:
-      - public-nuget
     schedule:
       interval: daily
+      time: "05:00"
     open-pull-requests-limit: 15
     labels:
       - "area-dependencies"
@@ -17,10 +12,12 @@ updates:
       all-dependencies:
         patterns:
           - "*"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: daily
+      time: "05:00"
     open-pull-requests-limit: 5
     labels:
       - "area-dependencies"
