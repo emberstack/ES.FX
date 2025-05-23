@@ -155,7 +155,7 @@ jobs:
       - name: artifacts - nuget - upload
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts-nuget-${{env.GitVersion_SemVer}}
+          name: artifacts-nuget
           path: .artifacts/nuget/*.nupkg
 
       - name: dotnet nuget push - GitHub
@@ -178,7 +178,7 @@ jobs:
       - name: artifacts - nuget - download
         uses: actions/download-artifact@v4
         with:
-          name: artifacts-nuget-${{env.semVer}}
+          name: artifacts-nuget
           path: .artifacts/nuget
 
       - name: dotnet nuget push - GitHub
