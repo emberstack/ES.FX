@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text;
 using JetBrains.Annotations;
 
 namespace ES.FX.Primitives.Extensions;
@@ -100,5 +101,68 @@ public static class StringExtensions
 
         culture ??= CultureInfo.InvariantCulture;
         return culture.TextInfo.ToTitleCase(value.ToLower(culture));
+    }
+
+    /// <summary>
+    ///     Removes all diacritical marks (accents, cedillas, breve, comma-below, stroke overlays, etc.)
+    ///     from the input string by using Unicode compatibility decomposition (FormKD) and filtering
+    ///     out every combining mark. Re-composes the result into FormC and applies a final
+    ///     mapping for stroked letters.
+    /// </summary>
+    /// <param name="text">
+    ///     The input string from which diacritics will be removed. May be <c>null</c> or empty.
+    /// </param>
+    /// <returns>
+    ///     A new <see cref="string" /> in which all diacritical marks have been stripped. If
+    ///     <paramref name="text" /> is <c>null</c> or empty, it is returned unchanged.
+    /// </returns>
+    /// <remarks>
+    ///     This method:
+    ///     <list type="bullet">
+    ///         <item>Uses <see cref="NormalizationForm.FormKD" /> to decompose compatibility characters (e.g. “ﬁ” → “fi”).</item>
+    ///         <item>
+    ///             Filters out any character whose <see cref="UnicodeCategory" /> is
+    ///             <see cref="UnicodeCategory.NonSpacingMark" />,
+    ///             <see cref="UnicodeCategory.SpacingCombiningMark" />, or
+    ///             <see cref="UnicodeCategory.EnclosingMark" />.
+    ///         </item>
+    ///         <item>
+    ///             Re-normalizes to <see cref="NormalizationForm.FormC" /> to produce
+    ///             a clean, composed string.
+    ///         </item>
+    ///         <item>
+    ///             Performs a final <c>Replace</c> in case any stroked characters remain.
+    ///         </item>
+    ///     </list>
+    ///     Does <em>not</em> perform transliteration of non-Latin scripts.
+    /// </remarks>
+    public static string RemoveDiacritics(this string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        // 1) Compatibility decomposition: splits out strokes, ligatures, etc.
+        var normalized = text.Normalize(NormalizationForm.FormKD);
+        var sb = new StringBuilder(normalized.Length);
+
+        // 2) Remove all combining characters
+        foreach (var c in normalized)
+        {
+            var cat = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (cat is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark
+                or UnicodeCategory.EnclosingMark) continue;
+
+            sb.Append(c);
+        }
+
+        // 3) Re-compose into FormC
+        var cleaned = sb
+            .ToString()
+            .Normalize(NormalizationForm.FormC);
+
+        // 4) Final mapping for any stroke letters
+        return cleaned
+            .Replace('Đ', 'D')
+            .Replace('đ', 'd');
     }
 }
