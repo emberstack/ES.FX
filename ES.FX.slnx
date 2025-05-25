@@ -4,14 +4,14 @@
     <File Path="Directory.Packages.props" />
   </Folder>
   <Folder Name="/.src/" />
-  <Folder Name="/.src/FX/" >
+  <Folder Name="/.src/FX/">
     <Project Path="src/ES.FX.Hosting/ES.FX.Hosting.csproj" />
     <Project Path="src/ES.FX.Migrations/ES.FX.Migrations.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX/ES.FX.csproj" />
   </Folder>
-  <Folder Name="/.src/FX/Additions/" >
+  <Folder Name="/.src/FX/Additions/">
     <Project Path="src/ES.FX.Additions.Asp.Versioning/ES.FX.Additions.Asp.Versioning.csproj" />
     <Project Path="src/ES.FX.Additions.AspNetCore.HealthChecks.UI/ES.FX.Additions.AspNetCore.HealthChecks.UI.csproj" />
     <Project Path="src/ES.FX.Additions.FluentValidation/ES.FX.Additions.FluentValidation.csproj" />
@@ -34,11 +34,11 @@
     <Project Path="src/ES.FX.Additions.StackExchange.Redis/ES.FX.Additions.StackExchange.Redis.csproj" />
     <Project Path="src/ES.FX.Additions.System.Text.Json/ES.FX.Additions.System.Text.Json.csproj" />
   </Folder>
-  <Folder Name="/.src/Ignite/" >
+  <Folder Name="/.src/Ignite/">
     <Project Path="src/ES.FX.Ignite.Spark/ES.FX.Ignite.Spark.csproj" />
     <Project Path="src/ES.FX.Ignite/ES.FX.Ignite.csproj" />
   </Folder>
-  <Folder Name="/.src/Ignite/Sparks/" >
+  <Folder Name="/.src/Ignite/Sparks/">
     <Project Path="src/ES.FX.Ignite.Asp.Versioning/ES.FX.Ignite.Asp.Versioning.csproj" />
     <Project Path="src/ES.FX.Ignite.AspNetCore.HealthChecks.UI/ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
     <Project Path="src/ES.FX.Ignite.Azure.Common/ES.FX.Ignite.Azure.Common.csproj" />
@@ -63,19 +63,23 @@
     <Project Path="playground/Playground.Microservice.Worker.Host/Playground.Microservice.Worker.Host.csproj" />
     <Project Path="playground/Playground.SimpleConsole/Playground.SimpleConsole.csproj" />
   </Folder>
-  <Folder Name="/playground/Shared/" >
+  <Folder Name="/playground/Shared/">
     <Project Path="playground/Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer/Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="playground/Playground.Shared.Data.Simple.EntityFrameworkCore/Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
   </Folder>
   <Folder Name="/tests/" />
-  <Folder Name="/tests/.Shared/" >
+  <Folder Name="/tests/.Shared/">
+    <Project Path="tests/ES.FX.Shared.Redis.Tests/ES.FX.Shared.Redis.Tests.csproj" Id="cd12c894-8708-43cd-b24d-629eed9de922" />
     <Project Path="tests/ES.FX.Shared.SqlServer.Tests/ES.FX.Shared.SqlServer.Tests.csproj" />
   </Folder>
-  <Folder Name="/tests/FX/" >
+  <Folder Name="/tests/FX/">
     <Project Path="tests/ES.FX.Hosting.Tests/ES.FX.Hosting.Tests.csproj" />
     <Project Path="tests/ES.FX.Tests/ES.FX.Tests.csproj" />
   </Folder>
-  <Folder Name="/tests/Ignite/" >
+  <Folder Name="/tests/FX/Additions/">
+    <Project Path="tests/ES.FX.Additions.StackExchange.Redis.Tests/ES.FX.Additions.StackExchange.Redis.Tests.csproj" Id="5d90b03e-cda4-475a-8cf9-a744edefb9f2" />
+  </Folder>
+  <Folder Name="/tests/Ignite/">
     <Project Path="tests/ES.FX.Ignite.Asp.Versioning.Tests/ES.FX.Ignite.Asp.Versioning.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT.csproj" />
     <Project Path="tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.csproj" />

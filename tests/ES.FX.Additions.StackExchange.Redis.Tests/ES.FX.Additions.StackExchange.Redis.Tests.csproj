@@ -27,8 +27,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\src\ES.FX.Ignite.StackExchange.Redis\ES.FX.Ignite.StackExchange.Redis.csproj" />
-		<ProjectReference Include="..\ES.FX.Shared.Redis.Tests\ES.FX.Shared.Redis.Tests.csproj" />
+	  <ProjectReference Include="..\..\src\ES.FX.Additions.StackExchange.Redis\ES.FX.Additions.StackExchange.Redis.csproj" />
+	  <ProjectReference Include="..\..\src\ES.FX\ES.FX.csproj" />
+	  <ProjectReference Include="..\ES.FX.Shared.Redis.Tests\ES.FX.Shared.Redis.Tests.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

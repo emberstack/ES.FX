@@ -10,4 +10,9 @@
 		<PackageReference Include="StackExchange.Redis" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\ES.FX.Additions.System.Text.Json\ES.FX.Additions.System.Text.Json.csproj" />
+	  <ProjectReference Include="..\ES.FX\ES.FX.csproj" />
+	</ItemGroup>
+
 </Project>

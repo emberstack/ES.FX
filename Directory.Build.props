@@ -29,7 +29,8 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 	<!-- Package defaults  -->
-	<ItemGroup Condition="'$(MSBuildProjectName)' == '' Or $(MSBuildProjectName.StartsWith('ES.FX'))">
+	<ItemGroup
+		Condition="('$(MSBuildProjectName)' == '' OR $(MSBuildProjectName.StartsWith('ES.FX'))) AND !$(MSBuildProjectName.Contains('.Tests'))">
 		<None Include="..\..\package.icon.png" Pack="true" PackagePath="" />
 		<None Include="..\..\README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
