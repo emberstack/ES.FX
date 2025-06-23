@@ -7,7 +7,7 @@ public sealed class SeqContainerFixture : IAsyncLifetime
 {
     public const string Registry = "datalust";
     public const string Image = "seq";
-    public const string Tag = "preview";
+    public const string Tag = "latest";
     public SeqSutFactory? WebApplicationFactory;
     public IContainer? Container { get; private set; }
 
@@ -25,6 +25,7 @@ public sealed class SeqContainerFixture : IAsyncLifetime
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request
                 .ForPath("/")))
             .WithEnvironment("ACCEPT_EULA", "Y")
+            .WithEnvironment("SEQ_FIRSTRUN_NOAUTHENTICATION", "true")
             .WithPortBinding(80, true)
             .Build();
         await Container.StartAsync();
