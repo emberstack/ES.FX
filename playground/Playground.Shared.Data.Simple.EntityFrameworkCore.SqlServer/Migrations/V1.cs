@@ -8,22 +8,6 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
 public partial class V1 : Migration
 {
     /// <inheritdoc />
-    protected override void Down(MigrationBuilder migrationBuilder)
-    {
-        migrationBuilder.DropTable(
-            "__Outboxes");
-
-        migrationBuilder.DropTable(
-            "__OutboxMessageFaults");
-
-        migrationBuilder.DropTable(
-            "__OutboxMessages");
-
-        migrationBuilder.DropTable(
-            "SimpleUsers");
-    }
-
-    /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.CreateTable(
@@ -45,9 +29,10 @@ public partial class V1 : Migration
                 Id = table.Column<long>("bigint", nullable: false),
                 OutboxId = table.Column<Guid>("uniqueidentifier", nullable: false),
                 AddedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false),
-                Headers = table.Column<string>("nvarchar(max)", nullable: false),
-                PayloadType = table.Column<string>("nvarchar(max)", nullable: false),
+                Headers = table.Column<string>("nvarchar(max)", nullable: true),
                 Payload = table.Column<string>("nvarchar(max)", nullable: false),
+                PayloadType = table.Column<string>("nvarchar(max)", nullable: false),
+                ActivityId = table.Column<string>("nvarchar(128)", maxLength: 128, nullable: true),
                 DeliveryAttempts = table.Column<int>("int", nullable: false),
                 DeliveryFirstAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
                 DeliveryLastAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
@@ -66,9 +51,10 @@ public partial class V1 : Migration
                     .Annotation("SqlServer:Identity", "1, 1"),
                 OutboxId = table.Column<Guid>("uniqueidentifier", nullable: false),
                 AddedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false),
-                Headers = table.Column<string>("nvarchar(max)", nullable: false),
-                PayloadType = table.Column<string>("nvarchar(max)", nullable: false),
+                Headers = table.Column<string>("nvarchar(max)", nullable: true),
                 Payload = table.Column<string>("nvarchar(max)", nullable: false),
+                PayloadType = table.Column<string>("nvarchar(max)", nullable: false),
+                ActivityId = table.Column<string>("nvarchar(128)", maxLength: 128, nullable: true),
                 DeliveryAttempts = table.Column<int>("int", nullable: false),
                 DeliveryMaxAttempts = table.Column<int>("int", nullable: true),
                 DeliveryFirstAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
@@ -105,5 +91,21 @@ public partial class V1 : Migration
             "IX___Outboxes_Lock",
             "__Outboxes",
             "Lock");
+    }
+
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(
+            "__Outboxes");
+
+        migrationBuilder.DropTable(
+            "__OutboxMessageFaults");
+
+        migrationBuilder.DropTable(
+            "__OutboxMessages");
+
+        migrationBuilder.DropTable(
+            "SimpleUsers");
     }
 }

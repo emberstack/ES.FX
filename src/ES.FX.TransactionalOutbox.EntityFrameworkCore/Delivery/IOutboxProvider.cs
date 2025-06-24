@@ -1,5 +1,4 @@
-﻿using ES.FX.Messaging;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
+﻿using ES.FX.TransactionalOutbox.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
@@ -8,7 +7,7 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 ///     Provider used to get the next exclusive (locked) <see cref="Outbox" /> which does not have a delivery delay
 /// </summary>
 /// <typeparam name="TDbContext"></typeparam>
-public interface IOutboxProvider<in TDbContext> where TDbContext : DbContext, IMessageStore
+public interface IOutboxProvider<in TDbContext> where TDbContext : DbContext
 {
     /// <summary>
     ///     Returns the next exclusive (locked) <see cref="Outbox" /> which does not have a delivery delay

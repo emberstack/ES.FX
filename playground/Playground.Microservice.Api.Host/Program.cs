@@ -2,7 +2,6 @@ using Asp.Versioning;
 using ES.FX.Additions.MassTransit.Extensions;
 using ES.FX.Additions.MassTransit.Formatters;
 using ES.FX.Additions.MassTransit.MediatR.Consumers;
-using ES.FX.Additions.MassTransit.Messaging;
 using ES.FX.Additions.MassTransit.Middleware.PayloadTypes;
 using ES.FX.Additions.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.Additions.NSwag.AspNetCore.Generation;
@@ -22,9 +21,10 @@ using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
-using ES.FX.Messaging;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
+using ES.FX.TransactionalOutbox.MassTransit.Delivery;
+using ES.FX.TransactionalOutbox.Observability;
 using HealthChecks.UI.Client;
 using MassTransit;
 using MassTransit.Logging;
@@ -95,6 +95,8 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             dbContextOptionsBuilder.ConfigureWarnings(w => w.Ignore(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
             dbContextOptionsBuilder.WithConfigureModelBuilderExtension((modelBuilder, _) =>
                 modelBuilder.ApplyConfigurationsFromAssembly(typeof(SimpleDbContextDesignTimeFactory).Assembly));
+
+            //dbContextOptionsBuilder.ConfigureOutbox(opt=>opt.MessageInterceptors.Add(new SimpleOutboxMessageInterceptor()));
         },
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {
@@ -117,10 +119,9 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddHostedService<TestHostedService>();
 
 
-    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitMessageHandler>(options =>
+    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitOutboxMessageHandler>(options =>
         {
-            options.AddMessageTypes(typeof(Program).Assembly);
-            options.UseSqlServer();
+            options.UseSqlServerOutboxProvider();
         })
         .AddOpenTelemetry().WithTracing(traceBuilder =>
             traceBuilder.AddOutboxInstrumentation());
@@ -173,7 +174,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             cfg.Publish<INotification>(p => p.Exclude = true);
             cfg.Publish<IRequest>(p => p.Exclude = true);
             cfg.Publish<IBaseRequest>(p => p.Exclude = true);
-            cfg.Publish<IMessage>(p => p.Exclude = true);
 
 
             cfg.MessageTopology.SetEntityNameFormatter(new AggregatePrefixEntityNameFormatter(

@@ -1,6 +1,5 @@
-﻿using ES.FX.Messaging;
+﻿using ES.FX.TransactionalOutbox.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
@@ -11,7 +10,7 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 /// </summary>
 /// <typeparam name="TDbContext"></typeparam>
 public class SqlServerOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
-    where TDbContext : DbContext, IMessageStore
+    where TDbContext : DbContext
 {
     public async Task<Outbox?> GetNextExclusiveOutboxWithoutDelay(TDbContext dbContext,
         CancellationToken cancellationToken = default)

@@ -17,12 +17,12 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities.Outbox", b =>
+            modelBuilder.Entity("ES.FX.TransactionalOutbox.Entities.Outbox", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -53,13 +53,17 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.ToTable("__Outboxes", (string)null);
                 });
 
-            modelBuilder.Entity("ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities.OutboxMessage", b =>
+            modelBuilder.Entity("ES.FX.TransactionalOutbox.Entities.OutboxMessage", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ActivityId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<DateTimeOffset>("AddedAt")
                         .HasColumnType("datetimeoffset");
@@ -93,7 +97,6 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Headers")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("OutboxId")
@@ -117,10 +120,14 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.ToTable("__OutboxMessages", (string)null);
                 });
 
-            modelBuilder.Entity("ES.FX.TransactionalOutbox.EntityFrameworkCore.Entities.OutboxMessageFault", b =>
+            modelBuilder.Entity("ES.FX.TransactionalOutbox.Entities.OutboxMessageFault", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("ActivityId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<DateTimeOffset>("AddedAt")
                         .HasColumnType("datetimeoffset");
@@ -148,7 +155,6 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Headers")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("OutboxId")
