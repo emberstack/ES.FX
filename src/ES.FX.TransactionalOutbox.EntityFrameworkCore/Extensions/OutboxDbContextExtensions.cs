@@ -76,7 +76,7 @@ public static class OutboxDbContextExtensions
         var messageContext = new OutboxMessageInterceptorContext
         {
             AddedAt = DateTimeOffset.UtcNow,
-            PayloadType = message.GetType(),
+            PayloadType = typeof(TMessage),
             Payload = message,
             Headers = new Dictionary<string, string>(),
             ActivityId = Activity.Current?.Id,
@@ -89,11 +89,11 @@ public static class OutboxDbContextExtensions
         dbContext.Set<OutboxMessage>().Add(new OutboxMessage
         {
             AddedAt = messageContext.AddedAt,
-            Headers = outboxDbContextOptions.Serializer.SerializeHeaders(messageContext.Headers),
-            Payload = outboxDbContextOptions.Serializer.SerializePayload(messageContext.Payload, message.GetType()),
-            PayloadType = messageContext.PayloadType.AssemblyQualifiedName ??
-                          throw new NotSupportedException(
-                              "The message type AssemblyQualifiedName cannot be null"),
+            Headers = outboxDbContextOptions.Serializer.SerializeHeaders(messageContext.Headers,
+                messageContext.PayloadType),
+            Payload = outboxDbContextOptions.Serializer.SerializePayload(messageContext.Payload,
+                messageContext.PayloadType, out var payloadType),
+            PayloadType = payloadType,
             ActivityId = messageContext.ActivityId,
             DeliveryAttempts = 0,
             DeliveryFirstAttemptedAt = null,

@@ -5,20 +5,29 @@ namespace ES.FX.TransactionalOutbox.Serialization;
 /// <summary>
 ///     Default implementation of <see cref="IOutboxSerializer" /> that uses JSON serialization
 /// </summary>
-public class DefaultOutboxSerializer : IOutboxSerializer
+public class DefaultOutboxSerializer(IPayloadTypeProvider typeProvider) : IOutboxSerializer
 {
-    public string SerializePayload(object payload, Type payloadType) => JsonSerializer.Serialize(payload, payloadType);
+    public virtual string SerializePayload(object payload, Type payloadType, out string payloadTypeString)
+    {
+        payloadTypeString = typeProvider.SetType(payloadType);
+        return JsonSerializer.Serialize(payload, payloadType);
+    }
 
-    public object DeserializePayload(string payload, string payloadType, Dictionary<string, string> headers) =>
-        JsonSerializer.Deserialize(payload,
-            Type.GetType(payloadType) ?? throw new InvalidOperationException($"Type '{payloadType}' not found.")) ??
-        throw new NotSupportedException("Could not deserialize message");
+    public virtual object DeserializePayload(string payload, string payloadType, Dictionary<string, string> headers)
+    {
+        var type = typeProvider.GetType(payloadType, headers);
+        return JsonSerializer.Deserialize(payload, type) ??
+               throw new NotSupportedException("Could not deserialize message");
+    }
 
-    public string? SerializeHeaders(IDictionary<string, string>? headers) => headers is null || headers.Count == 0
-        ? null
-        : JsonSerializer.Serialize(headers);
+    public virtual string? SerializeHeaders(IDictionary<string, string>? headers, Type payloadType)
+    {
+        headers ??= new Dictionary<string, string>();
+        typeProvider.SetTypeHeaders(payloadType, headers);
+        return headers.Count == 0 ? null : JsonSerializer.Serialize(headers);
+    }
 
-    public Dictionary<string, string> DeserializeHeaders(string? serializedHeaders) =>
+    public virtual Dictionary<string, string> DeserializeHeaders(string? serializedHeaders) =>
         string.IsNullOrWhiteSpace(serializedHeaders)
             ? new Dictionary<string, string>()
             : JsonSerializer.Deserialize<Dictionary<string, string>>(serializedHeaders)!;

@@ -16,5 +16,5 @@ public class OutboxDbContextOptions
     /// <summary>
     ///     Serializer used to serialize and deserialize outbox messages.
     /// </summary>
-    public IOutboxSerializer Serializer { get; set; } = new DefaultOutboxSerializer();
+    public IOutboxSerializer Serializer { get; set; } = new DefaultOutboxSerializer(new DefaultPayloadTypeResolver());
 }
