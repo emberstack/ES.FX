@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql\ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.csproj" />
+        <ProjectReference Include="..\ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests\ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.csproj" />
+        <ProjectReference Include="..\ES.FX.Shared.MySql.Tests\ES.FX.Shared.MySql.Tests.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio" />
+    </ItemGroup>
+
+</Project>

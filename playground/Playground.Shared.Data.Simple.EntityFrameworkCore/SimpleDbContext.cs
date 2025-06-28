@@ -13,12 +13,12 @@ public class SimpleDbContext(
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.AddOutbox();
+        optionsBuilder.UseOutbox();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.AddOutbox();
+        modelBuilder.AddOutboxEntities();
         modelBuilder.ConfigureFromExtension(dbContextOptions);
     }
 }

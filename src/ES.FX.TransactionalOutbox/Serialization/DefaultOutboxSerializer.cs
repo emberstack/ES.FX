@@ -7,28 +7,26 @@ namespace ES.FX.TransactionalOutbox.Serialization;
 /// </summary>
 public class DefaultOutboxSerializer(IPayloadTypeProvider typeProvider) : IOutboxSerializer
 {
-    public virtual string SerializePayload(object payload, Type payloadType, out string payloadTypeString)
-    {
-        payloadTypeString = typeProvider.SetType(payloadType);
-        return JsonSerializer.Serialize(payload, payloadType);
-    }
-
-    public virtual object DeserializePayload(string payload, string payloadType, Dictionary<string, string> headers)
-    {
-        var type = typeProvider.GetType(payloadType, headers);
-        return JsonSerializer.Deserialize(payload, type) ??
-               throw new NotSupportedException("Could not deserialize message");
-    }
-
-    public virtual string? SerializeHeaders(IDictionary<string, string>? headers, Type payloadType)
+    public virtual void Serialize(object payload, Type type, IDictionary<string, string>? headers,
+        out string payloadType, out string serializedPayload, out string? serializedHeaders)
     {
         headers ??= new Dictionary<string, string>();
-        typeProvider.SetTypeHeaders(payloadType, headers);
-        return headers.Count == 0 ? null : JsonSerializer.Serialize(headers);
+        typeProvider.SetTypeHeaders(type, headers);
+        serializedHeaders = headers.Count == 0 ? null : JsonSerializer.Serialize(headers);
+
+        payloadType = typeProvider.GetPayloadType(type);
+        serializedPayload = JsonSerializer.Serialize(payload, type);
     }
 
-    public virtual Dictionary<string, string> DeserializeHeaders(string? serializedHeaders) =>
-        string.IsNullOrWhiteSpace(serializedHeaders)
+    public virtual void Deserialize(string serializedPayload, string payloadType, string? serializedHeaders,
+        out object payload, out Type type, out Dictionary<string, string> headers)
+    {
+        headers = string.IsNullOrWhiteSpace(serializedHeaders)
             ? new Dictionary<string, string>()
             : JsonSerializer.Deserialize<Dictionary<string, string>>(serializedHeaders)!;
+
+        type = typeProvider.GetType(payloadType, headers);
+        payload = JsonSerializer.Deserialize(serializedPayload, type) ??
+                  throw new NotSupportedException("Could not deserialize message");
+    }
 }

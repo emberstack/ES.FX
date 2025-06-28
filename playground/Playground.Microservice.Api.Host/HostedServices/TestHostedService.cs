@@ -1,5 +1,4 @@
-﻿using ES.FX.TransactionalOutbox.Delivery;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
+﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
@@ -28,11 +27,6 @@ internal class TestHostedService(
                 dbContext.AddOutboxMessage(new OutboxTestMessage
                 {
                     SomeProp = "Property"
-                }, new OutboxMessageDeliveryOptions
-                {
-                    MaxAttempts = 5,
-                    DelayBetweenAttempts = 5,
-                    DelayBetweenAttemptsIsExponential = true
                 });
                 dbContext.SimpleUsers.Add(new SimpleUser
                     { Id = Guid.CreateVersion7(), Username = Guid.CreateVersion7().ToString() });
@@ -46,7 +40,8 @@ internal class TestHostedService(
             //    await redisDatabase.StringGetAsync("something");
             //}
 
-            await Task.Delay(100, stoppingToken).ConfigureAwait(false);
+
+            await Task.Delay(15000, stoppingToken).ConfigureAwait(false);
         }
     }
 }

@@ -4,7 +4,26 @@
       "Bash(dotnet --list-sdks)",
       "Bash(find:*)",
       "Bash(comm:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(mkdir:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet msbuild:*)",
+      "Bash(sed:*)",
+      "Bash(rg:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(dotnet tool install:*)",
+      "Bash(dotnet-gitversion:*)",
+      "Bash(dotnet tool uninstall:*)",
+      "WebFetch(domain:gitversion.net)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }

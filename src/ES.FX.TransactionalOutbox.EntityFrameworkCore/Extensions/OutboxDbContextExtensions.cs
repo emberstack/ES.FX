@@ -3,7 +3,6 @@ using ES.FX.TransactionalOutbox.Delivery;
 using ES.FX.TransactionalOutbox.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.EntityTypeConfigurations;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Internals;
-using ES.FX.TransactionalOutbox.Interceptors;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -17,7 +16,7 @@ public static class OutboxDbContextExtensions
     ///     Configures the <see cref="DbContext" /> to support the outbox pattern.
     /// </summary>
     /// <param name="optionsBuilder"></param>
-    public static void AddOutbox(this DbContextOptionsBuilder optionsBuilder,
+    public static void UseOutbox(this DbContextOptionsBuilder optionsBuilder,
         Action<OutboxDbContextOptions>? configureOptions = null)
     {
         OutboxDbContextOptions outboxDbContextOptions;
@@ -42,16 +41,13 @@ public static class OutboxDbContextExtensions
     ///     Adds the required Outbox entities to the model builder
     /// </summary>
     /// <param name="modelBuilder">The <see cref="ModelBuilder" /> to configure </param>
-    public static void AddOutbox(this ModelBuilder modelBuilder)
+    public static void AddOutboxEntities(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Outbox>().ToTable("__Outboxes");
         modelBuilder.ApplyConfiguration(new OutboxEntityTypeConfiguration());
 
         modelBuilder.Entity<OutboxMessage>().ToTable("__OutboxMessages");
         modelBuilder.ApplyConfiguration(new OutboxMessageEntityTypeConfiguration());
-
-        modelBuilder.Entity<OutboxMessageFault>().ToTable("__OutboxMessageFaults");
-        modelBuilder.ApplyConfiguration(new OutboxMessageFaultEntityTypeConfiguration());
     }
 
 
@@ -73,37 +69,26 @@ public static class OutboxDbContextExtensions
 
         var outboxDbContextOptions = dbContext.GetService<OutboxDbContextOptions>();
 
-        var messageContext = new OutboxMessageInterceptorContext
-        {
-            AddedAt = DateTimeOffset.UtcNow,
-            PayloadType = typeof(TMessage),
-            Payload = message,
-            Headers = new Dictionary<string, string>(),
-            ActivityId = Activity.Current?.Id,
-            DeliveryOptions = deliveryOptions
-        };
-
-        foreach (var messageInterceptor in outboxDbContextOptions.MessageInterceptors)
-            messageInterceptor.Intercept(messageContext);
+        outboxDbContextOptions.Serializer.Serialize(
+            message,
+            typeof(TMessage),
+            new Dictionary<string, string>(),
+            out var payloadType,
+            out var serializedPayload,
+            out var serializedHeaders);
 
         dbContext.Set<OutboxMessage>().Add(new OutboxMessage
         {
-            AddedAt = messageContext.AddedAt,
-            Headers = outboxDbContextOptions.Serializer.SerializeHeaders(messageContext.Headers,
-                messageContext.PayloadType),
-            Payload = outboxDbContextOptions.Serializer.SerializePayload(messageContext.Payload,
-                messageContext.PayloadType, out var payloadType),
+            AddedAt = DateTimeOffset.UtcNow,
+            Headers = serializedHeaders,
+            Payload = serializedPayload,
             PayloadType = payloadType,
-            ActivityId = messageContext.ActivityId,
+            ActivityId = Activity.Current?.Id,
             DeliveryAttempts = 0,
             DeliveryFirstAttemptedAt = null,
-            DeliveryLastAttemptError = null,
             DeliveryLastAttemptedAt = null,
-            DeliveryNotBefore = messageContext.DeliveryOptions.NotBefore,
-            DeliveryNotAfter = messageContext.DeliveryOptions.NotAfter,
-            DeliveryMaxAttempts = messageContext.DeliveryOptions.MaxAttempts,
-            DeliveryAttemptDelay = messageContext.DeliveryOptions.DelayBetweenAttempts,
-            DeliveryAttemptDelayIsExponential = messageContext.DeliveryOptions.DelayBetweenAttemptsIsExponential
+            DeliveryNotBefore = deliveryOptions.NotBefore,
+            DeliveryNotAfter = deliveryOptions.NotAfter
         });
     }
 }

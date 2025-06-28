@@ -18,14 +18,14 @@ internal class OutboxDbContextOptionsExtension : IDbContextOptionsExtension
 
     internal OutboxDbContextOptions OutboxDbContextOptions { get; }
 
+    public DbContextOptionsExtensionInfo Info { get; }
+
 
     public void ApplyServices(IServiceCollection services)
     {
-        services.AddSingleton<IInterceptor>(new OutboxDbContextInterceptor());
+        services.AddSingleton<IInterceptor, OutboxDbContextInterceptor>();
         services.AddSingleton(OutboxDbContextOptions);
     }
-
-    public DbContextOptionsExtensionInfo Info { get; }
 
     public void Validate(IDbContextOptions options)
     {
@@ -33,7 +33,7 @@ internal class OutboxDbContextOptionsExtension : IDbContextOptionsExtension
     }
 
 
-    public sealed class ExtensionInfo(IDbContextOptionsExtension extension)
+    private sealed class ExtensionInfo(IDbContextOptionsExtension extension)
         : DbContextOptionsExtensionInfo(extension)
     {
         public override bool IsDatabaseProvider => false;

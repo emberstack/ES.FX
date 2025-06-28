@@ -68,27 +68,14 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.Property<DateTimeOffset>("AddedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int>("DeliveryAttemptDelay")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("DeliveryAttemptDelayIsExponential")
-                        .HasColumnType("bit");
-
                     b.Property<int>("DeliveryAttempts")
                         .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("DeliveryFirstAttemptedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("DeliveryLastAttemptError")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
                     b.Property<DateTimeOffset?>("DeliveryLastAttemptedAt")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<int?>("DeliveryMaxAttempts")
-                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("DeliveryNotAfter")
                         .HasColumnType("datetimeoffset");
@@ -118,59 +105,6 @@ namespace Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("__OutboxMessages", (string)null);
-                });
-
-            modelBuilder.Entity("ES.FX.TransactionalOutbox.Entities.OutboxMessageFault", b =>
-                {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("ActivityId")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<DateTimeOffset>("AddedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("DeliveryAttempts")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("DeliveryFirstAttemptedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeliveryLastAttemptError")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<DateTimeOffset?>("DeliveryLastAttemptedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("DeliveryNotAfter")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("DeliveryNotBefore")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset>("FaultedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Headers")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("OutboxId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PayloadType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("__OutboxMessageFaults", (string)null);
                 });
 
             modelBuilder.Entity("Playground.Shared.Data.Simple.EntityFrameworkCore.Entities.SimpleUser", b =>

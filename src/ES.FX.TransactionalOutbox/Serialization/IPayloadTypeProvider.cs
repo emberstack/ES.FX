@@ -12,11 +12,11 @@ public interface IPayloadTypeProvider
 
 
     /// <summary>
-    ///     Sets the type of the payload. Default implementation uses the assembly qualified name of the type.
+    ///     Gets the type of the payload. Default implementation uses the assembly qualified name of the type.
     /// </summary>
-    public string SetType(Type payloadType) => payloadType.AssemblyQualifiedName ??
-                                               throw new InvalidOperationException(
-                                                   $"Type '{payloadType.FullName}' does not have an assembly qualified name.");
+    public string GetPayloadType(Type payloadType) => payloadType.AssemblyQualifiedName ??
+                                                      throw new InvalidOperationException(
+                                                          $"Type '{payloadType.FullName}' does not have an assembly qualified name.");
 
     /// <summary>
     ///     Allows setting headers for a specific type.

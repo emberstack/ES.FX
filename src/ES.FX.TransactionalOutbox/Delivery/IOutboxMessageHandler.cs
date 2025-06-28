@@ -12,8 +12,7 @@ public interface IOutboxMessageHandler
     ///     Handles the outbox message.
     /// </summary>
     /// <param name="cancellationToken"> Delivery cancellation token</param>
-    /// <returns> True if the message was successfully handled, false otherwise</returns>
-    public ValueTask<bool> HandleAsync(OutboxMessageContext context,
+    public ValueTask HandleAsync(OutboxMessageContext context,
         CancellationToken cancellationToken = default);
 
     /// <summary>

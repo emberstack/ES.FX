@@ -23,27 +23,6 @@ public partial class V1 : Migration
             constraints: table => { table.PrimaryKey("PK___Outboxes", x => x.Id); });
 
         migrationBuilder.CreateTable(
-            "__OutboxMessageFaults",
-            table => new
-            {
-                Id = table.Column<long>("bigint", nullable: false),
-                OutboxId = table.Column<Guid>("uniqueidentifier", nullable: false),
-                AddedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false),
-                Headers = table.Column<string>("nvarchar(max)", nullable: true),
-                Payload = table.Column<string>("nvarchar(max)", nullable: false),
-                PayloadType = table.Column<string>("nvarchar(max)", nullable: false),
-                ActivityId = table.Column<string>("nvarchar(128)", maxLength: 128, nullable: true),
-                DeliveryAttempts = table.Column<int>("int", nullable: false),
-                DeliveryFirstAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
-                DeliveryLastAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
-                DeliveryLastAttemptError = table.Column<string>("nvarchar(4000)", maxLength: 4000, nullable: true),
-                DeliveryNotBefore = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
-                DeliveryNotAfter = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
-                FaultedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: false)
-            },
-            constraints: table => { table.PrimaryKey("PK___OutboxMessageFaults", x => x.Id); });
-
-        migrationBuilder.CreateTable(
             "__OutboxMessages",
             table => new
             {
@@ -56,14 +35,10 @@ public partial class V1 : Migration
                 PayloadType = table.Column<string>("nvarchar(max)", nullable: false),
                 ActivityId = table.Column<string>("nvarchar(128)", maxLength: 128, nullable: true),
                 DeliveryAttempts = table.Column<int>("int", nullable: false),
-                DeliveryMaxAttempts = table.Column<int>("int", nullable: true),
                 DeliveryFirstAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
                 DeliveryLastAttemptedAt = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
-                DeliveryLastAttemptError = table.Column<string>("nvarchar(4000)", maxLength: 4000, nullable: true),
                 DeliveryNotBefore = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
                 DeliveryNotAfter = table.Column<DateTimeOffset>("datetimeoffset", nullable: true),
-                DeliveryAttemptDelay = table.Column<int>("int", nullable: false),
-                DeliveryAttemptDelayIsExponential = table.Column<bool>("bit", nullable: false),
                 RowVersion = table.Column<byte[]>("rowversion", rowVersion: true, nullable: true)
             },
             constraints: table => { table.PrimaryKey("PK___OutboxMessages", x => x.Id); });
@@ -98,9 +73,6 @@ public partial class V1 : Migration
     {
         migrationBuilder.DropTable(
             "__Outboxes");
-
-        migrationBuilder.DropTable(
-            "__OutboxMessageFaults");
 
         migrationBuilder.DropTable(
             "__OutboxMessages");

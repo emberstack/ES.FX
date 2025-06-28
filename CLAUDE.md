@@ -52,6 +52,12 @@ dotnet format
 
 # Run code analysis
 dotnet build /p:RunAnalyzers=true
+
+# Run a single test
+dotnet test --filter "FullyQualifiedName~TestClassName.TestMethodName"
+
+# Run tests with detailed output
+dotnet test --logger "console;verbosity=detailed"
 ```
 
 ## Architecture
@@ -81,6 +87,10 @@ dotnet build /p:RunAnalyzers=true
    - Reliable message delivery with EF Core
    - Automatic message capture via interceptors
 
+6. **ES.FX.Migrations** - Database migration abstractions
+   - Migration engine with dependency injection support
+   - Support for multiple migration providers
+
 ### Key Patterns
 - **Builder Pattern** - Used for configuration (e.g., `ProgramEntryBuilder`)
 - **Options Pattern** - All configurations use `IOptions<T>`
@@ -96,6 +106,8 @@ dotnet build /p:RunAnalyzers=true
 - Nullable reference types are enabled (`Nullable=enable`)
 - Implicit usings are enabled (`ImplicitUsings=enable`)
 - XML documentation is generated for all projects
+- Build artifacts output to `.artifacts/` directory
+- Test results output to `.artifacts/TestResults` in TRX format
 
 ### Testing
 - Unit tests use xUnit
@@ -144,3 +156,21 @@ dotnet build /p:RunAnalyzers=true
 - Publishes to GitHub Packages and NuGet.org
 - Creates GitHub releases automatically
 - Path filters optimize build times
+
+## Spark Components Overview
+
+Currently available Spark components for service integration:
+- **ApplicationInsights** - Azure Application Insights telemetry
+- **AzureKeyVault** - Azure Key Vault configuration provider
+- **AzureServiceBus** - Azure Service Bus messaging
+- **AzureStorage** - Azure Storage services (Blobs, Queues, Tables)
+- **Dapr** - Dapr distributed application runtime
+- **Redis** - Redis caching and distributed locking
+- **Seq** - Seq structured logging
+- **SqlServer** - SQL Server with EF Core integration
+
+Each Spark component follows a consistent pattern with:
+- `{Service}SparkConfig` for configuration
+- `{Service}SparkHostingExtensions` for service registration
+- Built-in health checks where applicable
+- OpenTelemetry instrumentation support

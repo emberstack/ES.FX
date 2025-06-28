@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1571;CS1573;CS1574;CS1723;NU1901;NU1902;NU1903;NU5104</NoWarn>
+    <PublicApiAnalyzers>true</PublicApiAnalyzers>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Product>ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory</Product>
+    <Description>ES.FX Transactional Outbox InMemory provider for Entity Framework Core</Description>
+    <PackageTags>ES.FX EmberStack Outbox InMemory EntityFrameworkCore</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ES.FX.TransactionalOutbox.EntityFrameworkCore\ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+</Project>

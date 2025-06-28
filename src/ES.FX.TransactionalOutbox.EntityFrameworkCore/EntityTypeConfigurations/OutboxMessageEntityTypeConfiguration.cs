@@ -20,13 +20,8 @@ internal class OutboxMessageEntityTypeConfiguration : IEntityTypeConfiguration<O
         builder.Property(p => p.ActivityId).HasMaxLength(128);
 
         builder.Property(p => p.DeliveryAttempts);
-        builder.Property(p => p.DeliveryMaxAttempts);
         builder.Property(p => p.DeliveryFirstAttemptedAt);
         builder.Property(p => p.DeliveryLastAttemptedAt);
-        builder.Property(p => p.DeliveryLastAttemptError).HasMaxLength(4000);
-
-        builder.Property(p => p.DeliveryAttemptDelay);
-        builder.Property(p => p.DeliveryAttemptDelayIsExponential);
 
 
         builder.Property(p => p.DeliveryNotBefore);

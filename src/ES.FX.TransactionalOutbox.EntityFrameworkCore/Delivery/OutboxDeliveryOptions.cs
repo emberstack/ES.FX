@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using ES.FX.TransactionalOutbox.Delivery.Faults;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
@@ -19,6 +20,13 @@ public abstract class OutboxDeliveryOptions
     ///     the lock.
     /// </summary>
     public TimeSpan DeliveryTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
+
+    /// <summary>
+    ///     The fault handler that will be used to handle delivery faults. This is used to handle exceptions that occur during
+    ///     message delivery.
+    /// </summary>
+    public IOutboxMessageFaultHandler FaultHandler { get; set; } = new DefaultOutboxMessageFaultHandler();
 
     /// <summary>
     ///     The isolation level for the transaction used to acquire the outbox and process the messages

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Description>MySQL provider for ES.FX TransactionalOutbox with Entity Framework Core support</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ES.FX.TransactionalOutbox.EntityFrameworkCore\ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
+    </ItemGroup>
+
+</Project>

@@ -8,6 +8,9 @@
     <Project Path="src/ES.FX.Hosting/ES.FX.Hosting.csproj" />
     <Project Path="src/ES.FX.Migrations/ES.FX.Migrations.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
+    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.csproj" />
+    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory/ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.csproj" />
+    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.MassTransit/ES.FX.TransactionalOutbox.MassTransit.csproj" Id="513497bb-2cd5-49e5-84a3-98bd5eea6f42" />
     <Project Path="src/ES.FX.TransactionalOutbox/ES.FX.TransactionalOutbox.csproj" Id="cbbc21f8-48f8-4d63-af6b-e64c33da8e4d" />
@@ -71,12 +74,19 @@
   </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/.Shared/">
+    <Project Path="tests/ES.FX.Shared.MySql.Tests/ES.FX.Shared.MySql.Tests.csproj" />
+    <Project Path="tests/ES.FX.Shared.PostgreSql.Tests/ES.FX.Shared.PostgreSql.Tests.csproj" />
     <Project Path="tests/ES.FX.Shared.Redis.Tests/ES.FX.Shared.Redis.Tests.csproj" Id="cd12c894-8708-43cd-b24d-629eed9de922" />
     <Project Path="tests/ES.FX.Shared.SqlServer.Tests/ES.FX.Shared.SqlServer.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/FX/">
     <Project Path="tests/ES.FX.Hosting.Tests/ES.FX.Hosting.Tests.csproj" />
     <Project Path="tests/ES.FX.Tests/ES.FX.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/FX/Additions/">
     <Project Path="tests/ES.FX.Additions.StackExchange.Redis.Tests/ES.FX.Additions.StackExchange.Redis.Tests.csproj" Id="5d90b03e-cda4-475a-8cf9-a744edefb9f2" />
