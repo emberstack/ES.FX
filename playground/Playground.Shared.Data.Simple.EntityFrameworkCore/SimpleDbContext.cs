@@ -1,5 +1,5 @@
 ﻿using ES.FX.Additions.Microsoft.EntityFrameworkCore.Extensions;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
+using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.Entities;
 
@@ -18,7 +18,7 @@ public class SimpleDbContext(
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.AddOutboxEntities();
+        modelBuilder.AddOutbox();
         modelBuilder.ConfigureFromExtension(dbContextOptions);
     }
 }

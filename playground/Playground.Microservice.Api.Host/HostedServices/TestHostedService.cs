@@ -1,4 +1,4 @@
-﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
+﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;

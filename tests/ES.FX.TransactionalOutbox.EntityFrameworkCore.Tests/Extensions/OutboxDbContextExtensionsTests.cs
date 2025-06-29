@@ -1,6 +1,5 @@
 using ES.FX.TransactionalOutbox.Delivery;
 using ES.FX.TransactionalOutbox.Entities;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +33,7 @@ public class OutboxDbContextExtensionsTests
 
         // Act
         context.Orders.Add(order);
-        context.AddOutboxMessage<OutboxTestDbContext, TestOrder>(order);
+        context.AddOutboxMessage(order);
         await context.SaveChangesAsync();
 
         // Assert
@@ -74,7 +73,7 @@ public class OutboxDbContextExtensionsTests
 
         // Act
         context.Orders.Add(order);
-        context.AddOutboxMessage<OutboxTestDbContext, TestOrder>(order, deliveryOptions);
+        context.AddOutboxMessage(order, deliveryOptions);
         await context.SaveChangesAsync();
 
         // Assert
@@ -106,7 +105,7 @@ public class OutboxDbContextExtensionsTests
         foreach (var order in orders)
         {
             context.Orders.Add(order);
-            context.AddOutboxMessage<OutboxTestDbContext, TestOrder>(order);
+            context.AddOutboxMessage(order);
         }
 
         await context.SaveChangesAsync();

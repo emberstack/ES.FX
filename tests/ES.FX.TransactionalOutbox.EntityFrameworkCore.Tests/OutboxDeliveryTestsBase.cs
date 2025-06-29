@@ -3,7 +3,6 @@ using ES.FX.TransactionalOutbox.Delivery;
 using ES.FX.TransactionalOutbox.Delivery.Faults;
 using ES.FX.TransactionalOutbox.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -329,8 +328,12 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
                     options.UseOutbox();
                 });
 
-                // Register the handler as scoped since OutboxDeliveryService expects scoped handlers
-                services.AddScoped<IOutboxMessageHandler>(sp => messageHandler);
+
+                services.AddKeyedSingleton<IOutboxMessageHandler>(typeof(OutboxTestDbContext), messageHandler);
+
+                if (faultHandler is not null)
+                    services.AddKeyedSingleton<IOutboxMessageFaultHandler>(typeof(OutboxTestDbContext), faultHandler);
+
 
                 services.AddOutboxDeliveryService<OutboxTestDbContext>(options =>
                 {
@@ -338,8 +341,6 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
                     options.BatchSize = batchSize;
                     options.PollingInterval = pollingInterval ?? TimeSpan.FromMilliseconds(500);
                     options.DeliveryTimeout = TimeSpan.FromSeconds(5);
-
-                    if (faultHandler != null) options.FaultHandler = faultHandler;
                 });
             })
             .Build();

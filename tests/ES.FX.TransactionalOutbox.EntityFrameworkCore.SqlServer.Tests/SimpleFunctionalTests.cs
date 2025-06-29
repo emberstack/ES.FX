@@ -1,5 +1,4 @@
 using ES.FX.TransactionalOutbox.Entities;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -80,7 +79,7 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
         // Act
         context.Orders.Add(order);
-        context.AddOutboxMessage<OutboxTestDbContext, TestOrder>(order);
+        context.AddOutboxMessage(order);
         await context.SaveChangesAsync();
 
         // Assert
@@ -114,7 +113,7 @@ public class SimpleFunctionalTests : IAsyncLifetime
             };
 
             context.Orders.Add(order1);
-            context.AddOutboxMessage<OutboxTestDbContext, TestOrder>(order1);
+            context.AddOutboxMessage(order1);
             await context.SaveChangesAsync();
 
             await transaction.CommitAsync();
@@ -131,7 +130,7 @@ public class SimpleFunctionalTests : IAsyncLifetime
             };
 
             context.Orders.Add(order2);
-            context.AddOutboxMessage<OutboxTestDbContext, TestOrder>(order2);
+            context.AddOutboxMessage(order2);
             await context.SaveChangesAsync();
 
             await transaction.RollbackAsync();

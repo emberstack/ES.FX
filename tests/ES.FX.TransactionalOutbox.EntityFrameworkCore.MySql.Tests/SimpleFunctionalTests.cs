@@ -2,7 +2,6 @@ using System.Text.Json;
 using ES.FX.TransactionalOutbox.Delivery;
 using ES.FX.TransactionalOutbox.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context.Entities;
 using Microsoft.EntityFrameworkCore;

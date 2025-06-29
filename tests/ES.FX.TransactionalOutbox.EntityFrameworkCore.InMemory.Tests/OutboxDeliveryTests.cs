@@ -1,6 +1,5 @@
 using ES.FX.TransactionalOutbox.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Extensions;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context.Entities;
@@ -38,11 +37,6 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase
         return Task.FromResult(databaseName);
     }
 
-    [Fact(Skip = "InMemory provider does not support concurrent access due to lack of proper locking")]
-    public override Task Should_Handle_Concurrent_Delivery_Services() =>
-        // InMemory provider cannot properly handle concurrent access
-        // as it doesn't support true database-level locking
-        base.Should_Handle_Concurrent_Delivery_Services();
 
     [Fact]
     public async Task InMemory_Provider_Should_Handle_Sequential_Processing()
@@ -108,7 +102,7 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase
                 });
 
                 // Register the handler as scoped since OutboxDeliveryService expects scoped handlers
-                services.AddScoped<IOutboxMessageHandler>(sp => messageHandler);
+                services.AddKeyedScoped<IOutboxMessageHandler>(typeof(OutboxTestDbContext), (_, _) => messageHandler);
 
                 services.AddOutboxDeliveryService<OutboxTestDbContext>(options =>
                 {

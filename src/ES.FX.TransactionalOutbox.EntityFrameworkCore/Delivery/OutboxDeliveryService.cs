@@ -90,7 +90,8 @@ public class OutboxDeliveryService<TDbContext>(
             }
 
             //Check if the outbox provider is ready to deliver messages. If not, sleep and try again.
-            var messageHandler = scope.ServiceProvider.GetRequiredService<IOutboxMessageHandler>();
+            var messageHandler =
+                scope.ServiceProvider.GetRequiredKeyedService<IOutboxMessageHandler>(typeof(TDbContext));
             bool messageHandlerReady;
             try
             {
@@ -111,6 +112,8 @@ public class OutboxDeliveryService<TDbContext>(
                 continue;
             }
 
+            var messageFaultHandler =
+                scope.ServiceProvider.GetRequiredKeyedService<IOutboxMessageFaultHandler>(typeof(TDbContext));
 
             //Always sleep unless there are more outboxes to process
             var sleep = true;
@@ -245,12 +248,13 @@ public class OutboxDeliveryService<TDbContext>(
                                         message.OutboxId,
                                         message.Id);
 
-                                    var faultHandler = outboxDeliveryOptions.FaultHandler;
-                                    var faultResult = await faultHandler.HandleAsync(new OutboxMessageFaultContext
-                                    {
-                                        MessageContext = messageContext,
-                                        FaultException = exception
-                                    }, deliveryTimeout.Token);
+
+                                    var faultResult = await messageFaultHandler.HandleAsync(
+                                        new OutboxMessageFaultContext
+                                        {
+                                            MessageContext = messageContext,
+                                            FaultException = exception
+                                        }, deliveryTimeout.Token);
 
 
                                     if (faultResult.Action is RedeliverMessageAction redeliverMessageAction)
