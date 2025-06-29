@@ -11,15 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\ES.FX.TransactionalOutbox.EntityFrameworkCore\ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests" />
-  </ItemGroup>
-
 </Project>

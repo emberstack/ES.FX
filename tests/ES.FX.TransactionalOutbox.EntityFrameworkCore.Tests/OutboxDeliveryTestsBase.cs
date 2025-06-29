@@ -357,8 +357,7 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
 
         public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default)
         {
-            var order = context.Message as TestOrder;
-            if (order != null)
+            if (context.Message is TestOrder order)
             {
                 _deliveredMessages.Add(order);
                 _semaphore.Release();
@@ -386,14 +385,11 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
         }
     }
 
-    private class FaultingMessageHandler : IOutboxMessageHandler
+    private class FaultingMessageHandler(int failUntilAttempt) : IOutboxMessageHandler
     {
         private readonly ConcurrentBag<TestOrder> _deliveredMessages = new();
-        private readonly int _failUntilAttempt;
         private readonly SemaphoreSlim _successSemaphore = new(0);
         private int _attemptCount;
-
-        public FaultingMessageHandler(int failUntilAttempt) => _failUntilAttempt = failUntilAttempt;
 
         public int AttemptCount => _attemptCount;
         public IReadOnlyCollection<TestOrder> DeliveredMessages => _deliveredMessages.ToList();
@@ -402,11 +398,10 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
         {
             Interlocked.Increment(ref _attemptCount);
 
-            if (_attemptCount < _failUntilAttempt)
+            if (_attemptCount < failUntilAttempt)
                 throw new InvalidOperationException($"Simulated failure on attempt {_attemptCount}");
 
-            var order = context.Message as TestOrder;
-            if (order != null)
+            if (context.Message is TestOrder order)
             {
                 _deliveredMessages.Add(order);
                 _successSemaphore.Release();
@@ -440,29 +435,16 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
         }
     }
 
-    private class XUnitLoggerProvider : ILoggerProvider
+    private class XUnitLoggerProvider(ITestOutputHelper output) : ILoggerProvider
     {
-        private readonly ITestOutputHelper _output;
-
-        public XUnitLoggerProvider(ITestOutputHelper output) => _output = output;
-
-        public ILogger CreateLogger(string categoryName) => new XUnitLogger(_output, categoryName);
+        public ILogger CreateLogger(string categoryName) => new XUnitLogger(output, categoryName);
 
         public void Dispose()
         {
         }
 
-        private class XUnitLogger : ILogger
+        private class XUnitLogger(ITestOutputHelper output, string categoryName) : ILogger
         {
-            private readonly string _categoryName;
-            private readonly ITestOutputHelper _output;
-
-            public XUnitLogger(ITestOutputHelper output, string categoryName)
-            {
-                _output = output;
-                _categoryName = categoryName;
-            }
-
             public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
 
             public bool IsEnabled(LogLevel logLevel) => true;
@@ -472,9 +454,9 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
             {
                 try
                 {
-                    _output.WriteLine(
-                        $"[{DateTime.UtcNow:HH:mm:ss.fff}] [{logLevel}] [{_categoryName}] {formatter(state, exception)}");
-                    if (exception != null) _output.WriteLine(exception.ToString());
+                    output.WriteLine(
+                        $"[{DateTime.UtcNow:HH:mm:ss.fff}] [{logLevel}] [{categoryName}] {formatter(state, exception)}");
+                    if (exception != null) output.WriteLine(exception.ToString());
                 }
                 catch
                 {

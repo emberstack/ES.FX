@@ -13,12 +13,8 @@ using Xunit.Abstractions;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.Tests;
 
-public class OutboxDeliveryTests : OutboxDeliveryTestsBase
+public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTestsBase(output)
 {
-    public OutboxDeliveryTests(ITestOutputHelper output) : base(output)
-    {
-    }
-
     protected override void ConfigureDbContext(DbContextOptionsBuilder optionsBuilder, string connectionString)
     {
         optionsBuilder.UseInMemoryDatabase(connectionString)
@@ -85,7 +81,7 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase
         await host.StopAsync();
     }
 
-    private Task<IHost> CreateHostAsync(
+    private static Task<IHost> CreateHostAsync(
         string connectionString,
         IOutboxMessageHandler messageHandler,
         int batchSize = 10)
@@ -135,8 +131,7 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase
 
         public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default)
         {
-            var order = context.Message as TestOrder;
-            if (order != null)
+            if (context.Message is TestOrder order)
             {
                 lock (_deliveredMessages)
                 {
@@ -171,7 +166,7 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase
                 await _semaphore.WaitAsync(Math.Min((int)remainingTime.TotalMilliseconds, 100));
             }
 
-            var actualCount = 0;
+            int actualCount;
             lock (_deliveredMessages)
             {
                 actualCount = _deliveredMessages.Count;

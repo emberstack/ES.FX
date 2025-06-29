@@ -17,7 +17,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\ES.FX.TransactionalOutbox\ES.FX.TransactionalOutbox.csproj" />
-		<ProjectReference Include="..\ES.FX\ES.FX.csproj" />
 	</ItemGroup>
 
 

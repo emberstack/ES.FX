@@ -12,8 +12,4 @@
         <ProjectReference Include="..\ES.FX.TransactionalOutbox.EntityFrameworkCore\ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
-    </ItemGroup>
-
 </Project>

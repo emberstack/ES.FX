@@ -8,7 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql\ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.csproj" />
+	    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
+		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql\ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.csproj" />
         <ProjectReference Include="..\ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests\ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.csproj" />
         <ProjectReference Include="..\ES.FX.Shared.MySql.Tests\ES.FX.Shared.MySql.Tests.csproj" />
     </ItemGroup>

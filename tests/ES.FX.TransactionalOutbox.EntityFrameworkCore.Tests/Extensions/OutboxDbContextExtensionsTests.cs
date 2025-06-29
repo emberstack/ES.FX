@@ -21,7 +21,7 @@ public class OutboxDbContextExtensionsTests
     public async Task AddOutboxMessage_Should_Add_Message_To_Outbox()
     {
         // Arrange
-        using var context = CreateContext();
+        await using var context = CreateContext();
         await context.Database.EnsureCreatedAsync();
 
         var order = new TestOrder
@@ -52,7 +52,7 @@ public class OutboxDbContextExtensionsTests
     public async Task AddOutboxMessage_With_DeliveryOptions_Should_Set_Delivery_Constraints()
     {
         // Arrange
-        using var context = CreateContext();
+        await using var context = CreateContext();
         await context.Database.EnsureCreatedAsync();
 
         var order = new TestOrder
@@ -86,7 +86,7 @@ public class OutboxDbContextExtensionsTests
     public async Task AddOutboxMessage_Multiple_Messages_Should_Be_Added_In_Order()
     {
         // Arrange
-        using var context = CreateContext();
+        await using var context = CreateContext();
         await context.Database.EnsureCreatedAsync();
 
         var orders = new List<TestOrder>();
@@ -131,7 +131,7 @@ public class OutboxDbContextExtensionsTests
         builder.UseOutbox();
 
         // Act
-        using var context = new OutboxTestDbContext(builder.Options);
+        await using var context = new OutboxTestDbContext(builder.Options);
         await context.Database.EnsureCreatedAsync();
 
         // Assert
