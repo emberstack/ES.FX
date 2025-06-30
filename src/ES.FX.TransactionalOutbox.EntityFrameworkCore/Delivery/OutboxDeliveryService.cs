@@ -96,7 +96,9 @@ public class OutboxDeliveryService<TDbContext>(
             try
             {
                 using var handlerReadyTimeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
-                    new CancellationTokenSource(outboxDeliveryOptions.DeliveryTimeout).Token);
+                    outboxDeliveryOptions.DeliveryTimeout.HasValue
+                        ? new CancellationTokenSource(outboxDeliveryOptions.DeliveryTimeout.Value).Token
+                        : CancellationToken.None);
                 messageHandlerReady =
                     await messageHandler.IsReadyAsync(handlerReadyTimeout.Token).ConfigureAwait(false);
             }
@@ -128,7 +130,9 @@ public class OutboxDeliveryService<TDbContext>(
                 await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
                     {
                         using var deliveryTimeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
-                            new CancellationTokenSource(outboxDeliveryOptions.DeliveryTimeout).Token);
+                            outboxDeliveryOptions.DeliveryTimeout.HasValue
+                                ? new CancellationTokenSource(outboxDeliveryOptions.DeliveryTimeout.Value).Token
+                                : CancellationToken.None);
 
 
                         await using var transaction = await dbContext.Database
@@ -295,8 +299,14 @@ public class OutboxDeliveryService<TDbContext>(
 
                             try
                             {
-                                await dbContext.SaveChangesAsync(deliveryTimeout.Token).ConfigureAwait(false);
-                                await transaction.CommitAsync(deliveryTimeout.Token).ConfigureAwait(false);
+                                using var commitTimeout = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken,
+                                    outboxDeliveryOptions.TransactionCommitTimeout.HasValue
+                                        ? new CancellationTokenSource(outboxDeliveryOptions.TransactionCommitTimeout
+                                            .Value).Token
+                                        : CancellationToken.None);
+
+                                await dbContext.SaveChangesAsync(commitTimeout.Token).ConfigureAwait(false);
+                                await transaction.CommitAsync(commitTimeout.Token).ConfigureAwait(false);
                             }
                             catch (Exception exception)
                             {

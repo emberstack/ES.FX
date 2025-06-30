@@ -9,7 +9,6 @@
     <Project Path="src/ES.FX.Migrations/ES.FX.Migrations.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.csproj" />
-    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory/ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.MassTransit/ES.FX.TransactionalOutbox.MassTransit.csproj" Id="513497bb-2cd5-49e5-84a3-98bd5eea6f42" />
@@ -84,7 +83,6 @@
     <Project Path="tests/ES.FX.Tests/ES.FX.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests.csproj" />
-    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.csproj" />
   </Folder>

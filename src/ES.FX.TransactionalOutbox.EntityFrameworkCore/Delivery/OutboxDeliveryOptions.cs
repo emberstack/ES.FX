@@ -18,7 +18,13 @@ public abstract class OutboxDeliveryOptions
     ///     The timeout for the delivery of a batch. This includes acquiring the outbox, processing the messages and releasing
     ///     the lock.
     /// </summary>
-    public TimeSpan DeliveryTimeout { get; set; } = TimeSpan.FromSeconds(5);
+    public TimeSpan? DeliveryTimeout { get; set; }
+
+
+    /// <summary>
+    ///     The timeout used to commit changes after processing a batch of messages.
+    /// </summary>
+    public TimeSpan? TransactionCommitTimeout { get; set; }
 
 
     /// <summary>

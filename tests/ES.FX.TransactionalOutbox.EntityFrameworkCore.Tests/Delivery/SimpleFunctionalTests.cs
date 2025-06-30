@@ -5,9 +5,8 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Xunit;
 
-namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.Tests;
+namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Delivery;
 
 public class SimpleFunctionalTests
 {
@@ -24,10 +23,7 @@ public class SimpleFunctionalTests
             options.UseOutbox();
         });
 
-        services.AddOutboxDeliveryService<OutboxTestDbContext, TestMessageHandler>(options =>
-        {
-            options.UseInMemoryOutboxProvider();
-        });
+        services.AddOutboxDeliveryService<OutboxTestDbContext, TestMessageHandler>();
 
         var serviceProvider = services.BuildServiceProvider();
 
@@ -37,7 +33,7 @@ public class SimpleFunctionalTests
 
         // Assert
         Assert.NotNull(deliveryOptions.Value.OutboxProvider);
-        Assert.IsType<InMemoryOutboxProvider<OutboxTestDbContext>>(deliveryOptions.Value.OutboxProvider);
+        Assert.IsType<DefaultOutboxProvider<OutboxTestDbContext>>(deliveryOptions.Value.OutboxProvider);
 
         return Task.CompletedTask;
     }
@@ -71,7 +67,7 @@ public class SimpleFunctionalTests
         await context.SaveChangesAsync();
 
         // Act
-        var provider = new InMemoryOutboxProvider<OutboxTestDbContext>();
+        var provider = new DefaultOutboxProvider<OutboxTestDbContext>();
         var result = await provider.GetNextExclusiveOutboxWithoutDelay(context);
 
         // Assert
@@ -111,7 +107,7 @@ public class SimpleFunctionalTests
         }
 
         // Act - Try to get the same outbox concurrently
-        var provider = new InMemoryOutboxProvider<OutboxTestDbContext>();
+        var provider = new DefaultOutboxProvider<OutboxTestDbContext>();
         var tasks = new List<Task<Outbox?>>();
 
         for (var i = 0; i < 3; i++)
@@ -172,7 +168,7 @@ public class SimpleFunctionalTests
         await context.SaveChangesAsync();
 
         // Act
-        var provider = new InMemoryOutboxProvider<OutboxTestDbContext>();
+        var provider = new DefaultOutboxProvider<OutboxTestDbContext>();
         var result = await provider.GetNextExclusiveOutboxWithoutDelay(context);
 
         // Assert
@@ -181,16 +177,11 @@ public class SimpleFunctionalTests
         Assert.Null(result.Lock);
     }
 
-    private class TestMessageHandler : IOutboxMessageHandler
+    public class TestMessageHandler : IOutboxMessageHandler
     {
-        public readonly List<object> DeliveredMessages = new();
-
         public ValueTask HandleAsync(OutboxMessageContext context,
-            CancellationToken cancellationToken = default)
-        {
-            DeliveredMessages.Add(context.Message);
-            return ValueTask.CompletedTask;
-        }
+            CancellationToken cancellationToken = default) =>
+            ValueTask.CompletedTask;
 
         public ValueTask<bool> IsReadyAsync(CancellationToken cancellationToken = default) =>
             ValueTask.FromResult(true);

@@ -1,6 +1,5 @@
 using ES.FX.TransactionalOutbox.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
-using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,10 +7,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Xunit;
 using Xunit.Abstractions;
 
-namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.InMemory.Tests;
+namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Delivery;
 
 public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTestsBase(output)
 {
@@ -23,7 +21,6 @@ public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTests
 
     protected override void ConfigureOutboxDelivery(OutboxDeliveryOptions<OutboxTestDbContext> options)
     {
-        options.UseInMemoryOutboxProvider();
     }
 
     protected override Task<string> GetConnectionStringAsync()
@@ -102,7 +99,6 @@ public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTests
 
                 services.AddOutboxDeliveryService<OutboxTestDbContext>(options =>
                 {
-                    options.UseInMemoryOutboxProvider();
                     options.BatchSize = batchSize;
                     options.PollingInterval = TimeSpan.FromMilliseconds(100);
                     options.DeliveryTimeout = TimeSpan.FromSeconds(5);

@@ -12,13 +12,14 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 public class DefaultOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
     where TDbContext : DbContext
 {
-    public Task<Outbox?> GetNextExclusiveOutboxWithoutDelay(TDbContext dbContext,
+    public async Task<Outbox?> GetNextExclusiveOutboxWithoutDelay(TDbContext dbContext,
         CancellationToken cancellationToken = default)
     {
-        return dbContext.Set<Outbox>()
+        return await dbContext.Set<Outbox>()
             .Where(o => o.Lock == null &&
                         (o.DeliveryDelayedUntil == null || o.DeliveryDelayedUntil < DateTimeOffset.UtcNow))
             .OrderBy(o => o.AddedAt)
-            .FirstOrDefaultAsync(cancellationToken);
+            .AsTracking()
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
     }
 }
