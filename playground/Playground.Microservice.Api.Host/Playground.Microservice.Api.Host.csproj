@@ -38,8 +38,10 @@
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Serilog\ES.FX.Ignite.Serilog.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.StackExchange.Redis\ES.FX.Ignite.StackExchange.Redis.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite\ES.FX.Ignite.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.MessageBus.MassTransit\ES.FX.MessageBus.MassTransit.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.MassTransit\ES.FX.TransactionalOutbox.MassTransit.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.MessageBus\ES.FX.TransactionalOutbox.MessageBus.csproj" />
 		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer\Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
 	</ItemGroup>

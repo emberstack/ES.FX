@@ -1,8 +1,6 @@
 using Asp.Versioning;
-using ES.FX.Additions.MassTransit.Extensions;
 using ES.FX.Additions.MassTransit.Formatters;
-using ES.FX.Additions.MassTransit.MediatR.Consumers;
-using ES.FX.Additions.MassTransit.Middleware.PayloadTypes;
+using ES.FX.Additions.MassTransit.MessageKind;
 using ES.FX.Additions.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.Additions.NSwag.AspNetCore.Generation;
 using ES.FX.Additions.Serilog.Lifetime;
@@ -21,13 +19,15 @@ using ES.FX.Ignite.NSwag.Hosting;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
+using ES.FX.MessageBus;
+using ES.FX.MessageBus.Abstractions;
+using ES.FX.MessageBus.MassTransit;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
-using ES.FX.TransactionalOutbox.MassTransit.Delivery;
+using ES.FX.TransactionalOutbox.MessageBus.Delivery;
 using ES.FX.TransactionalOutbox.Observability;
 using HealthChecks.UI.Client;
 using MassTransit;
-using MassTransit.Logging;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Playground.Microservice.Api.Host.HostedServices;
@@ -119,7 +119,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddHostedService<TestHostedService>();
 
 
-    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MassTransitOutboxMessageHandler>(options =>
+    builder.Services.AddOutboxDeliveryService<SimpleDbContext, MessageBusOutboxMessageHandler>(options =>
         {
             options.UseSqlServerOutboxProvider();
         })
@@ -130,21 +130,20 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
 
 
-    builder.Services.AddMassTransit(x =>
-    {
-        x.AddConsumer<MediatorConsumer<OutboxTestMessage>>((_, cfg) =>
-        {
-            //cfg.Options<BatchOptions>(options => options.SetMessageLimit(10));
-        }).Endpoint(e => e.PrefetchCount = 4);
-    });
+    //builder.Services.AddMessageHandler<OutboxTestMessage, OutboxTestMessageHandler>();
+    //builder.Services.AddMessageHandler<OutboxTestMessage, OutboxTestMessageHandler2>();
 
-    builder.Services.AddMassTransit(x =>
+    builder.Services.AddMessageHandler<OutboxTestMessageHandler>();
+
+
+    builder.Services.AddMessageBus(x =>
     {
         x.AddConfigureEndpointsCallback((_, receiveEndpointConfigurator) =>
         {
             //Attempt to fix message type and resend the message if possible.Otherwise, log and move to dead - letter
             receiveEndpointConfigurator.ConfigureDeadLetter(pipe =>
-                pipe.UseFilter(new TryResendUsingPayloadTypeFilter()));
+                pipe.UseFilter(new TryResendUsingMessageKindFilter()));
+
             //Use in-process retry with a limit before sending it back to the broker.
             //This prevents poison messages from overwhelming the system
             receiveEndpointConfigurator.UseMessageRetry(retryCfg => retryCfg.Interval(2, TimeSpan.FromSeconds(10)));
@@ -168,7 +167,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
                 settings => settings.SetQueueArgument("x-message-ttl", TimeSpan.FromDays(7));
 
 
-            cfg.UsePayloadType(context);
+            cfg.UseMessageKind(context);
 
 
             cfg.Publish<INotification>(p => p.Exclude = true);
@@ -177,18 +176,20 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
 
             cfg.MessageTopology.SetEntityNameFormatter(new AggregatePrefixEntityNameFormatter(
-                new PayloadTypeEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
+                new KindEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
                 "__",
                 _ => nameof(Playground),
                 _ => "Events"
             ));
 
             cfg.ConfigureEndpoints(context,
-                new PayloadTypeDefaultEndpointNameFormatter(
+                new KindEndpointNameFormatter(
                     prefix: $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__"));
         });
-    }).AddOpenTelemetry().WithTracing(traceBuilder =>
-        traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
+    });
+
+    //builder.Services.AddMassTransit().AddOpenTelemetry().WithTracing(traceBuilder =>
+    //    traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
 
 
     var app = builder.Build();

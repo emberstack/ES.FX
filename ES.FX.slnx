@@ -6,12 +6,15 @@
   <Folder Name="/.src/" />
   <Folder Name="/.src/FX/">
     <Project Path="src/ES.FX.Hosting/ES.FX.Hosting.csproj" />
+    <Project Path="src/ES.FX.MessageBus.MassTransit/ES.FX.MessageBus.MassTransit.csproj" Id="59307df7-c5de-4f3f-a4ce-d7e26bf55e82" />
+    <Project Path="src/ES.FX.MessageBus/ES.FX.MessageBus.csproj" Id="ee639471-b935-4e49-800c-75e56c35d48c" />
     <Project Path="src/ES.FX.Migrations/ES.FX.Migrations.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.MassTransit/ES.FX.TransactionalOutbox.MassTransit.csproj" Id="513497bb-2cd5-49e5-84a3-98bd5eea6f42" />
+    <Project Path="src/ES.FX.TransactionalOutbox.MessageBus/ES.FX.TransactionalOutbox.MessageBus.csproj" Id="3281969f-0576-4f17-b01a-8e3e7e0d43ed" />
     <Project Path="src/ES.FX.TransactionalOutbox/ES.FX.TransactionalOutbox.csproj" Id="cbbc21f8-48f8-4d63-af6b-e64c33da8e4d" />
     <Project Path="src/ES.FX/ES.FX.csproj" />
   </Folder>

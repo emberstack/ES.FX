@@ -1,19 +1,18 @@
-﻿using ES.FX.Additions.MassTransit.Serialization;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using MassTransit;
 using MassTransit.Serialization;
 
-namespace ES.FX.Additions.MassTransit.Middleware.PayloadTypes;
+namespace ES.FX.Additions.MassTransit.MessageKind;
 
 /// <summary>
 ///     Filter that attempts to fix the message type and resend the message
 /// </summary>
 [PublicAPI]
-public class TryResendUsingPayloadTypeFilter : IFilter<ReceiveContext>
+public class TryResendUsingMessageKindFilter : IFilter<ReceiveContext>
 {
     Task IFilter<ReceiveContext>.Send(ReceiveContext context, IPipe<ReceiveContext> next)
     {
-        var messageType = MassTransitPayloadTypeProvider.GetType(context);
+        var messageType = MessageKindProvider.GetType(context);
         if (messageType is null) return next.Send(context);
 
         var consumeContext = new SystemTextJsonMessageSerializer(context.ContentType).Deserialize(context);
@@ -24,6 +23,6 @@ public class TryResendUsingPayloadTypeFilter : IFilter<ReceiveContext>
 
     void IProbeSite.Probe(ProbeContext context)
     {
-        context.CreateFilterScope(nameof(TryResendUsingPayloadTypeFilter));
+        context.CreateFilterScope(nameof(TryResendUsingMessageKindFilter));
     }
 }

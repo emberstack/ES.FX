@@ -239,7 +239,7 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
     private class TestMessageHandler : IOutboxMessageHandler
     {
-        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default) =>
+        public ValueTask Handle(OutboxMessageContext context, CancellationToken cancellationToken = default) =>
             ValueTask.CompletedTask;
     }
 }

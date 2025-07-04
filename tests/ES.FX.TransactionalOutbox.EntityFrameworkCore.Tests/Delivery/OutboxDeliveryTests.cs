@@ -125,7 +125,7 @@ public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTests
             }
         }
 
-        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default)
+        public ValueTask Handle(OutboxMessageContext context, CancellationToken cancellationToken = default)
         {
             if (context.Message is TestOrder order)
             {
