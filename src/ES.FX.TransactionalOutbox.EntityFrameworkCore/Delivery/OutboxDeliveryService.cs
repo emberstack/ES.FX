@@ -53,7 +53,7 @@ public class OutboxDeliveryService<TDbContext>(
 
 
             await messageHandler
-                .HandleAsync(messageContext, cancellationToken)
+                .Handle(messageContext, cancellationToken)
                 .ConfigureAwait(false);
             deliverMessageActivity?.SetStatus(ActivityStatusCode.Ok);
         }
@@ -100,7 +100,7 @@ public class OutboxDeliveryService<TDbContext>(
                         ? new CancellationTokenSource(outboxDeliveryOptions.DeliveryTimeout.Value).Token
                         : CancellationToken.None);
                 messageHandlerReady =
-                    await messageHandler.IsReadyAsync(handlerReadyTimeout.Token).ConfigureAwait(false);
+                    await messageHandler.IsReady(handlerReadyTimeout.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

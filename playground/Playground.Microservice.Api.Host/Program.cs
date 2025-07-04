@@ -1,8 +1,6 @@
 using Asp.Versioning;
-using ES.FX.Additions.MassTransit.Extensions;
 using ES.FX.Additions.MassTransit.Formatters;
-using ES.FX.Additions.MassTransit.MediatR.Consumers;
-using ES.FX.Additions.MassTransit.Middleware.PayloadTypes;
+using ES.FX.Additions.MassTransit.MessageKind;
 using ES.FX.Additions.Microsoft.EntityFrameworkCore.Extensions;
 using ES.FX.Additions.NSwag.AspNetCore.Generation;
 using ES.FX.Additions.Serilog.Lifetime;
@@ -95,8 +93,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             dbContextOptionsBuilder.ConfigureWarnings(w => w.Ignore(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
             dbContextOptionsBuilder.WithConfigureModelBuilderExtension((modelBuilder, _) =>
                 modelBuilder.ApplyConfigurationsFromAssembly(typeof(SimpleDbContextDesignTimeFactory).Assembly));
-
-            //dbContextOptionsBuilder.ConfigureOutbox(opt=>opt.MessageInterceptors.Add(new SimpleOutboxMessageInterceptor()));
         },
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {
@@ -132,11 +128,9 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     builder.Services.AddMassTransit(x =>
     {
-        x.AddConsumer<MediatorConsumer<OutboxTestMessage>>((_, cfg) =>
-        {
-            //cfg.Options<BatchOptions>(options => options.SetMessageLimit(10));
-        }).Endpoint(e => e.PrefetchCount = 4);
+        x.AddConsumer<TestMessageConsumer>();
     });
+
 
     builder.Services.AddMassTransit(x =>
     {
@@ -144,7 +138,8 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         {
             //Attempt to fix message type and resend the message if possible.Otherwise, log and move to dead - letter
             receiveEndpointConfigurator.ConfigureDeadLetter(pipe =>
-                pipe.UseFilter(new TryResendUsingPayloadTypeFilter()));
+                pipe.UseFilter(new TryResendUsingMessageKindFilter()));
+
             //Use in-process retry with a limit before sending it back to the broker.
             //This prevents poison messages from overwhelming the system
             receiveEndpointConfigurator.UseMessageRetry(retryCfg => retryCfg.Interval(2, TimeSpan.FromSeconds(10)));
@@ -168,7 +163,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
                 settings => settings.SetQueueArgument("x-message-ttl", TimeSpan.FromDays(7));
 
 
-            cfg.UsePayloadType(context);
+            cfg.UseMessageKind(context);
 
 
             cfg.Publish<INotification>(p => p.Exclude = true);
@@ -177,18 +172,24 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
 
             cfg.MessageTopology.SetEntityNameFormatter(new AggregatePrefixEntityNameFormatter(
-                new PayloadTypeEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
+                new KindEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter),
                 "__",
                 _ => nameof(Playground),
                 _ => "Events"
             ));
 
             cfg.ConfigureEndpoints(context,
-                new PayloadTypeDefaultEndpointNameFormatter(
-                    prefix: $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__"));
+                new KindEndpointNameFormatter(
+                    prefix: $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__",
+                    includeNamespace: true,
+                    joinSeparator: "."));
         });
     }).AddOpenTelemetry().WithTracing(traceBuilder =>
         traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
+
+   
+
+
 
 
     var app = builder.Build();
@@ -205,7 +206,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             .ReportApiVersions()
             .Build());
 
-    root.MapGet("test", async (IServiceProvider serviceProvider) =>
+    root.MapGet("test", async (IServiceProvider _) =>
     {
         //var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<SimpleDbContext>>();
         //await using var dbContext = await dbContextFactory.CreateDbContextAsync().ConfigureAwait(false);

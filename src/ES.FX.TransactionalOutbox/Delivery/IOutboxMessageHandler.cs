@@ -12,12 +12,12 @@ public interface IOutboxMessageHandler
     ///     Handles the outbox message.
     /// </summary>
     /// <param name="cancellationToken"> Delivery cancellation token</param>
-    public ValueTask HandleAsync(OutboxMessageContext context,
+    public ValueTask Handle(OutboxMessageContext context,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     ///     Returns whether the handler can deliver messages. This can be used to delay the delivery of messages until certain
     ///     conditions are met (example: health checks)
     /// </summary>
-    public ValueTask<bool> IsReadyAsync(CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
+    public ValueTask<bool> IsReady(CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
 }

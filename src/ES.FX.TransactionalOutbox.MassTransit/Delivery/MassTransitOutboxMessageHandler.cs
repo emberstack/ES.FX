@@ -13,13 +13,13 @@ namespace ES.FX.TransactionalOutbox.MassTransit.Delivery;
 public class MassTransitOutboxMessageHandler(IBusControl busControl, IPublishEndpoint publishEndpoint)
     : IOutboxMessageHandler
 {
-    public async ValueTask HandleAsync(OutboxMessageContext context,
+    public async ValueTask Handle(OutboxMessageContext context,
         CancellationToken cancellationToken = default)
     {
         await publishEndpoint.Publish(context.Message, cancellationToken);
     }
 
-    public async ValueTask<bool> IsReadyAsync(CancellationToken cancellation = default) =>
+    public async ValueTask<bool> IsReady(CancellationToken cancellation = default) =>
         await busControl.WaitForHealthStatus(BusHealthStatus.Healthy, cancellation).ConfigureAwait(false) ==
         BusHealthStatus.Healthy;
 }
