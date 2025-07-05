@@ -130,10 +130,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
 
 
-    //builder.Services.AddMessageHandler<OutboxTestMessage, OutboxTestMessageHandler>();
-    //builder.Services.AddMessageHandler<OutboxTestMessage, OutboxTestMessageHandler2>();
-
-    builder.Services.AddMessageHandler<OutboxTestMessageHandler>();
+    builder.Services.AddMessageHandlers(typeof(Program).Assembly);
 
 
     builder.Services.AddMessageBus(x =>
@@ -184,7 +181,9 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
             cfg.ConfigureEndpoints(context,
                 new KindEndpointNameFormatter(
-                    prefix: $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__"));
+                    prefix: $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__",
+                    includeNamespace: true, 
+                    joinSeparator:"."));
         });
     });
 

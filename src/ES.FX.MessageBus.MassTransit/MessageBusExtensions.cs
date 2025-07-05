@@ -12,23 +12,6 @@ public static class MessageBusExtensions
     {
         services.AddMassTransit(x=>
         {
-            //var handlerServiceDescriptors = x.Where(sd =>
-            //        sd.ServiceType.IsGenericType
-            //        && sd.ServiceType.GetGenericTypeDefinition() == typeof(IHandleMessages<>))
-            //    .ToList();
-
-            //foreach (var handlerServiceDescriptor in handlerServiceDescriptors)
-            //{
-            //    var messageType = handlerServiceDescriptor.ServiceType.GenericTypeArguments.First();
-            //    var handlerType = handlerServiceDescriptor.ImplementationType!;
-
-            //    x.TryAddScoped(handlerType);
-
-            //    var consumerType = typeof(MassTransitConsumer<,>)
-            //        .MakeGenericType(messageType, handlerType);
-            //    x.AddConsumer(consumerType);
-            //}
-
             var handlerDefinitions = x.Where(sd =>
                         sd.ServiceType.IsGenericType
                         && sd.ServiceType.GetGenericTypeDefinition() == typeof(MessageHandlerDefinition<,>))
@@ -37,8 +20,9 @@ public static class MessageBusExtensions
             foreach (var definition in handlerDefinitions)
             {
                 var messageType = definition.ServiceType.GenericTypeArguments.First();
-                var handlerType = definition.ServiceType.GenericTypeArguments.Last()!;
+                var handlerType = definition.ServiceType.GenericTypeArguments.Last();
 
+                // In case the handler is not registered as a service, add it as scoped.
                 x.TryAddScoped(handlerType);
 
                 var consumerType = typeof(MassTransitConsumer<,>)
@@ -51,6 +35,4 @@ public static class MessageBusExtensions
         services.AddScoped<IMessageBus, MassTransitMessageBus>();
         services.AddSingleton<IMessageBusControl, MassTransitMessageBusControl>();
     }
-
-   
 }

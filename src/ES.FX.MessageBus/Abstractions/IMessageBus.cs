@@ -1,7 +1,6 @@
-﻿namespace ES.FX.MessageBus.Abstractions
+﻿namespace ES.FX.MessageBus.Abstractions;
+
+public interface IMessageBus
 {
-    public interface IMessageBus
-    {
-        Task Publish<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class;
-    }
+    Task Publish<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class;
 }
