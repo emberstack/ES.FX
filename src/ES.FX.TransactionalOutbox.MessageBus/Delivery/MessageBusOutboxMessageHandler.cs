@@ -1,4 +1,4 @@
-using ES.FX.MessageBus.Abstractions;
+using ES.FX.MessageBus;
 using ES.FX.TransactionalOutbox.Delivery;
 using JetBrains.Annotations;
 

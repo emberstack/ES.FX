@@ -20,7 +20,6 @@ using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using ES.FX.Ignite.Serilog.Hosting;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
 using ES.FX.MessageBus;
-using ES.FX.MessageBus.Abstractions;
 using ES.FX.MessageBus.MassTransit;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
@@ -28,10 +27,10 @@ using ES.FX.TransactionalOutbox.MessageBus.Delivery;
 using ES.FX.TransactionalOutbox.Observability;
 using HealthChecks.UI.Client;
 using MassTransit;
+using MassTransit.Logging;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Playground.Microservice.Api.Host.HostedServices;
-using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
 using Playground.Shared.Data.Simple.EntityFrameworkCore.SqlServer;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
@@ -95,8 +94,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             dbContextOptionsBuilder.ConfigureWarnings(w => w.Ignore(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
             dbContextOptionsBuilder.WithConfigureModelBuilderExtension((modelBuilder, _) =>
                 modelBuilder.ApplyConfigurationsFromAssembly(typeof(SimpleDbContextDesignTimeFactory).Assembly));
-
-            //dbContextOptionsBuilder.ConfigureOutbox(opt=>opt.MessageInterceptors.Add(new SimpleOutboxMessageInterceptor()));
         },
         configureSqlServerDbContextOptionsBuilder: sqlServerDbContextOptionsBuilder =>
         {
@@ -131,9 +128,12 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
 
     builder.Services.AddMessageHandlers(typeof(Program).Assembly);
+    builder.Services.AddMessageBus(messageBusBuilder =>
+    {
+        messageBusBuilder.UseMassTransit();
+    });
 
-
-    builder.Services.AddMessageBus(x =>
+    builder.Services.AddMassTransit(x =>
     {
         x.AddConfigureEndpointsCallback((_, receiveEndpointConfigurator) =>
         {
@@ -182,13 +182,15 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             cfg.ConfigureEndpoints(context,
                 new KindEndpointNameFormatter(
                     prefix: $"{context.GetRequiredService<IHostEnvironment>().ApplicationName}__",
-                    includeNamespace: true, 
-                    joinSeparator:"."));
+                    includeNamespace: true,
+                    joinSeparator: "."));
         });
-    });
+    }).AddOpenTelemetry().WithTracing(traceBuilder =>
+        traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
 
-    //builder.Services.AddMassTransit().AddOpenTelemetry().WithTracing(traceBuilder =>
-    //    traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
+   
+
+
 
 
     var app = builder.Build();

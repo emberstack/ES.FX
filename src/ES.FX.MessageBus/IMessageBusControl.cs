@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace ES.FX.MessageBus.Abstractions;
+namespace ES.FX.MessageBus;
 
 [PublicAPI]
 public interface IMessageBusControl : IAsyncDisposable

@@ -1,5 +1,4 @@
-﻿using ES.FX.MessageBus.Abstractions;
-using MassTransit;
+﻿using MassTransit;
 
 namespace ES.FX.MessageBus.MassTransit.Internals;
 

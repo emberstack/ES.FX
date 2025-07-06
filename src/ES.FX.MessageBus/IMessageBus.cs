@@ -1,4 +1,4 @@
-﻿namespace ES.FX.MessageBus.Abstractions;
+﻿namespace ES.FX.MessageBus;
 
 public interface IMessageBus
 {

@@ -1,5 +1,4 @@
-﻿using ES.FX.MessageBus.Abstractions;
-using MassTransit;
+﻿using MassTransit;
 
 namespace ES.FX.MessageBus.MassTransit.Internals;
 
@@ -9,7 +8,9 @@ internal class MassTransitConsumer<TMessage, TMessageHandler>(TMessageHandler ha
 {
     public async Task Consume(ConsumeContext<TMessage> context)
     {
-        await handler.Handle(context.Message, context.CancellationToken)
+        await handler.Handle(
+                new MassTransitMessageContext<TMessage>(context.Message,context), 
+                context.CancellationToken)
             .ConfigureAwait(false);
     }
 }

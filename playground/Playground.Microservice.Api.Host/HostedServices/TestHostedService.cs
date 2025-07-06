@@ -1,4 +1,5 @@
 ﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore;
+using ES.FX.TransactionalOutbox.Observability;
 using Microsoft.EntityFrameworkCore;
 using Playground.Microservice.Api.Host.Testing;
 using Playground.Shared.Data.Simple.EntityFrameworkCore;
@@ -14,15 +15,19 @@ internal class TestHostedService(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await Task.CompletedTask;
-
-        while (true)
+        while (!stoppingToken.IsCancellationRequested)
         {
+            var activity = Diagnostics.ActivitySource.StartActivity();
+
+            Console.WriteLine($"Activity ID: {activity?.Id ?? "No Activity"}");
+            Console.WriteLine($"Activity ParentId: {activity?.ParentId ?? "No Activity"}");
+            Console.WriteLine($"Activity RootId: {activity?.RootId ?? "No Activity"}");
+
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<SimpleDbContext>>();
 
             await using var dbContext =
                 await dbContextFactory.CreateDbContextAsync(stoppingToken).ConfigureAwait(false);
-            for (var i = 0; i < 50; i++)
+            for (var i = 0; i < 1; i++)
             {
                 dbContext.AddOutboxMessage(new OutboxTestMessage
                 {
@@ -39,7 +44,6 @@ internal class TestHostedService(
             //    var redisDatabase = redisMultiplexer.GetDatabase();
             //    await redisDatabase.StringGetAsync("something");
             //}
-
 
             await Task.Delay(15000, stoppingToken).ConfigureAwait(false);
         }
