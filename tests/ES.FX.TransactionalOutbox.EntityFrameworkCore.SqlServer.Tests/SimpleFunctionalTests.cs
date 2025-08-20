@@ -15,7 +15,7 @@ public class SimpleFunctionalTests : IAsyncLifetime
     {
         // Create a dedicated SQL Server container for this test
         _msSqlContainer = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
             .Build();
 
         await _msSqlContainer.StartAsync();

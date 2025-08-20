@@ -20,7 +20,7 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
     {
         // Create a dedicated SQL Server container for this test class
         _msSqlContainer = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
             .Build();
 
         await _msSqlContainer.StartAsync();

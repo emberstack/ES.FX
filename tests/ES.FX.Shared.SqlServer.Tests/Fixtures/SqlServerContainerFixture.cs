@@ -6,7 +6,7 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
 {
     public const string Registry = "mcr.microsoft.com";
     public const string Image = "mssql/server";
-    public const string Tag = "2022-latest";
+    public const string Tag = "2025-latest";
     public MsSqlContainer? Container { get; private set; }
 
     public async Task DisposeAsync()
