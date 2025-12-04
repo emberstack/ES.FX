@@ -9,6 +9,11 @@
 	<ItemGroup>
 		<PackageReference Include="AspNetCore.HealthChecks.UI" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+	<PackageReference Include="Microsoft.Extensions.Configuration.Binder" VersionOverride="10.0.0" />
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection" VersionOverride="10.0.0" />
+	<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
 	</ItemGroup>
 

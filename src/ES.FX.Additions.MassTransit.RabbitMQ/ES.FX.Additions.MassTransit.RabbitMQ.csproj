@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="MassTransit.RabbitMQ" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 	</ItemGroup>
 
 </Project>

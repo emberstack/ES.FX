@@ -13,6 +13,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+  	<PackageReference Include="Azure.Identity" />
 		<ProjectReference Include="..\ES.FX.Additions.Microsoft.Data.SqlClient\ES.FX.Additions.Microsoft.Data.SqlClient.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
 	</ItemGroup>
