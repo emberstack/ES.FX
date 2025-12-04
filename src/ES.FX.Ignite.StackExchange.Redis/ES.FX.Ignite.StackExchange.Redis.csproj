@@ -12,6 +12,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+  	<PackageReference Include="StackExchange.Redis" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
 	</ItemGroup>
 
