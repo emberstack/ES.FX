@@ -15,10 +15,13 @@ public class TestContainerDesignTimeFactory<TDbContext> : IDesignTimeDbContextFa
     where TDbContext : DbContext
 {
     private MsSqlContainer? _container;
+    public const string Registry = "mcr.microsoft.com";
+    public const string Image = "mssql/server";
+    public const string Tag = "2025-latest";
 
     public TDbContext CreateDbContext(string[] args)
     {
-        var builder = new MsSqlBuilder().WithName(GetType().Name);
+        var builder = new MsSqlBuilder($"{Registry}/{Image}:{Tag}").WithName(GetType().Name);
         ConfigureMsSqlContainerBuilder(builder);
         _container = builder.Build();
 

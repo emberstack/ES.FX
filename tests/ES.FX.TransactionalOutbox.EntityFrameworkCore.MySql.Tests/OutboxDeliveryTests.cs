@@ -20,8 +20,7 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Create a dedicated MariaDB container for this test class
-        _mariaDbContainer = new MariaDbBuilder()
-            .WithImage("mariadb:latest")
+        _mariaDbContainer = new MariaDbBuilder("mariadb:latest")
             .Build();
 
         await _mariaDbContainer.StartAsync();

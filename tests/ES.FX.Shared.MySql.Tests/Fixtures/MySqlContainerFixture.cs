@@ -6,8 +6,7 @@ namespace ES.FX.Shared.MySql.Tests.Fixtures;
 public class MySqlContainerFixture : IAsyncLifetime
 {
     // Using MariaDB container as it's fully MySQL-compatible
-    private readonly MariaDbContainer _mariaDbContainer = new MariaDbBuilder()
-        .WithImage("mariadb:latest")
+    private readonly MariaDbContainer _mariaDbContainer = new MariaDbBuilder("mariadb:latest")
         .Build();
 
     public string ConnectionString => _mariaDbContainer.GetConnectionString();

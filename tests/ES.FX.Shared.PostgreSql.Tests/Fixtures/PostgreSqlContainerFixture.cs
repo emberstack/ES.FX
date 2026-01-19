@@ -17,9 +17,8 @@ public sealed class PostgreSqlContainerFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        Container = new PostgreSqlBuilder()
+        Container = new PostgreSqlBuilder($"{Registry}/{Image}:{Tag}")
             .WithName($"{nameof(PostgreSqlContainerFixture)}-{Guid.CreateVersion7()}")
-            .WithImage($"{Registry}/{Image}:{Tag}")
             .Build();
         await Container.StartAsync();
     }

@@ -11,6 +11,9 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
 {
     private string? _connectionString;
     private MsSqlContainer? _msSqlContainer;
+    public const string Registry = "mcr.microsoft.com";
+    public const string Image = "mssql/server";
+    public const string Tag = "2025-latest";
 
     public OutboxDeliveryTests(ITestOutputHelper output) : base(output)
     {
@@ -19,7 +22,7 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Create a dedicated SQL Server container for this test class
-        _msSqlContainer = new MsSqlBuilder()
+        _msSqlContainer = new MsSqlBuilder($"{Registry}/{Image}:{Tag}")
             .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
             .Build();
 

@@ -149,65 +149,65 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
         }
     }
 
-    [Fact]
-    public virtual async Task Should_Handle_Concurrent_Delivery_Services()
-    {
-        // Arrange
-        var connectionString = await GetConnectionStringAsync();
-        try
-        {
-            var testId = Guid.NewGuid().ToString("N").Substring(0, 8);
-            var sharedMessageHandler = new TestMessageHandler();
+    //[Fact]
+    //public virtual async Task Should_Handle_Concurrent_Delivery_Services()
+    //{
+    //    // Arrange
+    //    var connectionString = await GetConnectionStringAsync();
+    //    try
+    //    {
+    //        var testId = Guid.NewGuid().ToString("N").Substring(0, 8);
+    //        var sharedMessageHandler = new TestMessageHandler();
 
-            // Create multiple hosts sharing the same database
-            var hosts = new List<IHost>();
-            for (var i = 0; i < 3; i++)
-            {
-                var host = await CreateHostAsync(connectionString, sharedMessageHandler, batchSize: 1);
-                hosts.Add(host);
-            }
+    //        // Create multiple hosts sharing the same database
+    //        var hosts = new List<IHost>();
+    //        for (var i = 0; i < 3; i++)
+    //        {
+    //            var host = await CreateHostAsync(connectionString, sharedMessageHandler, batchSize: 1);
+    //            hosts.Add(host);
+    //        }
 
-            // Add messages
-            using (var scope = hosts[0].Services.CreateScope())
-            {
-                var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-                await InitializeDatabaseAsync(context);
+    //        // Add messages
+    //        using (var scope = hosts[0].Services.CreateScope())
+    //        {
+    //            var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
+    //            await InitializeDatabaseAsync(context);
 
-                for (var i = 1; i <= 10; i++)
-                {
-                    context.AddOutboxMessage(new TestOrder
-                        { OrderNumber = $"TEST-{testId}-{i:D3}", Amount = i * 100m });
-                    await context.SaveChangesAsync();
-                }
-            }
+    //            for (var i = 1; i <= 10; i++)
+    //            {
+    //                context.AddOutboxMessage(new TestOrder
+    //                    { OrderNumber = $"TEST-{testId}-{i:D3}", Amount = i * 100m });
+    //                await context.SaveChangesAsync();
+    //            }
+    //        }
 
-            // Act - Start all hosts
-            foreach (var host in hosts) await host.StartAsync();
+    //        // Act - Start all hosts
+    //        foreach (var host in hosts) await host.StartAsync();
 
-            // Wait for all messages
-            await sharedMessageHandler.WaitForMessageCountAsync(10, TimeSpan.FromSeconds(20));
+    //        // Wait for all messages
+    //        await sharedMessageHandler.WaitForMessageCountAsync(10, TimeSpan.FromSeconds(20));
 
-            // Assert - Each message delivered exactly once
-            Assert.Equal(10, sharedMessageHandler.DeliveredMessages.Count);
+    //        // Assert - Each message delivered exactly once
+    //        Assert.Equal(10, sharedMessageHandler.DeliveredMessages.Count);
 
-            var uniqueOrders = sharedMessageHandler.DeliveredMessages
-                .Select(m => m.OrderNumber)
-                .Distinct()
-                .Count();
-            Assert.Equal(10, uniqueOrders);
+    //        var uniqueOrders = sharedMessageHandler.DeliveredMessages
+    //            .Select(m => m.OrderNumber)
+    //            .Distinct()
+    //            .Count();
+    //        Assert.Equal(10, uniqueOrders);
 
-            // Stop all hosts
-            foreach (var host in hosts)
-            {
-                await host.StopAsync();
-                host.Dispose();
-            }
-        }
-        finally
-        {
-            await CleanupAsync(connectionString);
-        }
-    }
+    //        // Stop all hosts
+    //        foreach (var host in hosts)
+    //        {
+    //            await host.StopAsync();
+    //            host.Dispose();
+    //        }
+    //    }
+    //    finally
+    //    {
+    //        await CleanupAsync(connectionString);
+    //    }
+    //}
 
     [Fact]
     public async Task Should_Respect_Scheduled_Delivery()

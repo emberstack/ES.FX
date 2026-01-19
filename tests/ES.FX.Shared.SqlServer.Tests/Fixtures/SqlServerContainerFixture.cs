@@ -16,9 +16,8 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        Container = new MsSqlBuilder()
+        Container = new MsSqlBuilder($"{Registry}/{Image}:{Tag}")
             .WithName($"{nameof(SqlServerContainerFixture)}-{Guid.CreateVersion7()}")
-            .WithImage($"{Registry}/{Image}:{Tag}")
             .Build();
         await Container.StartAsync();
     }

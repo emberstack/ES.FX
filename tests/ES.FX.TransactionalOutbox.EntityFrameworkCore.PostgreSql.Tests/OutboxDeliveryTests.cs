@@ -20,8 +20,7 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Create a dedicated PostgreSQL container for this test class
-        _postgreSqlContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
+        _postgreSqlContainer = new PostgreSqlBuilder("postgres:16-alpine")
             .Build();
 
         await _postgreSqlContainer.StartAsync();
