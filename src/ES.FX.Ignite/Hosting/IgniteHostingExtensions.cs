@@ -35,7 +35,6 @@ public static class IgniteHostingExtensions
                 options.ForwardedHeaders = ForwardedHeaders.All;
                 options.ForwardLimit = null;
                 options.KnownProxies.Clear();
-                options.KnownNetworks.Clear();
             });
 
         if (settings.AddEndpointsApiExplorer)
@@ -180,7 +179,6 @@ public static class IgniteHostingExtensions
             ForwardedHeaders = ForwardedHeaders.All,
             ForwardLimit = null
         };
-        forwardingOptions.KnownNetworks.Clear();
         forwardingOptions.KnownProxies.Clear();
         app.UseForwardedHeaders(forwardingOptions);
     }

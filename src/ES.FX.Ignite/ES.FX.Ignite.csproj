@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -19,7 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-  	<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" VersionOverride="10.0.0" />
+  	<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 		<ProjectReference Include="..\ES.FX.Additions.Microsoft.AspNetCore\ES.FX.Additions.Microsoft.AspNetCore.csproj" />
 		<ProjectReference Include="..\ES.FX.Hosting\ES.FX.Hosting.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />

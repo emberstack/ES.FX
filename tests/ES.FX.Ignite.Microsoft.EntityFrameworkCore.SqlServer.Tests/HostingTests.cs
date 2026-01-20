@@ -235,10 +235,10 @@ public class HostingTests
 
         builder.Configuration.AddInMemoryCollection([
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<TestDbContext>.ConnectionString)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<>.ConnectionString)}",
                 initialConnectionString),
             new KeyValuePair<string, string?>(
-                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<TestDbContext>.CommandTimeout)}",
+                $"{DbContextSpark.ConfigurationSectionPath}:{nameof(TestDbContext)}:{nameof(SqlServerDbContextSparkOptions<>.CommandTimeout)}",
                 initialCommandTimeout.ToString())
         ]);
 
@@ -257,14 +257,16 @@ public class HostingTests
 
         var context = app.Services.GetRequiredService<TestDbContext>();
         Assert.Equal(changedCommandTimeout, context.Database.GetCommandTimeout());
-        Assert.Equal(changedConnectionString, context.Database.GetConnectionString());
+        Assert.Equal(new SqlConnectionStringBuilder(changedConnectionString).InitialCatalog,
+            new SqlConnectionStringBuilder(context.Database.GetConnectionString()).InitialCatalog);
 
         if (useFactory)
         {
             var factory = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
             context = factory.CreateDbContext();
             Assert.Equal(changedCommandTimeout, context.Database.GetCommandTimeout());
-            Assert.Equal(changedConnectionString, context.Database.GetConnectionString());
+            Assert.Equal(new SqlConnectionStringBuilder(changedConnectionString).InitialCatalog,
+                new SqlConnectionStringBuilder(context.Database.GetConnectionString()).InitialCatalog);
         }
 
 

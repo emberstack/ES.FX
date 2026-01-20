@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -11,8 +11,8 @@
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
-	<PackageReference Include="Microsoft.Extensions.Configuration.Binder" VersionOverride="10.0.0" />
-	<PackageReference Include="Microsoft.Extensions.DependencyInjection" VersionOverride="10.0.0" />
+	<PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 	<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
 	</ItemGroup>
