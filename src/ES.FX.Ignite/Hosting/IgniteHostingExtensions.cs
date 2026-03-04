@@ -35,6 +35,7 @@ public static class IgniteHostingExtensions
                 options.ForwardedHeaders = ForwardedHeaders.All;
                 options.ForwardLimit = null;
                 options.KnownProxies.Clear();
+                options.KnownIPNetworks.Clear();
             });
 
         if (settings.AddEndpointsApiExplorer)
