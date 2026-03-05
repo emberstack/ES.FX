@@ -206,7 +206,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             .ReportApiVersions()
             .Build());
 
-    root.MapGet("test", async (IServiceProvider _) =>
+    root.MapGet("test", async (HttpContext context, IServiceProvider _) =>
     {
         //var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<SimpleDbContext>>();
         //await using var dbContext = await dbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
@@ -230,7 +230,19 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         //var redisDatabase = redisMultiplexer.GetDatabase();
         //await redisDatabase.StringGetAsync("something");
         await Task.CompletedTask;
-        throw new Exception("Failed");
+        //throw new Exception("Failed");
+
+
+        var clientIp = context.Connection.RemoteIpAddress?.ToString();
+        var headers = context.Request.Headers;
+        return Results.Ok(new
+        {
+            Message = "Test successful",
+            ClientIp = clientIp,
+            ForwardedFor = headers["X-Forwarded-For"].ToString(),
+            ForwardedProto = headers["X-Forwarded-Proto"].ToString(),
+            ForwardedHost = headers["X-Forwarded-Host"].ToString()
+        });
     });
 
     //app.IgniteHealthChecksUi();

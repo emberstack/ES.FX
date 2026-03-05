@@ -153,6 +153,8 @@ public static class IgniteHostingExtensions
 
         if (host is WebApplication app)
         {
+            UseForwardedHeaders(app, settings.AspNetCore);
+
             if (settings.AspNetCore.UseExceptionHandler)
                 app.UseExceptionHandler();
 
@@ -163,7 +165,6 @@ public static class IgniteHostingExtensions
                 app.UseDeveloperExceptionPage();
 
             UseStandardMiddleware(app, settings.AspNetCore);
-            UseForwardedHeaders(app, settings.AspNetCore);
             UseHealthChecks(app, settings);
         }
 
@@ -174,14 +175,7 @@ public static class IgniteHostingExtensions
     {
         if (!settings.ForwardedHeadersEnabled) return;
 
-        var forwardingOptions = new ForwardedHeadersOptions
-        {
-            RequireHeaderSymmetry = false,
-            ForwardedHeaders = ForwardedHeaders.All,
-            ForwardLimit = null
-        };
-        forwardingOptions.KnownProxies.Clear();
-        app.UseForwardedHeaders(forwardingOptions);
+        app.UseForwardedHeaders();
     }
 
     private static void UseHealthChecks(WebApplication app, IgniteSettings settings)
