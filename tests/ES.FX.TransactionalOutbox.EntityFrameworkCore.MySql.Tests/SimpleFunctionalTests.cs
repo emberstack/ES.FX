@@ -17,17 +17,17 @@ public class SimpleFunctionalTests : IAsyncLifetime
     private string? _connectionString;
     private MariaDbContainer? _mariaDbContainer;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Create a dedicated MariaDB container for this test
         _mariaDbContainer = new MariaDbBuilder("mariadb:latest")
             .Build();
 
-        await _mariaDbContainer.StartAsync();
+        await _mariaDbContainer.StartAsync(TestContext.Current.CancellationToken);
         _connectionString = _mariaDbContainer.GetConnectionString();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_mariaDbContainer != null) await _mariaDbContainer.DisposeAsync();
     }
@@ -84,24 +84,24 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         // Add test data
         var testMessage = new TestOrder { OrderNumber = $"TEST-{testId}-001", Amount = 100m };
         context.AddOutboxMessage(testMessage);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var provider = new MySqlOutboxProvider<OutboxTestDbContext>();
 
         // Act
-        var outbox = await provider.GetNextExclusiveOutboxWithoutDelay(context);
+        var outbox = await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(outbox);
 
         // Check the related message
         var message = await context.Set<OutboxMessage>()
-            .FirstOrDefaultAsync(m => m.OutboxId == outbox.Id);
+            .FirstOrDefaultAsync(m => m.OutboxId == outbox.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(message);
 
         var deserializedOrder = JsonSerializer.Deserialize<TestOrder>(message.Payload);
@@ -130,10 +130,10 @@ public class SimpleFunctionalTests : IAsyncLifetime
         using (var scope = serviceProvider.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-            await context.Database.EnsureCreatedAsync();
+            await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
             context.AddOutboxMessage(new TestOrder { OrderNumber = $"TEST-{testId}-001", Amount = 100m });
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         var provider = new MySqlOutboxProvider<OutboxTestDbContext>();
@@ -145,17 +145,17 @@ public class SimpleFunctionalTests : IAsyncLifetime
             {
                 using var scope = serviceProvider.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-                await using var transaction = await context.Database.BeginTransactionAsync();
-                var result = await provider.GetNextExclusiveOutboxWithoutDelay(context);
+                await using var transaction = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+                var result = await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
                 if (result != null)
                 {
                     // Lock the outbox to simulate what the delivery service does
                     result.Lock = Guid.NewGuid();
                     context.Update(result);
-                    await context.SaveChangesAsync();
+                    await context.SaveChangesAsync(TestContext.Current.CancellationToken);
                 }
 
-                await transaction.CommitAsync();
+                await transaction.CommitAsync(TestContext.Current.CancellationToken);
                 return result;
             }));
 
@@ -191,36 +191,36 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         // Clean up any existing outboxes to ensure test isolation
-        await context.Set<OutboxMessage>().ExecuteDeleteAsync();
-        await context.Set<Outbox>().ExecuteDeleteAsync();
+        await context.Set<OutboxMessage>().ExecuteDeleteAsync(TestContext.Current.CancellationToken);
+        await context.Set<Outbox>().ExecuteDeleteAsync(TestContext.Current.CancellationToken);
 
         // Add multiple outboxes - each SaveChanges creates a separate outbox
         context.AddOutboxMessage(new TestOrder { OrderNumber = $"TEST-{testId}-001", Amount = 100m });
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         context.AddOutboxMessage(new TestOrder { OrderNumber = $"TEST-{testId}-002", Amount = 200m });
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         context.AddOutboxMessage(new TestOrder { OrderNumber = $"TEST-{testId}-003", Amount = 300m });
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Lock the first outbox
         var firstOutbox = await context.Set<Outbox>()
             .OrderBy(o => o.AddedAt)
-            .FirstAsync();
+            .FirstAsync(TestContext.Current.CancellationToken);
         firstOutbox.Lock = Guid.NewGuid();
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
 
         var provider = new MySqlOutboxProvider<OutboxTestDbContext>();
 
         // Act
-        await using var transaction = await context.Database.BeginTransactionAsync();
-        var nextOutbox = await provider.GetNextExclusiveOutboxWithoutDelay(context);
-        await transaction.CommitAsync();
+        await using var transaction = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+        var nextOutbox = await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
+        await transaction.CommitAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(nextOutbox);
@@ -228,7 +228,7 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
         // Check the related message
         var message = await context.Set<OutboxMessage>()
-            .FirstOrDefaultAsync(m => m.OutboxId == nextOutbox.Id);
+            .FirstOrDefaultAsync(m => m.OutboxId == nextOutbox.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(message);
 
         var deserializedOrder = JsonSerializer.Deserialize<TestOrder>(message.Payload);

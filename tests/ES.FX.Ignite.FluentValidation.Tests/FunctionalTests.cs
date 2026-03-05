@@ -20,8 +20,9 @@ public class FunctionalTests(WebApplicationFactory<Program> factory)
             SimpleValidationEndpoint.RoutePattern,
             new StringContent(
                 JsonConvert.SerializeObject(new SimpleValidationEndpoint.Request(name)),
-                Encoding.UTF8, "application/json"));
-        var resultContent = await response.Content.ReadAsStringAsync();
+                Encoding.UTF8, "application/json"),
+            TestContext.Current.CancellationToken);
+        var resultContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.True(resultContent.Contains("validation error") == shouldThrowValidationError);
     }

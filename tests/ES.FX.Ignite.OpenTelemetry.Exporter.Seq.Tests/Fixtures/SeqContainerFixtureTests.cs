@@ -9,7 +9,7 @@ public class SeqContainerFixtureTests(SeqContainerFixture seqContainerFixture)
     public async Task SeqContainer_CanConnectAsync()
     {
         var client = new SeqConnection(seqContainerFixture.GetConnectionString());
-        var events = await client.Events.ListAsync();
+        var events = await client.Events.ListAsync(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(events);
         Assert.Empty(events);
     }

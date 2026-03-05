@@ -10,12 +10,12 @@ public sealed class PostgreSqlContainerFixture : IAsyncLifetime
     public const string Tag = "16-alpine";
     public PostgreSqlContainer? Container { get; private set; }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (Container is not null) await Container.DisposeAsync();
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         Container = new PostgreSqlBuilder($"{Registry}/{Image}:{Tag}")
             .WithName($"{nameof(PostgreSqlContainerFixture)}-{Guid.CreateVersion7()}")

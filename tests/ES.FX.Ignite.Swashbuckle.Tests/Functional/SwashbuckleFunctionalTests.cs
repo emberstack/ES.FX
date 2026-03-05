@@ -12,7 +12,7 @@ public class SwashbuckleFunctionalTests(WebApplicationFactory<Program> factory)
         var client = factory.CreateClient();
 
         var response = await client.GetAsync(
-            "/swagger/");
+            "/swagger/", TestContext.Current.CancellationToken);
         Assert.True(response.IsSuccessStatusCode);
     }
 }

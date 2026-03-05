@@ -11,7 +11,7 @@ public class FunctionalTests(WebApplicationFactory<Program> factory)
     public async Task ApiPath_Accessible()
     {
         var client = factory.CreateClient();
-        var response = await client.GetAsync(new HealthChecksUiSparkSettings().UiApiEndpointPath);
+        var response = await client.GetAsync(new HealthChecksUiSparkSettings().UiApiEndpointPath, TestContext.Current.CancellationToken);
         Assert.True(response.IsSuccessStatusCode);
     }
 }

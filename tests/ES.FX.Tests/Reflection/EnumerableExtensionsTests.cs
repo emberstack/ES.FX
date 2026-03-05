@@ -43,7 +43,7 @@ public class EnumerableExtensionsTests
         var resources = assembly.GetManifestResources();
         var resource = resources.First();
 
-        var result = await resource.ReadAllBytesAsync();
+        var result = await resource.ReadAllBytesAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(result);
     }
 
@@ -80,7 +80,7 @@ public class EnumerableExtensionsTests
         var resources = assembly.GetManifestResources();
         var resource = resources.First();
 
-        var result = await resource.ReadTextAsync();
+        var result = await resource.ReadTextAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal("TestContentDoNotModify", result);
     }
@@ -124,7 +124,7 @@ public class EnumerableExtensionsTests
     {
         var assembly = typeof(EnumerableExtensionsTests).Assembly;
         var resource = new ManifestResource(assembly, Guid.CreateVersion7().ToString());
-        var result = await resource.ReadTextAsync();
+        var result = await resource.ReadTextAsync(TestContext.Current.CancellationToken);
         Assert.Null(result);
     }
 

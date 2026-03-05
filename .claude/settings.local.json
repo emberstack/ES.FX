@@ -23,7 +23,8 @@
       "Bash(dotnet-gitversion:*)",
       "Bash(dotnet tool uninstall:*)",
       "WebFetch(domain:gitversion.net)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(dotnet package:*)"
     ],
     "deny": []
   }

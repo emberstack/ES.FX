@@ -4,7 +4,6 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.MariaDb;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests;
 
@@ -17,17 +16,17 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
     {
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Create a dedicated MariaDB container for this test class
         _mariaDbContainer = new MariaDbBuilder("mariadb:latest")
             .Build();
 
-        await _mariaDbContainer.StartAsync();
+        await _mariaDbContainer.StartAsync(TestContext.Current.CancellationToken);
         _connectionString = _mariaDbContainer.GetConnectionString();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_mariaDbContainer != null) await _mariaDbContainer.DisposeAsync();
     }

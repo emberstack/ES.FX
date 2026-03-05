@@ -19,15 +19,16 @@ public class FunctionalTests(SeqContainerFixture seqFixture) : IClassFixture<Seq
         var response = await client.PostAsync(
             SimpleEndpoint.RoutePattern,
             new StringContent(JsonSerializer.Serialize(new SimpleEndpoint.Request(name)),
-                Encoding.UTF8, "application/json"));
+                Encoding.UTF8, "application/json"),
+            TestContext.Current.CancellationToken);
 
-        var resultContent = await response.Content.ReadAsStringAsync();
+        var resultContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // wait for the events to be processed
-        await Task.Delay(5000);
+        await Task.Delay(5000, TestContext.Current.CancellationToken);
 
         var seqClient = new SeqConnection(seqFixture.GetConnectionString());
-        var events = await seqClient.Events.ListAsync(null, null, null, 100, null, null, true);
+        var events = await seqClient.Events.ListAsync(null, null, null, 100, null, null, true, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(events);
         Assert.Contains(events, x => x.RenderedMessage.Contains(SimpleEndpoint.RoutePattern));

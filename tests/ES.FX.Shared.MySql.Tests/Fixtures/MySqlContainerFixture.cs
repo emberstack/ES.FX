@@ -11,12 +11,12 @@ public class MySqlContainerFixture : IAsyncLifetime
 
     public string ConnectionString => _mariaDbContainer.GetConnectionString();
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _mariaDbContainer.StartAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await _mariaDbContainer.DisposeAsync();
     }

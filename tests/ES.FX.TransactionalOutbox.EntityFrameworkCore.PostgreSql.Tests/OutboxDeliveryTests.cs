@@ -4,7 +4,6 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests;
 
@@ -17,17 +16,17 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
     {
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Create a dedicated PostgreSQL container for this test class
         _postgreSqlContainer = new PostgreSqlBuilder("postgres:16-alpine")
             .Build();
 
-        await _postgreSqlContainer.StartAsync();
+        await _postgreSqlContainer.StartAsync(TestContext.Current.CancellationToken);
         _connectionString = _postgreSqlContainer.GetConnectionString();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_postgreSqlContainer != null) await _postgreSqlContainer.DisposeAsync();
     }
@@ -58,6 +57,6 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
     protected override async Task InitializeDatabaseAsync(OutboxTestDbContext context)
     {
         // PostgreSQL uses migrations
-        await context.Database.MigrateAsync();
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
     }
 }

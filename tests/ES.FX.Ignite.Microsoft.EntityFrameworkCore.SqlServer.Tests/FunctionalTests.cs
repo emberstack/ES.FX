@@ -38,20 +38,20 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
         var app = builder.Build();
 
         var context = app.Services.GetRequiredService<TestDbContext>();
-        Assert.True(await context.Database.CanConnectAsync());
+        Assert.True(await context.Database.CanConnectAsync(TestContext.Current.CancellationToken));
 
-        await context.Database.MigrateAsync();
-        var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
+        var pendingMigrations = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pendingMigrations);
 
         if (useFactory)
         {
             var factory = app.Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
-            context = await factory.CreateDbContextAsync();
-            Assert.True(await context.Database.CanConnectAsync());
+            context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+            Assert.True(await context.Database.CanConnectAsync(TestContext.Current.CancellationToken));
 
-            await context.Database.MigrateAsync();
-            pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+            await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
+            pendingMigrations = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
             Assert.Empty(pendingMigrations);
         }
 
@@ -91,19 +91,19 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
         var app = builder.Build();
 
         var context = app.Services.GetRequiredService<TestDbContext>();
-        Assert.True(await context.Database.CanConnectAsync());
+        Assert.True(await context.Database.CanConnectAsync(TestContext.Current.CancellationToken));
 
         var migrationsHealthChecks = new RelationalDbContextMigrationsHealthCheck<TestDbContext>(context);
         var healthCheckContext = new HealthCheckContext();
 
-        var healthCheckResult = await migrationsHealthChecks.CheckHealthAsync(healthCheckContext);
+        var healthCheckResult = await migrationsHealthChecks.CheckHealthAsync(healthCheckContext, TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Unhealthy, healthCheckResult.Status);
 
-        await context.Database.MigrateAsync();
-        var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
+        var pendingMigrations = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pendingMigrations);
 
-        healthCheckResult = await migrationsHealthChecks.CheckHealthAsync(healthCheckContext);
+        healthCheckResult = await migrationsHealthChecks.CheckHealthAsync(healthCheckContext, TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Healthy, healthCheckResult.Status);
         return;
 
@@ -144,11 +144,11 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
 
         var context = app.Services.GetRequiredService<TestDbContext>();
         var migrationTask = app.Services.GetRequiredService<IMigrationsTask>();
-        var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+        var pendingMigrations = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.NotEmpty(pendingMigrations);
 
-        await migrationTask.ApplyMigrations();
-        pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+        await migrationTask.ApplyMigrations(TestContext.Current.CancellationToken);
+        pendingMigrations = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pendingMigrations);
 
         return;

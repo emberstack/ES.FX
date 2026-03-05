@@ -11,13 +11,13 @@ public sealed class SeqContainerFixture : IAsyncLifetime
     public SeqSutFactory? WebApplicationFactory;
     public IContainer? Container { get; private set; }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (Container is not null) await Container.DisposeAsync();
         if (WebApplicationFactory is not null) await WebApplicationFactory.DisposeAsync();
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         Container = new ContainerBuilder($"{Registry}/{Image}:{Tag}")
             .WithName($"{nameof(SeqContainerFixture)}-{Guid.CreateVersion7()}")

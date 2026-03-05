@@ -16,17 +16,17 @@ public class SimpleFunctionalTests : IAsyncLifetime
     private string? _connectionString;
     private PostgreSqlContainer? _postgreSqlContainer;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Create a dedicated PostgreSQL container for this test
         _postgreSqlContainer = new PostgreSqlBuilder("postgres:16-alpine")
             .Build();
 
-        await _postgreSqlContainer.StartAsync();
+        await _postgreSqlContainer.StartAsync(TestContext.Current.CancellationToken);
         _connectionString = _postgreSqlContainer.GetConnectionString();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_postgreSqlContainer != null) await _postgreSqlContainer.DisposeAsync();
     }
@@ -52,15 +52,15 @@ public class SimpleFunctionalTests : IAsyncLifetime
         using var context = CreateContext();
 
         // Act
-        await context.Database.MigrateAsync();
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var canConnect = await context.Database.CanConnectAsync();
+        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
         Assert.True(canConnect);
 
         // Verify tables exist by trying to query them
-        var outboxCount = await context.Set<Outbox>().CountAsync();
-        var outboxMessageCount = await context.Set<OutboxMessage>().CountAsync();
+        var outboxCount = await context.Set<Outbox>().CountAsync(TestContext.Current.CancellationToken);
+        var outboxMessageCount = await context.Set<OutboxMessage>().CountAsync(TestContext.Current.CancellationToken);
 
         Assert.True(outboxCount >= 0); // Will succeed if table exists
         Assert.True(outboxMessageCount >= 0); // Will succeed if table exists
@@ -71,7 +71,7 @@ public class SimpleFunctionalTests : IAsyncLifetime
     {
         // Arrange
         using var context = CreateContext();
-        await context.Database.MigrateAsync();
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
 
         var testId = Guid.NewGuid().ToString("N").Substring(0, 8);
         var order = new TestOrder
@@ -84,14 +84,14 @@ public class SimpleFunctionalTests : IAsyncLifetime
         // Act
         context.Orders.Add(order);
         context.AddOutboxMessage(order);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var savedOrder = await context.Orders.FirstOrDefaultAsync(o => o.OrderNumber == $"PG-TEST-{testId}");
+        var savedOrder = await context.Orders.FirstOrDefaultAsync(o => o.OrderNumber == $"PG-TEST-{testId}", TestContext.Current.CancellationToken);
         Assert.NotNull(savedOrder);
         Assert.Equal($"PG-TEST-{testId}", savedOrder.OrderNumber);
 
-        var outboxMessage = await context.Set<OutboxMessage>().FirstAsync();
+        var outboxMessage = await context.Set<OutboxMessage>().FirstAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(outboxMessage);
         Assert.NotNull(outboxMessage.Payload);
         Assert.Contains("TestOrder", outboxMessage.PayloadType);
@@ -102,12 +102,12 @@ public class SimpleFunctionalTests : IAsyncLifetime
     {
         // Arrange
         using var context = CreateContext();
-        await context.Database.MigrateAsync();
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
 
         var testId = Guid.NewGuid().ToString("N").Substring(0, 8);
 
         // Act - Success case
-        using (var transaction = await context.Database.BeginTransactionAsync())
+        using (var transaction = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken))
         {
             var order1 = new TestOrder
             {
@@ -118,13 +118,13 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
             context.Orders.Add(order1);
             context.AddOutboxMessage(order1);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            await transaction.CommitAsync();
+            await transaction.CommitAsync(TestContext.Current.CancellationToken);
         }
 
         // Act - Rollback case
-        using (var transaction = await context.Database.BeginTransactionAsync())
+        using (var transaction = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken))
         {
             var order2 = new TestOrder
             {
@@ -135,20 +135,20 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
             context.Orders.Add(order2);
             context.AddOutboxMessage(order2);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(TestContext.Current.CancellationToken);
         }
 
         // Assert
-        var orders = await context.Orders.Where(o => o.OrderNumber.StartsWith($"TX-{testId}")).ToListAsync();
+        var orders = await context.Orders.Where(o => o.OrderNumber.StartsWith($"TX-{testId}")).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(orders);
         Assert.Equal($"TX-{testId}-001", orders[0].OrderNumber);
 
         // Verify only one message was saved (the committed one)
         var messageCount = await context.Set<OutboxMessage>()
             .Where(m => m.Payload.Contains(testId))
-            .CountAsync();
+            .CountAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1, messageCount);
     }
 

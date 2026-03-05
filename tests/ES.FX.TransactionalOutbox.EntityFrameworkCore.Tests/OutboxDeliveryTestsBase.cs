@@ -9,8 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Xunit.Abstractions;
-
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests;
 
 /// <summary>
@@ -43,7 +41,7 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
     /// </summary>
     protected virtual async Task InitializeDatabaseAsync(OutboxTestDbContext context)
     {
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -65,11 +63,11 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
                 await InitializeDatabaseAsync(context);
 
                 context.AddOutboxMessage(new TestOrder { OrderNumber = $"TEST-{testId}-001", Amount = 100m });
-                await context.SaveChangesAsync();
+                await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             }
 
             // Act - Start the host which starts the delivery service
-            await host.StartAsync();
+            await host.StartAsync(TestContext.Current.CancellationToken);
 
             // Wait for delivery
             await messageHandler.WaitForMessageCountAsync(1, TimeSpan.FromSeconds(10));
@@ -81,17 +79,17 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
             Assert.Equal(100m, deliveredMessage.Amount);
 
             // Give the service a moment to clean up the outbox after delivery
-            await Task.Delay(100);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
             // Verify the outbox is cleaned up
             using (var scope = host.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-                var remainingOutboxes = await context.Set<Outbox>().CountAsync();
+                var remainingOutboxes = await context.Set<Outbox>().CountAsync(TestContext.Current.CancellationToken);
                 Assert.Equal(0, remainingOutboxes);
             }
 
-            await host.StopAsync();
+            await host.StopAsync(TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -121,12 +119,12 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
                 {
                     context.AddOutboxMessage(new TestOrder
                         { OrderNumber = $"TEST-{testId}-{i:D3}", Amount = i * 100m });
-                    await context.SaveChangesAsync();
+                    await context.SaveChangesAsync(TestContext.Current.CancellationToken);
                 }
             }
 
             // Act
-            await host.StartAsync();
+            await host.StartAsync(TestContext.Current.CancellationToken);
 
             // Wait for all messages
             await messageHandler.WaitForMessageCountAsync(5, TimeSpan.FromSeconds(15));
@@ -141,7 +139,7 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
 
             for (var i = 1; i <= 5; i++) Assert.Contains($"TEST-{testId}-{i:D3}", deliveredOrders);
 
-            await host.StopAsync();
+            await host.StopAsync(TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -231,17 +229,17 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
 
                 // Immediate delivery
                 context.AddOutboxMessage(new TestOrder { OrderNumber = $"TEST-{testId}-IMMEDIATE", Amount = 100m });
-                await context.SaveChangesAsync();
+                await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
                 // Delayed delivery
                 context.AddOutboxMessage(
                     new TestOrder { OrderNumber = $"TEST-{testId}-DELAYED", Amount = 200m },
                     new OutboxMessageDeliveryOptions { NotBefore = now.AddSeconds(2) });
-                await context.SaveChangesAsync();
+                await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             }
 
             // Act
-            await host.StartAsync();
+            await host.StartAsync(TestContext.Current.CancellationToken);
 
             // Should only get immediate message first
             await messageHandler.WaitForMessageCountAsync(1, TimeSpan.FromSeconds(1));
@@ -253,7 +251,7 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
             Assert.Equal(2, messageHandler.DeliveredMessages.Count);
             Assert.Contains(messageHandler.DeliveredMessages, m => m.OrderNumber == $"TEST-{testId}-DELAYED");
 
-            await host.StopAsync();
+            await host.StopAsync(TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -285,11 +283,11 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
                 await InitializeDatabaseAsync(context);
 
                 context.AddOutboxMessage(new TestOrder { OrderNumber = $"TEST-{testId}-001", Amount = 100m });
-                await context.SaveChangesAsync();
+                await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             }
 
             // Act
-            await host.StartAsync();
+            await host.StartAsync(TestContext.Current.CancellationToken);
 
             // Wait for successful delivery (after retries)
             await faultingHandler.WaitForSuccessfulDeliveryAsync(TimeSpan.FromSeconds(10));
@@ -299,7 +297,7 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
             Assert.Equal(2, faultHandler.FaultCount); // Failed twice before succeeding
             Assert.Single(faultingHandler.DeliveredMessages);
 
-            await host.StopAsync();
+            await host.StopAsync(TestContext.Current.CancellationToken);
         }
         finally
         {

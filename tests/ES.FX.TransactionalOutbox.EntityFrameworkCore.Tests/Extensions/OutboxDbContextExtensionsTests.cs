@@ -22,7 +22,7 @@ public class OutboxDbContextExtensionsTests
     {
         // Arrange
         await using var context = CreateContext();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         var order = new TestOrder
         {
@@ -34,10 +34,10 @@ public class OutboxDbContextExtensionsTests
         // Act
         context.Orders.Add(order);
         context.AddOutboxMessage(order);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var messages = await context.Set<OutboxMessage>().ToListAsync();
+        var messages = await context.Set<OutboxMessage>().ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(messages);
 
         var message = messages.First();
@@ -53,7 +53,7 @@ public class OutboxDbContextExtensionsTests
     {
         // Arrange
         await using var context = CreateContext();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         var order = new TestOrder
         {
@@ -74,10 +74,10 @@ public class OutboxDbContextExtensionsTests
         // Act
         context.Orders.Add(order);
         context.AddOutboxMessage(order, deliveryOptions);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var message = await context.Set<OutboxMessage>().FirstAsync();
+        var message = await context.Set<OutboxMessage>().FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(notBefore, message.DeliveryNotBefore);
         Assert.Equal(notAfter, message.DeliveryNotAfter);
     }
@@ -87,7 +87,7 @@ public class OutboxDbContextExtensionsTests
     {
         // Arrange
         await using var context = CreateContext();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         var orders = new List<TestOrder>();
         for (var i = 1; i <= 5; i++)
@@ -108,12 +108,12 @@ public class OutboxDbContextExtensionsTests
             context.AddOutboxMessage(order);
         }
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var messages = await context.Set<OutboxMessage>()
             .OrderBy(m => m.AddedAt)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(5, messages.Count);
 
@@ -132,7 +132,7 @@ public class OutboxDbContextExtensionsTests
 
         // Act
         await using var context = new OutboxTestDbContext(builder.Options);
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         // Assert
         // Verify outbox tables are created

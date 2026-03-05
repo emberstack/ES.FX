@@ -34,7 +34,7 @@ public class ManifestResourceTests
         var sourceArray = new[] { byte.MinValue, byte.MaxValue };
         var source = new MemoryStream(sourceArray);
 
-        var result = await source.ToByteArrayAsync();
+        var result = await source.ToByteArrayAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, result.Length);
         Assert.Equal(sourceArray, result);
     }
@@ -47,7 +47,7 @@ public class ManifestResourceTests
         var sourceMemoryStream = new MemoryStream(sourceArray);
         var source = new BufferedStream(sourceMemoryStream);
 
-        var result = await source.ToByteArrayAsync();
+        var result = await source.ToByteArrayAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, result.Length);
         Assert.Equal(sourceArray, result);
     }

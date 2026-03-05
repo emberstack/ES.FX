@@ -28,14 +28,14 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
 
 
         var connection = app.Services.GetRequiredService<SqlConnection>();
-        var result = await connection.ExecuteSafeQueryAsync();
+        var result = await connection.ExecuteSafeQueryAsync(cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(result);
 
         if (useFactory)
         {
             var factory = app.Services.GetRequiredService<ISqlConnectionFactory>();
-            connection = await factory.CreateConnectionAsync();
-            result = await connection.ExecuteSafeQueryAsync();
+            connection = await factory.CreateConnectionAsync(TestContext.Current.CancellationToken);
+            result = await connection.ExecuteSafeQueryAsync(cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(result);
         }
 

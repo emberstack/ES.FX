@@ -7,8 +7,6 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Xunit.Abstractions;
-
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Delivery;
 
 public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTestsBase(output)
@@ -52,12 +50,12 @@ public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTests
             for (var i = 1; i <= 3; i++)
             {
                 context.AddOutboxMessage(new TestOrder { OrderNumber = $"TEST-{testId}-{i:D3}", Amount = i * 100m });
-                await context.SaveChangesAsync();
+                await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             }
         }
 
         // Act
-        await host.StartAsync();
+        await host.StartAsync(TestContext.Current.CancellationToken);
 
         // Wait for all messages
         await messageHandler.WaitForMessageCountAsync(3, TimeSpan.FromSeconds(10));
@@ -75,7 +73,7 @@ public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTests
         Assert.Equal($"TEST-{testId}-002", deliveredOrders[1]);
         Assert.Equal($"TEST-{testId}-003", deliveredOrders[2]);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     private static Task<IHost> CreateHostAsync(

@@ -55,7 +55,7 @@ public class SimpleFunctionalTests
 
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         // Add a single outbox
         var outbox = new Outbox
@@ -64,11 +64,11 @@ public class SimpleFunctionalTests
             AddedAt = DateTimeOffset.UtcNow
         };
         context.Set<Outbox>().Add(outbox);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var provider = new DefaultOutboxProvider<OutboxTestDbContext>();
-        var result = await provider.GetNextExclusiveOutboxWithoutDelay(context);
+        var result = await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -95,7 +95,7 @@ public class SimpleFunctionalTests
         using (var scope = serviceProvider.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-            await context.Database.EnsureCreatedAsync();
+            await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
             var outbox = new Outbox
             {
@@ -103,7 +103,7 @@ public class SimpleFunctionalTests
                 AddedAt = DateTimeOffset.UtcNow
             };
             context.Set<Outbox>().Add(outbox);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         // Act - Try to get the same outbox concurrently
@@ -146,7 +146,7 @@ public class SimpleFunctionalTests
 
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         // Add an outbox that is already locked
         var lockedOutbox = new Outbox
@@ -165,11 +165,11 @@ public class SimpleFunctionalTests
         };
         context.Set<Outbox>().Add(availableOutbox);
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var provider = new DefaultOutboxProvider<OutboxTestDbContext>();
-        var result = await provider.GetNextExclusiveOutboxWithoutDelay(context);
+        var result = await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);

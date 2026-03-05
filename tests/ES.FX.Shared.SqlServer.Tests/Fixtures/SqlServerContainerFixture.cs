@@ -9,12 +9,12 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
     public const string Tag = "2025-latest";
     public MsSqlContainer? Container { get; private set; }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (Container is not null) await Container.DisposeAsync();
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         Container = new MsSqlBuilder($"{Registry}/{Image}:{Tag}")
             .WithName($"{nameof(SqlServerContainerFixture)}-{Guid.CreateVersion7()}")
