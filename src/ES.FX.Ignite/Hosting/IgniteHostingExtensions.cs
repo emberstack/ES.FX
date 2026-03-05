@@ -125,6 +125,14 @@ public static class IgniteHostingExtensions
                 o.Filter = context =>
                     !context.Request.Path.StartsWithSegments(settings.AspNetCore.HealthChecks.LivenessEndpointPath) &&
                     !context.Request.Path.StartsWithSegments(settings.AspNetCore.HealthChecks.ReadinessEndpointPath);
+
+            if (settings.AspNetCore.Tracing.EnrichClientAddressFromRemoteIpAddress)
+                o.EnrichWithHttpResponse = (activity, response) =>
+                {
+                    var clientAddress = response.HttpContext.Connection.RemoteIpAddress?.ToString();
+                    if (clientAddress is not null)
+                        activity.SetTag("client.address", clientAddress);
+                };
         });
     }
 

@@ -24,7 +24,8 @@
       "Bash(dotnet tool uninstall:*)",
       "WebFetch(domain:gitversion.net)",
       "Bash(cat:*)",
-      "Bash(dotnet package:*)"
+      "Bash(dotnet package:*)",
+      "WebSearch"
     ],
     "deny": []
   }
