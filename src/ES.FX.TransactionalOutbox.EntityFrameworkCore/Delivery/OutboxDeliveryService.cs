@@ -190,6 +190,7 @@ public class OutboxDeliveryService<TDbContext>(
                                 .ConfigureAwait(false);
 
 
+                            var outboxHasRemainingMessages = false;
                             foreach (var message in messages)
                             {
                                 if (DateTimeOffset.UtcNow > message.DeliveryNotAfter)
@@ -212,6 +213,7 @@ public class OutboxDeliveryService<TDbContext>(
                                     outbox.DeliveryDelayedUntil = message.DeliveryNotBefore;
 
                                     //Proceed to the next available outbox, since this one is delayed
+                                    outboxHasRemainingMessages = true;
                                     break;
                                 }
 
@@ -270,6 +272,7 @@ public class OutboxDeliveryService<TDbContext>(
                                         outbox.DeliveryDelayedUntil =
                                             DateTimeOffset.UtcNow.Add(redeliverMessageAction.Delay);
 
+                                        outboxHasRemainingMessages = true;
                                         break;
                                     }
 
@@ -287,11 +290,14 @@ public class OutboxDeliveryService<TDbContext>(
                                 }
                             }
 
+                            // If the batch was full, there may be more messages beyond this batch
+                            if (messages.Count >= outboxDeliveryOptions.BatchSize)
+                                outboxHasRemainingMessages = true;
 
                             outbox.Lock = null;
                             dbContext.Update(outbox);
 
-                            if (messages.Count == 0)
+                            if (!outboxHasRemainingMessages)
                             {
                                 logger.LogTrace("Removing empty outbox {outboxId}", outbox.Id);
                                 dbContext.Remove(outbox);

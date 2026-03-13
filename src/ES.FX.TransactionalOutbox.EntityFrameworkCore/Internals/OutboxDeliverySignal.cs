@@ -10,11 +10,8 @@ internal static class OutboxDeliverySignal
 {
     private static readonly ConcurrentDictionary<Type, Channel<string>> Channels = new();
 
-    public static Channel<string> GetChannel(Type type)
-    {
-        Channel.CreateUnbounded<string>(new UnboundedChannelOptions());
-        return Channels.GetOrAdd(type, _ => Channel.CreateUnbounded<string>());
-    }
+    public static Channel<string> GetChannel(Type type) =>
+        Channels.GetOrAdd(type, _ => Channel.CreateUnbounded<string>());
 
     public static Channel<string> GetChannel<TType>() => GetChannel(typeof(TType));
 
