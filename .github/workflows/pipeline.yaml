@@ -138,7 +138,7 @@ jobs:
         run: dotnet test --no-build --configuration ${{ env.build_configuration }} --verbosity normal
 
       - name: tests - report
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         if: ${{ github.event.pull_request.head.repo.fork == false }}
         with:
           name: Test Results
