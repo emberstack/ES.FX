@@ -234,20 +234,20 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
                 // Delayed delivery
                 context.AddOutboxMessage(
                     new TestOrder { OrderNumber = $"TEST-{testId}-DELAYED", Amount = 200m },
-                    new OutboxMessageDeliveryOptions { NotBefore = now.AddSeconds(2) });
+                    new OutboxMessageDeliveryOptions { NotBefore = now.AddSeconds(5) });
                 await context.SaveChangesAsync(TestContext.Current.CancellationToken);
             }
 
             // Act
             await host.StartAsync(TestContext.Current.CancellationToken);
 
-            // Should only get immediate message first
-            await messageHandler.WaitForMessageCountAsync(1, TimeSpan.FromSeconds(1));
+            // Should only get immediate message first (generous timeout for real DB cold start on CI)
+            await messageHandler.WaitForMessageCountAsync(1, TimeSpan.FromSeconds(10));
             Assert.Single(messageHandler.DeliveredMessages);
             Assert.Equal($"TEST-{testId}-IMMEDIATE", messageHandler.DeliveredMessages.First().OrderNumber);
 
             // Wait for delayed message
-            await messageHandler.WaitForMessageCountAsync(2, TimeSpan.FromSeconds(5));
+            await messageHandler.WaitForMessageCountAsync(2, TimeSpan.FromSeconds(15));
             Assert.Equal(2, messageHandler.DeliveredMessages.Count);
             Assert.Contains(messageHandler.DeliveredMessages, m => m.OrderNumber == $"TEST-{testId}-DELAYED");
 
