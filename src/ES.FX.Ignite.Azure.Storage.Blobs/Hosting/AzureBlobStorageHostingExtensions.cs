@@ -1,8 +1,8 @@
 ﻿using Azure.Storage.Blobs;
 using ES.FX.Ignite.Azure.Common.Hosting;
 using ES.FX.Ignite.Azure.Storage.Blobs.Configuration;
+using ES.FX.Ignite.Azure.Storage.Blobs.HealthChecks;
 using ES.FX.Ignite.Spark.Configuration;
-using HealthChecks.Azure.Storage.Blobs;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -56,6 +56,6 @@ public static class AzureBlobStorageHostingExtensions
         builder.Services.IgniteAzureClientObservability<BlobServiceClient>(serviceKey,
             settings.Tracing,
             settings.HealthChecks,
-            (_, client) => new AzureBlobStorageHealthCheck(client));
+            (_, client) => new SimpleBlobServiceHealthCheck(client));
     }
 }

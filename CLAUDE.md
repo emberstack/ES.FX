@@ -40,9 +40,6 @@ dotnet run --project playground/Playground.Microservice.Api.Host
 
 # Run worker playground
 dotnet run --project playground/Playground.Microservice.Worker.Host
-
-# Run test SUTs for manual testing
-dotnet run --project tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT
 ```
 
 ### Code Quality

@@ -8,8 +8,6 @@
 
 
 	<ItemGroup>
-
-		<PackageReference Include="AspNetCore.HealthChecks.Azure.Data.Tables" />
 		<PackageReference Include="Azure.Data.Tables" />
 	</ItemGroup>
 

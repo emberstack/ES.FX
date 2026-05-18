@@ -1,7 +1,7 @@
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using Microting.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests.Context;
 

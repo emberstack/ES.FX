@@ -1,8 +1,8 @@
 ﻿using ES.FX.Additions.Microsoft.Data.SqlClient.Abstractions;
 using ES.FX.Additions.Microsoft.Data.SqlClient.Factories;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
+using ES.FX.Ignite.Microsoft.Data.SqlClient.HealthChecks;
 using ES.FX.Ignite.Spark.Configuration;
-using HealthChecks.SqlServer;
 using JetBrains.Annotations;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
@@ -76,10 +76,7 @@ public static class SqlServerClientHostingExtensions
                     var options = serviceProvider
                         .GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>()
                         .Get(serviceKey);
-                    return new SqlServerHealthCheck(new SqlServerHealthCheckOptions
-                    {
-                        ConnectionString = options.ConnectionString ?? string.Empty
-                    });
+                    return new SimpleSqlServerHealthCheck(options.ConnectionString ?? string.Empty);
                 },
                 settings.HealthChecks.FailureStatus,
                 [SqlServerClientSpark.Name, ..settings.HealthChecks.Tags],

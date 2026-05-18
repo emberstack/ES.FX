@@ -1,8 +1,8 @@
 ﻿using Azure.Storage.Queues;
 using ES.FX.Ignite.Azure.Common.Hosting;
 using ES.FX.Ignite.Azure.Storage.Queues.Configuration;
+using ES.FX.Ignite.Azure.Storage.Queues.HealthChecks;
 using ES.FX.Ignite.Spark.Configuration;
-using HealthChecks.Azure.Storage.Queues;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -56,6 +56,6 @@ public static class AzureQueueStorageHostingExtensions
         builder.Services.IgniteAzureClientObservability<QueueServiceClient>(serviceKey,
             settings.Tracing,
             settings.HealthChecks,
-            (_, client) => new AzureQueueStorageHealthCheck(client));
+            (_, client) => new SimpleQueueServiceHealthCheck(client));
     }
 }

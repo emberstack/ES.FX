@@ -41,6 +41,6 @@ public static class ApiVersioningHostingExtensions
                 options.SubstituteApiVersionInUrl = true;
 
                 configureApiExplorerOptions?.Invoke(options);
-            }).EnableApiVersionBinding();
+            });
     }
 }

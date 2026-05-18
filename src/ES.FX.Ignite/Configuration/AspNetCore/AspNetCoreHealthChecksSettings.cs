@@ -24,11 +24,6 @@ public class AspNetCoreHealthChecksSettings
     public string LivenessEndpointPath { get; set; } = "/health/live";
 
     /// <summary>
-    ///     Gets or sets a value indicating whether the application status check is enabled
-    /// </summary>
-    public bool ApplicationStatusCheckEnabled { get; set; } = true;
-
-    /// <summary>
     ///     Gets or sets the response writer for the health checks endpoints
     /// </summary>
     public Func<HttpContext, HealthReport, Task>? ResponseWriter { get; set; }

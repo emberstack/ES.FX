@@ -1,7 +1,9 @@
 ﻿using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.StackExchange.Redis.Configuration;
+using ES.FX.Ignite.StackExchange.Redis.HealthChecks;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -43,15 +45,13 @@ public static class RedisHostingExtensions
         {
             var healthCheckName =
                 $"{RedisSpark.Name}{(serviceKey is null ? string.Empty : $"[{serviceKey}]")}";
-            builder.Services.AddHealthChecks().AddRedis(
-                sp =>
-                    serviceKey is null
-                        ? sp.GetRequiredService<IConnectionMultiplexer>()
-                        : sp.GetRequiredKeyedService<IConnectionMultiplexer>(serviceKey),
-                healthCheckName,
+            builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName,
+                sp => new SimpleRedisHealthCheck(serviceKey is null
+                    ? sp.GetRequiredService<IConnectionMultiplexer>()
+                    : sp.GetRequiredKeyedService<IConnectionMultiplexer>(serviceKey)),
                 settings.HealthChecks.FailureStatus,
                 [nameof(Redis), .. settings.HealthChecks.Tags],
-                settings.HealthChecks.Timeout);
+                settings.HealthChecks.Timeout));
         }
     }
 

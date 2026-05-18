@@ -7,7 +7,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.Redis" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis" />
 	</ItemGroup>
 

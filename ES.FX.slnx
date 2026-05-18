@@ -17,7 +17,6 @@
   </Folder>
   <Folder Name="/.src/FX/Additions/">
     <Project Path="src/ES.FX.Additions.Asp.Versioning/ES.FX.Additions.Asp.Versioning.csproj" />
-    <Project Path="src/ES.FX.Additions.AspNetCore.HealthChecks.UI/ES.FX.Additions.AspNetCore.HealthChecks.UI.csproj" />
     <Project Path="src/ES.FX.Additions.FluentValidation/ES.FX.Additions.FluentValidation.csproj" />
     <Project Path="src/ES.FX.Additions.KubernetesClient/ES.FX.Additions.KubernetesClient.csproj" />
     <Project Path="src/ES.FX.Additions.MassTransit.MediatR/ES.FX.Additions.MassTransit.MediatR.csproj" />
@@ -44,7 +43,6 @@
   </Folder>
   <Folder Name="/.src/Ignite/Sparks/">
     <Project Path="src/ES.FX.Ignite.Asp.Versioning/ES.FX.Ignite.Asp.Versioning.csproj" />
-    <Project Path="src/ES.FX.Ignite.AspNetCore.HealthChecks.UI/ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
     <Project Path="src/ES.FX.Ignite.Azure.Common/ES.FX.Ignite.Azure.Common.csproj" />
     <Project Path="src/ES.FX.Ignite.Azure.Data.Tables/ES.FX.Ignite.Azure.Data.Tables.csproj" />
     <Project Path="src/ES.FX.Ignite.Azure.Security.KeyVault.Secrets/ES.FX.Ignite.Azure.Security.KeyVault.Secrets.csproj" />
@@ -91,8 +89,6 @@
   </Folder>
   <Folder Name="/tests/Ignite/">
     <Project Path="tests/ES.FX.Ignite.Asp.Versioning.Tests/ES.FX.Ignite.Asp.Versioning.Tests.csproj" />
-    <Project Path="tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.SUT.csproj" />
-    <Project Path="tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests/ES.FX.Ignite.AspNetCore.HealthChecks.UI.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Azure.Data.Tables.Tests/ES.FX.Ignite.Azure.Data.Tables.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests/ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Azure.Storage.Blobs.Tests/ES.FX.Ignite.Azure.Storage.Blobs.Tests.csproj" />

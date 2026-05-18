@@ -7,7 +7,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.ApplicationStatus" />
 		<PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" />
 		<PackageReference Include="OpenTelemetry.Exporter.Console" />

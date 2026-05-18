@@ -5,7 +5,6 @@ using ES.FX.Ignite.Configuration;
 using ES.FX.Ignite.Configuration.AspNetCore;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.HealthChecks;
-using HealthChecks.ApplicationStatus.DependencyInjection;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -61,12 +60,9 @@ public static class IgniteHostingExtensions
         }
     }
 
-    private static void AddHealthChecks(IHostApplicationBuilder builder, IgniteSettings settings)
+    private static void AddHealthChecks(IHostApplicationBuilder builder)
     {
-        var healthCheckKey = builder.Environment.ApplicationName;
-        var healthCheckBuilder = builder.Services.AddHealthChecks();
-        if (settings.AspNetCore.HealthChecks.ApplicationStatusCheckEnabled)
-            healthCheckBuilder.AddApplicationStatus(healthCheckKey, tags: [HealthChecksTags.Live, nameof(Host)]);
+        builder.Services.AddHealthChecks();
     }
 
     private static void AddHttpClient(IHostApplicationBuilder builder, HttpClientSettings settings)
@@ -147,7 +143,7 @@ public static class IgniteHostingExtensions
 
         AddOpenTelemetry(builder, settings);
 
-        AddHealthChecks(builder, settings);
+        AddHealthChecks(builder);
 
         AddHttpClient(builder, settings.HttpClient);
 

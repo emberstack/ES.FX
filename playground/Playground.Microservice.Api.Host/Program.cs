@@ -23,7 +23,6 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 using ES.FX.TransactionalOutbox.MassTransit.Delivery;
 using ES.FX.TransactionalOutbox.Observability;
-using HealthChecks.UI.Client;
 using MassTransit;
 using MassTransit.Logging;
 using MediatR;
@@ -44,7 +43,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 
     builder.Ignite(settings =>
     {
-        settings.AspNetCore.HealthChecks.ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse;
         settings.AspNetCore.JsonStringEnumConverterEnabled = true;
     });
 
@@ -81,10 +79,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     }));
 
     #endregion
-
-    // Add health checks UI
-    //builder.IgniteHealthChecksUi();
-
 
     //SqlServerDbContext
     builder.IgniteSqlServerDbContextFactory<SimpleDbContext>(
@@ -244,8 +238,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
             ForwardedHost = headers["X-Forwarded-Host"].ToString()
         });
     });
-
-    //app.IgniteHealthChecksUi();
 
     await app.RunAsync();
     return 0;

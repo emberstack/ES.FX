@@ -1,8 +1,8 @@
 ﻿using Azure.Security.KeyVault.Secrets;
 using ES.FX.Ignite.Azure.Common.Hosting;
 using ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Configuration;
+using ES.FX.Ignite.Azure.Security.KeyVault.Secrets.HealthChecks;
 using ES.FX.Ignite.Spark.Configuration;
-using HealthChecks.Azure.KeyVault.Secrets;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -56,6 +56,6 @@ public static class AzureKeyVaultSecretsHostingExtensions
         builder.Services.IgniteAzureClientObservability<SecretClient>(serviceKey,
             settings.Tracing,
             settings.HealthChecks,
-            (_, client) => new AzureKeyVaultSecretsHealthCheck(client));
+            (_, client) => new SimpleKeyVaultSecretsHealthCheck(client));
     }
 }

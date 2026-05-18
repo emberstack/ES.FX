@@ -23,7 +23,6 @@
 		<ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Additions.MassTransit.MediatR\ES.FX.Additions.MassTransit.MediatR.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Asp.Versioning\ES.FX.Ignite.Asp.Versioning.csproj" />
-		<ProjectReference Include="..\..\src\ES.FX.Ignite.AspNetCore.HealthChecks.UI\ES.FX.Ignite.AspNetCore.HealthChecks.UI.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Azure.Data.Tables\ES.FX.Ignite.Azure.Data.Tables.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Azure.Security.KeyVault.Secrets\ES.FX.Ignite.Azure.Security.KeyVault.Secrets.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.Ignite.Azure.Storage.Blobs\ES.FX.Ignite.Azure.Storage.Blobs.csproj" />
