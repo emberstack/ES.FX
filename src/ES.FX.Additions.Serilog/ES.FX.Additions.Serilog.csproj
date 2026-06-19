@@ -11,6 +11,7 @@
 		<PackageReference Include="Serilog.Enrichers.Environment" />
 		<PackageReference Include="Serilog.Extensions.Logging" />
 		<PackageReference Include="Serilog.Formatting.Compact" />
+		<PackageReference Include="Serilog.Settings.Configuration" />
 		<PackageReference Include="Serilog.Sinks.Console" />
 		<PackageReference Include="Serilog.AspNetCore" />
 	</ItemGroup>
