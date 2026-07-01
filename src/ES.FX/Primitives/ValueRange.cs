@@ -1,9 +1,10 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 
 namespace ES.FX.Primitives;
 
 [PublicAPI]
-public readonly record struct ValueRange<T> where T : IComparable<T>
+public readonly record struct ValueRange<T> : IComparable<ValueRange<T>>, IComparable
+    where T : IComparable<T>
 {
     /// <summary>
     ///     Creates a range with the same min and max values
@@ -44,22 +45,36 @@ public readonly record struct ValueRange<T> where T : IComparable<T>
     /// <summary>
     ///     The minimum value of the range
     /// </summary>
-    public T Min { get; init; }
+    /// <remarks>
+    ///     Get-only so the <see cref="Min" /> &lt;= <see cref="Max" /> invariant enforced by the constructor
+    ///     cannot be bypassed through an object initializer or a <c>with</c> expression.
+    /// </remarks>
+    public T Min { get; }
 
     /// <summary>
     ///     The maximum value of the range
     /// </summary>
-    public T Max { get; init; }
+    /// <remarks>
+    ///     Get-only so the <see cref="Min" /> &lt;= <see cref="Max" /> invariant enforced by the constructor
+    ///     cannot be bypassed through an object initializer or a <c>with</c> expression.
+    /// </remarks>
+    public T Max { get; }
+
+    /// <inheritdoc />
+    int IComparable.CompareTo(object? obj) => obj switch
+    {
+        null => 1,
+        ValueRange<T> other => CompareTo(other),
+        _ => throw new ArgumentException($"Object must be of type {nameof(ValueRange<T>)}.", nameof(obj))
+    };
 
     /// <summary>
-    ///     Compares the current range with another range.
+    ///     Compares the current range with another range, ordering by <see cref="Min" /> then <see cref="Max" />.
     /// </summary>
-    public int CompareTo(ValueRange<T>? other)
+    public int CompareTo(ValueRange<T> other)
     {
-        if (other is null) return 1;
-
-        var minComparison = Min.CompareTo(other.Value.Min);
-        return minComparison != 0 ? minComparison : Max.CompareTo(other.Value.Max);
+        var minComparison = Min.CompareTo(other.Min);
+        return minComparison != 0 ? minComparison : Max.CompareTo(other.Max);
     }
 
     /// <summary>

@@ -13,8 +13,13 @@ public static class KeyedConfigurationGuard
     /// </summary>
     /// <param name="builder"> The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
     /// <param name="key"> The key to guard</param>
-    public static bool IsGuardConfigurationKeySet(this IHostApplicationBuilder builder, string key) =>
-        builder.Properties.ContainsKey(GuardConfigurationKey(key));
+    public static bool IsGuardConfigurationKeySet(this IHostApplicationBuilder builder, string key)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentException.ThrowIfNullOrEmpty(key);
+
+        return builder.Properties.ContainsKey(GuardConfigurationKey(key));
+    }
 
     /// <summary>
     ///     Prevent reconfiguration by throwing an exception if the key is already configured
@@ -25,6 +30,9 @@ public static class KeyedConfigurationGuard
     /// <exception cref="ReconfigurationNotSupportedException"></exception>
     public static void GuardConfigurationKey(this IHostApplicationBuilder builder, string key, string? message = null)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentException.ThrowIfNullOrEmpty(key);
+
         if (builder.IsGuardConfigurationKeySet(key))
             throw new ReconfigurationNotSupportedException(string.IsNullOrEmpty(message)
                 ? AlreadyConfiguredError(key)

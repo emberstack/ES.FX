@@ -14,7 +14,10 @@ public static class NSwagHostingExtensions
     ///     Uses <see cref="NSwag" />
     ///     Enables the OpenAPI/Swagger specification generation and the Swagger UI.
     /// </summary>
-    /// <param name="app"> The <see cref="WebApplication" /> to configure the Ignite HealthChecks UI for.</param>
+    /// <param name="app">
+    ///     The <see cref="WebApplication" /> to configure the NSwag OpenAPI document middleware and Swagger UI
+    ///     for.
+    /// </param>
     /// <param name="useSwaggerUi"> A flag indicating whether to use Swagger UI. Default is <c>true</c>.</param>
     /// <param name="useSwaggerUiDarkMode"> A flag indicating whether to use Swagger UI dark mode. Default is <c>true</c>.</param>
     /// <param name="configureOpenApiDocumentMiddlewareSettings">

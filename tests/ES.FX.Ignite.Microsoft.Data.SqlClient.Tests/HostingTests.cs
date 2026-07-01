@@ -31,10 +31,17 @@ public class HostingTests
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
+        // A connection string is required (fail-fast) but does not need to be reachable for these
+        // registration/lifetime assertions, so supply a dummy, non-connecting one.
+        void ConfigureOptions(SqlServerClientSparkOptions options) =>
+            options.ConnectionString = "Server=(local);Database=x;";
+
         if (!useFactory)
-            builder.IgniteSqlServerClient("database", serviceKey, lifetime: serviceLifetime);
+            builder.IgniteSqlServerClient("database", serviceKey, configureOptions: ConfigureOptions,
+                lifetime: serviceLifetime);
         else
-            builder.IgniteSqlServerClientFactory("database", serviceKey, lifetime: serviceLifetime);
+            builder.IgniteSqlServerClientFactory("database", serviceKey, configureOptions: ConfigureOptions,
+                lifetime: serviceLifetime);
 
         var app = builder.Build();
 

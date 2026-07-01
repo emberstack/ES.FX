@@ -1,6 +1,8 @@
-﻿using ES.FX.TransactionalOutbox.Entities;
+using ES.FX.TransactionalOutbox.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 
@@ -9,19 +11,36 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 ///     delivery delay
 /// </summary>
 /// <typeparam name="TDbContext"></typeparam>
+[PublicAPI]
 public class SqlServerOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
     where TDbContext : DbContext
 {
+    /// <inheritdoc />
     public async Task<Outbox?> GetNextExclusiveOutboxWithoutDelay(TDbContext dbContext,
         CancellationToken cancellationToken = default)
     {
-        var tableName = GetTableName<Outbox>(dbContext);
+        var entityType = dbContext.Model.FindEntityType(typeof(Outbox)) ??
+                         throw new InvalidOperationException(
+                             $"Entity type {typeof(Outbox)} not found in {dbContext.GetType().Name}");
+
+        var tableName = entityType.GetTableName() ??
+                        throw new InvalidOperationException(
+                            $"Entity type {entityType.DisplayName()} is not mapped to a table");
+        var schema = entityType.GetSchema();
+        var qualifiedTableName = string.IsNullOrWhiteSpace(schema)
+            ? $"[{tableName}]"
+            : $"[{schema}].[{tableName}]";
+
+        var storeObject = StoreObjectIdentifier.Table(tableName, schema);
+        var lockColumn = GetColumnName(entityType, storeObject, nameof(Outbox.Lock));
+        var deliveryDelayedUntilColumn = GetColumnName(entityType, storeObject, nameof(Outbox.DeliveryDelayedUntil));
+        var addedAtColumn = GetColumnName(entityType, storeObject, nameof(Outbox.AddedAt));
 
         //Get the next outbox message that is not delayed, ordered by the time it was added. Read past the locked ones.
         var query =
-            $"SELECT TOP 1 * FROM {tableName} WITH (UPDLOCK, ROWLOCK, READPAST) " +
-            $"WHERE {nameof(Outbox.Lock)} IS NULL  AND ( {nameof(Outbox.DeliveryDelayedUntil)} IS NULL OR {nameof(Outbox.DeliveryDelayedUntil)} < {{0}} )" +
-            $"ORDER BY {nameof(Outbox.AddedAt)}";
+            $"SELECT TOP 1 * FROM {qualifiedTableName} WITH (UPDLOCK, ROWLOCK, READPAST) " +
+            $"WHERE [{lockColumn}] IS NULL  AND ( [{deliveryDelayedUntilColumn}] IS NULL OR [{deliveryDelayedUntilColumn}] < {{0}} )" +
+            $"ORDER BY [{addedAtColumn}]";
 
         var outbox = await dbContext.Set<Outbox>()
             .FromSqlRaw(query, DateTimeOffset.UtcNow)
@@ -32,14 +51,15 @@ public class SqlServerOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
         return outbox;
     }
 
-    private static string GetTableName<TEntity>(DbContext context) where TEntity : class
+    private static string GetColumnName(IEntityType entityType, in StoreObjectIdentifier storeObject,
+        string propertyName)
     {
-        var entityType = context.Model.FindEntityType(typeof(TEntity)) ??
-                         throw new InvalidOperationException(
-                             $"Entity type {typeof(TEntity)} not found in {context.GetType().Name}");
+        var property = entityType.FindProperty(propertyName) ??
+                       throw new InvalidOperationException(
+                           $"Property {propertyName} not found on {entityType.DisplayName()}");
 
-        var tableName = entityType.GetTableName();
-        var schema = entityType.GetSchema();
-        return string.IsNullOrWhiteSpace(schema) ? $"[{tableName}]" : $"[{schema}].[{tableName}]";
+        return property.GetColumnName(storeObject) ??
+               throw new InvalidOperationException(
+                   $"Column for property {propertyName} not found on {entityType.DisplayName()}");
     }
 }

@@ -22,8 +22,13 @@ public static class SparkConfig
     /// <returns>The <see cref="T" />settings instance.</returns>
     public static T GetSettings<T>(IConfiguration configuration,
         string configurationPath,
-        Action<T>? configureSettings = null) where T : new() =>
-        GetSettings(new T(), configuration, configurationPath, configureSettings);
+        Action<T>? configureSettings = null) where T : new()
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentException.ThrowIfNullOrEmpty(configurationPath);
+
+        return GetSettings(new T(), configuration, configurationPath, configureSettings);
+    }
 
     /// <summary>
     ///     Gets the settings from the configuration.
@@ -41,6 +46,9 @@ public static class SparkConfig
         string configurationPath,
         Action<T>? configureSettings = null)
     {
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentException.ThrowIfNullOrEmpty(configurationPath);
+
         configuration.GetSection($"{configurationPath}:{Settings}").Bind(settings);
         configureSettings?.Invoke(settings);
 
@@ -49,17 +57,16 @@ public static class SparkConfig
 
 
     /// <summary>
-    ///     Gets the name or the default if the name is null or empty.
+    ///     Gets the name or the default if the name is null, empty or whitespace.
     /// </summary>
     /// <param name="name">The spark name</param>
     /// <param name="defaultName">The default spark name </param>
     /// <returns></returns>
     public static string Name(string? name, string defaultName)
     {
-        name = name?.Trim();
-        defaultName = defaultName.Trim();
+        ArgumentException.ThrowIfNullOrEmpty(defaultName);
 
-        return name ?? defaultName;
+        return string.IsNullOrWhiteSpace(name) ? defaultName.Trim() : name.Trim();
     }
 
     /// <summary>
@@ -70,6 +77,8 @@ public static class SparkConfig
     /// <returns></returns>
     public static string Path(string? serviceName, string sectionPath)
     {
+        ArgumentNullException.ThrowIfNull(sectionPath);
+
         sectionPath = sectionPath.Trim();
 
         if (string.IsNullOrWhiteSpace(serviceName)) return sectionPath;

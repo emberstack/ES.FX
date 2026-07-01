@@ -47,19 +47,35 @@ public static class SqlServerClientHostingExtensions
         builder.Services.Add(new ServiceDescriptor(typeof(SqlConnection), serviceKey, ResolveSqlConnection, lifetime));
 
 
-        ConfigureObservability(builder, serviceKey, settings);
+        ConfigureObservability(builder, serviceKey, name, configPath, settings);
 
         return;
 
-        static SqlConnection ResolveSqlConnection(IServiceProvider sp, object? key)
+        SqlConnection ResolveSqlConnection(IServiceProvider sp, object? key)
         {
             var options = sp.GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>().Get(key as string);
-            return new SqlConnection(options.ConnectionString);
+            var connectionString = GetRequiredConnectionString(options, name, configPath);
+            return new SqlConnection(connectionString);
         }
     }
 
-    private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey,
-        SqlServerClientSparkSettings settings)
+    /// <summary>
+    ///     Resolves the connection string from the options, failing fast with a descriptive
+    ///     <see cref="InvalidOperationException" /> when it is missing.
+    /// </summary>
+    private static string GetRequiredConnectionString(SqlServerClientSparkOptions options, string name,
+        string configPath)
+    {
+        if (string.IsNullOrWhiteSpace(options.ConnectionString))
+            throw new InvalidOperationException(
+                $"ConnectionString is missing for '{name}'. " +
+                $"Expected at '{configPath}:{nameof(SqlServerClientSparkOptions.ConnectionString)}'.");
+
+        return options.ConnectionString;
+    }
+
+    private static void ConfigureObservability(IHostApplicationBuilder builder, string? serviceKey, string name,
+        string configPath, SqlServerClientSparkSettings settings)
     {
         if (settings.Tracing.Enabled)
             builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
@@ -76,7 +92,8 @@ public static class SqlServerClientHostingExtensions
                     var options = serviceProvider
                         .GetRequiredService<IOptionsMonitor<SqlServerClientSparkOptions>>()
                         .Get(serviceKey);
-                    return new SimpleSqlServerHealthCheck(options.ConnectionString ?? string.Empty);
+                    var connectionString = GetRequiredConnectionString(options, name, configPath);
+                    return new SimpleSqlServerHealthCheck(connectionString);
                 },
                 settings.HealthChecks.FailureStatus,
                 [SqlServerClientSpark.Name, ..settings.HealthChecks.Tags],
@@ -118,7 +135,7 @@ public static class SqlServerClientHostingExtensions
         Action<SqlServerClientSparkOptions>? configureOptions = null,
         ServiceLifetime lifetime = ServiceLifetime.Transient,
         string configurationSectionPath = SqlServerClientSpark.ConfigurationSectionPath) =>
-        AddSqlServerClient(builder, name, serviceKey, configureSettings, configureOptions, lifetime,
+        builder.AddSqlServerClient(name, serviceKey, configureSettings, configureOptions, lifetime,
             configurationSectionPath);
 
 
@@ -157,6 +174,6 @@ public static class SqlServerClientHostingExtensions
         Action<SqlServerClientSparkOptions>? configureOptions = null,
         ServiceLifetime lifetime = ServiceLifetime.Transient,
         string configurationSectionPath = SqlServerClientSpark.ConfigurationSectionPath) =>
-        AddSqlServerClient(builder, name, serviceKey, configureSettings, configureOptions, lifetime,
+        builder.AddSqlServerClient(name, serviceKey, configureSettings, configureOptions, lifetime,
             configurationSectionPath, true);
 }

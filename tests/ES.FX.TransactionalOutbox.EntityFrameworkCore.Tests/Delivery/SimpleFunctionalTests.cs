@@ -179,11 +179,11 @@ public class SimpleFunctionalTests
 
     public class TestMessageHandler : IOutboxMessageHandler
     {
-        public ValueTask Handle(OutboxMessageContext context,
+        public ValueTask HandleAsync(OutboxMessageContext context,
             CancellationToken cancellationToken = default) =>
             ValueTask.CompletedTask;
 
-        public ValueTask<bool> IsReady(CancellationToken cancellationToken = default) =>
+        public ValueTask<bool> IsReadyAsync(CancellationToken cancellationToken = default) =>
             ValueTask.FromResult(true);
     }
 }

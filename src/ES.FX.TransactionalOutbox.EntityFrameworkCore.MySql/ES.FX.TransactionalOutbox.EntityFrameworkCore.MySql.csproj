@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Description>MySQL provider for ES.FX TransactionalOutbox with Entity Framework Core support</Description>
+        <Description>MySQL and MariaDB provider for the ES.FX transactional outbox on Entity Framework Core.</Description>
     </PropertyGroup>
 
     <ItemGroup>

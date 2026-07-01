@@ -82,24 +82,16 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
         // If the transaction is not committed and there is an active transaction, do not signal, wait for the transaction to commit
         if (!transactionCommitted && context.Database.CurrentTransaction is not null) return;
 
-        DbContextDictionary.AddOrUpdate(context.GetType(),
-            _ => [],
-            (_, bag) =>
-            {
-                var matches = bag.RemoveAll(s => context.Equals(s?.Target));
-                if (matches > 0)
-                    OutboxDeliverySignal.GetChannel(type).Writer.TryWrite(callerMemberName ?? nameof(OnOutboxSaved));
-                try
-                {
-                    bag.RemoveAll(s => !s?.IsAlive ?? true);
-                }
-                catch
-                {
-                    // Ignored. This is a best-effort cleanup
-                }
+        var bag = DbContextDictionary.GetOrAdd(type, _ => []);
+        int matches;
+        lock (bag)
+        {
+            matches = bag.RemoveAll(s => context.Equals(s?.Target));
+            bag.RemoveAll(s => !s?.IsAlive ?? true);
+        }
 
-                return bag;
-            });
+        if (matches > 0)
+            OutboxDeliverySignal.GetChannel(type).Writer.TryWrite(callerMemberName ?? nameof(OnOutboxSaved));
     }
 
     private static void OnOutboxSaving(DbContext? context)
@@ -131,21 +123,11 @@ internal class OutboxDbContextInterceptor : ISaveChangesInterceptor, IDbTransact
 
         foreach (var message in addedMessages) message.Entity.OutboxId = outboxEntry.Entity.Id;
 
-        DbContextDictionary.AddOrUpdate(context.GetType(),
-            _ => [new WeakReference(context)],
-            (_, bag) =>
-            {
-                try
-                {
-                    bag.RemoveAll(s => !s?.IsAlive ?? true);
-                }
-                catch
-                {
-                    // Ignored. This is a best-effort cleanup
-                }
-
-                bag.Add(new WeakReference(context));
-                return bag;
-            });
+        var bag = DbContextDictionary.GetOrAdd(context.GetType(), _ => []);
+        lock (bag)
+        {
+            bag.RemoveAll(s => !s?.IsAlive ?? true);
+            bag.Add(new WeakReference(context));
+        }
     }
 }

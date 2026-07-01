@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Delivery;
 
 public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTestsBase(output)
@@ -123,7 +124,7 @@ public class OutboxDeliveryTests(ITestOutputHelper output) : OutboxDeliveryTests
             }
         }
 
-        public ValueTask Handle(OutboxMessageContext context, CancellationToken cancellationToken = default)
+        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default)
         {
             if (context.Message is TestOrder order)
             {

@@ -16,10 +16,10 @@ internal sealed class SimpleSqlServerHealthCheck(string connectionString) : IHea
     {
         try
         {
-            using var connection = new SqlConnection(connectionString);
+            await using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-            using var command = connection.CreateCommand();
+            await using var command = connection.CreateCommand();
             command.CommandText = HealthQuery;
             await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
 

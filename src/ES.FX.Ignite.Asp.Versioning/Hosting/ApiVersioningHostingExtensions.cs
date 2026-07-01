@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using ES.FX.Ignite.Spark.Configuration;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,9 +11,11 @@ namespace ES.FX.Ignite.Asp.Versioning.Hosting;
 public static class ApiVersioningHostingExtensions
 {
     /// <summary>
-    ///     Registers <see cref="Versioning" /> services in the services provided by the
+    ///     Registers API versioning and versioned API Explorer services in the services provided by the
     ///     <paramref name="builder" />.
-    ///     Enables AutoValidation for Endpoints and MVC.
+    ///     Configures <see cref="ApiVersioningOptions" /> with a <see cref="UrlSegmentApiVersionReader" /> and API
+    ///     version reporting, and <see cref="ApiExplorerOptions" /> with the 'v'VVV group name format and API version
+    ///     substitution in URLs.
     /// </summary>
     /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
     /// <param name="configureApiVersioningOptions">
@@ -27,6 +30,8 @@ public static class ApiVersioningHostingExtensions
         Action<ApiVersioningOptions>? configureApiVersioningOptions = null,
         Action<ApiExplorerOptions>? configureApiExplorerOptions = null)
     {
+        builder.GuardConfigurationKey(ApiVersioningSpark.Name);
+
         builder.Services.AddApiVersioning(options =>
             {
                 options.ReportApiVersions = true;

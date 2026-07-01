@@ -19,12 +19,12 @@ internal sealed class SimpleQueueServiceHealthCheck(QueueServiceClient queueServ
     {
         try
         {
-            await queueServiceClient
-                .GetQueuesAsync(cancellationToken: cancellationToken)
-                .AsPages(pageSizeHint: 1)
-                .GetAsyncEnumerator(cancellationToken)
-                .MoveNextAsync()
-                .ConfigureAwait(false);
+            await foreach (var _ in queueServiceClient
+                               .GetQueuesAsync(cancellationToken: cancellationToken)
+                               .AsPages(pageSizeHint: 1)
+                               .WithCancellation(cancellationToken)
+                               .ConfigureAwait(false))
+                break;
 
             return HealthCheckResult.Healthy();
         }

@@ -41,10 +41,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Logging.ClearProviders();
     builder.IgniteSerilog();
 
-    builder.Ignite(settings =>
-    {
-        settings.AspNetCore.JsonStringEnumConverterEnabled = true;
-    });
+    builder.Ignite(settings => { settings.AspNetCore.JsonStringEnumConverterEnabled = true; });
 
     //Add Seq
     builder.IgniteSeqOpenTelemetryExporter();
@@ -120,10 +117,7 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
 
 
-    builder.Services.AddMassTransit(x =>
-    {
-        x.AddConsumer<TestMessageConsumer>();
-    });
+    builder.Services.AddMassTransit(x => { x.AddConsumer<TestMessageConsumer>(); });
 
 
     builder.Services.AddMassTransit(x =>
@@ -180,10 +174,6 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         });
     }).AddOpenTelemetry().WithTracing(traceBuilder =>
         traceBuilder.AddSource(DiagnosticHeaders.DefaultListenerName));
-
-   
-
-
 
 
     var app = builder.Build();

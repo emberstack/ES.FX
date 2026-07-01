@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace ES.FX.Additions.Microsoft.Extensions.Identity.Core.Passwords;
 
@@ -10,13 +11,32 @@ namespace ES.FX.Additions.Microsoft.Extensions.Identity.Core.Passwords;
 public class GenericPasswordHasher
 {
     private static readonly object User = new();
-    private readonly PasswordHasher<object> _hasher = new();
+    private readonly PasswordHasher<object> _hasher;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="GenericPasswordHasher" /> class using the default
+    ///     <see cref="PasswordHasherOptions" />.
+    /// </summary>
+    public GenericPasswordHasher() => _hasher = new PasswordHasher<object>();
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="GenericPasswordHasher" /> class using the supplied
+    ///     <paramref name="optionsAccessor" />.
+    /// </summary>
+    /// <param name="optionsAccessor">The options used to configure the underlying <see cref="PasswordHasher{TUser}" />.</param>
+    public GenericPasswordHasher(IOptions<PasswordHasherOptions> optionsAccessor) =>
+        _hasher = new PasswordHasher<object>(optionsAccessor);
+
+    /// <summary>
+    ///     Gets a shared default instance of the hasher.
+    /// </summary>
     public static GenericPasswordHasher Instance { get; } = new();
 
     /// <summary>
     ///     Returns a hashed representation of the supplied <paramref name="password" />.
     /// </summary>
+    /// <param name="password">The password to hash.</param>
+    /// <returns>A hashed representation of the supplied <paramref name="password" />.</returns>
     public string HashPassword(string password) => _hasher.HashPassword(User, password);
 
     /// <summary>

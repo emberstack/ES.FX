@@ -17,6 +17,8 @@ public static class BuilderExtensions
     public static void UseOutbox(this DbContextOptionsBuilder optionsBuilder,
         Action<OutboxDbContextOptions>? configureOptions = null)
     {
+        ArgumentNullException.ThrowIfNull(optionsBuilder);
+
         OutboxDbContextOptions outboxDbContextOptions;
         var outboxDbContextOptionsExtension = optionsBuilder.Options.FindExtension<OutboxDbContextOptionsExtension>();
         if (outboxDbContextOptionsExtension is not null)
@@ -41,6 +43,8 @@ public static class BuilderExtensions
     /// <param name="modelBuilder">The <see cref="ModelBuilder" /> to configure </param>
     public static void AddOutbox(this ModelBuilder modelBuilder)
     {
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+
         modelBuilder.Entity<Outbox>().ToTable("__Outboxes");
         modelBuilder.ApplyConfiguration(new OutboxEntityTypeConfiguration());
 

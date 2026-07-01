@@ -1,11 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<Description>ES.FX helpers that bridge MassTransit consumers to MediatR.</Description>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="MassTransit.Abstractions" />
 		<PackageReference Include="MediatR" />
 	</ItemGroup>
 	<ItemGroup>

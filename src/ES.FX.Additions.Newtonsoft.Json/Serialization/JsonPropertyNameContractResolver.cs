@@ -7,7 +7,9 @@ using Newtonsoft.Json.Serialization;
 namespace ES.FX.Additions.Newtonsoft.Json.Serialization;
 
 /// <summary>
-///     Used to resolve <see cref="JsonPropertyNameAttribute" /> decorated contracts
+///     Used to resolve <see cref="JsonPropertyNameAttribute" /> decorated contracts.
+///     <see cref="JsonPropertyNameAttribute" /> takes precedence over <see cref="JsonPropertyAttribute" /> when both
+///     are present on the same member.
 /// </summary>
 [PublicAPI]
 public class JsonPropertyNameContractResolver : DefaultContractResolver

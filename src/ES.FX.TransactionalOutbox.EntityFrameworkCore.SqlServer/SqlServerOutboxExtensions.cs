@@ -1,8 +1,13 @@
 ﻿using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer;
 
+/// <summary>
+///     Extension methods for configuring SQL Server-specific outbox functionality.
+/// </summary>
+[PublicAPI]
 public static class SqlServerOutboxExtensions
 {
     /// <summary>
@@ -13,6 +18,8 @@ public static class SqlServerOutboxExtensions
     public static void UseSqlServerOutboxProvider<TDbContext>(this OutboxDeliveryOptions<TDbContext> options)
         where TDbContext : DbContext
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         options.OutboxProvider = new SqlServerOutboxProvider<TDbContext>();
     }
 }

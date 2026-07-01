@@ -6,9 +6,9 @@ namespace ES.FX.Additions.Microsoft.EntityFrameworkCore.Factories;
 /// <summary>
 ///     Defines a factory for creating instances of <see cref="DbContext" /> using a delegate.
 /// </summary>
-/// <typeparam name="TDbContext"><see cref="DbContext" />> type</typeparam>
+/// <typeparam name="TDbContext"><see cref="DbContext" /> type</typeparam>
 /// <param name="serviceProvider">Service provider used by the factory</param>
-/// <param name="factory">Factory function used to create the <see cref="TDbContext" /></param>
+/// <param name="factory">Factory function used to create the <typeparamref name="TDbContext" /></param>
 [PublicAPI]
 public class DelegateDbContextFactory<TDbContext>(
     IServiceProvider serviceProvider,
@@ -16,5 +16,12 @@ public class DelegateDbContextFactory<TDbContext>(
     : IDbContextFactory<TDbContext>
     where TDbContext : DbContext
 {
-    public TDbContext CreateDbContext() => factory(serviceProvider);
+    /// <inheritdoc />
+    public TDbContext CreateDbContext()
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(factory);
+
+        return factory(serviceProvider);
+    }
 }

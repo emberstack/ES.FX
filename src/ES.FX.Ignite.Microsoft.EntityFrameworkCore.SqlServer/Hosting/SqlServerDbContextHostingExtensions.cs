@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Trace;
@@ -92,10 +93,21 @@ public static class SqlServerDbContextHostingExtensions
                 tracerProviderBuilder.AddSqlClientInstrumentation());
 
         if (settings.HealthChecks.Enabled)
+        {
+            var healthCheckName = $"{DbContextSpark.Name}.{serviceName.Trim()}";
             builder.Services.AddHealthChecks().AddDbContextCheck<TContext>(
-                $"{DbContextSpark.Name}.{serviceName.Trim()}",
+                healthCheckName,
                 settings.HealthChecks.FailureStatus,
                 [DbContextSpark.Name, ..settings.HealthChecks.Tags]);
+
+            if (settings.HealthChecks.Timeout is { } timeout)
+                builder.Services.Configure<HealthCheckServiceOptions>(options =>
+                {
+                    foreach (var registration in options.Registrations)
+                        if (registration.Name == healthCheckName)
+                            registration.Timeout = timeout;
+                });
+        }
     }
 
     /// <summary>
@@ -179,7 +191,10 @@ public static class SqlServerDbContextHostingExtensions
     /// </param>
     /// <remarks>
     ///     This also registers the <see cref="DbContext" /> as a service in the services provided by the
-    ///     <paramref name="builder" /> with the same lifetime specified by <paramref name="lifetime" />.
+    ///     <paramref name="builder" />. The <see cref="DbContext" /> is registered as
+    ///     <see cref="ServiceLifetime.Scoped" />, unless <paramref name="lifetime" /> is
+    ///     <see cref="ServiceLifetime.Transient" />, in which case it is registered as
+    ///     <see cref="ServiceLifetime.Transient" />.
     /// </remarks>
     public static void IgniteSqlServerDbContextFactory<TDbContext>(this IHostApplicationBuilder builder,
         string? name = null,

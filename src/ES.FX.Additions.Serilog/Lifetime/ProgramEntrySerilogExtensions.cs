@@ -24,6 +24,8 @@ public static class ProgramEntrySerilogExtensions
         LogEventLevel minimumLevel = LogEventLevel.Information,
         Action<LoggerConfiguration>? configureLoggerConfiguration = null, bool enableConsoleSelfLog = true)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+
         // Enable Serilog SelfLog to console
         if (enableConsoleSelfLog) SelfLog.Enable(Console.Error);
 

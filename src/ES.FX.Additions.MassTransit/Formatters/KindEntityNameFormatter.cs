@@ -8,10 +8,10 @@ namespace ES.FX.Additions.MassTransit.Formatters;
 ///     Formatter that uses the <see cref="KindAttribute" /> to format the entity name. Uses
 ///     <see cref="IEntityNameFormatter" /> as the base formatter
 /// </summary>
-/// <param name="entityNameFormatter"><see cref="IEndpointNameFormatter" /> to use as the base formatter</param>
+/// <param name="entityNameFormatter"><see cref="IEntityNameFormatter" /> to use as the base formatter</param>
 /// <param name="faultFallbackToKind">
 ///     When set to true, the <see cref="KindAttribute" /> and
-///     <param name="faultFormat"></param>
+///     <paramref name="faultFormat" />
 ///     will be used to determine the <see cref="Fault" /> message name
 /// </param>
 /// <param name="faultFormat">
@@ -33,11 +33,11 @@ public class KindEntityNameFormatter(
     {
         if (typeof(TMessage).ClosesType(typeof(Fault<>), out Type[] types))
         {
-            var type = FaultKindAttribute.For(types.First());
+            var type = FaultKindAttribute.For(types[0]);
             if (type is not null) return type;
 
             if (!faultFallbackToKind) return entityNameFormatter.FormatEntityName<TMessage>();
-            type = KindAttribute.For(types.First());
+            type = KindAttribute.For(types[0]);
             if (type is not null) return string.Format(faultFormat, type);
         }
         else

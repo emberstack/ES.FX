@@ -21,18 +21,18 @@ public static class RedisHostingExtensions
     {
         if (settings.Tracing.Enabled)
         {
-            builder.Services.AddOpenTelemetry().WithTracing(t =>
-            {
-                t.AddSource($"{typeof(StackExchangeRedisInstrumentation).Namespace}");
-                t.ConfigureRedisInstrumentation(_ => { });
-                t.AddInstrumentation(sp => sp.GetRequiredService<StackExchangeRedisInstrumentation>());
-            });
-
-            // Configure StackExchangeRedisInstrumentationOptions once 
+            // Configure tracing once
             const string configureOnceKey = $"{RedisSpark.Name}.Global.Tracing.Configure";
             if (!builder.IsGuardConfigurationKeySet(configureOnceKey))
             {
                 builder.GuardConfigurationKey(configureOnceKey);
+
+                builder.Services.AddOpenTelemetry().WithTracing(t =>
+                {
+                    t.AddSource($"{typeof(StackExchangeRedisInstrumentation).Namespace}");
+                    t.ConfigureRedisInstrumentation(_ => { });
+                    t.AddInstrumentation(sp => sp.GetRequiredService<StackExchangeRedisInstrumentation>());
+                });
 
                 // Disable EnrichActivityWithTimingEvents as the activity is already timed
                 // Enabling this leads to logs that get registered with each span
@@ -72,7 +72,10 @@ public static class RedisHostingExtensions
     /// </param>
     /// <param name="configureOptions">
     ///     An optional delegate that can be used for customizing options. It's invoked after the
-    ///     options are read from the configuration.
+    ///     options are read from the configuration. Note that
+    ///     <see cref="RedisSparkOptions.ConnectionString" /> takes full precedence over
+    ///     <see cref="RedisSparkOptions.ConfigurationOptions" />: when both are set, the connection
+    ///     string is used and the configuration options are ignored entirely.
     /// </param>
     /// <param name="configurationSectionPath">
     ///     The configuration section path. Default is

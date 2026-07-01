@@ -45,6 +45,8 @@ public class Result<T> : IResult where T : notnull
     /// <param name="value">The value for the result</param>
     public Result(T value)
     {
+        ArgumentNullException.ThrowIfNull(value);
+
         _result = value;
         IsResult = true;
     }
@@ -55,6 +57,8 @@ public class Result<T> : IResult where T : notnull
     /// <param name="problem">The problem for the result</param>
     public Result(Problem problem)
     {
+        ArgumentNullException.ThrowIfNull(problem);
+
         _problem = problem;
         IsResult = false;
     }
@@ -90,6 +94,12 @@ public class Result<T> : IResult where T : notnull
     /// <summary>
     ///     Gets the result's value. Can be either a <typeparamref name="T" /> or <see cref="Problem" />
     /// </summary>
+    /// <remarks>
+    ///     Because this returns <see cref="object" />, accessing a value-type <typeparamref name="T" /> through this
+    ///     property boxes the payload on every call. In hot paths prefer the strongly typed accessors
+    ///     (<see cref="AsResult" />, <see cref="TryPickResult(out T)" />, or <see cref="TryPickProblem(out Problem)" />)
+    ///     which avoid the allocation.
+    /// </remarks>
     public object Value => IsResult ? _result : _problem;
 
     /// <summary>
@@ -132,10 +142,21 @@ public class Result<T> : IResult where T : notnull
     public static explicit operator Problem(Result<T> _) => _.AsProblem;
 
 
-    // Override Equals so that:
-    // - Two Result<T> objects compare equal if they have the same state (success or problem)
-    //   and their inner values are equal.
-    // - A Result<T> compares equal to a T (or Problem) if it is a success (or problem) and its inner value equals that T (or Problem).
+    /// <summary>
+    ///     Determines whether the specified object is equal to this result.
+    /// </summary>
+    /// <remarks>
+    ///     Two <see cref="Result{T}" /> instances are equal when they share the same state (success or problem)
+    ///     and their inner values are equal; a success (or problem) result also compares equal to a bare
+    ///     <typeparamref name="T" /> (or <see cref="Problem" />) whose value is equal.
+    ///     <para>
+    ///         This cross-type equality is intentionally <b>asymmetric</b>: <c>result.Equals(value)</c> can be
+    ///         <see langword="true" /> while <c>value.Equals(result)</c> is <see langword="false" />, and the two
+    ///         produce different hash codes. Do not rely on order-independent equality when mixing
+    ///         <see cref="Result{T}" /> and bare <typeparamref name="T" />/<see cref="Problem" /> values in the
+    ///         same hash-based collection.
+    ///     </para>
+    /// </remarks>
     public override bool Equals(object? obj)
     {
         if (ReferenceEquals(this, obj))

@@ -18,5 +18,9 @@ public class SqlServerClientSparkSettings
     /// <summary>
     ///     <inheritdoc cref="TracingSettings" />
     /// </summary>
+    /// <remarks>
+    ///     SqlClient instrumentation is process-wide: enabling tracing for any one client enables it for all
+    ///     <see cref="SqlConnection" /> activity in the process.
+    /// </remarks>
     public TracingSettings Tracing { get; set; } = new();
 }

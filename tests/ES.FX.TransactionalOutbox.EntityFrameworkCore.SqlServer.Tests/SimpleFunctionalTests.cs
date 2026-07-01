@@ -8,12 +8,11 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests;
 
 public class SimpleFunctionalTests : IAsyncLifetime
 {
-    private string? _connectionString;
-    private MsSqlContainer? _msSqlContainer;
-
     public const string Registry = "mcr.microsoft.com";
     public const string Image = "mssql/server";
     public const string Tag = "2025-latest";
+    private string? _connectionString;
+    private MsSqlContainer? _msSqlContainer;
 
     public async ValueTask InitializeAsync()
     {
@@ -87,7 +86,8 @@ public class SimpleFunctionalTests : IAsyncLifetime
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var savedOrder = await context.Orders.FirstOrDefaultAsync(o => o.OrderNumber == $"SQL-TEST-{testId}", TestContext.Current.CancellationToken);
+        var savedOrder = await context.Orders.FirstOrDefaultAsync(o => o.OrderNumber == $"SQL-TEST-{testId}",
+            TestContext.Current.CancellationToken);
         Assert.NotNull(savedOrder);
         Assert.Equal($"SQL-TEST-{testId}", savedOrder.OrderNumber);
 
@@ -141,7 +141,8 @@ public class SimpleFunctionalTests : IAsyncLifetime
         }
 
         // Assert
-        var orders = await context.Orders.Where(o => o.OrderNumber.StartsWith($"TX-{testId}")).ToListAsync(TestContext.Current.CancellationToken);
+        var orders = await context.Orders.Where(o => o.OrderNumber.StartsWith($"TX-{testId}"))
+            .ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(orders);
         Assert.Equal($"TX-{testId}-001", orders[0].OrderNumber);
 

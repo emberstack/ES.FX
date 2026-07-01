@@ -11,7 +11,7 @@ namespace ES.FX.Ignite.Migrations.Hosting;
 public static class MigrationsServiceHostingExtensions
 {
     /// <summary>
-    ///     Adds the <see cref="MigrationsService" /> to the <see cref="IHostBuilder" />.
+    ///     Adds the <see cref="MigrationsService" /> to the <see cref="IHostApplicationBuilder" />.
     /// </summary>
     /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
     /// <param name="configureSettings">

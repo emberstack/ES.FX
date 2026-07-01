@@ -28,7 +28,8 @@ public class FunctionalTests(SeqContainerFixture seqFixture) : IClassFixture<Seq
         await Task.Delay(5000, TestContext.Current.CancellationToken);
 
         var seqClient = new SeqConnection(seqFixture.GetConnectionString());
-        var events = await seqClient.Events.ListAsync(null, null, null, 100, null, null, true, cancellationToken: TestContext.Current.CancellationToken);
+        var events = await seqClient.Events.ListAsync(null, null, null, 100, null, null, true,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(events);
         Assert.Contains(events, x => x.RenderedMessage.Contains(SimpleEndpoint.RoutePattern));

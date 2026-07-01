@@ -2,6 +2,7 @@ using ES.FX.TransactionalOutbox.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql;
 
@@ -14,17 +15,26 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql;
 public class PostgreSqlOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
     where TDbContext : DbContext
 {
+    /// <inheritdoc />
     public async Task<Outbox?> GetNextExclusiveOutboxWithoutDelay(TDbContext dbContext,
         CancellationToken cancellationToken = default)
     {
-        var tableName = GetTableName<Outbox>(dbContext);
+        var entityType = dbContext.Model.FindEntityType(typeof(Outbox)) ??
+                         throw new InvalidOperationException(
+                             $"Entity type {typeof(Outbox)} not found in {dbContext.GetType().Name}");
+
+        var tableName = GetTableName(entityType);
+        var storeObject = StoreObjectIdentifier.Table(entityType.GetTableName()!, entityType.GetSchema());
+        var lockColumn = GetColumnName(entityType, storeObject, nameof(Outbox.Lock));
+        var deliveryDelayedUntilColumn = GetColumnName(entityType, storeObject, nameof(Outbox.DeliveryDelayedUntil));
+        var addedAtColumn = GetColumnName(entityType, storeObject, nameof(Outbox.AddedAt));
 
         // PostgreSQL uses FOR UPDATE SKIP LOCKED to get exclusive access without blocking
         // Double quotes are used for identifiers in PostgreSQL
         var query =
             $"SELECT * FROM {tableName} " +
-            $"WHERE \"{nameof(Outbox.Lock)}\" IS NULL AND (\"{nameof(Outbox.DeliveryDelayedUntil)}\" IS NULL OR \"{nameof(Outbox.DeliveryDelayedUntil)}\" < {{0}}) " +
-            $"ORDER BY \"{nameof(Outbox.AddedAt)}\" " +
+            $"WHERE \"{lockColumn}\" IS NULL AND (\"{deliveryDelayedUntilColumn}\" IS NULL OR \"{deliveryDelayedUntilColumn}\" < {{0}}) " +
+            $"ORDER BY \"{addedAtColumn}\" " +
             "LIMIT 1 " +
             "FOR UPDATE SKIP LOCKED";
 
@@ -35,14 +45,17 @@ public class PostgreSqlOutboxProvider<TDbContext> : IOutboxProvider<TDbContext>
             .ConfigureAwait(false);
     }
 
-    private static string GetTableName<TEntity>(TDbContext dbContext) where TEntity : class
+    private static string GetTableName(IEntityType entityType)
     {
-        var entityType = dbContext.Model.FindEntityType(typeof(TEntity));
-        var schema = entityType?.GetSchema();
-        var tableName = entityType?.GetTableName();
+        var schema = entityType.GetSchema();
+        var tableName = entityType.GetTableName();
 
         return !string.IsNullOrEmpty(schema)
             ? $"\"{schema}\".\"{tableName}\""
             : $"\"{tableName}\"";
     }
+
+    private static string GetColumnName(IEntityType entityType, in StoreObjectIdentifier storeObject,
+        string propertyName) =>
+        entityType.FindProperty(propertyName)!.GetColumnName(storeObject) ?? propertyName;
 }

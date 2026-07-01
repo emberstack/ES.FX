@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.Migrations;
@@ -18,6 +19,7 @@ public static class RelationalDbContextMigrationsTaskExtensions
     public static void AddDbContextMigrationsTask<TDbContext>(this IHostApplicationBuilder builder)
         where TDbContext : DbContext
     {
-        builder.Services.AddTransient<IMigrationsTask, RelationalDbContextMigrationsTask<TDbContext>>();
+        builder.Services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IMigrationsTask, RelationalDbContextMigrationsTask<TDbContext>>());
     }
 }

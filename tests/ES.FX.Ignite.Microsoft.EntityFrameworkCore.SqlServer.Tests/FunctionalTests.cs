@@ -96,14 +96,16 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
         var migrationsHealthChecks = new RelationalDbContextMigrationsHealthCheck<TestDbContext>(context);
         var healthCheckContext = new HealthCheckContext();
 
-        var healthCheckResult = await migrationsHealthChecks.CheckHealthAsync(healthCheckContext, TestContext.Current.CancellationToken);
+        var healthCheckResult =
+            await migrationsHealthChecks.CheckHealthAsync(healthCheckContext, TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Unhealthy, healthCheckResult.Status);
 
         await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
         var pendingMigrations = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pendingMigrations);
 
-        healthCheckResult = await migrationsHealthChecks.CheckHealthAsync(healthCheckContext, TestContext.Current.CancellationToken);
+        healthCheckResult =
+            await migrationsHealthChecks.CheckHealthAsync(healthCheckContext, TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Healthy, healthCheckResult.Status);
         return;
 

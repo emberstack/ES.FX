@@ -17,6 +17,7 @@ public static class EndpointConventionBuilderExtensions
     public static TBuilder HasApiVersions<TBuilder>(this TBuilder builder, IEnumerable<ApiVersion> apiVersions)
         where TBuilder : IEndpointConventionBuilder
     {
+        ArgumentNullException.ThrowIfNull(apiVersions);
         foreach (var apiVersion in apiVersions) builder.HasApiVersion(apiVersion);
         return builder;
     }

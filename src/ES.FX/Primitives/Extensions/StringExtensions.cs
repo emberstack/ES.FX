@@ -92,8 +92,8 @@ public static class StringExtensions
     /// </param>
     /// <returns>
     ///     A new string where the first character of each word is capitalized and all other characters are in lower case.
+    ///     Returns <c>null</c> if the input string is <c>null</c>.
     /// </returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value" /> is <c>null</c>.</exception>
     [return: NotNullIfNotNull(nameof(value))]
     public static string? ToTitleCase(this string? value, CultureInfo? culture = null)
     {
@@ -110,11 +110,11 @@ public static class StringExtensions
     ///     mapping for stroked letters.
     /// </summary>
     /// <param name="text">
-    ///     The input string from which diacritics will be removed. May be <c>null</c> or empty.
+    ///     The input string from which diacritics will be removed. Must be non-null; may be empty.
     /// </param>
     /// <returns>
     ///     A new <see cref="string" /> in which all diacritical marks have been stripped. If
-    ///     <paramref name="text" /> is <c>null</c> or empty, it is returned unchanged.
+    ///     <paramref name="text" /> is empty, it is returned unchanged.
     /// </returns>
     /// <remarks>
     ///     This method:
@@ -131,7 +131,8 @@ public static class StringExtensions
     ///             a clean, composed string.
     ///         </item>
     ///         <item>
-    ///             Performs a final <c>Replace</c> in case any stroked characters remain.
+    ///             Maps stroked letters that survive decomposition (for example <c>Đ</c>/<c>đ</c>) to
+    ///             their ASCII base (<c>D</c>/<c>d</c>).
     ///         </item>
     ///     </list>
     ///     Does <em>not</em> perform transliteration of non-Latin scripts.
@@ -145,24 +146,31 @@ public static class StringExtensions
         var normalized = text.Normalize(NormalizationForm.FormKD);
         var sb = new StringBuilder(normalized.Length);
 
-        // 2) Remove all combining characters
-        foreach (var c in normalized)
+        // 2) Remove all combining characters, mapping stroke letters inline
+        foreach (var rune in normalized.EnumerateRunes())
         {
-            var cat = CharUnicodeInfo.GetUnicodeCategory(c);
+            var cat = Rune.GetUnicodeCategory(rune);
             if (cat is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark
                 or UnicodeCategory.EnclosingMark) continue;
 
-            sb.Append(c);
+            // Map stroked letters that survive decomposition
+            switch (rune.Value)
+            {
+                case 'Đ':
+                    sb.Append('D');
+                    break;
+                case 'đ':
+                    sb.Append('d');
+                    break;
+                default:
+                    sb.Append(rune);
+                    break;
+            }
         }
 
         // 3) Re-compose into FormC
-        var cleaned = sb
+        return sb
             .ToString()
             .Normalize(NormalizationForm.FormC);
-
-        // 4) Final mapping for any stroke letters
-        return cleaned
-            .Replace('Đ', 'D')
-            .Replace('đ', 'd');
     }
 }

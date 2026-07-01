@@ -20,39 +20,70 @@ public static class JsonSerializerOptionsExtended
     /// <remarks>
     ///     The options are initialized with the <see cref="JsonSerializerDefaults.Web" /> settings and include a
     ///     <see cref="JsonStringEnumConverter" /> that uses the property naming policy defined by
-    ///     <see cref="JsonSerializerOptions.Default" />. The converter is configured for case-sensitive enum conversion.
+    ///     <see cref="JsonSerializerOptions.Default" />. The converter does not allow integer values for enums;
+    ///     enum values must be supplied as strings (matched case-insensitively).
+    ///     <para>
+    ///         This instance is read-only (see <see cref="JsonSerializerOptions.MakeReadOnly()" />) to prevent
+    ///         process-wide mutation and first-use races. To customize, copy-construct a new instance, for example
+    ///         <c>new JsonSerializerOptions(WebApi)</c>, and mutate the copy.
+    ///     </para>
     /// </remarks>
-    public static JsonSerializerOptions WebApi { get; } = new(JsonSerializerDefaults.Web)
-    {
-        Converters = { new JsonStringEnumConverter(JsonSerializerOptions.Default.PropertyNamingPolicy, false) }
-    };
+    public static JsonSerializerOptions WebApi { get; } = CreateReadOnly(
+        new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            Converters = { new JsonStringEnumConverter(JsonSerializerOptions.Default.PropertyNamingPolicy, false) }
+        });
 
 
     /// <summary>
-    ///     Gets the <see cref="JsonSerializerOptions" /> preconfigured for Web API usage.
+    ///     Gets the <see cref="JsonSerializerOptions" /> preconfigured for JavaScript-oriented Web API usage.
     /// </summary>
     /// <remarks>
     ///     The options are initialized with the <see cref="JsonSerializerDefaults.Web" /> settings and include a
     ///     <see cref="JsonStringEnumConverter" /> that uses the property naming policy defined by
-    ///     <see cref="JsonSerializerOptions.Web" />. The converter is configured for case-sensitive enum conversion.
+    ///     <see cref="JsonSerializerOptions.Web" />. The converter does not allow integer values for enums;
+    ///     enum values must be supplied as strings (matched case-insensitively).
+    ///     <para>
+    ///         This instance is read-only (see <see cref="JsonSerializerOptions.MakeReadOnly()" />) to prevent
+    ///         process-wide mutation and first-use races. To customize, copy-construct a new instance, for example
+    ///         <c>new JsonSerializerOptions(JavascriptWebApi)</c>, and mutate the copy.
+    ///     </para>
     /// </remarks>
-    public static JsonSerializerOptions JavascriptWebApi { get; } = new(JsonSerializerDefaults.Web)
-    {
-        Converters = { new JsonStringEnumConverter(JsonSerializerOptions.Web.PropertyNamingPolicy, false) }
-    };
+    public static JsonSerializerOptions JavascriptWebApi { get; } = CreateReadOnly(
+        new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            Converters = { new JsonStringEnumConverter(JsonSerializerOptions.Web.PropertyNamingPolicy, false) }
+        });
 
 
     /// <summary>
     ///     Gets the <see cref="JsonSerializerOptions" /> preconfigured for payload serialization
     /// </summary>
     /// <remarks>
-    ///     The options are initialized with the <see cref="JsonSerializerDefaults.Default" /> settings and include a
-    ///     <see cref="JsonStringEnumConverter" /> that uses the property naming policy defined by
-    ///     <see cref="JsonSerializerOptions.Default" />. The converter is configured for case-sensitive enum conversion.
+    ///     The options are initialized with the <see cref="JsonSerializerDefaults.General" /> settings, enable
+    ///     case-insensitive property name matching, and include a <see cref="JsonStringEnumConverter" /> that uses
+    ///     the property naming policy defined by <see cref="JsonSerializerOptions.Default" />. The converter allows
+    ///     both string and integer values for enums; string values are matched case-insensitively.
+    ///     <para>
+    ///         This instance is read-only (see <see cref="JsonSerializerOptions.MakeReadOnly()" />) to prevent
+    ///         process-wide mutation and first-use races. To customize, copy-construct a new instance, for example
+    ///         <c>new JsonSerializerOptions(Payload)</c>, and mutate the copy.
+    ///     </para>
     /// </remarks>
-    public static JsonSerializerOptions Payload { get; } = new(JsonSerializerDefaults.General)
+    public static JsonSerializerOptions Payload { get; } = CreateReadOnly(
+        new JsonSerializerOptions(JsonSerializerDefaults.General)
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter(JsonSerializerOptions.Default.PropertyNamingPolicy) }
+        });
+
+    /// <summary>
+    ///     Seals the supplied <paramref name="options" /> by invoking
+    ///     <see cref="JsonSerializerOptions.MakeReadOnly()" /> and returns the same instance.
+    /// </summary>
+    private static JsonSerializerOptions CreateReadOnly(JsonSerializerOptions options)
     {
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(JsonSerializerOptions.Default.PropertyNamingPolicy) }
-    };
+        options.MakeReadOnly();
+        return options;
+    }
 }

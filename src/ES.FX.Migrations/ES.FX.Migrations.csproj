@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+		<Description>Dependency-injection-driven database migration runner for the ES.FX framework.</Description>
   </PropertyGroup>
 
 </Project>

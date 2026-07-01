@@ -4,6 +4,7 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<Description>Ignite Spark that integrates Swashbuckle Swagger and Swagger UI into ES.FX applications.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

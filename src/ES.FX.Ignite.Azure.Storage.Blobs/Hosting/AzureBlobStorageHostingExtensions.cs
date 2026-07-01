@@ -42,6 +42,11 @@ public static class AzureBlobStorageHostingExtensions
         Action<BlobClientOptions>? configureClientOptions = null,
         string configurationSectionPath = AzureBlobStorageSpark.ConfigurationSectionPath)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(configurationSectionPath);
+
+        serviceKey = string.IsNullOrWhiteSpace(serviceKey) ? null : serviceKey;
+
         builder.GuardConfigurationKey($"{AzureBlobStorageSpark.Name}-[{serviceKey}]");
 
         var configPath = SparkConfig.Path(name, configurationSectionPath);

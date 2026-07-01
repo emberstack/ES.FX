@@ -4,6 +4,7 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<Description>Shared Azure client foundation for the ES.FX Ignite Azure Sparks.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

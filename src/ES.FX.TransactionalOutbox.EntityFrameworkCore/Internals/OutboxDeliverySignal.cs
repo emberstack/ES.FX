@@ -14,13 +14,4 @@ internal static class OutboxDeliverySignal
         Channels.GetOrAdd(type, _ => Channel.CreateUnbounded<string>());
 
     public static Channel<string> GetChannel<TType>() => GetChannel(typeof(TType));
-
-
-    public static Channel<string> RenewChannel(Type type)
-    {
-        var channel = Channel.CreateUnbounded<string>();
-        return Channels.AddOrUpdate(type, _ => channel, (_, _) => channel);
-    }
-
-    public static Channel<string> RenewChannel<TType>() => RenewChannel(typeof(TType));
 }

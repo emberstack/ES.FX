@@ -23,9 +23,15 @@ public static class DbContextExtensions
         OutboxMessageDeliveryOptions? deliveryOptions = null)
         where TMessage : class
     {
+        ArgumentNullException.ThrowIfNull(dbContext);
+        ArgumentNullException.ThrowIfNull(message);
+
         deliveryOptions ??= new OutboxMessageDeliveryOptions();
 
-        var outboxDbContextOptions = dbContext.GetService<OutboxDbContextOptions>();
+        var outboxDbContextOptions = dbContext.GetService<IDbContextOptions>()
+                                         .FindExtension<OutboxDbContextOptionsExtension>()?.OutboxDbContextOptions ??
+                                     throw new InvalidOperationException(
+                                         $"Outbox is not configured for {dbContext.GetType().Name}. Configure it using {nameof(BuilderExtensions.UseOutbox)}.");
 
         outboxDbContextOptions.Serializer.Serialize(
             message,

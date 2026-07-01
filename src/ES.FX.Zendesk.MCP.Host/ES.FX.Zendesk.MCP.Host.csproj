@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<IsPackable>false</IsPackable>
+		<!-- Host app, not a package: opt out of the ES.FX* auto-pack applied by Directory.Build.props. -->
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<UserSecretsId>a3f1c2e4-5b6d-47a8-9c0e-1f2a3b4c5d6e</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerfileContext>..\..</DockerfileContext>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="ES.FX.Zendesk.MCP.Host.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ModelContextProtocol.AspNetCore" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ES.FX.Additions.Serilog\ES.FX.Additions.Serilog.csproj" />
+		<ProjectReference Include="..\ES.FX.Hosting\ES.FX.Hosting.csproj" />
+		<ProjectReference Include="..\ES.FX.Ignite\ES.FX.Ignite.csproj" />
+		<ProjectReference Include="..\ES.FX.Ignite.Serilog\ES.FX.Ignite.Serilog.csproj" />
+		<ProjectReference Include="..\ES.FX.Ignite.Zendesk\ES.FX.Ignite.Zendesk.csproj" />
+		<ProjectReference Include="..\ES.FX.Zendesk\ES.FX.Zendesk.csproj" />
+	</ItemGroup>
+
+</Project>

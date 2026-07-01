@@ -7,7 +7,9 @@ using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.HealthChecks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -102,7 +104,15 @@ public static class IgniteHostingExtensions
             });
 
 
-        if (settings.OpenTelemetry.UseOtlpExporter) builder.Services.AddOpenTelemetry().UseOtlpExporter();
+        // Only wire up the OTLP exporter when an endpoint is actually configured (matching Aspire's behavior).
+        // Calling UseOtlpExporter() unconditionally would attempt to export to the default localhost endpoint.
+        // The OTLP spec allows either the general endpoint or any signal-specific variant.
+        if (settings.OpenTelemetry.UseOtlpExporter &&
+            (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]) ||
+             !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"]) ||
+             !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"]) ||
+             !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"])))
+            builder.Services.AddOpenTelemetry().UseOtlpExporter();
         if (settings.OpenTelemetry.UseAzureMonitor) builder.Services.AddOpenTelemetry().UseAzureMonitor();
 
         //This must be called after AzureMonitor so attributes don't get overridden
@@ -132,10 +142,27 @@ public static class IgniteHostingExtensions
         });
     }
 
+    /// <summary>
+    ///     Configures the application builder with the Ignite defaults (OpenTelemetry, health checks, resilient
+    ///     HTTP clients and ASP.NET Core services). This is the first phase of the two-phase Ignite activation and
+    ///     must be followed by calling <see cref="Ignite(IHost)" /> on the built host.
+    /// </summary>
+    /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to configure</param>
+    /// <param name="configureSettings">
+    ///     An optional delegate that can be used for customizing the <see cref="IgniteSettings" />. It's invoked after
+    ///     the settings are read from the configuration.
+    /// </param>
+    /// <param name="configurationSectionPath">The configuration section path for the <see cref="IgniteSettings" /></param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder" /> is null</exception>
+    /// <exception cref="Spark.Exceptions.ReconfigurationNotSupportedException">
+    ///     Thrown when Ignite has already been configured on the <paramref name="builder" />
+    /// </exception>
     public static void Ignite(this IHostApplicationBuilder builder,
         Action<IgniteSettings>? configureSettings = null,
         string configurationSectionPath = IgniteConfigurationSections.Ignite)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+
         builder.GuardConfigurationKey(nameof(FX.Ignite));
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configurationSectionPath, configureSettings);
@@ -151,8 +178,19 @@ public static class IgniteHostingExtensions
     }
 
 
+    /// <summary>
+    ///     Configures the host with the Ignite defaults. This is the second phase of the two-phase Ignite activation
+    ///     and must be called after <see cref="Ignite(IHostApplicationBuilder, Action{IgniteSettings}?, string)" />.
+    ///     For <see cref="WebApplication" /> hosts this configures the middleware pipeline and the health check
+    ///     endpoints; for other hosts this is a no-op.
+    /// </summary>
+    /// <param name="host">The <see cref="IHost" /> to configure</param>
+    /// <returns>The <see cref="IHost" /> for chaining</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="host" /> is null</exception>
     public static IHost Ignite(this IHost host)
     {
+        ArgumentNullException.ThrowIfNull(host);
+
         var settings = host.Services.GetRequiredService<IgniteSettings>();
 
         if (host is WebApplication app)
@@ -160,7 +198,18 @@ public static class IgniteHostingExtensions
             UseForwardedHeaders(app, settings.AspNetCore);
 
             if (settings.AspNetCore.UseExceptionHandler)
-                app.UseExceptionHandler();
+            {
+                // The ExceptionHandlerMiddleware requires an IProblemDetailsService (see
+                // AspNetCoreSettings.AddProblemDetails), a registered IExceptionHandler or configured
+                // ExceptionHandlerOptions. Only add the middleware when a handler is available to avoid a
+                // startup crash.
+                var exceptionHandlerOptions = app.Services.GetService<IOptions<ExceptionHandlerOptions>>()?.Value;
+                if (app.Services.GetService<IProblemDetailsService>() is not null ||
+                    app.Services.GetService<IExceptionHandler>() is not null ||
+                    exceptionHandlerOptions?.ExceptionHandler is not null ||
+                    exceptionHandlerOptions?.ExceptionHandlingPath.HasValue == true)
+                    app.UseExceptionHandler();
+            }
 
             if (settings.AspNetCore.UseStatusCodePages)
                 app.UseStatusCodePages();

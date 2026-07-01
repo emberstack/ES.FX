@@ -7,7 +7,7 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Serialization;
 public class OutboxSerializerTests
 {
     private readonly IOutboxSerializer _serializer;
-    private readonly IPayloadTypeProvider _typeProvider = new DefaultPayloadTypeResolver();
+    private readonly IPayloadTypeProvider _typeProvider = new DefaultPayloadTypeProvider();
 
     public OutboxSerializerTests() => _serializer = new DefaultOutboxSerializer(_typeProvider);
 

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Concurrent;
+using System.ComponentModel;
 using JetBrains.Annotations;
 using k8s;
 using k8s.Models;
@@ -11,11 +12,11 @@ public static class V1ObjectMetaExtensions
     /// <summary>
     ///     Private cache of type converters used to convert string values
     /// </summary>
-    private static readonly Dictionary<Type, TypeConverter> Converters = [];
+    private static readonly ConcurrentDictionary<Type, TypeConverter> Converters = new();
 
 
     /// <summary>
-    ///     Returns a <see cref="NamespacedName" />> for the object
+    ///     Returns a <see cref="NamespacedName" /> for the object
     /// </summary>
     public static NamespacedName NamespacedName(this IKubernetesObject<V1ObjectMeta>? obj) =>
         new(obj?.Namespace() ?? string.Empty, obj?.Name() ?? string.Empty);
@@ -30,26 +31,17 @@ public static class V1ObjectMetaExtensions
     /// <param name="value">The resulting value</param>
     public static bool TryGetAnnotationValue<T>(this V1ObjectMeta metadata, string key, out T? value)
     {
+        ArgumentNullException.ThrowIfNull(metadata);
+        ArgumentNullException.ThrowIfNull(key);
+
         value = default;
 
-        var annotations = metadata.EnsureAnnotations();
-        if (!annotations.TryGetValue(key, out var raw)) return false;
+        if (metadata.Annotations is null || !metadata.Annotations.TryGetValue(key, out var raw)) return false;
         try
         {
-            if (Nullable.GetUnderlyingType(typeof(T)) != null)
-            {
-                if (!Converters.TryGetValue(typeof(T), out var conv))
-                {
-                    conv = TypeDescriptor.GetConverter(typeof(T));
-                    Converters.TryAdd(typeof(T), conv);
-                }
+            var conv = Converters.GetOrAdd(typeof(T), static t => TypeDescriptor.GetConverter(t));
 
-                value = (T?)conv.ConvertFromString(raw.Trim());
-            }
-            else
-            {
-                value = (T)Convert.ChangeType(raw.Trim(), typeof(T));
-            }
+            value = (T?)conv.ConvertFromInvariantString(raw.Trim());
 
             return true;
         }

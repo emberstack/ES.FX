@@ -1,5 +1,4 @@
-﻿using ES.FX.Ignite.Swashbuckle.Tests.SUT;
-using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace ES.FX.Ignite.Swashbuckle.Tests.Functional;
 

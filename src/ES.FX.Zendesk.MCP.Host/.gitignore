@@ -1,0 +1,3 @@
+# Local development secrets — never commit real Zendesk credentials.
+appsettings.Development.json
+appsettings.*.local.json

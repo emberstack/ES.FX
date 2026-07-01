@@ -19,12 +19,11 @@ internal sealed class SimpleBlobServiceHealthCheck(BlobServiceClient blobService
     {
         try
         {
-            await blobServiceClient
-                .GetBlobContainersAsync(cancellationToken: cancellationToken)
-                .AsPages(pageSizeHint: 1)
-                .GetAsyncEnumerator(cancellationToken)
-                .MoveNextAsync()
-                .ConfigureAwait(false);
+            await foreach (var _ in blobServiceClient
+                               .GetBlobContainersAsync(cancellationToken: cancellationToken)
+                               .AsPages(pageSizeHint: 1)
+                               .ConfigureAwait(false))
+                break;
 
             return HealthCheckResult.Healthy();
         }

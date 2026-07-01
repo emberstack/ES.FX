@@ -22,9 +22,9 @@ public static class ExceptionExtensions
 
 
     /// <summary>
-    ///     Returns the innermost <see cref="Exception" /> of type <see cref="T" />
+    ///     Returns the innermost <see cref="Exception" /> of type <typeparamref name="T" />
     /// </summary>
-    public static Exception? InnermostException<T>(this Exception? exception) where T : Exception
+    public static T? InnermostException<T>(this Exception? exception) where T : Exception
     {
         if (exception == null) return null;
 

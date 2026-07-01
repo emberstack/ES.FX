@@ -4,11 +4,17 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<Description>Ignite Spark that integrates NSwag OpenAPI generation into ES.FX applications.</Description>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\ES.FX.Additions.NSwag.AspNetCore\ES.FX.Additions.NSwag.AspNetCore.csproj" />
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
+		<PackageReference Include="NSwag.AspNetCore" />
 		<PackageReference Include="oqo0.SwaggerThemes" />
 	</ItemGroup>
 

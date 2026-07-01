@@ -18,7 +18,7 @@
 	<ItemGroup>
   	<PackageReference Include="Azure.Identity" />
   	<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
-		<ProjectReference Include="..\..\src\ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
+		<ProjectReference Include="..\..\src\ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime\ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.csproj" />
 		<ProjectReference Include="..\..\src\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer\ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
 		<ProjectReference Include="..\Playground.Shared.Data.Simple.EntityFrameworkCore\Playground.Shared.Data.Simple.EntityFrameworkCore.csproj" />
 	</ItemGroup>

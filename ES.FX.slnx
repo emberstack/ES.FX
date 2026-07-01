@@ -13,6 +13,7 @@
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.MassTransit/ES.FX.TransactionalOutbox.MassTransit.csproj" Id="513497bb-2cd5-49e5-84a3-98bd5eea6f42" />
     <Project Path="src/ES.FX.TransactionalOutbox/ES.FX.TransactionalOutbox.csproj" Id="cbbc21f8-48f8-4d63-af6b-e64c33da8e4d" />
+    <Project Path="src/ES.FX.Zendesk/ES.FX.Zendesk.csproj" />
     <Project Path="src/ES.FX/ES.FX.csproj" />
   </Folder>
   <Folder Name="/.src/FX/Additions/">
@@ -27,6 +28,7 @@
     <Project Path="src/ES.FX.Additions.Microsoft.AspNetCore/ES.FX.Additions.Microsoft.AspNetCore.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.Data.SqlClient/ES.FX.Additions.Microsoft.Data.SqlClient.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
+    <Project Path="src/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.EntityFrameworkCore/ES.FX.Additions.Microsoft.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks/ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.Extensions.Identity.Core/ES.FX.Additions.Microsoft.Extensions.Identity.Core.csproj" />
@@ -59,6 +61,10 @@
     <Project Path="src/ES.FX.Ignite.Serilog/ES.FX.Ignite.Serilog.csproj" />
     <Project Path="src/ES.FX.Ignite.StackExchange.Redis/ES.FX.Ignite.StackExchange.Redis.csproj" />
     <Project Path="src/ES.FX.Ignite.Swashbuckle/ES.FX.Ignite.Swashbuckle.csproj" />
+    <Project Path="src/ES.FX.Ignite.Zendesk/ES.FX.Ignite.Zendesk.csproj" />
+  </Folder>
+  <Folder Name="/.src/MCP/">
+    <Project Path="src/ES.FX.Zendesk.MCP.Host/ES.FX.Zendesk.MCP.Host.csproj" />
   </Folder>
   <Folder Name="/playground/">
     <Project Path="playground/Playground.Microservice.Api.Host/Playground.Microservice.Api.Host.csproj" />
@@ -109,5 +115,12 @@
     <Project Path="tests/ES.FX.Ignite.Swashbuckle.Tests.SUT/ES.FX.Ignite.Swashbuckle.Tests.SUT.csproj" />
     <Project Path="tests/ES.FX.Ignite.Swashbuckle.Tests/ES.FX.Ignite.Swashbuckle.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Tests/ES.FX.Ignite.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/MCP/">
+    <Project Path="tests/ES.FX.Zendesk.MCP.Host.Tests/ES.FX.Zendesk.MCP.Host.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Zendesk/">
+    <Project Path="tests/ES.FX.Zendesk.Tests/ES.FX.Zendesk.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Zendesk.Tests/ES.FX.Ignite.Zendesk.Tests.csproj" />
   </Folder>
 </Solution>

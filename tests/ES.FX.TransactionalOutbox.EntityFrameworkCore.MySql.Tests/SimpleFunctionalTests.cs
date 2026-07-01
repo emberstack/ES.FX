@@ -145,8 +145,10 @@ public class SimpleFunctionalTests : IAsyncLifetime
             {
                 using var scope = serviceProvider.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<OutboxTestDbContext>();
-                await using var transaction = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
-                var result = await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
+                await using var transaction =
+                    await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+                var result =
+                    await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
                 if (result != null)
                 {
                     // Lock the outbox to simulate what the delivery service does
@@ -218,8 +220,10 @@ public class SimpleFunctionalTests : IAsyncLifetime
         var provider = new MySqlOutboxProvider<OutboxTestDbContext>();
 
         // Act
-        await using var transaction = await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
-        var nextOutbox = await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
+        await using var transaction =
+            await context.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+        var nextOutbox =
+            await provider.GetNextExclusiveOutboxWithoutDelay(context, TestContext.Current.CancellationToken);
         await transaction.CommitAsync(TestContext.Current.CancellationToken);
 
         // Assert
@@ -238,7 +242,7 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
     private class TestMessageHandler : IOutboxMessageHandler
     {
-        public ValueTask Handle(OutboxMessageContext context, CancellationToken cancellationToken = default) =>
+        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default) =>
             ValueTask.CompletedTask;
     }
 }

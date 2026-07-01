@@ -11,7 +11,10 @@ public class AspNetCoreSettings
     public bool AddEndpointsApiExplorer { get; set; } = true;
 
     /// <summary>
-    ///     Gets or sets a value indicating whether the Exception Handling Middleware is enabled
+    ///     Gets or sets a value indicating whether the Exception Handling Middleware is enabled.
+    ///     The middleware is only added when an exception handler is available: an IProblemDetailsService
+    ///     (registered by <see cref="AddProblemDetails" />), a registered IExceptionHandler or configured
+    ///     ExceptionHandlerOptions.
     /// </summary>
     public bool UseExceptionHandler { get; set; } = true;
 
@@ -28,7 +31,9 @@ public class AspNetCoreSettings
 
 
     /// <summary>
-    ///     Gets or sets a value indicating whether the ProblemDetails middleware is enabled
+    ///     Gets or sets a value indicating whether the ProblemDetails services are added.
+    ///     Disabling this also disables the Exception Handling Middleware (see <see cref="UseExceptionHandler" />)
+    ///     unless another exception handler is registered.
     /// </summary>
     public bool AddProblemDetails { get; set; } = true;
 

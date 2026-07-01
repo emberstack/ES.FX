@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace ES.FX.Additions.Microsoft.Data.SqlClient.Queries;
 
@@ -7,6 +8,9 @@ namespace ES.FX.Additions.Microsoft.Data.SqlClient.Queries;
 /// </summary>
 public static class SqlServerSafeQuery
 {
+    /// <summary>
+    ///     The command text executed to check if the connection is valid
+    /// </summary>
     public const string CommandText = "SELECT 1";
 
     /// <summary>
@@ -14,21 +18,25 @@ public static class SqlServerSafeQuery
     /// </summary>
     /// <param name="connection"> The <see cref="SqlConnection" /> to execute the query on</param>
     /// <param name="close"> Indicates whether to close the connection after executing the query</param>
-    /// <returns> A boolean value indicating whether the connection is valid</returns>
+    /// <returns> A boolean value indicating whether the connection is valid. Returns false on any failure</returns>
     public static bool ExecuteSafeQuery(this SqlConnection connection, bool close = true)
     {
+        ArgumentNullException.ThrowIfNull(connection);
         try
         {
-            connection.Open();
-            var command = connection.CreateCommand();
+            if (connection.State != ConnectionState.Open) connection.Open();
+            using var command = connection.CreateCommand();
             command.CommandText = CommandText;
             var result = command.ExecuteScalar();
-            if (close) connection.Close();
             return result != null && (int)result == 1;
         }
         catch
         {
             return false;
+        }
+        finally
+        {
+            if (close) connection.Close();
         }
     }
 
@@ -38,22 +46,32 @@ public static class SqlServerSafeQuery
     /// <param name="connection"> The <see cref="SqlConnection" /> to execute the query on</param>
     /// <param name="close"> Indicates whether to close the connection after executing the query</param>
     /// <param name="cancellationToken"> The <see cref="CancellationToken" /> to cancel the operation</param>
-    /// <returns> A boolean value indicating whether the connection is valid</returns>
+    /// <returns> A boolean value indicating whether the connection is valid. Returns false on any failure</returns>
+    /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
     public static async Task<bool> ExecuteSafeQueryAsync(this SqlConnection connection, bool close = true,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(connection);
         try
         {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-            var command = connection.CreateCommand();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            await using var command = connection.CreateCommand();
             command.CommandText = CommandText;
             var result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-            if (close) connection.Close();
             return result != null && (int)result == 1;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
             return false;
+        }
+        finally
+        {
+            if (close) await connection.CloseAsync().ConfigureAwait(false);
         }
     }
 }

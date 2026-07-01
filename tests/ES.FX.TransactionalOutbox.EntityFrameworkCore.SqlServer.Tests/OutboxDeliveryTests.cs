@@ -3,15 +3,16 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.MsSql;
+
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests;
 
 public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
 {
-    private string? _connectionString;
-    private MsSqlContainer? _msSqlContainer;
     public const string Registry = "mcr.microsoft.com";
     public const string Image = "mssql/server";
     public const string Tag = "2025-latest";
+    private string? _connectionString;
+    private MsSqlContainer? _msSqlContainer;
 
     public OutboxDeliveryTests(ITestOutputHelper output) : base(output)
     {

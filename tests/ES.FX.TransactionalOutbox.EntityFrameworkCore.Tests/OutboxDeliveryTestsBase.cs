@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests;
 
 /// <summary>
@@ -353,7 +354,7 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
 
         public IReadOnlyCollection<TestOrder> DeliveredMessages => _deliveredMessages.ToList();
 
-        public ValueTask Handle(OutboxMessageContext context, CancellationToken cancellationToken = default)
+        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default)
         {
             if (context.Message is TestOrder order)
             {
@@ -392,7 +393,7 @@ public abstract class OutboxDeliveryTestsBase(ITestOutputHelper output)
         public int AttemptCount => _attemptCount;
         public IReadOnlyCollection<TestOrder> DeliveredMessages => _deliveredMessages.ToList();
 
-        public ValueTask Handle(OutboxMessageContext context, CancellationToken cancellationToken = default)
+        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default)
         {
             Interlocked.Increment(ref _attemptCount);
 

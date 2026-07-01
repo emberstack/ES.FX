@@ -16,7 +16,7 @@ public static class KubernetesClientHostingExtensions
     /// <summary>
     ///     Registers <see cref="IKubernetes" /> as a service in the services provided by the
     ///     <paramref name="builder" />.
-    ///     Enables health check, logging and telemetry for the <see cref="IKubernetes" />.
+    ///     Enables health check for the <see cref="IKubernetes" />.
     /// </summary>
     /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
     /// <param name="name">A name used to retrieve the settings and options from configuration</param>
@@ -40,7 +40,11 @@ public static class KubernetesClientHostingExtensions
     ///     An optional delegate that can be used for customizing the <see cref="KubernetesClientConfiguration" />.
     /// </param>
     /// <param name="kubernetesClientDelegatingHandlers">
-    ///     Optional delegating handlers to add to the http client pipeline.
+    ///     An optional delegate that produces the delegating handlers to add to the http client pipeline.
+    ///     It is invoked once per <see cref="IKubernetes" /> construction with the resolving
+    ///     <see cref="IServiceProvider" />, so a fresh set of handler instances is created for every client.
+    ///     This is required for non-<see cref="ServiceLifetime.Singleton" /> lifetimes because a
+    ///     <see cref="DelegatingHandler" /> cannot be re-parented once it has started a request.
     /// </param>
     /// <param name="lifetime">
     ///     The lifetime of the <see cref="IKubernetes" />. Default is
@@ -57,7 +61,7 @@ public static class KubernetesClientHostingExtensions
         Action<KubernetesClientSparkOptions>? configureOptions = null,
         Func<IServiceProvider, KubernetesClientConfiguration>? kubernetesClientConfigurationFactory = null,
         Action<IServiceProvider, KubernetesClientConfiguration>? configureKubernetesClientConfiguration = null,
-        DelegatingHandler[]? kubernetesClientDelegatingHandlers = null,
+        Func<IServiceProvider, DelegatingHandler[]>? kubernetesClientDelegatingHandlers = null,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         string configurationSectionPath = KubernetesClientSpark.ConfigurationSectionPath)
     {
@@ -82,7 +86,8 @@ public static class KubernetesClientHostingExtensions
                 var clientConfiguration = kubernetesClientConfigurationFactory?.Invoke(sp) ??
                                           KubernetesClientConfiguration.BuildDefaultConfig();
 
-                clientConfiguration.SkipTlsVerify = options.SkipTlsVerify;
+                if (options.SkipTlsVerify.HasValue)
+                    clientConfiguration.SkipTlsVerify = options.SkipTlsVerify.Value;
 
                 configureKubernetesClientConfiguration?.Invoke(sp, clientConfiguration);
                 return clientConfiguration;
@@ -91,7 +96,9 @@ public static class KubernetesClientHostingExtensions
         {
             var clientConfiguration =
                 sp.GetRequiredKeyedService<KubernetesClientConfiguration>(key as string);
-            var client = new Kubernetes(clientConfiguration, kubernetesClientDelegatingHandlers);
+            var client = kubernetesClientDelegatingHandlers is null
+                ? new Kubernetes(clientConfiguration)
+                : new Kubernetes(clientConfiguration, kubernetesClientDelegatingHandlers.Invoke(sp));
             return client;
         }, lifetime));
 

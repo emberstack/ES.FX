@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+		<Description>Ignite Spark that integrates Entity Framework Core into ES.FX applications with health checks and tracing.</Description>
   </PropertyGroup>
 
   <ItemGroup>

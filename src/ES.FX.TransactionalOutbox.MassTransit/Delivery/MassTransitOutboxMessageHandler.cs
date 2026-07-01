@@ -13,13 +13,21 @@ namespace ES.FX.TransactionalOutbox.MassTransit.Delivery;
 public class MassTransitOutboxMessageHandler(IBusControl busControl, IPublishEndpoint publishEndpoint)
     : IOutboxMessageHandler
 {
-    public async ValueTask Handle(OutboxMessageContext context,
+    /// <inheritdoc />
+    public async ValueTask HandleAsync(OutboxMessageContext context,
         CancellationToken cancellationToken = default)
     {
-        await publishEndpoint.Publish(context.Message, cancellationToken);
+        await publishEndpoint.Publish(context.Message, context.MessageType, ctx =>
+        {
+            foreach (var (key, value) in context.Headers) ctx.Headers.Set(key, value);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<bool> IsReady(CancellationToken cancellation = default) =>
-        await busControl.WaitForHealthStatus(BusHealthStatus.Healthy, cancellation).ConfigureAwait(false) ==
-        BusHealthStatus.Healthy;
+    /// <inheritdoc />
+    /// <remarks>
+    ///     Returns <see langword="true" /> when the bus health status is <see cref="BusHealthStatus.Healthy" />.
+    ///     The check is non-blocking; the delivery service polls readiness on its own interval.
+    /// </remarks>
+    public ValueTask<bool> IsReadyAsync(CancellationToken cancellationToken = default) =>
+        ValueTask.FromResult(busControl.CheckHealth().Status == BusHealthStatus.Healthy);
 }

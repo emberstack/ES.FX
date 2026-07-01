@@ -1,5 +1,8 @@
 ﻿namespace ES.FX.TransactionalOutbox.Delivery.Faults;
 
+/// <summary>
+///     Context for an outbox message delivery fault handled by an <see cref="IOutboxMessageFaultHandler" />.
+/// </summary>
 public record OutboxMessageFaultContext
 {
     /// <summary>

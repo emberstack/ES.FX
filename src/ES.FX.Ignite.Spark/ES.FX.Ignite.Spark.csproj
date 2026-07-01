@@ -4,6 +4,7 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<Description>Base abstractions for building Sparks, the pluggable service integrations of the ES.FX Ignite bootstrap.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

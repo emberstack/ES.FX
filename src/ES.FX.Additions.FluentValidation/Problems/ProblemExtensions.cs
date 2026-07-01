@@ -1,4 +1,4 @@
-﻿using ES.FX.Additions.FluentValidation.Results;
+using ES.FX.Additions.FluentValidation.Results;
 using ES.FX.Problems;
 using FluentValidation.Results;
 using JetBrains.Annotations;

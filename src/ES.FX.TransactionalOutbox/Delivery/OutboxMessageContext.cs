@@ -1,5 +1,8 @@
 ﻿namespace ES.FX.TransactionalOutbox.Delivery;
 
+/// <summary>
+///     Context for an outbox message being delivered to an <see cref="IOutboxMessageHandler" />.
+/// </summary>
 public record OutboxMessageContext
 {
     /// <summary>

@@ -19,7 +19,7 @@ internal sealed class SimpleRedisHealthCheck(IConnectionMultiplexer connectionMu
     {
         try
         {
-            foreach (var endPoint in connectionMultiplexer.GetEndPoints(configuredOnly: true))
+            foreach (var endPoint in connectionMultiplexer.GetEndPoints(true))
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -27,12 +27,14 @@ internal sealed class SimpleRedisHealthCheck(IConnectionMultiplexer connectionMu
 
                 if (server.ServerType != ServerType.Cluster)
                 {
-                    await connectionMultiplexer.GetDatabase().PingAsync().ConfigureAwait(false);
-                    await server.PingAsync().ConfigureAwait(false);
+                    await connectionMultiplexer.GetDatabase().PingAsync().WaitAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                    await server.PingAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
                     continue;
                 }
 
-                var clusterInfo = await server.ExecuteAsync("CLUSTER", "INFO").ConfigureAwait(false);
+                var clusterInfo = await server.ExecuteAsync("CLUSTER", "INFO").WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
 
                 if (clusterInfo.IsNull)
                     return new HealthCheckResult(context.Registration.FailureStatus,

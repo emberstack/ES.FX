@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 
@@ -8,8 +9,8 @@ namespace ES.FX.Additions.System.Text.Json.Serialization.Converters;
 ///     Converts Unix time values to and from nullable <see cref="DateTimeOffset" /> objects.
 /// </summary>
 /// <remarks>
-///     Unix time is defined as the number of seconds that have elapsed since 00:00:00 UTC on 1 January 1970 (the Unix
-///     epoch).
+///     Unix time is expressed here as the number of milliseconds that have elapsed since 00:00:00 UTC on 1 January 1970
+///     (the Unix epoch).
 ///     This converter supports Unix time values represented either as JSON numbers or as strings.
 ///     When encountering a JSON null or an empty string, the converter returns <c>null</c>.
 /// </remarks>
@@ -27,17 +28,31 @@ public class UnixTimeMillisecondsNullableDateTimeOffsetJsonConverter : JsonConve
                 var stringValue = reader.GetString();
                 // Return null if the string is empty
                 if (string.IsNullOrEmpty(stringValue)) return null;
-                if (!long.TryParse(stringValue, out var unixTime))
+                if (!long.TryParse(stringValue, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                        out var unixTime))
                     throw new JsonException($"Invalid Unix epoch time string: {stringValue}");
-                return DateTimeOffset.FromUnixTimeMilliseconds(unixTime);
+                return FromUnixTime(unixTime);
             }
             case { TokenType: JsonTokenType.Number }:
             {
-                var unixTime = reader.GetInt64();
-                return DateTimeOffset.FromUnixTimeMilliseconds(unixTime);
+                if (!reader.TryGetInt64(out var unixTime))
+                    throw new JsonException("Invalid Unix epoch time number");
+                return FromUnixTime(unixTime);
             }
             default:
                 throw new JsonException("Invalid token type for Unix epoch time");
+        }
+    }
+
+    private static DateTimeOffset FromUnixTime(long unixTime)
+    {
+        try
+        {
+            return DateTimeOffset.FromUnixTimeMilliseconds(unixTime);
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            throw new JsonException($"Invalid Unix epoch time: {unixTime}", exception);
         }
     }
 

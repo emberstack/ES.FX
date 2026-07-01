@@ -11,7 +11,7 @@ namespace ES.FX.Additions.MediatR.Contracts.Batches;
 public record BatchRequest<T> : IRequest
 {
     /// <summary>
-    ///     An enumerable collection of items in the batch.
+    ///     A read-only list of items in the batch.
     /// </summary>
-    public IEnumerable<T> Items { get; set; } = [];
+    public IReadOnlyList<T> Items { get; init; } = [];
 }

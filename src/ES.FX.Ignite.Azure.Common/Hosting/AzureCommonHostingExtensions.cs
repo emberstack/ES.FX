@@ -25,6 +25,8 @@ public static class AzureCommonHostingExtensions
     ///     An optional delegate that can be used for customizing options. It's invoked after the
     ///     options are read from the configuration.
     /// </param>
+    /// <typeparam name="TClient">The type of the Azure client to register.</typeparam>
+    /// <typeparam name="TOptions">The type of the Azure client options used to configure <typeparamref name="TClient" />.</typeparam>
     public static void IgniteAzureClient<TClient, TOptions>(this IServiceCollection services,
         string? serviceKey,
         IConfigurationSection configuration,
@@ -32,18 +34,20 @@ public static class AzureCommonHostingExtensions
         where TOptions : class
         where TClient : class
     {
+        serviceKey = string.IsNullOrWhiteSpace(serviceKey) ? null : serviceKey;
+
         services.AddAzureClients(azureClientFactoryBuilder =>
         {
             var clientBuilder =
                 ((IAzureClientFactoryBuilderWithConfiguration<IConfigurationSection>)azureClientFactoryBuilder)
                 .RegisterClientFactory<TClient, TOptions>(configuration);
 
-            if (!string.IsNullOrWhiteSpace(serviceKey)) clientBuilder.WithName(serviceKey);
+            if (serviceKey is not null) clientBuilder.WithName(serviceKey);
             clientBuilder.ConfigureOptions(options => configureOptions?.Invoke(options));
         });
 
 
-        if (!string.IsNullOrWhiteSpace(serviceKey))
+        if (serviceKey is not null)
             services.AddKeyedSingleton(serviceKey,
                 static (serviceProvider, serviceKey) => serviceProvider
                     .GetRequiredService<IAzureClientFactory<TClient>>().CreateClient((string)serviceKey!));
@@ -64,11 +68,14 @@ public static class AzureCommonHostingExtensions
     ///     <see cref="HealthCheckSettings" />
     /// </param>
     /// <param name="healthCheckFactory"> The factory used to create the health checks if enabled</param>
+    /// <typeparam name="TClient">The type of the Azure client to register observability for.</typeparam>
     public static void IgniteAzureClientObservability<TClient>(this IServiceCollection services, string? serviceKey,
         TracingSettings tracingSettings,
         HealthCheckSettings healthCheckSettings,
         Func<IServiceProvider, TClient, IHealthCheck> healthCheckFactory) where TClient : class
     {
+        serviceKey = string.IsNullOrWhiteSpace(serviceKey) ? null : serviceKey;
+
         if (tracingSettings.Enabled)
             services.AddOpenTelemetry().WithTracing(traceBuilder =>
                 traceBuilder.AddSource($"{typeof(TClient).Namespace}.*"));
@@ -76,7 +83,7 @@ public static class AzureCommonHostingExtensions
         if (healthCheckSettings.Enabled)
         {
             var healthCheckName =
-                $"{nameof(Azure)}-{typeof(TClient).Name}{(string.IsNullOrWhiteSpace(serviceKey) ? string.Empty : $"-[{serviceKey}]")}";
+                $"{nameof(Azure)}-{typeof(TClient).Name}{(serviceKey is null ? string.Empty : $"-[{serviceKey}]")}";
             services.AddHealthChecks().Add(new HealthCheckRegistration(healthCheckName,
                 serviceProvider => healthCheckFactory(serviceProvider,
                     serviceProvider.GetRequiredKeyedService<TClient>(serviceKey)),

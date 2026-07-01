@@ -87,7 +87,8 @@ public class SimpleFunctionalTests : IAsyncLifetime
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var savedOrder = await context.Orders.FirstOrDefaultAsync(o => o.OrderNumber == $"PG-TEST-{testId}", TestContext.Current.CancellationToken);
+        var savedOrder = await context.Orders.FirstOrDefaultAsync(o => o.OrderNumber == $"PG-TEST-{testId}",
+            TestContext.Current.CancellationToken);
         Assert.NotNull(savedOrder);
         Assert.Equal($"PG-TEST-{testId}", savedOrder.OrderNumber);
 
@@ -141,7 +142,8 @@ public class SimpleFunctionalTests : IAsyncLifetime
         }
 
         // Assert
-        var orders = await context.Orders.Where(o => o.OrderNumber.StartsWith($"TX-{testId}")).ToListAsync(TestContext.Current.CancellationToken);
+        var orders = await context.Orders.Where(o => o.OrderNumber.StartsWith($"TX-{testId}"))
+            .ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(orders);
         Assert.Equal($"TX-{testId}-001", orders[0].OrderNumber);
 
@@ -185,11 +187,11 @@ public class SimpleFunctionalTests : IAsyncLifetime
 
     private class TestMessageHandler : IOutboxMessageHandler
     {
-        public ValueTask Handle(OutboxMessageContext context,
+        public ValueTask HandleAsync(OutboxMessageContext context,
             CancellationToken cancellationToken = default) =>
             ValueTask.CompletedTask;
 
-        public ValueTask<bool> IsReady(CancellationToken cancellationToken = default) =>
+        public ValueTask<bool> IsReadyAsync(CancellationToken cancellationToken = default) =>
             ValueTask.FromResult(true);
     }
 }

@@ -22,5 +22,8 @@ public interface ISqlConnectionFactory
     /// <returns>A task containing the created <see cref="SqlConnection" /> that represents the asynchronous operation.</returns>
     /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
     Task<SqlConnection> CreateConnectionAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(CreateConnection());
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(CreateConnection());
+    }
 }

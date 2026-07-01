@@ -47,7 +47,10 @@ public static class SwashbuckleHostingExtensions
     /// <summary>
     ///     Uses the Ignite Swashbuckle Swagger and Swagger UI.
     /// </summary>
-    /// <param name="app"> The <see cref="WebApplication" /> to configure the Ignite HealthChecks UI for.</param>
+    /// <param name="app">
+    ///     The <see cref="WebApplication" /> to configure the Swashbuckle Swagger and Swagger UI middleware
+    ///     for.
+    /// </param>
     /// <param name="configureSwaggerOptions">
     ///     An optional delegate that can be used for customizing the
     ///     <see cref="SwaggerOptions" />.

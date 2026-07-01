@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 
@@ -27,17 +28,31 @@ public class UnixTimeSecondsNullableDateTimeOffsetJsonConverter : JsonConverter<
                 var stringValue = reader.GetString();
                 // Return null if the string is empty
                 if (string.IsNullOrEmpty(stringValue)) return null;
-                if (!long.TryParse(stringValue, out var unixTime))
+                if (!long.TryParse(stringValue, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                        out var unixTime))
                     throw new JsonException($"Invalid Unix epoch time string: {stringValue}");
-                return DateTimeOffset.FromUnixTimeSeconds(unixTime);
+                return FromUnixTime(unixTime);
             }
             case { TokenType: JsonTokenType.Number }:
             {
-                var unixTime = reader.GetInt64();
-                return DateTimeOffset.FromUnixTimeSeconds(unixTime);
+                if (!reader.TryGetInt64(out var unixTime))
+                    throw new JsonException("Invalid Unix epoch time number");
+                return FromUnixTime(unixTime);
             }
             default:
                 throw new JsonException("Invalid token type for Unix epoch time");
+        }
+    }
+
+    private static DateTimeOffset FromUnixTime(long unixTime)
+    {
+        try
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(unixTime);
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            throw new JsonException($"Invalid Unix epoch time: {unixTime}", exception);
         }
     }
 

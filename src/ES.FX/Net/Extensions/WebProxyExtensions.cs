@@ -20,14 +20,14 @@ public static class WebProxyExtensions
         {
             BypassProxyOnLocal = options.BypassProxyOnLocal,
             BypassList = options.BypassList ?? [],
-            UseDefaultCredentials = options.UseDefaultCredentials,
-            Credentials = options.Credentials is not null
-                ? new NetworkCredential(
-                    options.Credentials.UserName,
-                    options.Credentials.Password,
-                    options.Credentials.Domain)
-                : null
+            UseDefaultCredentials = options.UseDefaultCredentials
         };
+
+        if (options.Credentials is not null)
+            proxy.Credentials = new NetworkCredential(
+                options.Credentials.UserName,
+                options.Credentials.Password,
+                options.Credentials.Domain);
 
         return proxy;
     }

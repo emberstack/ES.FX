@@ -56,10 +56,10 @@ public class ManifestResource(Assembly assembly, string name)
     /// <summary>
     ///     Reads all bytes for the manifest resource
     /// </summary>
-    public async Task<byte[]?> ReadAllBytesAsync(CancellationToken cancellation = default)
+    public async Task<byte[]?> ReadAllBytesAsync(CancellationToken cancellationToken = default)
     {
         await using var stream = GetStream();
-        return stream is not null ? await stream.ToByteArrayAsync(cancellation).ConfigureAwait(false) : null;
+        return stream is not null ? await stream.ToByteArrayAsync(cancellationToken).ConfigureAwait(false) : null;
     }
 
 

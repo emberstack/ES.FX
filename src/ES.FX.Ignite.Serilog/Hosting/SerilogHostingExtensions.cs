@@ -15,7 +15,6 @@ public static class SerilogHostingExtensions
     ///     Adds Serilog to the host builder with the default enrichers and default configuration
     /// </summary>
     /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
-    /// ///
     /// <param name="configureLoggerConfiguration">
     ///     An optional delegate that can be used for customizing the
     ///     <see cref="LoggerConfiguration" /> that will be used to construct a <see cref="Logger" />.

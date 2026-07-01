@@ -7,13 +7,13 @@ namespace ES.FX.IO;
 public static class StreamExtensions
 {
     /// <summary>
-    ///     Reads all bytes from the stream and returns them as a byte array
+    ///     Reads all bytes from the stream, starting at the current position, and returns them as a byte array
     /// </summary>
     public static byte[] ToByteArray(this Stream stream)
     {
         ThrowIfNull(stream);
 
-        if (stream is MemoryStream directMemoryStream)
+        if (stream is MemoryStream { Position: 0 } directMemoryStream)
             return directMemoryStream.ToArray();
 
         using var memoryStream = new MemoryStream();
@@ -22,13 +22,14 @@ public static class StreamExtensions
     }
 
     /// <summary>
-    ///     Reads all bytes from the stream asynchronously and returns them as a byte array
+    ///     Reads all bytes from the stream asynchronously, starting at the current position, and returns them as a byte
+    ///     array
     /// </summary>
     public static async Task<byte[]> ToByteArrayAsync(this Stream stream, CancellationToken cancellationToken = default)
     {
         ThrowIfNull(stream);
 
-        if (stream is MemoryStream directMemoryStream)
+        if (stream is MemoryStream { Position: 0 } directMemoryStream)
             return directMemoryStream.ToArray();
 
         using var memoryStream = new MemoryStream();

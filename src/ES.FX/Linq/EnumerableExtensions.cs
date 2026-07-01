@@ -14,6 +14,10 @@ public static class EnumerableExtensions
     /// <param name="source">The source enumerable</param>
     public static T? TakeRandomItemOrDefault<T>(this IEnumerable<T?> source)
     {
+        // Fast-path IReadOnlyList<T> (arrays and List<T> qualify) to avoid buffering the whole sequence.
+        if (source is IReadOnlyList<T?> readOnlyList)
+            return readOnlyList.Count == 0 ? default : readOnlyList[Random.Shared.Next(readOnlyList.Count)];
+
         var list = source.ToList();
         return list.Count == 0 ? default : list[Random.Shared.Next(list.Count)];
     }

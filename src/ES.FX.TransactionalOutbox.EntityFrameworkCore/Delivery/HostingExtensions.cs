@@ -32,6 +32,8 @@ public static class HostingExtensions
         where TMessageHandler : class, IOutboxMessageHandler
         where TMessageFaultHandler : class, IOutboxMessageFaultHandler
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddOutboxMessageHandler<TDbContext, TMessageHandler>();
         services.AddOutboxMessageFaultHandler<TDbContext, TMessageFaultHandler>();
         services.AddOutboxDeliveryService(configureOptions);
@@ -78,6 +80,8 @@ public static class HostingExtensions
     )
         where TDbContext : DbContext
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.TryAddKeyedScoped<IOutboxMessageFaultHandler, DefaultOutboxMessageFaultHandler>(typeof(TDbContext));
 
         services.AddOptions<OutboxDeliveryOptions<TDbContext>>().Configure(options =>
@@ -103,6 +107,8 @@ public static class HostingExtensions
         where TDbContext : DbContext
         where TMessageHandler : class, IOutboxMessageHandler
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddKeyedScoped<IOutboxMessageHandler, TMessageHandler>(typeof(TDbContext));
         return services;
     }
@@ -122,6 +128,8 @@ public static class HostingExtensions
         where TDbContext : DbContext
         where TMessageFaultHandler : class, IOutboxMessageFaultHandler
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddKeyedScoped<IOutboxMessageFaultHandler, TMessageFaultHandler>(typeof(TDbContext));
         return services;
     }

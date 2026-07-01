@@ -8,7 +8,7 @@ namespace ES.FX.Hosting.Lifetime;
 public class ProgramEntryBuilder(ProgramEntryOptions options)
 {
     private readonly List<Func<ProgramEntryOptions, Task>> _exitActions = [];
-    private ILogger _logger = LoggerFactory.Create(builder => { builder.AddConsole(); }).CreateLogger<ProgramEntry>();
+    private ILogger? _logger;
 
     /// <summary>
     ///     Adds a new action to be executed before the program exits (regardless of the exit reason)
@@ -17,6 +17,8 @@ public class ProgramEntryBuilder(ProgramEntryOptions options)
     /// <returns>The <see cref="ProgramEntryBuilder" /></returns>
     public ProgramEntryBuilder AddExitAction(Func<ProgramEntryOptions, Task> exitAction)
     {
+        ArgumentNullException.ThrowIfNull(exitAction);
+
         _exitActions.Add(exitAction);
         return this;
     }
@@ -25,7 +27,9 @@ public class ProgramEntryBuilder(ProgramEntryOptions options)
     ///     Builds the <see cref="ProgramEntry" /> instance
     /// </summary>
     /// <returns>The <see cref="ProgramEntry" /> instance</returns>
-    public ProgramEntry Build() => new(_logger, _exitActions, new ProgramEntryOptions { Args = options.Args });
+    public ProgramEntry Build() =>
+        new(_logger ?? LoggerFactory.Create(builder => { builder.AddConsole(); }).CreateLogger<ProgramEntry>(),
+            _exitActions, new ProgramEntryOptions { Args = options.Args });
 
     /// <summary>
     ///     Sets the logger to be used by the <see cref="ProgramEntry" />
@@ -34,6 +38,8 @@ public class ProgramEntryBuilder(ProgramEntryOptions options)
     /// <returns>The <see cref="ProgramEntryBuilder" /></returns>
     public ProgramEntryBuilder WithLogger(ILogger logger)
     {
+        ArgumentNullException.ThrowIfNull(logger);
+
         _logger = logger;
         return this;
     }

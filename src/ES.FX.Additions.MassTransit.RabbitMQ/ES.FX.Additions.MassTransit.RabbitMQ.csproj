@@ -1,14 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<Description>ES.FX helpers that augment the MassTransit RabbitMQ transport.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="MassTransit.RabbitMQ" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 	</ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using ES.FX.Migrations.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -11,33 +11,42 @@ namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.Migrations;
 /// <typeparam name="TDbContext">The <see cref="DbContext" /> type</typeparam>
 /// <param name="logger">Logger instance</param>
 /// <param name="context">The <see cref="TDbContext" /> instance</param>
-public class RelationalDbContextMigrationsTask<TDbContext>(
+public partial class RelationalDbContextMigrationsTask<TDbContext>(
     ILogger<RelationalDbContextMigrationsTask<TDbContext>> logger,
     TDbContext context) : IMigrationsTask where TDbContext : DbContext
 {
     public async Task ApplyMigrations(CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Applying migrations for {contextType}", typeof(TDbContext).Name);
+        LogApplyingMigrations(typeof(TDbContext).Name);
 
-        var stopWatch = new Stopwatch();
-        stopWatch.Start();
-
+        var start = Stopwatch.GetTimestamp();
 
         var migrations = (await context.Database.GetPendingMigrationsAsync(cancellationToken)
-            .ConfigureAwait(false)).ToList();
+            .ConfigureAwait(false)).ToArray();
 
-        if (migrations.Count > 0)
+        if (migrations.Length > 0)
         {
-            logger.LogInformation("Applying {count} migrations", migrations.Count);
+            LogApplyingMigrationCount(migrations.Length);
             await context.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
         }
         else
         {
-            logger.LogInformation("No migrations to apply");
+            LogNoMigrations();
         }
 
-        stopWatch.Stop();
-        logger.LogInformation("Migrations for {contextType} completed in {elapsed}", typeof(TDbContext).Name,
-            stopWatch.Elapsed);
+        var elapsed = Stopwatch.GetElapsedTime(start);
+        LogMigrationsCompleted(typeof(TDbContext).Name, elapsed);
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Applying migrations for {ContextType}")]
+    private partial void LogApplyingMigrations(string contextType);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Applying {Count} migrations")]
+    private partial void LogApplyingMigrationCount(int count);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "No migrations to apply")]
+    private partial void LogNoMigrations();
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Migrations for {ContextType} completed in {Elapsed}")]
+    private partial void LogMigrationsCompleted(string contextType, TimeSpan elapsed);
 }

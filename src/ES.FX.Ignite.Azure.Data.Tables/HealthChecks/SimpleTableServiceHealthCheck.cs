@@ -7,8 +7,7 @@ namespace ES.FX.Ignite.Azure.Data.Tables.HealthChecks;
 ///     Azure Tables health check.
 /// </summary>
 internal sealed class SimpleTableServiceHealthCheck(
-    TableServiceClient tableServiceClient,
-    bool useFilter)
+    TableServiceClient tableServiceClient)
     : IHealthCheck
 {
     /// <inheritdoc />
@@ -17,11 +16,11 @@ internal sealed class SimpleTableServiceHealthCheck(
     {
         try
         {
-            await tableServiceClient
-                .QueryAsync(useFilter ? "false" : null, cancellationToken: cancellationToken)
-                .GetAsyncEnumerator(cancellationToken)
-                .MoveNextAsync()
-                .ConfigureAwait(false);
+            await foreach (var _ in tableServiceClient
+                               .QueryAsync((string?)null, 1,
+                                   cancellationToken)
+                               .ConfigureAwait(false))
+                break;
 
             return HealthCheckResult.Healthy();
         }

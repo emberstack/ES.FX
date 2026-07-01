@@ -2,6 +2,7 @@
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Configuration;
 using ES.FX.Ignite.Spark.Configuration;
 using JetBrains.Annotations;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -17,6 +18,9 @@ using SimpleLogRecordExportProcessor = OpenTelemetry.SimpleLogRecordExportProces
 
 namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 
+/// <summary>
+///     Provides extension methods for registering the Seq OpenTelemetry exporter
+/// </summary>
 [PublicAPI]
 public static class SeqOpenTelemetryExporterHostingExtensions
 {
@@ -42,12 +46,33 @@ public static class SeqOpenTelemetryExporterHostingExtensions
         }
     }
 
+    /// <summary>
+    ///     Registers the Seq OpenTelemetry log and trace exporters in the services provided by the
+    ///     <paramref name="builder" />.
+    ///     Enables health check for the Seq server.
+    /// </summary>
+    /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
+    /// <param name="name">A name used to retrieve the settings and options from configuration</param>
+    /// <param name="configureSettings">
+    ///     An optional delegate that can be used for customizing settings. It's invoked after the
+    ///     settings are read from the configuration.
+    /// </param>
+    /// <param name="configureOptions">
+    ///     An optional delegate that can be used for customizing options. It's invoked after the
+    ///     options are read from the configuration.
+    /// </param>
+    /// <param name="configurationSectionPath">
+    ///     The configuration section path. Default is
+    ///     <see cref="SeqOpenTelemetryExporterSpark.ConfigurationSectionPath" />.
+    /// </param>
     public static void IgniteSeqOpenTelemetryExporter(this IHostApplicationBuilder builder,
         string? name = null,
         Action<SeqOpenTelemetryExporterSparkSettings>? configureSettings = null,
         Action<SeqOpenTelemetryExporterSparkOptions>? configureOptions = null,
         string configurationSectionPath = SeqOpenTelemetryExporterSpark.ConfigurationSectionPath)
     {
+        builder.GuardConfigurationKey($"{SeqOpenTelemetryExporterSpark.Name}[{name}]");
+
         var configPath = SparkConfig.Path(name, configurationSectionPath);
 
         var settings = SparkConfig.GetSettings(builder.Configuration, configPath, configureSettings);
@@ -91,7 +116,10 @@ public static class SeqOpenTelemetryExporterHostingExtensions
             }));
 
 
-        ConfigureObservability(builder, name, settings);
+        var options = new SeqOpenTelemetryExporterSparkOptions();
+        builder.Configuration.GetSection(configPath).Bind(options);
+        configureOptions?.Invoke(options);
+        if (!string.IsNullOrWhiteSpace(options.HealthUrl)) ConfigureObservability(builder, name, settings);
 
         return;
 
@@ -105,13 +133,13 @@ public static class SeqOpenTelemetryExporterHostingExtensions
             {
                 exporterOptions.Endpoint = new Uri(options.IngestionEndpoint);
                 if (options.OtlpProtocol == OtlpExportProtocol.HttpProtobuf)
-                    exporterOptions.Endpoint = new Uri($"{options.IngestionEndpoint}{httpProtobufSuffix}");
+                    exporterOptions.Endpoint = new Uri($"{options.IngestionEndpoint.TrimEnd('/')}{httpProtobufSuffix}");
             }
 
             if (!string.IsNullOrEmpty(options.ApiKey))
-                options.OtlpTraceExporter.Headers = string.IsNullOrEmpty(options.OtlpTraceExporter.Headers)
+                exporterOptions.Headers = string.IsNullOrEmpty(exporterOptions.Headers)
                     ? $"X-Seq-ApiKey={options.ApiKey}"
-                    : $"{options.OtlpTraceExporter.Headers},X-Seq-ApiKey={options.ApiKey}";
+                    : $"{exporterOptions.Headers},X-Seq-ApiKey={options.ApiKey}";
         }
     }
 }

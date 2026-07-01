@@ -4,6 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.Internals;
 
+// OutboxDbContextOptions lives in the package root namespace (ES.FX.TransactionalOutbox.EntityFrameworkCore),
+// which is the parent of this Internals namespace, so no additional using is required to reference it.
+
 /// <summary>
 ///     Extension for configuring the Outbox on a DbContext.
 /// </summary>

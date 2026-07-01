@@ -3,10 +3,9 @@
 namespace ES.FX.Problems;
 
 /// <summary>
-///     Represents a problem (based on RFC 7807 - https://datatracker.ietf.org/doc/html/rfc7807).
+///     Represents a problem (based on RFC 9457 - https://datatracker.ietf.org/doc/html/rfc9457).
 /// </summary>
 [PublicAPI]
-[Serializable]
 public record Problem
 {
     /// <summary>

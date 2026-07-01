@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using StackExchange.Redis;
 
 namespace ES.FX.Additions.StackExchange.Redis;
@@ -31,7 +31,7 @@ public static class DatabaseExtensions
                                                                              end
                                                                          until cursor == '0'
                                                                          return totalDeleted
-                                                                     
+
                                                              """;
 
     private const string DeterminePrefixScript =
@@ -42,15 +42,22 @@ public static class DatabaseExtensions
     ///     Attempts to get the key prefix.
     /// </summary>
     /// <param name="database">The <see cref="IDatabase" /></param>
-    public static RedisResult GetKeyPrefix(this IDatabase database) =>
-        database.ScriptEvaluateReadOnly(DeterminePrefixScript, [nameof(Redis)], [nameof(Redis)]);
+    public static RedisResult GetKeyPrefix(this IDatabase database)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        return database.ScriptEvaluateReadOnly(DeterminePrefixScript, [nameof(Redis)], [nameof(Redis)]);
+    }
 
     /// <summary>
     ///     Attempts to get the key prefix.
     /// </summary>
     /// <param name="database">The <see cref="IDatabase" /></param>
-    public static async Task<RedisResult> GetKeyPrefixAsync(this IDatabase database) =>
-        await database.ScriptEvaluateReadOnlyAsync(DeterminePrefixScript, [nameof(Redis)], [nameof(Redis)]);
+    public static async Task<RedisResult> GetKeyPrefixAsync(this IDatabase database)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        return await database.ScriptEvaluateReadOnlyAsync(DeterminePrefixScript, [nameof(Redis)], [nameof(Redis)])
+            .ConfigureAwait(false);
+    }
 
 
     /// <summary>
@@ -60,6 +67,11 @@ public static class DatabaseExtensions
     /// <param name="pattern">Pattern to MATCH keys</param>
     /// <param name="batchSize">The batch size</param>
     /// <returns>The deleted key count</returns>
+    /// <remarks>
+    ///     Runs a server-side Lua script that pages the keyspace with SCAN and deletes each page as a batch.
+    ///     Because the script is evaluated through the <see cref="IDatabase" />, the pattern respects the
+    ///     database's key prefix (keyspace isolation).
+    /// </remarks>
     public static long KeysDelete(this IDatabase database, string pattern, int batchSize = 1000)
     {
         var result = database.ScriptEvaluate(
@@ -75,6 +87,11 @@ public static class DatabaseExtensions
     /// <param name="database">The <see cref="IDatabase" /></param>
     /// <param name="batchSize">The batch size</param>
     /// <returns>The deleted key count</returns>
+    /// <remarks>
+    ///     Runs a server-side Lua script that pages the keyspace with SCAN and deletes each page as a batch.
+    ///     Because the script is evaluated through the <see cref="IDatabase" />, the pattern respects the
+    ///     database's key prefix (keyspace isolation).
+    /// </remarks>
     public static long KeysDeleteAll(this IDatabase database, int batchSize = 1000) =>
         database.KeysDelete("*", batchSize);
 
@@ -85,8 +102,13 @@ public static class DatabaseExtensions
     /// <param name="database">The <see cref="IDatabase" /></param>
     /// <param name="batchSize">The batch size</param>
     /// <returns>The deleted key count</returns>
+    /// <remarks>
+    ///     Runs a server-side Lua script that pages the keyspace with SCAN and deletes each page as a batch.
+    ///     Because the script is evaluated through the <see cref="IDatabase" />, the pattern respects the
+    ///     database's key prefix (keyspace isolation).
+    /// </remarks>
     public static async Task<long> KeysDeleteAllAsync(this IDatabase database, int batchSize = 1000) =>
-        await database.KeysDeleteAsync("*", batchSize);
+        await database.KeysDeleteAsync("*", batchSize).ConfigureAwait(false);
 
     /// <summary>
     ///     Deletes all keys matching a pattern in batches
@@ -95,6 +117,11 @@ public static class DatabaseExtensions
     /// <param name="pattern">Pattern to MATCH keys</param>
     /// <param name="batchSize">The batch size</param>
     /// <returns>The deleted key count</returns>
+    /// <remarks>
+    ///     Runs a server-side Lua script that pages the keyspace with SCAN and deletes each page as a batch.
+    ///     Because the script is evaluated through the <see cref="IDatabase" />, the pattern respects the
+    ///     database's key prefix (keyspace isolation).
+    /// </remarks>
     public static async Task<long> KeysDeleteAsync(this IDatabase database, string pattern, int batchSize = 1000)
     {
         var result = await database.ScriptEvaluateAsync(
