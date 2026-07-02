@@ -8,11 +8,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Azure.Identity" />
-		<PackageReference Include="Microsoft.Data.SqlClient" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="Testcontainers.MsSql" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer\ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
 	</ItemGroup>
 
 </Project>

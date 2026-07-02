@@ -7,4 +7,11 @@
 		<Description>SQL Server-specific Entity Framework Core helpers for the ES.FX framework.</Description>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<PackageReference Include="Azure.Identity" />
+		<PackageReference Include="Microsoft.Data.SqlClient" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+	</ItemGroup>
+
 </Project>
