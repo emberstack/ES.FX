@@ -89,9 +89,31 @@
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/ES.FX.Migrations.Tests/ES.FX.Migrations.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.Tests/ES.FX.TransactionalOutbox.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.MassTransit.Tests/ES.FX.TransactionalOutbox.MassTransit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/FX/Additions/">
     <Project Path="tests/ES.FX.Additions.StackExchange.Redis.Tests/ES.FX.Additions.StackExchange.Redis.Tests.csproj" Id="5d90b03e-cda4-475a-8cf9-a744edefb9f2" />
+    <Project Path="tests/ES.FX.Additions.Asp.Versioning.Tests/ES.FX.Additions.Asp.Versioning.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.FluentValidation.Tests/ES.FX.Additions.FluentValidation.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.KubernetesClient.Tests/ES.FX.Additions.KubernetesClient.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.MassTransit.Tests/ES.FX.Additions.MassTransit.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.MassTransit.MediatR.Tests/ES.FX.Additions.MassTransit.MediatR.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.MassTransit.RabbitMQ.Tests/ES.FX.Additions.MassTransit.RabbitMQ.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.MediatR.Tests/ES.FX.Additions.MediatR.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.MediatR.Contracts.Tests/ES.FX.Additions.MediatR.Contracts.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Microsoft.AspNetCore.Tests/ES.FX.Additions.Microsoft.AspNetCore.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Microsoft.Data.SqlClient.Tests/ES.FX.Additions.Microsoft.Data.SqlClient.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.Tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.Tests/ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Microsoft.Extensions.Identity.Core.Tests/ES.FX.Additions.Microsoft.Extensions.Identity.Core.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Newtonsoft.Json.Tests/ES.FX.Additions.Newtonsoft.Json.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.NSwag.AspNetCore.Tests/ES.FX.Additions.NSwag.AspNetCore.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.OneOf.Tests/ES.FX.Additions.OneOf.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Serilog.Tests/ES.FX.Additions.Serilog.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.System.Text.Json.Tests/ES.FX.Additions.System.Text.Json.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Ignite/">
     <Project Path="tests/ES.FX.Ignite.Asp.Versioning.Tests/ES.FX.Ignite.Asp.Versioning.Tests.csproj" />
@@ -115,6 +137,8 @@
     <Project Path="tests/ES.FX.Ignite.Swashbuckle.Tests.SUT/ES.FX.Ignite.Swashbuckle.Tests.SUT.csproj" />
     <Project Path="tests/ES.FX.Ignite.Swashbuckle.Tests/ES.FX.Ignite.Swashbuckle.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Tests/ES.FX.Ignite.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.KubernetesClient.Tests/ES.FX.Ignite.KubernetesClient.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Azure.Common.Tests/ES.FX.Ignite.Azure.Common.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/MCP/">
     <Project Path="tests/ES.FX.Zendesk.MCP.Host.Tests/ES.FX.Zendesk.MCP.Host.Tests.csproj" />
