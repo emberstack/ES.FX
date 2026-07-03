@@ -78,12 +78,13 @@ public static class JsonSerializerOptionsExtended
         });
 
     /// <summary>
-    ///     Seals the supplied <paramref name="options" /> by invoking
-    ///     <see cref="JsonSerializerOptions.MakeReadOnly()" /> and returns the same instance.
+    ///     Seals the supplied <paramref name="options" /> and returns the same instance. Freezes via
+    ///     <c>MakeReadOnly(populateMissingResolver: true)</c> so the default reflection-based type-info resolver is
+    ///     attached first — the parameterless <c>MakeReadOnly()</c> throws when no <c>TypeInfoResolver</c> has been set.
     /// </summary>
     private static JsonSerializerOptions CreateReadOnly(JsonSerializerOptions options)
     {
-        options.MakeReadOnly();
+        options.MakeReadOnly(populateMissingResolver: true);
         return options;
     }
 }
