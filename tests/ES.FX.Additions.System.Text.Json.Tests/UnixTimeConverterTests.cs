@@ -221,4 +221,63 @@ public class UnixTimeConverterTests
         Assert.Contains($"{Milliseconds}", msJson);
         Assert.NotEqual(secJson, msJson);
     }
+
+    // ==================== FromUnixTime out-of-range -> JsonException wrapping ====================
+    // long.MaxValue exceeds the range accepted by DateTimeOffset.FromUnixTimeSeconds/Milliseconds,
+    // so the converter's try/catch must re-wrap the ArgumentOutOfRangeException as a JsonException
+    // (with the original exception preserved as InnerException).
+
+    [Fact]
+    public void Seconds_OutOfRangeNumber_ThrowsJsonException_WrappingArgumentOutOfRange()
+    {
+        var o = With(new UnixTimeSecondsDateTimeOffsetJsonConverter());
+        var ex = Assert.ThrowsAny<JsonException>(() =>
+            JsonSerializer.Deserialize<DtoBox>($"{{\"t\":{long.MaxValue}}}", o));
+        Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
+    }
+
+    [Fact]
+    public void Seconds_OutOfRangeString_ThrowsJsonException_WrappingArgumentOutOfRange()
+    {
+        var o = With(new UnixTimeSecondsDateTimeOffsetJsonConverter());
+        var ex = Assert.ThrowsAny<JsonException>(() =>
+            JsonSerializer.Deserialize<DtoBox>($"{{\"t\":\"{long.MaxValue}\"}}", o));
+        Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
+    }
+
+    [Fact]
+    public void NullableSeconds_OutOfRangeNumber_ThrowsJsonException_WrappingArgumentOutOfRange()
+    {
+        var o = With(new UnixTimeSecondsNullableDateTimeOffsetJsonConverter());
+        var ex = Assert.ThrowsAny<JsonException>(() =>
+            JsonSerializer.Deserialize<NullableDtoBox>($"{{\"t\":{long.MaxValue}}}", o));
+        Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
+    }
+
+    [Fact]
+    public void Milliseconds_OutOfRangeNumber_ThrowsJsonException_WrappingArgumentOutOfRange()
+    {
+        var o = With(new UnixTimeMillisecondsDateTimeOffsetJsonConverter());
+        var ex = Assert.ThrowsAny<JsonException>(() =>
+            JsonSerializer.Deserialize<DtoBox>($"{{\"t\":{long.MaxValue}}}", o));
+        Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
+    }
+
+    [Fact]
+    public void Milliseconds_OutOfRangeString_ThrowsJsonException_WrappingArgumentOutOfRange()
+    {
+        var o = With(new UnixTimeMillisecondsDateTimeOffsetJsonConverter());
+        var ex = Assert.ThrowsAny<JsonException>(() =>
+            JsonSerializer.Deserialize<DtoBox>($"{{\"t\":\"{long.MaxValue}\"}}", o));
+        Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
+    }
+
+    [Fact]
+    public void NullableMilliseconds_OutOfRangeNumber_ThrowsJsonException_WrappingArgumentOutOfRange()
+    {
+        var o = With(new UnixTimeMillisecondsNullableDateTimeOffsetJsonConverter());
+        var ex = Assert.ThrowsAny<JsonException>(() =>
+            JsonSerializer.Deserialize<NullableDtoBox>($"{{\"t\":{long.MaxValue}}}", o));
+        Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
+    }
 }

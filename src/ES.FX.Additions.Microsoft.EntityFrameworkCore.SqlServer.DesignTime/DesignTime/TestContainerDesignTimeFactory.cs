@@ -42,7 +42,9 @@ public class TestContainerDesignTimeFactory<TDbContext> : IDesignTimeDbContextFa
     public TDbContext CreateDbContext(string[] args)
     {
         var builder = new MsSqlBuilder($"{Registry}/{Image}:{Tag}")
-            .WithName($"{GetType().Name}-{Guid.NewGuid():N}");
+            // GetType().Name for a closed generic carries a backtick + arity suffix (e.g. "...`1") that Docker
+            // rejects in a container name; strip it so the generated name is always Docker-legal.
+            .WithName($"{GetType().Name.Split('`')[0]}-{Guid.NewGuid():N}");
         ConfigureMsSqlContainerBuilder(builder);
         _container = builder.Build();
 

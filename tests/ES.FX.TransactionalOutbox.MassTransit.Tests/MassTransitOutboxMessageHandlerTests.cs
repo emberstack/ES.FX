@@ -3,6 +3,7 @@ using ES.FX.TransactionalOutbox.MassTransit.Delivery;
 using global::MassTransit;
 using global::MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace ES.FX.TransactionalOutbox.MassTransit.Tests;
 
@@ -178,5 +179,62 @@ public sealed class MassTransitOutboxMessageHandlerTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             handler.HandleAsync(ContextFor(new OutboxOrderShipped(Guid.NewGuid())), cts.Token).AsTask());
+    }
+
+    // Gap: HandleAsync failure propagation. The delivery service relies on HandleAsync throwing when the
+    // publish cannot succeed (bus stopped / transport unavailable) so the outbox message is retried rather
+    // than silently marked delivered. The handler does not catch/swallow publish exceptions, so any fault
+    // from IPublishEndpoint.Publish must surface to the caller. The two tests below prove this from opposite
+    // angles: (1) a hand-rolled endpoint that throws a broker-style fault, and (2) a real in-memory bus that
+    // has been stopped, which faults on publish the way an unavailable transport would.
+
+    [Fact]
+    public async Task HandleAsync_PropagatesPublishFailure_FromEndpoint()
+    {
+        var boom = new InvalidOperationException("broker unavailable");
+
+        // The typed Publish(object, Type, callback, CT) extension the handler calls resolves to this
+        // interface overload; faulting it simulates an unavailable transport rejecting the publish.
+        var publishEndpoint = new Mock<IPublishEndpoint>(MockBehavior.Loose);
+        publishEndpoint
+            .Setup(e => e.Publish(
+                It.IsAny<object>(),
+                It.IsAny<Type>(),
+                It.IsAny<IPipe<PublishContext>>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(boom);
+
+        // IBusControl is not touched by HandleAsync, so a bare mock is sufficient.
+        var handler = new MassTransitOutboxMessageHandler(Mock.Of<IBusControl>(), publishEndpoint.Object);
+
+        // The failure must surface unchanged so the delivery service can count the attempt and retry.
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(ContextFor(new OutboxOrderShipped(Guid.NewGuid())), Ct).AsTask());
+        Assert.Same(boom, thrown);
+    }
+
+    // Documents the observed behavior of the in-memory transport (not the handler contract): publishing on a
+    // *stopped* in-memory bus does NOT fault. The in-memory transport accepts the publish without a live
+    // broker, so this path cannot exercise failure propagation. The deterministic proof of the gap
+    // (HandleAsync surfaces a publish fault so the delivery service retries) is
+    // HandleAsync_PropagatesPublishFailure_FromEndpoint above, which faults the publish call directly.
+    // Asserting current real behavior here keeps the boundary explicit and guards against silently changing
+    // it. IsReadyAsync is the mechanism the delivery service uses to avoid publishing on a down bus.
+    [Fact]
+    public async Task HandleAsync_DoesNotThrow_OnStoppedInMemoryBus_AndBecomesNotReady()
+    {
+        await using var provider = BuildHarnessProvider();
+        var harness = provider.GetRequiredService<ITestHarness>();
+        await harness.Start();
+        var busControl = provider.GetRequiredService<IBusControl>();
+        var handler = CreateHandler(provider);
+
+        await busControl.StopAsync(Ct);
+
+        // Readiness flips to false once the bus is stopped, which is how the delivery service holds off.
+        Assert.False(await handler.IsReadyAsync(Ct));
+
+        // The in-memory transport does not fault the publish; record that observed behavior.
+        await handler.HandleAsync(ContextFor(new OutboxOrderShipped(Guid.NewGuid())), Ct);
     }
 }

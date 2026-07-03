@@ -42,6 +42,75 @@ public class RabbitMqOptionsBindingTests
     }
 
     [Fact]
+    public void Each_Property_Maps_To_Its_Own_Config_Key_And_Is_Not_Cross_Wired()
+    {
+        // Distinct, non-overlapping values per key so that a mutation which swaps two properties
+        // (e.g. Username <-> Password, or Host reading the Username key), hard-codes a value, or
+        // drops a setter is observable as a value mismatch on the shipped POCO.
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["RabbitMq:Host"] = "host-value",
+            ["RabbitMq:Username"] = "username-value",
+            ["RabbitMq:Password"] = "password-value"
+        });
+
+        var options = configuration.GetSection("RabbitMq").Get<RabbitMqOptions>();
+
+        Assert.NotNull(options);
+        Assert.Equal("host-value", options.Host);
+        Assert.Equal("username-value", options.Username);
+        Assert.Equal("password-value", options.Password);
+
+        // Explicitly rule out cross-wiring: no property may carry another property's key value.
+        Assert.NotEqual(options.Username, options.Host);
+        Assert.NotEqual(options.Password, options.Host);
+        Assert.NotEqual(options.Password, options.Username);
+    }
+
+    [Theory]
+    [InlineData("amqp://localhost:5672")]
+    [InlineData("rabbitmq://broker.internal/vhost")]
+    [InlineData("plain-host-name")]
+    public void Host_Round_Trips_Verbatim_For_Various_Address_Shapes(string host)
+    {
+        // The POCO must store the Host string verbatim (no normalization/transformation), because it
+        // is later handed unchanged to MassTransit's cfg.Host(...). A mutation that rewrites or
+        // truncates the value would break this.
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["RabbitMq:Host"] = host
+        });
+
+        var options = configuration.GetSection("RabbitMq").Get<RabbitMqOptions>();
+
+        Assert.NotNull(options);
+        Assert.Equal(host, options.Host);
+    }
+
+    [Fact]
+    public void Properties_Are_Independently_Mutable_And_Round_Trip_Set_Values()
+    {
+        // Guards the setters directly (independent of the config binder): a mutation that makes a
+        // setter a no-op, hard-codes a value, or aliases two backing fields fails here.
+        var options = new RabbitMqOptions
+        {
+            Host = "set-host",
+            Username = "set-user",
+            Password = "set-pass"
+        };
+
+        Assert.Equal("set-host", options.Host);
+        Assert.Equal("set-user", options.Username);
+        Assert.Equal("set-pass", options.Password);
+
+        // Mutating one property must not disturb the others (rules out shared backing state).
+        options.Host = "changed-host";
+        Assert.Equal("changed-host", options.Host);
+        Assert.Equal("set-user", options.Username);
+        Assert.Equal("set-pass", options.Password);
+    }
+
+    [Fact]
     public void Binds_Host_Only_And_Leaves_Credentials_Null()
     {
         // A common real-world case: broker allows anonymous/default access, so only the host is configured.

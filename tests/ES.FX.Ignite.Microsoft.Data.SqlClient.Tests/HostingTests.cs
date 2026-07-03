@@ -7,6 +7,7 @@ using ES.FX.Ignite.Spark.Exceptions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -361,6 +362,15 @@ public class HostingTests
         var resolvedSettings = app.Services.GetRequiredService<SqlServerClientSparkSettings>();
         Assert.False(resolvedSettings.Tracing.Enabled);
         Assert.True(resolvedSettings.HealthChecks.Enabled);
+
+        // Downstream effect of the override: HealthChecks stayed enabled, so exactly one health-check
+        // registration must exist and be named for the spark. This asserts the observability wiring
+        // actually reacted to the settings, not just that the settings POCO holds the value.
+        var registrations = app.Services
+            .GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations;
+        var registration = Assert.Single(registrations);
+        Assert.Equal(SqlServerClientSpark.Name, registration.Name);
+        Assert.Contains(SqlServerClientSpark.Name, registration.Tags);
 
 
         return;

@@ -168,6 +168,85 @@ public sealed class HttpGetHealthCheckTests(LoopbackServerFixture server) : ICla
     }
 
     [Fact]
+    public async Task Ambient_Cancellation_With_A_Configured_Timeout_Still_Propagates_To_The_Caller()
+    {
+        // Closes the "linked-CTS" gap: when BOTH a per-attempt Timeout is set (so the request runs on a
+        // linked token) AND the ambient token is cancelled mid-flight, the exception filter guards on the
+        // AMBIENT token's IsCancellationRequested — not the linked/timeout token — so cancellation must still
+        // propagate rather than being mislabeled as a timeout failure. The timeout here is long enough that
+        // the ambient cancellation wins the race.
+        using var cts = new CancellationTokenSource();
+        // ReSharper disable once MethodSupportsCancellation
+        cts.CancelAfter(TimeSpan.FromMilliseconds(200));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await RunAsync(
+                new HttpGetHealthCheckOptions { Uri = server.Url("/slow"), Timeout = TimeSpan.FromSeconds(30) },
+                cancellationToken: cts.Token));
+    }
+
+    [Fact]
+    public async Task Already_Cancelled_Ambient_Token_With_A_Configured_Timeout_Propagates()
+    {
+        // Same guard, deterministic variant: the ambient token is already cancelled before the call. Even
+        // though a Timeout is configured (linked CTS present), the ambient cancellation must propagate.
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await RunAsync(
+                new HttpGetHealthCheckOptions { Uri = server.Url("/ok"), Timeout = TimeSpan.FromSeconds(30) },
+                cancellationToken: cts.Token));
+    }
+
+    [Fact]
+    public async Task Per_Attempt_Timeout_Fires_While_Ambient_Token_Stays_Live_Reports_FailureStatus()
+    {
+        // The other side of the linked-CTS branch: the timeout CTS cancels the request but the AMBIENT token
+        // is never cancelled, so cancellationToken.IsCancellationRequested is false and the filter swallows
+        // the TaskCanceledException into the registered failure status instead of propagating it.
+        using var ambient = new CancellationTokenSource();
+
+        var result = await RunAsync(
+            new HttpGetHealthCheckOptions { Uri = server.Url("/slow"), Timeout = TimeSpan.FromMilliseconds(250) },
+            HealthStatus.Degraded,
+            ambient.Token);
+
+        Assert.Equal(HealthStatus.Degraded, result.Status);
+        Assert.NotNull(result.Exception);
+        Assert.False(ambient.IsCancellationRequested);
+    }
+
+    [Fact]
+    public async Task Relative_Uri_Throws_Uncaught_InvalidOperationException()
+    {
+        // Pins current real behavior (NOT a bug fix): Uri is passed straight to HttpClient.GetAsync as a
+        // string. A relative URI produces an InvalidOperationException, which is neither HttpRequestException
+        // nor TaskCanceledException, so the exception filter does NOT catch it and it bubbles out of the
+        // health check rather than reporting FailureStatus.
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await RunAsync(new HttpGetHealthCheckOptions { Uri = "/relative/path" }));
+    }
+
+    [Fact]
+    public async Task Garbage_Non_Uri_Throws_Uncaught_InvalidOperationException()
+    {
+        // A malformed, non-absolute URI string is treated the same as a relative one by HttpClient: an
+        // uncaught InvalidOperationException, not a FailureStatus result.
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await RunAsync(new HttpGetHealthCheckOptions { Uri = "not a valid uri" }));
+    }
+
+    [Fact]
+    public async Task Unsupported_Scheme_Uri_Throws_Uncaught_NotSupportedException()
+    {
+        // An absolute URI with a scheme HttpClient does not support (e.g. ftp) throws NotSupportedException,
+        // which is likewise outside the exception filter and bubbles out rather than reporting FailureStatus.
+        await Assert.ThrowsAsync<NotSupportedException>(async () =>
+            await RunAsync(new HttpGetHealthCheckOptions { Uri = "ftp://example.test/resource" }));
+    }
+
+    [Fact]
     public void Constructor_Throws_On_Null_Options()
     {
         Assert.Throws<ArgumentNullException>(() => new HttpGetHealthCheck(null!));

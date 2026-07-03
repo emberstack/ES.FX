@@ -1,29 +1,27 @@
+using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.Tests;
 
 /// <summary>
 ///     Functional regression coverage for <see cref="TestContainerDesignTimeFactory{TDbContext}" />.
-///     These tests start (or attempt to start) real SQL Server containers via Testcontainers and therefore
-///     require Docker.
+///     These tests start real SQL Server containers via Testcontainers (through the shared
+///     <see cref="SqlServerFixture" />) and therefore require Docker.
 /// </summary>
 /// <remarks>
 ///     <para>
-///         KNOWN LIBRARY BUG (asserted, not worked around, per the test mandate): the factory names its
-///         container <c>$"{GetType().Name}-{Guid.NewGuid():N}"</c>. For a closed generic type,
-///         <see cref="System.Reflection.MemberInfo.Name" /> returns the arity-suffixed form
-///         (e.g. <c>TestContainerDesignTimeFactory`1</c>) which contains a backtick — a character Docker
-///         rejects in container names (<c>only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed</c>). Because the
-///         factory is <em>always</em> used as a closed generic, <see cref="TestContainerDesignTimeFactory{TDbContext}.CreateDbContext" />
-///         currently fails for every real usage with a <c>Docker.DotNet.DockerApiException</c> before the
-///         constructor-selection logic is ever reached.
+///         The public <see cref="TestContainerDesignTimeFactory{TDbContext}.CreateDbContext" /> is driven end to
+///         end: the factory strips the backtick + arity suffix that <c>GetType().Name</c> produces for a closed
+///         generic (source line 45), so the container name is Docker-legal, the container starts, and a
+///         connectable context is returned.
+///         <see cref="CreateDbContext_ClosedGenericFactory_StartsContainerAndReturnsConnectableContext" /> guards
+///         that (a reintroduced backtick or broken options wiring makes it fail).
 ///     </para>
 ///     <para>
-///         The tests below pin this CURRENT behavior so the suite stays green and acts as a regression guard:
-///         once the library sanitizes the container name, the "throws" assertions will start failing and flag
-///         the change for review (at which point they should be flipped to assert a connectable context and to
-///         exercise the DbContextOptions&lt;T&gt;, DbContextOptions, and parameterless/OnConfiguring
-///         constructor-selection branches end to end).
+///         The constructor-selection + options wiring core (shipped private <c>CreateDbContextInstance</c>) is
+///         also driven here with options carrying a REAL running container's connection string, asserting the
+///         returned context connects and round-trips a query for each accepted constructor shape.
 ///     </para>
 /// </remarks>
 [Collection(nameof(SqlServerCollection))]
@@ -61,49 +59,54 @@ public sealed class TestContainerDesignTimeFactoryTests(SqlServerFixture fixture
     }
 
     [Fact]
-    public async Task CreateDbContext_WithGenericOptionsConstructor_CurrentlyFailsOnInvalidContainerName()
+    public async Task CreateDbContextInstance_GenericOptionsConstructor_ProducesLiveConnectableContext()
     {
-        // Intended behavior (once the container-name bug is fixed): return a context whose single
-        // DbContextOptions<TContext> constructor received the container-backed options and that can connect.
-        // CURRENT behavior: the container name contains a backtick from the closed-generic type name, which
-        // Docker rejects, so CreateDbContext throws before constructing the context. Asserting the real
-        // behavior keeps this as a regression guard.
-        var factory = new TestContainerDesignTimeFactory<OptionsCtorDbContext>();
+        // Drives the shipped constructor-selection + options wiring against a REAL SQL Server container:
+        // the single DbContextOptions<TContext> constructor must receive the container-backed options and the
+        // returned context must actually connect and round trip. If the wrong branch were taken, or the options
+        // not carried through, the context could not reach the live database.
+        var options = SqlServerOptions<OptionsCtorDbContext>(fixture.ConnectionString);
 
-        var exception = await Assert.ThrowsAnyAsync<Exception>(
-            () => Task.Run(() => factory.CreateDbContext([]), TestContext.Current.CancellationToken));
+        await using var context = InvokeCreateDbContextInstance(options);
 
-        AssertInvalidContainerNameBug(exception);
+        Assert.IsType<OptionsCtorDbContext>(context);
+        Assert.True(context.Database.IsSqlServer());
+        await AssertCanRoundTripAsync(context, TestContext.Current.CancellationToken);
     }
 
     [Fact]
-    public async Task CreateDbContext_WithNonGenericOptionsConstructor_CurrentlyFailsOnInvalidContainerName()
+    public async Task CreateDbContextInstance_NonGenericOptionsConstructor_ProducesLiveConnectableContext()
     {
-        // Same known bug via a different accepted constructor shape (non-generic DbContextOptions).
-        var factory = new TestContainerDesignTimeFactory<NonGenericOptionsCtorDbContext>();
+        // Same live-connectivity guarantee via the non-generic DbContextOptions constructor branch.
+        var options = SqlServerOptions<NonGenericOptionsCtorDbContext>(fixture.ConnectionString);
 
-        var exception = await Assert.ThrowsAnyAsync<Exception>(
-            () => Task.Run(() => factory.CreateDbContext([]), TestContext.Current.CancellationToken));
+        await using var context = InvokeCreateDbContextInstance(options);
 
-        AssertInvalidContainerNameBug(exception);
+        Assert.IsType<NonGenericOptionsCtorDbContext>(context);
+        Assert.True(context.Database.IsSqlServer());
+        await AssertCanRoundTripAsync(context, TestContext.Current.CancellationToken);
     }
 
     [Fact]
-    public async Task CreateDbContext_WithParameterlessOnConfiguringContext_CurrentlyFailsOnInvalidContainerName()
+    public async Task CreateDbContextInstance_ParameterlessOnConfiguringContext_ProducesLiveSelfConfiguredContext()
     {
-        // Intended behavior (once fixed): resolve the parameterless context via the ActivatorUtilities
-        // fallback branch and return a self-configuring (OnConfiguring) context. We pre-publish the fixture's
-        // connection string so that flip is a one-line change. CURRENT behavior: the same invalid-container-name
-        // failure occurs before the fallback branch runs.
+        // The ActivatorUtilities fallback branch: a parameterless context ignores the passed options and
+        // self-configures via OnConfiguring from the ambient connection string (pointed at the live container).
+        // The returned context must connect and round trip, proving the fallback yields a usable instance.
         ParameterlessDbContext.AmbientConnectionString = fixture.ConnectionString;
         try
         {
-            var factory = new TestContainerDesignTimeFactory<ParameterlessDbContext>();
+            // The passed options intentionally target a DIFFERENT (in-memory) provider so that a context which
+            // actually connects to SQL Server can only have done so via its own OnConfiguring, not by reusing
+            // these options.
+            var ignoredOptions = new DbContextOptionsBuilder<ParameterlessDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString("N")).Options;
 
-            var exception = await Assert.ThrowsAnyAsync<Exception>(
-                () => Task.Run(() => factory.CreateDbContext([]), TestContext.Current.CancellationToken));
+            await using var context = InvokeCreateDbContextInstance(ignoredOptions);
 
-            AssertInvalidContainerNameBug(exception);
+            Assert.IsType<ParameterlessDbContext>(context);
+            Assert.True(context.Database.IsSqlServer());
+            await AssertCanRoundTripAsync(context, TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -111,32 +114,75 @@ public sealed class TestContainerDesignTimeFactoryTests(SqlServerFixture fixture
         }
     }
 
-    /// <summary>
-    ///     Asserts the failure is the known invalid-container-name bug (backtick in the closed-generic type
-    ///     name) rather than an unrelated Docker/environment error, so the guard does not silently pass on a
-    ///     different failure.
-    /// </summary>
-    private static void AssertInvalidContainerNameBug(Exception exception)
+    [Fact]
+    public async Task CreateDbContext_ClosedGenericFactory_StartsContainerAndReturnsConnectableContext()
     {
-        // The Testcontainers/Docker.DotNet exception message surfaces the rejected container name and the
-        // allowed-character rule. Both fragments together pin this to the arity-suffix bug.
-        var message = FlattenMessages(exception);
-        Assert.Contains("Invalid container name", message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("`1", message, StringComparison.Ordinal);
+        // End-to-end through the PUBLIC API on a raw closed-generic factory. The factory strips the backtick +
+        // arity suffix that GetType().Name produces for "TestContainerDesignTimeFactory`1" (source line 45), so
+        // the container name is Docker-legal: the container starts and a usable, connectable OptionsCtorDbContext
+        // is returned. Reintroducing the backtick, or breaking the options wiring, makes this fail.
+        var factory = new TestContainerDesignTimeFactory<OptionsCtorDbContext>();
+
+        await using var context = factory.CreateDbContext([]);
+
+        Assert.IsType<OptionsCtorDbContext>(context);
+        Assert.True(context.Database.IsSqlServer());
+        await AssertCanRoundTripAsync(context, TestContext.Current.CancellationToken);
     }
 
-    private static string FlattenMessages(Exception exception)
+    /// <summary>
+    ///     Invokes the shipped private static <c>CreateDbContextInstance(DbContextOptions&lt;TContext&gt;)</c>
+    ///     for the given closed generic factory type, unwrapping reflection's
+    ///     <see cref="TargetInvocationException" /> so callers see the real exception.
+    /// </summary>
+    private static TContext InvokeCreateDbContextInstance<TContext>(DbContextOptions<TContext> options)
+        where TContext : DbContext
     {
-        var messages = new List<string>();
-        for (var current = exception; current is not null; current = current.InnerException)
-            messages.Add(current.Message);
-        return string.Join(" | ", messages);
+        var method = typeof(TestContainerDesignTimeFactory<TContext>)
+            .GetMethod("CreateDbContextInstance", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+
+        try
+        {
+            return (TContext)method.Invoke(null, [options])!;
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException is not null)
+        {
+            throw ex.InnerException;
+        }
+    }
+
+    private static DbContextOptions<TContext> SqlServerOptions<TContext>(string connectionString)
+        where TContext : DbContext =>
+        new DbContextOptionsBuilder<TContext>().UseSqlServer(connectionString).Options;
+
+    /// <summary>
+    ///     Proves the returned context can actually reach its database: opens the connection and executes a
+    ///     trivial scalar query, asserting the round-tripped value. A context that was not wired to the live
+    ///     container (wrong provider, missing connection string) cannot satisfy this.
+    /// </summary>
+    private static async Task AssertCanRoundTripAsync(DbContext context, CancellationToken cancellationToken)
+    {
+        Assert.True(await context.Database.CanConnectAsync(cancellationToken));
+
+        await context.Database.OpenConnectionAsync(cancellationToken);
+        try
+        {
+            await using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = "SELECT 42";
+            var scalar = await command.ExecuteScalarAsync(cancellationToken);
+            Assert.Equal(42, Convert.ToInt32(scalar));
+        }
+        finally
+        {
+            await context.Database.CloseConnectionAsync();
+        }
     }
 }
 
 /// <summary>
 ///     xUnit collection binding the shared <see cref="SqlServerFixture" /> so the container is started once
-///     for the test that needs an externally-owned reachable database (used by the intended-behavior path).
+///     for the live-database end-to-end tests above.
 /// </summary>
 [CollectionDefinition(nameof(SqlServerCollection))]
 public sealed class SqlServerCollection : ICollectionFixture<SqlServerFixture>;

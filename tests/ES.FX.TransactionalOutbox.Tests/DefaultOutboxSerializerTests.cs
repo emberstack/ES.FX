@@ -123,6 +123,94 @@ public class DefaultOutboxSerializerTests
     public void Constructor_Throws_When_TypeProvider_Is_Null() =>
         Assert.Throws<ArgumentNullException>(() => new DefaultOutboxSerializer(null!));
 
+    [Fact]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Test uses reflection-based JSON.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Test uses reflection-based JSON.")]
+    public void Deserialize_Throws_NotSupported_When_Payload_Deserializes_To_Null()
+    {
+        var serializer = CreateSerializer();
+
+        // A literal JSON "null" makes JsonSerializer.Deserialize return null, which trips the guard.
+        var ex = Assert.Throws<NotSupportedException>(() =>
+            serializer.Deserialize("null", typeof(SamplePayload).AssemblyQualifiedName!, null,
+                out _, out _, out _));
+
+        Assert.Equal("Could not deserialize message", ex.Message);
+    }
+
+    // Custom provider that both round-trips a type via an injected header and augments headers in place
+    // during Serialize. Proves the SetTypeHeaders/GetType contract drives type resolution end to end.
+    private sealed class HeaderDrivenTypeProvider : IPayloadTypeProvider
+    {
+        public const string TypeHeaderKey = "x-payload-type";
+
+        public string GetPayloadType(Type payloadType) => "opaque-token";
+
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Test resolves types via reflection.")]
+        public Type GetType(string payloadType, IReadOnlyDictionary<string, string> headers)
+        {
+            // Ignore the opaque payloadType token; resolve strictly from the header injected during Serialize.
+            var aqn = headers[TypeHeaderKey];
+            return Type.GetType(aqn) ?? throw new InvalidOperationException($"Type '{aqn}' not found.");
+        }
+
+        public void SetTypeHeaders(Type payloadType, IDictionary<string, string> headers) =>
+            headers[TypeHeaderKey] = payloadType.AssemblyQualifiedName!;
+    }
+
+    [Fact]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Test uses reflection-based JSON.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Test uses reflection-based JSON.")]
+    public void Serialize_Lets_Custom_Provider_Inject_Type_Header_That_Drives_Deserialization()
+    {
+        var serializer = new DefaultOutboxSerializer(new HeaderDrivenTypeProvider());
+        var original = new SamplePayload(11, "header-driven", new[] { "t1" });
+
+        serializer.Serialize(original, typeof(SamplePayload), null,
+            out var payloadType, out var serializedPayload, out var serializedHeaders);
+
+        // The provider returns an opaque token instead of the AQN, proving type resolution now relies on headers.
+        Assert.Equal("opaque-token", payloadType);
+        // SetTypeHeaders mutated the (initially empty) headers dictionary in place, so headers were serialized.
+        Assert.NotNull(serializedHeaders);
+        Assert.Contains(HeaderDrivenTypeProvider.TypeHeaderKey, serializedHeaders);
+
+        serializer.Deserialize(serializedPayload, payloadType, serializedHeaders,
+            out var payload, out var type, out var headers);
+
+        // GetType resolved the concrete type solely from the injected header that survived the round-trip.
+        Assert.Equal(typeof(SamplePayload), type);
+        Assert.Equal(typeof(SamplePayload).AssemblyQualifiedName, headers[HeaderDrivenTypeProvider.TypeHeaderKey]);
+        var roundTripped = Assert.IsType<SamplePayload>(payload);
+        Assert.Equal(original.Id, roundTripped.Id);
+        Assert.Equal(original.Name, roundTripped.Name);
+    }
+
+    [Fact]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Test uses reflection-based JSON.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Test uses reflection-based JSON.")]
+    public void Serialize_Custom_Provider_Augments_Caller_Supplied_Headers_In_Place()
+    {
+        var serializer = new DefaultOutboxSerializer(new HeaderDrivenTypeProvider());
+        var payload = new SamplePayload(2, "merge", Array.Empty<string>());
+        var headers = new Dictionary<string, string> { ["correlation-id"] = "abc-123" };
+
+        serializer.Serialize(payload, typeof(SamplePayload), headers,
+            out _, out _, out var serializedHeaders);
+
+        Assert.NotNull(serializedHeaders);
+
+        // Only the headers survive the round-trip here; the payload body is irrelevant to this assertion.
+        serializer.Deserialize("{}", "opaque-token", serializedHeaders,
+            out _, out _, out var deserializedHeaders);
+
+        // Caller header is preserved AND the provider's injected type header is present alongside it.
+        Assert.Equal("abc-123", deserializedHeaders["correlation-id"]);
+        Assert.Equal(typeof(SamplePayload).AssemblyQualifiedName,
+            deserializedHeaders[HeaderDrivenTypeProvider.TypeHeaderKey]);
+        Assert.Equal(2, deserializedHeaders.Count);
+    }
+
     // Derived type proving the protected TypeProvider/Options accessors are reachable by subclasses.
     private sealed class DerivedSerializer(IPayloadTypeProvider typeProvider, JsonSerializerOptions? options = null)
         : DefaultOutboxSerializer(typeProvider, options)
