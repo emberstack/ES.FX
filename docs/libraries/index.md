@@ -16,7 +16,7 @@ into Ignite when you want it to.
 | [**Migrations**](./migrations.md) | `ES.FX.Migrations` (+ `ES.FX.Ignite.Migrations`) | A DI-driven migration runner: implement `IMigrationsTask`, register it, and a hosted service applies every task at startup. |
 | [**Zendesk API client**](./zendesk-client.md) | `ES.FX.Zendesk` (+ `ES.FX.Ignite.Zendesk` Spark) | A typed, OAuth-authenticated client for the Zendesk Support REST API — resource-grouped operations, typed errors with `Retry-After`, and OpenTelemetry tracing. |
 
-Both libraries are independently consumable. Each has its own page below with the full end-to-end walkthrough.
+Each library is independently consumable and has its own page below with the full end-to-end walkthrough.
 
 ---
 
@@ -70,6 +70,11 @@ multi-tenant instances, the resource areas, configuration and secret hygiene, th
 handling and rate limits, and observability. The [Zendesk Spark](../ignite/sparks/zendesk.md) page
 covers the Ignite integration (config binding, startup validation, live health check, tracing).
 
+For exposing Zendesk to an AI agent, the [Zendesk MCP server](./zendesk-mcp-server.md) is a deployable
+[Model Context Protocol](https://modelcontextprotocol.io) host — built on this client and Ignite — that
+publishes the full client surface as 168 read and write MCP tools, with execution-mode gating and Origin
+validation. It is an application, not a package.
+
 ---
 
 ## See also
@@ -78,6 +83,7 @@ covers the Ignite integration (config binding, startup validation, live health c
 - [Migrations](./migrations.md)
 - [Zendesk API client](./zendesk-client.md)
 - [Zendesk Spark](../ignite/sparks/zendesk.md)
+- [Zendesk MCP server](./zendesk-mcp-server.md)
 - [Transactional Outbox — EF Core additions](../additions/entity-framework-core.md)
 - [MassTransit additions](../additions/masstransit.md)
 - [Entity Framework Core Spark](../ignite/sparks/entity-framework-core.md)

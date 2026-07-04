@@ -60,4 +60,39 @@ public class McpExecutionModeAccessorTests
 
         Assert.Equal(McpExecutionMode.Default, accessor.EffectiveMode);
     }
+
+    [Fact]
+    public void EffectiveMode_Honors_Duplicated_Header_Values()
+    {
+        // A request carrying the header twice (client retry, proxy injection) must still tighten — a naive
+        // ToString() would comma-join the values into an unparseable string and silently drop the request.
+        var options = new McpOptions { Execution = { Mode = McpExecutionMode.Default } };
+        var context = new DefaultHttpContext();
+        context.Request.Headers[options.Execution.HeaderName] = new[] { "read-only", "read-only" };
+
+        var accessor = new McpExecutionModeAccessor(new HttpContextAccessor { HttpContext = context },
+            new StaticOptionsMonitor<McpOptions>(options));
+
+        Assert.Equal(McpExecutionMode.ReadOnly, accessor.EffectiveMode);
+    }
+
+    [Fact]
+    public void EffectiveMode_Fails_Closed_On_Unparseable_Header()
+    {
+        var accessor = CreateAccessor(new McpOptions { Execution = { Mode = McpExecutionMode.Default } },
+            "garbage");
+
+        Assert.Equal(McpExecutionMode.ReadOnly, accessor.EffectiveMode);
+    }
+
+    [Fact]
+    public void EffectiveMode_Uses_Baseline_Without_HttpContext()
+    {
+        // Outside a request (background work), the configured baseline applies.
+        var accessor = new McpExecutionModeAccessor(new HttpContextAccessor { HttpContext = null },
+            new StaticOptionsMonitor<McpOptions>(
+                new McpOptions { Execution = { Mode = McpExecutionMode.DryRun } }));
+
+        Assert.Equal(McpExecutionMode.DryRun, accessor.EffectiveMode);
+    }
 }

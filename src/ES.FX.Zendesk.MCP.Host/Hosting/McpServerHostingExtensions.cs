@@ -34,12 +34,23 @@ public static class McpServerHostingExtensions
             .WithMetrics(metrics => metrics.AddMeter(McpTelemetry.MeterName));
 
         // Materialize options now for registration-time transport configuration.
-        var options = new McpOptions();
-        builder.Configuration.GetSection(McpOptions.SectionKey).Bind(options);
+        var options = builder.GetMcpOptions();
 
         return builder.Services
             .AddMcpServer()
             .WithHttpTransport(transport => transport.Stateless = options.Stateless);
+    }
+
+    /// <summary>
+    ///     Reads the <see cref="McpOptions" /> from configuration at registration time — for decisions that must
+    ///     be made before the container is built (transport shape, conditional tool registration). Runtime code
+    ///     should use the bound <see cref="IOptionsMonitor{TOptions}" /> instead.
+    /// </summary>
+    public static McpOptions GetMcpOptions(this IHostApplicationBuilder builder)
+    {
+        var options = new McpOptions();
+        builder.Configuration.GetSection(McpOptions.SectionKey).Bind(options);
+        return options;
     }
 
     /// <summary>
@@ -50,6 +61,11 @@ public static class McpServerHostingExtensions
     public static WebApplication MapZendeskMcp(this WebApplication app)
     {
         var options = app.Services.GetRequiredService<IOptions<McpOptions>>().Value;
+
+        // MCP transport spec: validate Origin on all incoming connections (DNS-rebinding protection). The
+        // endpoint prefix is frozen to the exact route MapMcp is mapped at below.
+        app.UseMiddleware<McpOriginValidationMiddleware>(options.Endpoint);
+
         app.MapMcp(options.Endpoint);
         return app;
     }

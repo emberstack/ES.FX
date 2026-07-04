@@ -1,0 +1,155 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Reflection;
+using System.Text;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using ModelContextProtocol.Server;
+
+namespace ES.FX.Zendesk.MCP.Host.Tests.Hosting;
+
+/// <summary>
+///     Boots the REAL host (Program.cs) via <see cref="WebApplicationFactory{TEntryPoint}" /> to cover behavior
+///     unit tests cannot: tool registration drift, conditional write-tool registration, the MCP endpoint mapping,
+///     Origin validation, and the execution-mode header travelling through the request pipeline.
+/// </summary>
+public class McpHostIntegrationTests
+{
+    private static WebApplicationFactory<Program> CreateFactory(Dictionary<string, string?>? settings = null) =>
+        new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            // Never "Development": dev machines keep real secrets in appsettings.Development.json.
+            builder.UseEnvironment("Testing");
+            builder.ConfigureAppConfiguration((_, configuration) =>
+            {
+                var merged = new Dictionary<string, string?>
+                {
+                    ["Ignite:Zendesk:Subdomain"] = "unit-tests",
+                    ["Ignite:Zendesk:OAuth:ClientId"] = "unit-tests-client",
+                    ["Ignite:Zendesk:OAuth:ClientSecret"] = "unit-tests-secret"
+                };
+                foreach (var setting in settings ?? []) merged[setting.Key] = setting.Value;
+                configuration.AddInMemoryCollection(merged);
+            });
+        });
+
+    /// <summary>Every tool declared in the host assembly, keyed by MCP tool name.</summary>
+    private static Dictionary<string, McpServerToolAttribute> DeclaredTools()
+    {
+        var attributes = typeof(Program).Assembly.GetTypes()
+            .Where(type => type.GetCustomAttribute<McpServerToolTypeAttribute>() is not null)
+            .SelectMany(type => type.GetMethods(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+            .Select(method => method.GetCustomAttribute<McpServerToolAttribute>())
+            .Where(attribute => attribute is not null)
+            .Cast<McpServerToolAttribute>()
+            .ToList();
+
+        Assert.All(attributes, attribute => Assert.False(string.IsNullOrWhiteSpace(attribute.Name),
+            "Every [McpServerTool] must set an explicit snake_case Name."));
+        return attributes.ToDictionary(attribute => attribute.Name!, attribute => attribute);
+    }
+
+    private static HashSet<string> RegisteredTools(WebApplicationFactory<Program> factory) =>
+        factory.Services.GetServices<McpServerTool>().Select(tool => tool.ProtocolTool.Name).ToHashSet();
+
+    private static HttpRequestMessage McpRequest(string body, string path = "/")
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, path)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+        return request;
+    }
+
+    [Fact]
+    public void Every_Declared_Tool_Is_Registered()
+    {
+        // Drift guard: a new [McpServerToolType] class that is not wired into Program.cs (WithTools<T>) fails here.
+        using var factory = CreateFactory();
+
+        var declared = DeclaredTools().Keys.ToHashSet();
+        var registered = RegisteredTools(factory);
+
+        Assert.Empty(declared.Except(registered));
+        Assert.Empty(registered.Except(declared));
+    }
+
+    [Fact]
+    public void ReadOnly_Baseline_Registers_Only_Read_Tools()
+    {
+        // With a ReadOnly baseline the header can only tighten, so write tools could never execute — they
+        // must not even be listed. The baseline is read at REGISTRATION time in Program.cs, which runs before
+        // WebApplicationFactory can inject its configuration, so the environment-variable provider (read by
+        // WebApplication.CreateBuilder itself) is the only seam that reaches it. Tests within a class run
+        // sequentially, so the process-wide variable cannot leak into the sibling factory tests.
+        Environment.SetEnvironmentVariable("Mcp__Execution__Mode", "ReadOnly");
+        try
+        {
+            using var factory = CreateFactory();
+
+            var declared = DeclaredTools();
+            var registered = RegisteredTools(factory);
+            var declaredReadOnly = declared.Where(tool => tool.Value.ReadOnly).Select(tool => tool.Key).ToHashSet();
+
+            Assert.Empty(declaredReadOnly.Except(registered));
+            Assert.Empty(registered.Except(declaredReadOnly));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("Mcp__Execution__Mode", null);
+        }
+    }
+
+    [Fact]
+    public async Task Mcp_Endpoint_Accepts_Initialize()
+    {
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.SendAsync(McpRequest(
+            """{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"integration-tests","version":"1.0.0"}}}"""),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(response.IsSuccessStatusCode);
+    }
+
+    [Fact]
+    public async Task Mcp_Endpoint_Rejects_Unknown_Browser_Origin()
+    {
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var request = McpRequest(
+            """{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"integration-tests","version":"1.0.0"}}}""");
+        request.Headers.Add("Origin", "https://evil.example");
+
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Execution_Mode_Header_Tightens_To_ReadOnly_Through_The_Pipeline()
+    {
+        // End-to-end: a write tool invoked with the tighten header must be rejected by the invoker guard —
+        // and never reach the Zendesk client (which would hit the network).
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var request = McpRequest(
+            """{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"zendesk_tickets_delete","arguments":{"id":1}}}""");
+        request.Headers.Add("X-Mcp-Execution-Mode", "read-only");
+
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(response.IsSuccessStatusCode);
+        Assert.Contains("read-only", body);
+        Assert.Contains("NOT performed", body);
+    }
+}

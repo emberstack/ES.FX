@@ -22,9 +22,13 @@ public sealed class ZendeskGroupTools(IZendeskClient zendeskApiClient)
         [Description(
             "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 100,
+        [Description(
+            "Sideloads to resolve inline as sibling arrays: \"users\" returns each group's members in the same " +
+            "roundtrip, avoiding per-group zendesk_groups_memberships calls.")]
+        string[]? include = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Groups.ListAsync(page, perPage, cancellationToken: cancellationToken));
+            zendeskApiClient.Groups.ListAsync(page, perPage, include: include, cancellationToken: cancellationToken));
 
     /// <summary>Returns a Zendesk group by id.</summary>
     [McpServerTool(Name = "zendesk_groups_read", ReadOnly = true, OpenWorld = true)]
@@ -41,7 +45,8 @@ public sealed class ZendeskGroupTools(IZendeskClient zendeskApiClient)
     [McpServerTool(Name = "zendesk_groups_memberships", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists the memberships (agents) of a group — the agents a ticket routed to this group can be assigned to. " +
-        "Each membership carries a user_id; resolve names with zendesk_users_read or zendesk_users_read_many. Read-only.")]
+        "Each membership carries a user_id; prefer the \"users\" sideload (include) to resolve names in this call " +
+        "instead of following up with zendesk_users_read_many. Read-only.")]
     public Task<ZendeskGroupMembershipsResult> Memberships(
         [Description("The numeric Zendesk group id.")]
         long groupId,
@@ -50,8 +55,53 @@ public sealed class ZendeskGroupTools(IZendeskClient zendeskApiClient)
         [Description(
             "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 100,
+        [Description(
+            "Sideloads to resolve ids inline in one call: any of \"users\", \"groups\". Returned as sibling arrays.")]
+        string[]? include = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Groups.GetMembershipsAsync(groupId, page, perPage,
+            zendeskApiClient.Groups.GetMembershipsAsync(groupId, page, perPage, include: include,
                 cancellationToken: cancellationToken));
+
+    /// <summary>Lists the groups assignable to tickets for the current agent.</summary>
+    [McpServerTool(Name = "zendesk_groups_assignable", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists the Zendesk groups assignable to tickets for the authenticated agent — use it to pick a valid " +
+        "group_id when routing a ticket, instead of guessing from zendesk_groups_list. Offset pagination: " +
+        "'count'/'next_page' indicate more pages. Read-only.")]
+    public Task<ZendeskGroupsResult> Assignable(
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+        int? perPage = null,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Groups.GetAssignableAsync(page, perPage, cancellationToken: cancellationToken));
+
+    /// <summary>Returns the approximate group count.</summary>
+    [McpServerTool(Name = "zendesk_groups_count", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Returns the number of Zendesk groups. The value is cached and approximate above 100,000 (refreshed roughly " +
+        "every 24 hours; 'refreshed_at' reports the cache time and may be null while Zendesk recomputes). Read-only.")]
+    public Task<ZendeskCount> Count(CancellationToken cancellationToken)
+        => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Groups.CountAsync(cancellationToken));
+
+    /// <summary>Lists the users of a group.</summary>
+    [McpServerTool(Name = "zendesk_groups_users", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists the users (agents) of a Zendesk group as full user records — a one-call alternative to " +
+        "zendesk_groups_memberships followed by zendesk_users_read_many when only the users matter. Offset " +
+        "pagination: 'count'/'next_page' indicate more pages. Read-only.")]
+    public Task<ZendeskUsersResult> Users(
+        [Description("The numeric Zendesk group id.")]
+        long groupId,
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+        int? perPage = null,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Groups.GetUsersAsync(groupId, page, perPage, cancellationToken: cancellationToken));
 }

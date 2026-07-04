@@ -54,9 +54,13 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
     public Task<ZendeskUsersResult> ReadMany(
         [Description("The numeric Zendesk user ids to resolve.")]
         long[] ids,
-        CancellationToken cancellationToken)
+        [Description(
+            "Sideloads to resolve inline as sibling arrays (merged and de-duplicated across batches): any of " +
+            "\"organizations\", \"groups\", \"identities\".")]
+        string[]? include = null,
+        CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Users.GetManyAsync(ids, cancellationToken: cancellationToken));
+            zendeskApiClient.Users.GetManyAsync(ids, include: include, cancellationToken: cancellationToken));
 
     /// <summary>Returns the tickets a user has requested (their ticket history).</summary>
     [McpServerTool(Name = "zendesk_users_requested_tickets", ReadOnly = true, OpenWorld = true)]
@@ -77,4 +81,169 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
             zendeskApiClient.Users.GetRequestedTicketsAsync(userId, page, perPage, include, cancellationToken));
+
+    /// <summary>Lists Zendesk users, optionally filtered by role.</summary>
+    [McpServerTool(Name = "zendesk_users_list", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists Zendesk users, optionally filtered by role (\"end-user\", \"agent\", or \"admin\"). Prefer " +
+        "zendesk_users_search or zendesk_users_autocomplete when looking for a specific person. Cursor pagination: " +
+        "pass pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. Read-only.")]
+    public Task<ZendeskUsersResult> List(
+        [Description("Optional role filter: \"end-user\", \"agent\", or \"admin\".")]
+        string? role = null,
+        [Description("The cursor page size (max 100).")]
+        int? pageSize = null,
+        [Description("The cursor from the previous page's meta.after_cursor (optional).")]
+        string? afterCursor = null,
+        [Description(
+            "Sideloads to resolve ids inline in one call: any of \"organizations\", \"groups\", \"identities\". Returned as sibling arrays.")]
+        string[]? include = null,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.ListAsync(role, pageSize, afterCursor, include: include,
+                cancellationToken: cancellationToken));
+
+    /// <summary>Returns the (cached, approximate) user count, optionally filtered by role.</summary>
+    [McpServerTool(Name = "zendesk_users_count", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Returns the user count, optionally filtered by role (\"end-user\", \"agent\", or \"admin\"). Counts over " +
+        "100,000 are approximate — cached and refreshed roughly every 24 hours (refreshed_at may be null while " +
+        "Zendesk recomputes). Read-only.")]
+    public Task<ZendeskCount> Count(
+        [Description("Optional role filter: \"end-user\", \"agent\", or \"admin\".")]
+        string? role = null,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.CountAsync(role, cancellationToken: cancellationToken));
+
+    /// <summary>Suggests users whose name or e-mail starts with a prefix.</summary>
+    [McpServerTool(Name = "zendesk_users_autocomplete", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Suggests Zendesk users whose name or e-mail starts with a prefix (minimum two characters) — a cheap " +
+        "type-ahead lookup when you have a partial name. Offset-paginated only: count/next_page indicate more pages. " +
+        "Read-only.")]
+    public Task<ZendeskUsersResult> Autocomplete(
+        [Description("The name or e-mail prefix to match (minimum two characters).")]
+        string name,
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+        int? perPage = 25,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.AutocompleteAsync(name, page, perPage, cancellationToken));
+
+    /// <summary>Returns a user's related ticket/subscription counts.</summary>
+    [McpServerTool(Name = "zendesk_users_related", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Returns a user's related information — counts of requested/assigned tickets and subscriptions. A quick " +
+        "gauge of how active a user is before pulling their full ticket lists. Read-only.")]
+    public Task<ZendeskUserRelated> Related(
+        [Description("The numeric Zendesk user id.")]
+        long userId,
+        CancellationToken cancellationToken)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.GetRelatedInformationAsync(userId, cancellationToken));
+
+    /// <summary>Lists a user's identities (e-mails, phone numbers, social handles).</summary>
+    [McpServerTool(Name = "zendesk_users_identities", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists a user's identities — e-mail addresses, phone numbers, and social handles, with primary/verified " +
+        "flags. Use to see all the contact points behind a user record. Cursor pagination: pass pageSize/afterCursor; " +
+        "the result's meta.has_more/meta.after_cursor drive continuation. Read-only.")]
+    public Task<ZendeskUserIdentitiesResult> Identities(
+        [Description("The numeric Zendesk user id.")]
+        long userId,
+        [Description("The cursor page size (max 100).")]
+        int? pageSize = null,
+        [Description("The cursor from the previous page's meta.after_cursor (optional).")]
+        string? afterCursor = null,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.GetIdentitiesAsync(userId, pageSize, afterCursor, cancellationToken));
+
+    /// <summary>Lists the groups an agent belongs to.</summary>
+    [McpServerTool(Name = "zendesk_users_groups", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists the groups an agent belongs to — the teams their tickets can be routed through. Complements " +
+        "zendesk_groups_memberships (group → agents). count/next_page indicate more pages. Read-only.")]
+    public Task<ZendeskGroupsResult> Groups(
+        [Description("The numeric Zendesk user id (an agent).")]
+        long userId,
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+        int? perPage = 100,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.GetGroupsAsync(userId, page, perPage, cancellationToken));
+
+    /// <summary>Lists the organizations a user belongs to.</summary>
+    [McpServerTool(Name = "zendesk_users_organizations", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists the organizations a user belongs to — the companies/accounts their tickets are attributed to. " +
+        "count/next_page indicate more pages. Read-only.")]
+    public Task<ZendeskOrganizationsResult> Organizations(
+        [Description("The numeric Zendesk user id.")]
+        long userId,
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+        int? perPage = 100,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.GetOrganizationsAsync(userId, page, perPage, cancellationToken));
+
+    /// <summary>Returns the tickets assigned to an agent.</summary>
+    [McpServerTool(Name = "zendesk_users_assigned_tickets", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Returns the tickets assigned to an agent — their current and past workload. count/next_page indicate more " +
+        "pages. Read-only.")]
+    public Task<ZendeskTicketsResult> AssignedTickets(
+        [Description("The numeric Zendesk user id (the assignee agent).")]
+        long userId,
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages — advance 'page'.")]
+        int? perPage = 25,
+        [Description(
+            "Sideloads to resolve ids inline in one call: any of \"users\", \"groups\", \"organizations\". Returned as sibling arrays.")]
+        string[]? include = null,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.GetAssignedTicketsAsync(userId, page, perPage, include, cancellationToken));
+
+    /// <summary>Returns the tickets a user is CC'd on.</summary>
+    [McpServerTool(Name = "zendesk_users_ccd_tickets", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Returns the tickets a user is CC'd on — issues they follow without being the requester or assignee. " +
+        "count/next_page indicate more pages. Read-only.")]
+    public Task<ZendeskTicketsResult> CcdTickets(
+        [Description("The numeric Zendesk user id (the CC'd user).")]
+        long userId,
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages — advance 'page'.")]
+        int? perPage = 25,
+        [Description(
+            "Sideloads to resolve ids inline in one call: any of \"users\", \"groups\", \"organizations\". Returned as sibling arrays.")]
+        string[]? include = null,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.GetCcdTicketsAsync(userId, page, perPage, include, cancellationToken));
+
+    /// <summary>Lists a user's tags.</summary>
+    [McpServerTool(Name = "zendesk_users_tags", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists a user's tags as plain strings. Requires user tagging to be enabled in Zendesk Support. Read-only.")]
+    public Task<ZendeskTagNamesResult> Tags(
+        [Description("The numeric Zendesk user id.")]
+        long userId,
+        CancellationToken cancellationToken)
+        => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Users.GetTagsAsync(userId, cancellationToken));
 }

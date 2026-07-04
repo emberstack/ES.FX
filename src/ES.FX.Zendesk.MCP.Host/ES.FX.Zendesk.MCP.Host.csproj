@@ -17,6 +17,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- Dev secrets must never ship in publish output (or Docker images built from it). -->
+		<Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="ModelContextProtocol.AspNetCore" />
 	</ItemGroup>
 

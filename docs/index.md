@@ -68,6 +68,7 @@ For the full walkthrough, see the [Quickstart](./getting-started/quickstart.md) 
 | Add a helper for a specific third-party library | [Additions catalog](./additions/index.md) |
 | Use the core error-handling and primitive types | [Results & Problems](./development/results-and-problems.md), [Primitives](./development/primitives.md) |
 | Use a standalone feature library | [Transactional Outbox](./libraries/transactional-outbox.md), [Migrations](./libraries/migrations.md), [Zendesk client](./libraries/zendesk-client.md) |
+| Expose Zendesk to an AI agent (MCP server) | [Zendesk MCP server](./libraries/zendesk-mcp-server.md) |
 | Build, test, or contribute to the framework | [Development guide](./development/index.md) |
 
 ## See also

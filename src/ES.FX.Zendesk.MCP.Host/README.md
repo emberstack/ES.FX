@@ -1,7 +1,8 @@
 # ES.FX.Zendesk.MCP.Host
 
 A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that exposes Zendesk Support as
-namespaced MCP tools. Built on **ES.FX.Ignite** and the official
+namespaced MCP tools — the **full read and write surface** of the `ES.FX.Zendesk` client. Built on
+**ES.FX.Ignite** and the official
 [`ModelContextProtocol.AspNetCore`](https://www.nuget.org/packages/ModelContextProtocol.AspNetCore) SDK, served
 over the Streamable HTTP transport.
 
@@ -14,59 +15,62 @@ over the Streamable HTTP transport.
 
 ## Tools
 
-Tools are namespaced `zendesk_{resource}_{verb}` to mirror the Zendesk API.
+**168 tools** namespaced `zendesk_{resource}_{verb}`, mirroring the Zendesk API: **81 read tools**
+(`ReadOnly = true`) and **87 write tools** (`ReadOnly = false`, with truthful `Destructive`/`Idempotent`
+annotations). Write tools are gated by the [execution mode](#execution-modes-read-only--dry-run) and are **not
+registered at all** when the configured baseline is `ReadOnly`, so a read-only deployment advertises a purely
+read-only tool list.
 
-All implemented tools are **read-only** (`ReadOnly = true, OpenWorld = true`). Search/list tools default `perPage`
-to 25 (100 for `ticket_fields_list`, `groups_list`, `groups_memberships`) and expose `count` + `next_page` for
-pagination.
+Conventions shared by all tools:
 
-A read ticket carries requester/assignee/group/organization ids, tags, collaborators/CCs, **custom field values**,
-satisfaction rating, and problem/incident links. Resolve the people ids with `zendesk_users_read_many`, the group id
-with `zendesk_groups_read`, and decode custom fields with `zendesk_ticket_fields_list`. To avoid per-id round-trips,
-`zendesk_tickets_search`, `zendesk_organizations_tickets`, and `zendesk_users_requested_tickets` accept an
-`include` sideload (`users`, `groups`, `organizations`) returned as sibling arrays.
+- **Pagination** — offset-paginated tools take `page`/`perPage` and return `count` + `next_page` (search-style
+  tools default `perPage` to 25); cursor-paginated tools take `pageSize`/`afterCursor` and return
+  `meta.has_more` + `meta.after_cursor`. `zendesk_ticket_fields_list` takes no paging parameters and returns
+  the full set in one call (a documented Zendesk exception).
+- **Sideloads** — list/read tools accept `include` (e.g. `users`, `groups`, `organizations`) where the Zendesk
+  endpoint supports it, returning sibling arrays that remove per-id follow-up lookups.
+- **Errors** — Zendesk failures surface to the agent with the real HTTP status and response body (never the
+  SDK's opaque generic error), including `Retry-After` semantics on 429s.
+- **Bulk writes** — bulk operations (≤100 items unless noted) return a `job_status`; poll
+  `zendesk_job_statuses_read` until `completed`/`failed`.
 
-**Users & groups**
-| Tool | Zendesk endpoint |
+### Read tools (81)
+
+| Area | Tools (`zendesk_…`) |
 | --- | --- |
-| `zendesk_users_whoami` | `GET /api/v2/users/me.json` |
-| `zendesk_users_read` | `GET /api/v2/users/{id}.json` |
-| `zendesk_users_read_many` | `GET /api/v2/users/show_many.json?ids=` (batch id→name, ≤100) |
-| `zendesk_users_search` | `GET /api/v2/users/search.json` |
-| `zendesk_users_requested_tickets` | `GET /api/v2/users/{id}/tickets/requested.json` |
-| `zendesk_groups_list` | `GET /api/v2/groups.json` (resolve a `group_id` to a name) |
-| `zendesk_groups_read` | `GET /api/v2/groups/{id}.json` |
-| `zendesk_groups_memberships` | `GET /api/v2/groups/{id}/memberships.json` (agents in a group) |
+| Users (15) | `users_whoami`, `users_read`, `users_read_many`, `users_search`, `users_requested_tickets`, `users_list`, `users_count`, `users_autocomplete`, `users_related`, `users_identities`, `users_groups`, `users_organizations`, `users_assigned_tickets`, `users_ccd_tickets`, `users_tags` |
+| Tickets (15) | `tickets_read`, `tickets_search`, `tickets_comments`, `tickets_audits`, `tickets_metrics`, `tickets_metric_events`, `tickets_incidents`, `tickets_side_conversations`, `tickets_list`, `tickets_read_many`, `tickets_count`, `tickets_read_by_external_id`, `tickets_collaborators`, `tickets_comments_count`, `tickets_incremental` |
+| Organizations (11) | `organizations_read`, `organizations_tickets`, `organizations_list`, `organizations_count`, `organizations_read_many`, `organizations_search`, `organizations_autocomplete`, `organizations_users`, `organizations_memberships`, `organizations_merge_status`, `organizations_tags` |
+| Groups (6) | `groups_list`, `groups_read`, `groups_memberships`, `groups_assignable`, `groups_count`, `groups_users` |
+| Help Center (7) | `articles_search`, `articles_read`, `articles_list`, `articles_sections`, `articles_section_read`, `articles_categories`, `articles_category_read` |
+| Ticket fields (3) | `ticket_fields_list`, `ticket_fields_read`, `ticket_fields_options` |
+| Macros (3) | `macros_list`, `macros_read`, `macros_list_active` |
+| Forms (2) | `forms_search`, `forms_read` |
+| Views (4) | `views_list`, `views_read`, `views_tickets`, `views_count` |
+| Search (2) | `search_count`, `search_export_tickets` (cursor-only deep export, no 1k cap) |
+| Brands (2) | `brands_list`, `brands_read` |
+| Custom statuses (2) | `custom_statuses_list`, `custom_statuses_read` |
+| Job statuses (3) | `job_statuses_list`, `job_statuses_read`, `job_statuses_read_many` |
+| Tags (3) | `tags_list`, `tags_count`, `tags_autocomplete` |
+| Suspended tickets (2) | `suspended_tickets_list`, `suspended_tickets_read` |
+| Attachments (1) | `attachments_read` (authenticated content download; text or size-capped base64) |
 
-**Tickets**
-| Tool | Zendesk endpoint |
+### Write tools (87)
+
+| Area | Tools (`zendesk_…`) |
 | --- | --- |
-| `zendesk_tickets_read` | `GET /api/v2/tickets/{id}.json` (custom fields, CCs, satisfaction, problem/incident links) |
-| `zendesk_tickets_search` | `GET /api/v2/search.json?query=type:ticket ...` (`include=tickets(users,groups,organizations)`) |
-| `zendesk_tickets_comments` | `GET /api/v2/tickets/{id}/comments.json` (`bodyFormat` = plain \| rich \| both) |
-| `zendesk_tickets_audits` | `GET /api/v2/tickets/{id}/audits.json` (change history) |
-| `zendesk_tickets_metrics` | `GET /api/v2/tickets/{id}/metrics.json` (aggregate timing / reopens) |
-| `zendesk_tickets_metric_events` | `GET /api/v2/incremental/ticket_metric_events.json?start_time=` (SLA breach timeline export; filter by `ticket_id` — Zendesk has no per-ticket variant) |
-| `zendesk_tickets_incidents` | `GET /api/v2/tickets/{id}/incidents.json` (blast radius of a problem) |
-| `zendesk_tickets_side_conversations` | `GET /api/v2/tickets/{id}/side_conversations.json` (vendor/escalation threads; add-on) |
-| `zendesk_attachments_read` | `GET /api/v2/attachments/{id}.json` → authenticated content (text or size-capped base64) |
-
-**Organizations, Help Center, schema & macros**
-| Tool | Zendesk endpoint |
-| --- | --- |
-| `zendesk_organizations_read` | `GET /api/v2/organizations/{id}.json` |
-| `zendesk_organizations_tickets` | `GET /api/v2/organizations/{id}/tickets.json` |
-| `zendesk_articles_search` | `GET /api/v2/help_center/articles/search.json` (knowledge base) |
-| `zendesk_articles_read` | `GET /api/v2/help_center/articles/{id}.json` |
-| `zendesk_ticket_fields_list` | `GET /api/v2/ticket_fields.json` (decode custom fields) |
-| `zendesk_ticket_fields_read` | `GET /api/v2/ticket_fields/{id}.json` |
-| `zendesk_macros_list` | `GET /api/v2/macros.json` (canned responses) |
-| `zendesk_macros_read` | `GET /api/v2/macros/{id}.json` |
-| `zendesk_forms_search` | `GET /api/v2/ticket_forms.json` (lists all forms) |
-| `zendesk_forms_read` | `GET /api/v2/ticket_forms/{id}.json` |
-
-**Planned (write)** — not built: `zendesk_tickets_write`, `zendesk_tickets_reply_public`,
-`zendesk_tickets_reply_internal` (will be `readOnlyHint:false`, gated by execution mode, and require OAuth `write` scope).
+| Tickets (21) | `tickets_create`, `tickets_create_many`, `tickets_update` (public reply / internal note via `comment.public`; 409 optimistic locking via `SafeUpdate`/`UpdatedStamp`), `tickets_update_many`, `tickets_update_many_batch`, `tickets_delete`, `tickets_delete_many`, `tickets_merge`, `tickets_mark_spam`, `tickets_mark_spam_many`, `tickets_restore`, `tickets_restore_many`, `tickets_delete_permanently`, `tickets_delete_permanently_many`, `tickets_tags_set`, `tickets_tags_add`, `tickets_tags_remove`, `tickets_comment_make_private`, `tickets_comment_attachment_redact`, `tickets_import`, `tickets_import_many` |
+| Users (17) | `users_create`, `users_create_or_update`, `users_create_many`, `users_create_or_update_many`, `users_update`, `users_update_many`, `users_update_many_batch`, `users_merge`, `users_delete`, `users_delete_many`, `users_delete_permanently`, `users_identities_create`, `users_identities_update`, `users_identities_make_primary`, `users_identities_verify`, `users_identities_request_verification`, `users_identities_delete` |
+| Organizations (14) | `organizations_create`, `organizations_create_many`, `organizations_create_or_update`, `organizations_update`, `organizations_update_many`, `organizations_update_many_batch`, `organizations_delete`, `organizations_delete_many`, `organizations_merge` (poll `organizations_merge_status`), `organizations_memberships_create`, `organizations_memberships_create_many`, `organizations_memberships_delete`, `organizations_memberships_delete_many`, `organizations_memberships_make_default` |
+| Groups (8) | `groups_create`, `groups_update`, `groups_delete`, `groups_memberships_create`, `groups_memberships_create_many`, `groups_memberships_delete`, `groups_memberships_delete_many`, `groups_memberships_make_default` |
+| Forms (4) | `forms_create`, `forms_update`, `forms_delete`, `forms_clone` |
+| Ticket fields (5) | `ticket_fields_create`, `ticket_fields_update`, `ticket_fields_delete`, `ticket_fields_options_set`, `ticket_fields_options_delete` |
+| Macros (3) | `macros_create`, `macros_update`, `macros_delete` |
+| Views (3) | `views_create`, `views_update`, `views_delete` |
+| Brands (3) | `brands_create`, `brands_update`, `brands_delete` |
+| Custom statuses (3) | `custom_statuses_create`, `custom_statuses_update`, `custom_statuses_delete` |
+| Suspended tickets (4) | `suspended_tickets_recover`, `suspended_tickets_recover_many`, `suspended_tickets_delete`, `suspended_tickets_delete_many` |
+| Uploads (2) | `uploads_create` (base64 content → upload token for ticket comments), `uploads_delete` |
 
 ## Configuration
 
@@ -82,7 +86,7 @@ environment-overridable (`__` maps to `:`, e.g. `Ignite__Zendesk__OAuth__ClientS
       "OAuth": {                        // OAuth 2.0 client_credentials (confidential client)
         "ClientId": "***",              // Zendesk OAuth client "Unique Identifier"
         "ClientSecret": "***",
-        "Scope": "read"                 // space-separated; "read write" / resource scopes for writes
+        "Scope": "read"                 // use "read write" to enable the write tools
       },
       "Settings": {
         "HealthChecks": { "Enabled": true },   // live GET /users/me on /health/ready
@@ -93,6 +97,7 @@ environment-overridable (`__` maps to `:`, e.g. `Ignite__Zendesk__OAuth__ClientS
   "Mcp": {
     "Endpoint": "",                         // route prefix for the MCP endpoints ("" = root)
     "Stateless": true,                      // Streamable HTTP, horizontally scalable
+    "AllowedOrigins": [],                   // browser Origins allowed through (empty = reject all; see Security)
     "Execution": {
       "Mode": "Default",                    // Default | DryRun | ReadOnly (gates write tools)
       "AllowHeaderOverride": true,
@@ -117,13 +122,15 @@ tokens after 2026-10-27; all removed 2027-04-30), so this server authenticates w
    generated **Secret** (`ClientSecret`).
 2. Create it under a **dedicated, least-privilege admin identity** — the token inherits *that user's* permissions
    (Zendesk has no separate service-account entity for this grant).
-3. Set `OAuth:ClientId`, `OAuth:ClientSecret`, and `OAuth:Scope` (default `read`).
+3. Set `OAuth:ClientId`, `OAuth:ClientSecret`, and `OAuth:Scope` (default `read`; the write tools need
+   `read write`).
 
 The client `POST`s `https://{subdomain}.zendesk.com/oauth/tokens` (or `/oauth/tokens` on the `BaseUrl` host when
 overridden; `grant_type=client_credentials`), caches the returned bearer token, refreshes it proactively before
 expiry (default ~30 min), and retries once on a `401`.
 
-Provide credentials for local development via `appsettings.Development.json` (git-ignored) or user secrets:
+Provide credentials for local development via `appsettings.Development.json` (git-ignored, excluded from
+`dotnet publish` and from the Docker build context) or user secrets:
 
 ```bash
 dotnet user-secrets set "Ignite:Zendesk:Subdomain" "acme"
@@ -138,11 +145,14 @@ The server enforces a baseline **execution mode** and a request may only ever ma
 | Mode | Read tools | Write tools |
 | --- | --- | --- |
 | `Default` | run | perform changes |
-| `DryRun` | run | accepted, **no changes made** |
-| `ReadOnly` | run | **rejected** |
+| `DryRun` | run | **no changes made** — return an explicit `{"status":"dry_run","executed":false,…}` payload describing what would have happened, echoing the request |
+| `ReadOnly` | run | **not registered** (baseline) / **rejected** (per-request header) |
 
 A per-request header (`X-Mcp-Execution-Mode: dry-run` \| `read-only`) can tighten the mode but never relax the
-configured baseline — a `ReadOnly` deployment can never be talked into writing.
+configured baseline — a `ReadOnly` deployment can never be talked into writing. The header check **fails
+closed**: a present-but-unrecognized value resolves to `ReadOnly` rather than silently falling back to the
+(less restrictive) baseline. Every write tool routes through a single guard
+(`ZendeskToolInvoker.InvokeWriteAsync`), so the mode guarantees hold uniformly.
 
 ## Security (deployment)
 
@@ -154,6 +164,11 @@ Before exposing this server:
 - Bind it to a trusted network only (e.g. a private interface / service mesh), **or**
 - Front it with authentication (an API gateway, mTLS, or the MCP SDK's bearer/OAuth resource-server support) and
   add `.RequireAuthorization()` to the mapped endpoint.
+
+**Origin validation (DNS rebinding).** Per the MCP Streamable HTTP transport specification, the host validates
+the `Origin` header on incoming requests: requests carrying an `Origin` not present in `Mcp:AllowedOrigins` are
+rejected with `403`. The default (empty list) rejects **all** browser origins; non-browser clients (MCP agents,
+CLIs) send no `Origin` header and always pass. Add explicit origins only if a browser-based client must connect.
 
 The Ignite health endpoints (`/health/live`, `/health/ready`) are likewise unauthenticated; keep them off any
 public interface.
@@ -170,13 +185,17 @@ Health endpoints (from Ignite): `/health/live`, `/health/ready` (the latter live
 
 ```bash
 # build from the repository root (build context = repo root)
-docker build -f src/ES.FX.Zendesk.MCP.Host/Dockerfile -t es-mcp-zendesk .
+docker build -f src/ES.FX.Zendesk.MCP.Host/Dockerfile -t es-fx-zendesk-mcp .
 docker run --rm -p 8080:8080 \
   -e Ignite__Zendesk__Subdomain=acme \
   -e Ignite__Zendesk__OAuth__ClientId=*** \
   -e Ignite__Zendesk__OAuth__ClientSecret=*** \
-  es-mcp-zendesk
+  es-fx-zendesk-mcp
 ```
+
+The image never contains development secrets: `appsettings.Development.json` is excluded from the build context
+(`.dockerignore`) *and* from publish output (`CopyToPublishDirectory=Never`). Configuration enters the container
+via environment variables or your orchestrator's secret store.
 
 ## Observability
 

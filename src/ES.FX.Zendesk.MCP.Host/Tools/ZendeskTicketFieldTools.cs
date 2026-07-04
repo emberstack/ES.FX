@@ -29,4 +29,22 @@ public sealed class ZendeskTicketFieldTools(IZendeskClient zendeskApiClient)
         long id,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.TicketFields.GetByIdAsync(id, cancellationToken));
+
+    /// <summary>Lists the custom options of a drop-down ticket field.</summary>
+    [McpServerTool(Name = "zendesk_ticket_fields_options", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists the custom options of a drop-down ticket field (value→label pairs in the custom_field_options " +
+        "envelope) — use to see the allowed values before setting the field on a ticket or editing options with " +
+        "zendesk_ticket_fields_options_set. Read-only.")]
+    public Task<ZendeskCustomFieldOptionsResult> Options(
+        [Description("The numeric ticket field id (must be a drop-down/tagger field).")]
+        long ticketFieldId,
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+        int? perPage = 100,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.TicketFields.GetOptionsAsync(ticketFieldId, page, perPage, cancellationToken));
 }

@@ -293,4 +293,4 @@ public sealed class SgPerson
 [JsonSerializable(typeof(SgPerson))]
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(int))]
-internal class SgJsonContext : JsonSerializerContext;
+internal partial class SgJsonContext : JsonSerializerContext;

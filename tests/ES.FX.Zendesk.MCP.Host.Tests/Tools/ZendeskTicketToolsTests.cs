@@ -55,10 +55,28 @@ public class ZendeskTicketToolsTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
-        var result = await tools.Comments(99, 1, 25, "plain", TestContext.Current.CancellationToken);
+        var result = await tools.Comments(99, 1, 25, "plain", null, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        tickets.Verify(api => api.GetCommentsAsync(99, 1, 25, "plain", It.IsAny<IReadOnlyList<string>?>(),
+        tickets.Verify(api => api.GetCommentsAsync(99, 1, 25, "plain", null,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Comments_Passes_Sideloads_Through()
+    {
+        var expected = new ZendeskTicketCommentsResult { Count = 3 };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.GetCommentsAsync(99, null, 25, "plain", It.IsAny<IReadOnlyList<string>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
+
+        var result = await tools.Comments(99, null, 25, "plain", ["users"],
+            TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        tickets.Verify(api => api.GetCommentsAsync(99, null, 25, "plain",
+            It.Is<IReadOnlyList<string>>(i => i != null && i.Count == 1 && i.Contains("users")),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -70,9 +88,27 @@ public class ZendeskTicketToolsTests
         tickets.Setup(api => api.GetAuditsAsync(99, null, 25, It.IsAny<IReadOnlyList<string>?>(),
             It.IsAny<CancellationToken>())).ReturnsAsync(expected);
 
-        var result = await tools.Audits(99, null, 25, TestContext.Current.CancellationToken);
+        var result = await tools.Audits(99, null, 25, null, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
+    }
+
+    [Fact]
+    public async Task Audits_Passes_Sideloads_Through()
+    {
+        var expected = new ZendeskTicketAuditsResult { Count = 2 };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.GetAuditsAsync(99, null, 25, It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        var result = await tools.Audits(99, null, 25, ["users", "groups", "organizations"],
+            TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        tickets.Verify(api => api.GetAuditsAsync(99, null, 25,
+            It.Is<IReadOnlyList<string>>(i =>
+                i != null && i.Contains("users") && i.Contains("groups") && i.Contains("organizations")),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -126,6 +162,121 @@ public class ZendeskTicketToolsTests
 
         Assert.Same(expected, result);
         tickets.Verify(api => api.GetMetricEventsAsync(1690000000, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task List_Delegates_With_Cursor_And_Sideloads()
+    {
+        var expected = new ZendeskTicketsResult { Count = 7 };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.ListAsync(50, "cursor-1", It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        var result = await tools.List(50, "cursor-1", ["users"], TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        tickets.Verify(api => api.ListAsync(50, "cursor-1",
+            It.Is<IReadOnlyList<string>>(i => i != null && i.Count == 1 && i.Contains("users")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ReadMany_Delegates_With_Ids_And_Sideloads()
+    {
+        var expected = new ZendeskTicketsResult { Count = 2 };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.GetManyAsync(It.IsAny<IReadOnlyList<long>>(), It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        var result = await tools.ReadMany([11, 22], ["comment_count"], TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        tickets.Verify(api => api.GetManyAsync(
+            It.Is<IReadOnlyList<long>>(i => i.Count == 2 && i.Contains(11) && i.Contains(22)),
+            It.Is<IReadOnlyList<string>>(i => i != null && i.Contains("comment_count")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Count_Delegates()
+    {
+        var expected = new ZendeskCount { Value = 1234 };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.CountAsync(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        var result = await tools.Count(TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+    }
+
+    [Fact]
+    public async Task ReadByExternalId_Delegates()
+    {
+        var expected = new ZendeskTicketsResult { Count = 1 };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.GetByExternalIdAsync("crm-42", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
+
+        var result = await tools.ReadByExternalId("crm-42", TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        tickets.Verify(api => api.GetByExternalIdAsync("crm-42", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Collaborators_Delegates()
+    {
+        var expected = new ZendeskUsersResult { Count = 3 };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.GetCollaboratorsAsync(99, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        var result = await tools.Collaborators(99, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+    }
+
+    [Fact]
+    public async Task CommentsCount_Delegates()
+    {
+        var expected = new ZendeskCount { Value = 12 };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.GetCommentsCountAsync(99, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        var result = await tools.CommentsCount(99, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        tickets.Verify(api => api.GetCommentsCountAsync(99, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Incremental_Delegates_With_StartTime_And_Sideloads()
+    {
+        var expected = new ZendeskIncrementalTicketsResult { EndOfStream = false, AfterCursor = "next" };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.GetIncrementalAsync(1690000000, null, It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        var result = await tools.Incremental(1690000000, null, ["users"], TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        tickets.Verify(api => api.GetIncrementalAsync(1690000000, null,
+            It.Is<IReadOnlyList<string>>(i => i != null && i.Count == 1 && i.Contains("users")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Incremental_Delegates_With_Cursor()
+    {
+        var expected = new ZendeskIncrementalTicketsResult { EndOfStream = true };
+        var (tools, tickets) = Create();
+        tickets.Setup(api => api.GetIncrementalAsync(null, "cursor-2", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
+
+        var result = await tools.Incremental(null, "cursor-2", null, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        tickets.Verify(api => api.GetIncrementalAsync(null, "cursor-2", null, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

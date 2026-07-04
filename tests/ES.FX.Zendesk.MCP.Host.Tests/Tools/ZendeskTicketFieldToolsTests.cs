@@ -41,4 +41,18 @@ public class ZendeskTicketFieldToolsTests
 
         Assert.Same(expected, field);
     }
+
+    [Fact]
+    public async Task Options_Passes_Parameters_Through()
+    {
+        var expected = new ZendeskCustomFieldOptionsResult { Count = 5 };
+        var (tools, fields) = Create();
+        fields.Setup(api => api.GetOptionsAsync(42, 1, 100, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
+
+        var result = await tools.Options(42, 1, 100, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        fields.Verify(api => api.GetOptionsAsync(42, 1, 100, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

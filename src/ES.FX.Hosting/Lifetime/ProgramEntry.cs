@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace ES.FX.Hosting.Lifetime;
@@ -46,6 +47,12 @@ public sealed class ProgramEntry(
             logger.LogDebug("Program exited controlled with message \"{message}\" and exit code {exitCode}",
                 ex.Message, ex.ExitCode);
             return ex.ExitCode;
+        }
+        catch (HostAbortedException)
+        {
+            // Design-time tooling (EF Core tools) and test hosts (WebApplicationFactory) abort the host on
+            // purpose and REQUIRE the exception to propagate out of Main to take over the captured host.
+            throw;
         }
         catch (Exception ex)
         {
@@ -100,6 +107,12 @@ public sealed class ProgramEntry(
         {
             logger.LogDebug("Program shut down gracefully in response to a shutdown signal");
             return 0;
+        }
+        catch (HostAbortedException)
+        {
+            // Design-time tooling (EF Core tools) and test hosts (WebApplicationFactory) abort the host on
+            // purpose and REQUIRE the exception to propagate out of Main to take over the captured host.
+            throw;
         }
         catch (Exception ex)
         {

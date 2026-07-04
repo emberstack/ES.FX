@@ -22,6 +22,14 @@ public class McpOptions
     public bool Stateless { get; set; } = true;
 
     /// <summary>
+    ///     Browser origins allowed to reach the MCP endpoints. Requests that carry an <c>Origin</c> header not on
+    ///     this list are rejected with <c>403</c>, as required by the MCP Streamable HTTP transport specification to
+    ///     prevent DNS-rebinding attacks. Requests without an <c>Origin</c> header (non-browser clients such as MCP
+    ///     agents) are always allowed. Defaults to empty — all browser origins are rejected.
+    /// </summary>
+    public string[] AllowedOrigins { get; set; } = [];
+
+    /// <summary>
     ///     Execution-mode options (read-only / dry-run) for write operations.
     /// </summary>
     public McpExecutionOptions Execution { get; set; } = new();

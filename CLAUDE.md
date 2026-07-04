@@ -84,7 +84,9 @@ registration, health checks, OpenTelemetry) and follows a fixed shape — study
 A newer Zendesk vertical spans the layers: `ES.FX.Zendesk` (typed Zendesk API client,
 [`docs/libraries/zendesk-client.md`](docs/libraries/zendesk-client.md)), `ES.FX.Ignite.Zendesk` (its Spark,
 [`docs/ignite/sparks/zendesk.md`](docs/ignite/sparks/zendesk.md)), and `ES.FX.Zendesk.MCP.Host` (the
-deployable MCP server app noted above; its MCP wiring is host-inline — there is no MCP Spark package).
+deployable MCP server app exposing the client as 168 read/write MCP tools,
+[`docs/libraries/zendesk-mcp-server.md`](docs/libraries/zendesk-mcp-server.md); its MCP wiring is
+host-inline — there is no MCP Spark package).
 
 ## Conventions & Build Configuration
 

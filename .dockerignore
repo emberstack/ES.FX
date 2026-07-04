@@ -19,6 +19,9 @@
 **/node_modules
 **/npm-debug.log
 **/obj
+**/appsettings.Development.json
+**/appsettings.*.local.json
+.artifacts
 **/secrets.dev.yaml
 **/values.dev.yaml
 LICENSE

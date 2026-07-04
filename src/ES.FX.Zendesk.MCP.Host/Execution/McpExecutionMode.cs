@@ -13,8 +13,8 @@ public enum McpExecutionMode
     Default = 0,
 
     /// <summary>
-    ///     Write operations are accepted and report success, but no changes are actually made. Read operations
-    ///     execute normally.
+    ///     Write operations are accepted but not executed; instead they return an explicit dry-run result
+    ///     describing the change that would have been made. Read operations execute normally.
     /// </summary>
     DryRun = 1,
 

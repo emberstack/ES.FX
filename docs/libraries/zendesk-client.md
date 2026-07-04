@@ -378,6 +378,7 @@ counts and durations for the underlying `HttpClient`.
 ## See also
 
 - [Zendesk Spark](../ignite/sparks/zendesk.md) — the Ignite integration: config binding, health check, tracing.
+- [Zendesk MCP server](./zendesk-mcp-server.md) — a deployable MCP host exposing this client as 168 agent tools.
 - [Framework libraries](./index.md)
 - [Ignite overview](../ignite/index.md)
 - [Zendesk API reference](https://developer.zendesk.com/api-reference/)

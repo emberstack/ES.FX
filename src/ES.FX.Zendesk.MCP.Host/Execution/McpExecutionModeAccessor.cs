@@ -20,8 +20,14 @@ internal sealed class McpExecutionModeAccessor(
         get
         {
             var execution = options.CurrentValue.Execution;
-            var headerValue = httpContextAccessor.HttpContext?.Request.Headers[execution.HeaderName].ToString();
-            return McpExecutionModeResolver.Resolve(execution.Mode, headerValue, execution.AllowHeaderOverride);
+            var httpContext = httpContextAccessor.HttpContext;
+            if (httpContext is null) return execution.Mode;
+
+            // Pass every header value individually; ToString() would comma-join duplicates into an
+            // unparseable single value and silently drop an explicitly requested restriction.
+            var headerValues = httpContext.Request.Headers[execution.HeaderName];
+            return McpExecutionModeResolver.Resolve(execution.Mode, (IEnumerable<string?>)headerValues,
+                execution.AllowHeaderOverride);
         }
     }
 }

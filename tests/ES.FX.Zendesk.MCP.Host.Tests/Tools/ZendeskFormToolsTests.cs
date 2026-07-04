@@ -20,14 +20,27 @@ public class ZendeskFormToolsTests
     {
         var expected = new ZendeskTicketFormsResult { Count = 2 };
         var (tools, forms) = Create();
-        forms.Setup(api => api.ListAsync(It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        forms.Setup(api => api.ListAsync(null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
-        var result = await tools.Search(TestContext.Current.CancellationToken);
+        var result = await tools.Search(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        forms.Verify(api => api.ListAsync(It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        forms.Verify(api => api.ListAsync(null, null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Search_Passes_Paging_Parameters_Through()
+    {
+        var expected = new ZendeskTicketFormsResult { Count = 2 };
+        var (tools, forms) = Create();
+        forms.Setup(api => api.ListAsync(50, "cursor-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
+
+        var result = await tools.Search(50, "cursor-1", TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        forms.Verify(api => api.ListAsync(50, "cursor-1", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

@@ -275,6 +275,7 @@ the status code on failure. Response bodies are never logged.
 ## See also
 
 - [Zendesk API client](../../libraries/zendesk-client.md) — the client surface, OAuth model, and error handling.
+- [Zendesk MCP server](../../libraries/zendesk-mcp-server.md) — a deployable MCP host built on this Spark.
 - [Ignite overview](../index.md)
 - [Sparks catalog](./index.md)
 - [Azure Key Vault Secrets Spark](./azure-keyvault-secrets.md) — for the OAuth client secret.

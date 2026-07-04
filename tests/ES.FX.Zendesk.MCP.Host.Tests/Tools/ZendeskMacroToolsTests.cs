@@ -39,4 +39,17 @@ public class ZendeskMacroToolsTests
 
         Assert.Same(expected, macro);
     }
+
+    [Fact]
+    public async Task ListActive_Delegates()
+    {
+        var expected = new ZendeskMacrosResult { Count = 3 };
+        var (tools, macros) = Create();
+        macros.Setup(api => api.ListActiveAsync(2, 25, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+
+        var result = await tools.ListActive(2, 25, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        macros.Verify(api => api.ListActiveAsync(2, 25, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

@@ -11,14 +11,20 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 [McpServerToolType]
 public sealed class ZendeskFormTools(IZendeskClient zendeskApiClient)
 {
-    /// <summary>Lists all Zendesk ticket forms.</summary>
+    /// <summary>Lists Zendesk ticket forms.</summary>
     [McpServerTool(Name = "zendesk_forms_search", ReadOnly = true, OpenWorld = true)]
     [Description(
-        "Lists all Zendesk ticket forms (id, name, display name, active/default flags, and the ticket field ids on " +
-        "each form). Read-only.")]
-    public Task<ZendeskTicketFormsResult> Search(CancellationToken cancellationToken)
+        "Lists Zendesk ticket forms (id, name, display name, active/default flags, and the ticket field ids on " +
+        "each form). Cursor pagination: pass pageSize/afterCursor; the result's meta.has_more/meta.after_cursor " +
+        "drive continuation. Read-only.")]
+    public Task<ZendeskTicketFormsResult> Search(
+        [Description("The cursor page size (max 100).")]
+        int? pageSize = null,
+        [Description("The cursor from the previous page's meta.after_cursor (optional).")]
+        string? afterCursor = null,
+        CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Forms.ListAsync(cancellationToken: cancellationToken));
+            zendeskApiClient.Forms.ListAsync(pageSize, afterCursor, cancellationToken: cancellationToken));
 
     /// <summary>Returns a Zendesk ticket form by id.</summary>
     [McpServerTool(Name = "zendesk_forms_read", ReadOnly = true, OpenWorld = true)]

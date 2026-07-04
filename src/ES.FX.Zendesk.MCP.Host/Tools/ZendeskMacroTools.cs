@@ -20,10 +20,26 @@ public sealed class ZendeskMacroTools(IZendeskClient zendeskApiClient)
     public Task<ZendeskMacrosResult> List(
         [Description("The 1-based page number (optional).")]
         int? page = null,
-        [Description("Results per page (default 25, max 100).")]
+        [Description(
+            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 25,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Macros.ListAsync(page, perPage, cancellationToken));
+
+    /// <summary>Lists only the macros usable by the current agent.</summary>
+    [McpServerTool(Name = "zendesk_macros_list_active", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Lists only the active macros usable by the current agent — a pre-filtered view of zendesk_macros_list " +
+        "excluding inactive or inaccessible macros. Read-only.")]
+    public Task<ZendeskMacrosResult> ListActive(
+        [Description("The 1-based page number (optional).")]
+        int? page = null,
+        [Description(
+            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+        int? perPage = 25,
+        CancellationToken cancellationToken = default)
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Macros.ListActiveAsync(page, perPage, cancellationToken));
 
     /// <summary>Returns a single macro including its actions.</summary>
     [McpServerTool(Name = "zendesk_macros_read", ReadOnly = true, OpenWorld = true)]

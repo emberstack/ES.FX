@@ -67,13 +67,19 @@ Everything lives in the `ES.FX.Hosting.Lifetime` namespace.
 
 ## Exit codes
 
-`RunAsync` maps three outcomes onto the returned exit code:
+`RunAsync` maps these outcomes onto the returned exit code:
 
 | Outcome | Returned code | Logged as |
 | --- | --- | --- |
 | Delegate returns normally | the value your delegate returns | `Debug` — "Program completed with exit code …" |
 | Delegate throws `ControlledExitException` | `ex.ExitCode` | `Debug` — "Program exited controlled …" |
+| Delegate throws `HostAbortedException` | *(rethrown, no code)* | not logged — see below |
 | Delegate throws any other exception | `1` | `Critical` — "Program terminated unexpectedly" (with the exception) |
+
+`HostAbortedException` is deliberately **not** swallowed: design-time tooling (the EF Core tools) and test
+hosts (`WebApplicationFactory`) abort the host on purpose and require the exception to propagate out of `Main`
+to take over the captured host. Treating it as a crash would break `dotnet ef` and integration tests against
+hosts built on `ProgramEntry`.
 
 Because you return the exit code from the delegate, wire it straight into the process exit code by returning the result of `RunAsync` from your top-level statements (as in the examples on this page).
 
