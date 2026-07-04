@@ -1,6 +1,7 @@
 using ES.FX.Additions.Serilog.Lifetime;
 using ES.FX.Hosting.Lifetime;
 using Serilog;
+using Serilog.Core;
 using Serilog.Events;
 
 namespace ES.FX.Additions.Serilog.Tests;
@@ -41,7 +42,7 @@ public class ProgramEntrySerilogExtensionsTests
 
         // The helper assigns a real (non-silent) bootstrap logger to the global Log.Logger.
         Assert.NotNull(Log.Logger);
-        Assert.NotEqual(global::Serilog.Core.Logger.None, Log.Logger);
+        Assert.NotEqual(Logger.None, Log.Logger);
     }
 
     [Fact]
@@ -97,7 +98,7 @@ public class ProgramEntrySerilogExtensionsTests
         builder.UseSerilog(
             LogEventLevel.Warning,
             config => config.WriteTo.Sink(sink),
-            enableConsoleSelfLog: false);
+            false);
 
         // Log.Logger is now the configured bootstrap logger; Debug is below Warning and must be dropped.
         Log.Logger.Debug("debug-should-be-filtered");

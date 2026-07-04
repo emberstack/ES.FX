@@ -94,8 +94,8 @@ public class MigrationsServiceHostingExtensionsTests
         using var provider = builder.Services.BuildServiceProvider();
         var settings = provider.GetRequiredService<MigrationsServiceSparkSettings>();
 
-        Assert.True(boundEnabledSeenByDelegate);   // config bound before delegate ran
-        Assert.False(settings.Enabled);            // delegate override wins
+        Assert.True(boundEnabledSeenByDelegate); // config bound before delegate ran
+        Assert.False(settings.Enabled); // delegate override wins
         Assert.True(settings.ExitOnComplete);
     }
 

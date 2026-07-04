@@ -20,12 +20,14 @@ public class ZendeskFormToolsTests
     {
         var expected = new ZendeskTicketFormsResult { Count = 2 };
         var (tools, forms) = Create();
-        forms.Setup(api => api.ListAsync(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        forms.Setup(api => api.ListAsync(It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
 
         var result = await tools.Search(TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        forms.Verify(api => api.ListAsync(It.IsAny<CancellationToken>()), Times.Once);
+        forms.Verify(api => api.ListAsync(It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

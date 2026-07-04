@@ -83,10 +83,8 @@ public sealed class MultiCtorDbContext : DbContext
 public sealed class OptionsPlusExtraCtorDbContext : DbContext
 {
     public OptionsPlusExtraCtorDbContext(DbContextOptions<OptionsPlusExtraCtorDbContext> options, string extra)
-        : base(options)
-    {
+        : base(options) =>
         Extra = extra;
-    }
 
     public string Extra { get; }
 }

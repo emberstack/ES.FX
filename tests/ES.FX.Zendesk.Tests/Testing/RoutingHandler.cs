@@ -15,6 +15,8 @@ internal sealed class RoutingHandler : HttpMessageHandler
     public int TokenCalls => Volatile.Read(ref _tokenCalls);
     public string? LastApiAuthScheme { get; private set; }
     public string? LastApiAccept { get; private set; }
+    public string? LastApiUserAgent { get; private set; }
+    public string? LastTokenUserAgent { get; private set; }
     public ConcurrentBag<string> ApiHosts { get; } = [];
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
@@ -25,6 +27,7 @@ internal sealed class RoutingHandler : HttpMessageHandler
         if (uri.AbsolutePath.Contains("oauth/tokens", StringComparison.Ordinal))
         {
             Interlocked.Increment(ref _tokenCalls);
+            LastTokenUserAgent = request.Headers.UserAgent.ToString();
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Created)
             {
                 Content = JsonContent.Create(new
@@ -36,6 +39,7 @@ internal sealed class RoutingHandler : HttpMessageHandler
 
         LastApiAuthScheme = request.Headers.Authorization?.Scheme;
         LastApiAccept = request.Headers.Accept.ToString();
+        LastApiUserAgent = request.Headers.UserAgent.ToString();
         ApiHosts.Add(uri.Host);
         return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {

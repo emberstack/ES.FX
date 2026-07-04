@@ -56,7 +56,8 @@ public class ZendeskUserToolsTests
     {
         var expected = new ZendeskUsersResult { Count = 2 };
         var (tools, users) = Create();
-        users.Setup(api => api.GetManyAsync(It.IsAny<IReadOnlyList<long>>(), It.IsAny<CancellationToken>()))
+        users.Setup(api => api.GetManyAsync(It.IsAny<IReadOnlyList<long>>(), It.IsAny<IReadOnlyList<string>?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await tools.ReadMany([1, 2], TestContext.Current.CancellationToken);
@@ -64,7 +65,7 @@ public class ZendeskUserToolsTests
         Assert.Same(expected, result);
         users.Verify(api => api.GetManyAsync(
             It.Is<IReadOnlyList<long>>(ids => ids.Count == 2 && ids.Contains(1) && ids.Contains(2)),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<IReadOnlyList<string>?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

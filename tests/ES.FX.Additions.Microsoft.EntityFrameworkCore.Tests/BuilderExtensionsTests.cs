@@ -1,6 +1,5 @@
 using ES.FX.Additions.Microsoft.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests;
 
@@ -116,7 +115,7 @@ public class BuilderExtensionsTests
         // first (non-null) guard so the options-null guard is what actually fires.
         var mb = new ModelBuilder();
         Assert.Throws<ArgumentNullException>(() =>
-            BuilderExtensions.ConfigureFromExtension(mb, null!));
+            mb.ConfigureFromExtension(null!));
     }
 
     [Fact]
@@ -128,17 +127,6 @@ public class BuilderExtensionsTests
         // Model builds fine; no extension means nothing extra mapped.
         Assert.Null(ctx.Model.FindEntityType(typeof(Widget)));
     }
-
-    // Per-test marker types so each context below gets its own model cache entry.
-    private struct M1;
-
-    private struct M2;
-
-    private struct M3;
-
-    private struct M4;
-
-    private struct M5;
 
     [Fact]
     public void ConfigureFromExtension_SingleAction_RunsAndMapsEntity()
@@ -241,4 +229,15 @@ public class BuilderExtensionsTests
         // PlainDbContext ignores the extension entirely, so Widget is not mapped.
         Assert.Null(ctx.Model.FindEntityType(typeof(Widget)));
     }
+
+    // Per-test marker types so each context below gets its own model cache entry.
+    private struct M1;
+
+    private struct M2;
+
+    private struct M3;
+
+    private struct M4;
+
+    private struct M5;
 }

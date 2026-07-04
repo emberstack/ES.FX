@@ -2,7 +2,6 @@ using ES.FX.TransactionalOutbox.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using MySqlConnector;
 using Testcontainers.MariaDb;
 using Xunit;
@@ -120,47 +119,6 @@ public class MySqlOutboxProviderContainerTests : IAsyncLifetime
         Assert.Null(result);
     }
 
-    // ---- Gap 3: schema-qualified table-name branch -------------------------------------------
-
-    /// <summary>
-    ///     Context that maps the outbox entities to an explicit (non-default) schema so the provider takes
-    ///     the <c>`schema`.`table`</c> branch of the table-name builder. In MySQL/MariaDB a schema is a
-    ///     database, so the schema is set to the connection's own database name.
-    /// </summary>
-    /// <remarks>
-    ///     The Pomelo/Microting MySQL provider refuses to emit schema-qualified DDL
-    ///     (<c>EnsureCreated</c>/migrations throw "MySQL does not support the EF Core concept of
-    ///     schemas"). The tables are therefore materialised by a separate schema-less context pointed at
-    ///     the same database, and this context is only ever used to drive the provider's runtime query -
-    ///     never to create the schema. Because the schema name equals the connection's database, the
-    ///     provider's <c>`schema`.`__Outboxes`</c> SQL resolves against the real, already-created table.
-    /// </remarks>
-    private sealed class SchemaQualifiedOutboxDbContext(
-        DbContextOptions<SchemaQualifiedOutboxDbContext> options,
-        string schema) : DbContext(options)
-    {
-        public DbSet<TestOrder> Orders { get; set; } = null!;
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<TestOrder>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Amount).HasPrecision(18, 2);
-            });
-
-            // AddOutbox applies the full outbox mapping (keys, indexes, row version) to the default
-            // (null) schema; re-target the tables to the explicit schema so the provider takes the
-            // `schema`.`table` branch of the table-name builder.
-            modelBuilder.AddOutbox();
-            modelBuilder.Entity<Outbox>().ToTable("__Outboxes", schema);
-            modelBuilder.Entity<OutboxMessage>().ToTable("__OutboxMessages", schema);
-
-            base.OnModelCreating(modelBuilder);
-        }
-    }
-
     private static string GetDatabaseName(string connectionString) =>
         new MySqlConnectionStringBuilder(connectionString).Database;
 
@@ -208,5 +166,46 @@ public class MySqlOutboxProviderContainerTests : IAsyncLifetime
         // The schema-qualified SQL executed successfully against the real table and returned the row -
         // proving the `schema`.`table` quoting branch produces valid, resolvable SQL.
         Assert.NotNull(result);
+    }
+
+    // ---- Gap 3: schema-qualified table-name branch -------------------------------------------
+
+    /// <summary>
+    ///     Context that maps the outbox entities to an explicit (non-default) schema so the provider takes
+    ///     the <c>`schema`.`table`</c> branch of the table-name builder. In MySQL/MariaDB a schema is a
+    ///     database, so the schema is set to the connection's own database name.
+    /// </summary>
+    /// <remarks>
+    ///     The Pomelo/Microting MySQL provider refuses to emit schema-qualified DDL
+    ///     (<c>EnsureCreated</c>/migrations throw "MySQL does not support the EF Core concept of
+    ///     schemas"). The tables are therefore materialised by a separate schema-less context pointed at
+    ///     the same database, and this context is only ever used to drive the provider's runtime query -
+    ///     never to create the schema. Because the schema name equals the connection's database, the
+    ///     provider's <c>`schema`.`__Outboxes`</c> SQL resolves against the real, already-created table.
+    /// </remarks>
+    private sealed class SchemaQualifiedOutboxDbContext(
+        DbContextOptions<SchemaQualifiedOutboxDbContext> options,
+        string schema) : DbContext(options)
+    {
+        public DbSet<TestOrder> Orders { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TestOrder>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Amount).HasPrecision(18, 2);
+            });
+
+            // AddOutbox applies the full outbox mapping (keys, indexes, row version) to the default
+            // (null) schema; re-target the tables to the explicit schema so the provider takes the
+            // `schema`.`table` branch of the table-name builder.
+            modelBuilder.AddOutbox();
+            modelBuilder.Entity<Outbox>().ToTable("__Outboxes", schema);
+            modelBuilder.Entity<OutboxMessage>().ToTable("__OutboxMessages", schema);
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

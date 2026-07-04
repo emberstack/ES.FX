@@ -106,7 +106,7 @@ internal sealed class ClientCredentialsAccessTokenProvider : IZendeskAccessToken
         var lifetime = token.ExpiresIn > 0 ? TimeSpan.FromSeconds(token.ExpiresIn) : TimeSpan.FromMinutes(30);
         var expiresAt = _timeProvider.GetUtcNow() + lifetime - oauth.ExpiryBuffer;
 
-        _logger.LogDebug("Acquired Zendesk OAuth access token (expires in {ExpiresInSeconds}s)", token.ExpiresIn);
+        ZendeskClientLog.TokenAcquired(_logger, token.ExpiresIn);
         return new CachedToken(token.AccessToken!, expiresAt);
     }
 

@@ -1,4 +1,5 @@
 using ES.FX.Additions.FluentValidation.Problems;
+using ES.FX.Additions.FluentValidation.Results;
 using ES.FX.Problems;
 using FluentValidation.Results;
 
@@ -42,7 +43,7 @@ public class ProblemExtensionsTests
         ]);
 
         var problem = result.ToValidationProblem();
-        var errors = ES.FX.Additions.FluentValidation.Results.ValidationResultExtensions
+        var errors = ValidationResultExtensions
             .ToValidationErrors(result);
 
         Assert.Equal(errors, problem.Errors);

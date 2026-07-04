@@ -25,7 +25,7 @@ public class RelationalDbContextMigrationsHealthCheckTests
                 "migrations",
                 Mock.Of<IHealthCheck>(),
                 failureStatus,
-                tags: null)
+                null)
         };
 
     [Fact]
@@ -34,8 +34,8 @@ public class RelationalDbContextMigrationsHealthCheckTests
         await using var context = CreateInMemoryContext();
         var sut = new RelationalDbContextMigrationsHealthCheck<TestDbContext>(context);
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            () => sut.CheckHealthAsync(null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            sut.CheckHealthAsync(null!, TestContext.Current.CancellationToken));
     }
 
     [Fact]

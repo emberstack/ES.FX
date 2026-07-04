@@ -12,12 +12,6 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests;
 /// </summary>
 public class MySqlOutboxProviderGuardTests
 {
-    /// <summary>
-    ///     A context that intentionally does NOT call <c>AddOutbox()</c>, so the <see cref="Outbox" />
-    ///     entity type is absent from the model.
-    /// </summary>
-    private sealed class NoOutboxDbContext(DbContextOptions<NoOutboxDbContext> options) : DbContext(options);
-
     private static NoOutboxDbContext CreateContextWithoutOutbox() =>
         new(new DbContextOptionsBuilder<NoOutboxDbContext>()
             .UseInMemoryDatabase($"no-outbox-{Guid.NewGuid():N}")
@@ -53,4 +47,10 @@ public class MySqlOutboxProviderGuardTests
 
         Assert.StartsWith($"Entity type {typeof(Outbox)} not found", exception.Message);
     }
+
+    /// <summary>
+    ///     A context that intentionally does NOT call <c>AddOutbox()</c>, so the <see cref="Outbox" />
+    ///     entity type is absent from the model.
+    /// </summary>
+    private sealed class NoOutboxDbContext(DbContextOptions<NoOutboxDbContext> options) : DbContext(options);
 }

@@ -19,6 +19,13 @@ internal static class ZendeskQuery
 
     public static string? Int(int? value) => value?.ToString(CultureInfo.InvariantCulture);
 
+    public static string? Bool(bool? value) => value switch
+    {
+        true => "true",
+        false => "false",
+        null => null
+    };
+
     /// <summary>
     ///     Builds the flat sideload value for list/show endpoints (e.g. <c>users,groups,organizations</c>), or
     ///     <c>null</c> when nothing is requested.

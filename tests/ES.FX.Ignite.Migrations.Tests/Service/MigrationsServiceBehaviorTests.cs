@@ -75,7 +75,7 @@ public class MigrationsServiceBehaviorTests
         services.AddSingleton<IMigrationsTask>(task);
         await using var provider = services.BuildServiceProvider();
 
-        await CreateService(provider, enabled: false).StartAsync(TestContext.Current.CancellationToken);
+        await CreateService(provider, false).StartAsync(TestContext.Current.CancellationToken);
 
         Assert.Empty(log);
         Assert.Equal(0, task.ApplyCount);

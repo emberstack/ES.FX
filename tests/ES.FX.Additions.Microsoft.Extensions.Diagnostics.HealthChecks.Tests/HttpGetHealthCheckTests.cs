@@ -1,6 +1,6 @@
+using System.Net;
 using System.Net.Sockets;
 using ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.Tests;
@@ -18,7 +18,7 @@ public sealed class HttpGetHealthCheckTests(LoopbackServerFixture server) : ICla
             "test",
             instance,
             failureStatus,
-            tags: null);
+            null);
 
         return new HealthCheckContext { Registration = registration };
     }
@@ -97,8 +97,7 @@ public sealed class HttpGetHealthCheckTests(LoopbackServerFixture server) : ICla
         // which the check translates into the registered failure status (with the exception attached).
         var deadPort = GetFreePort();
         var result = await RunAsync(
-            new HttpGetHealthCheckOptions { Uri = $"http://127.0.0.1:{deadPort}/" },
-            HealthStatus.Unhealthy);
+            new HttpGetHealthCheckOptions { Uri = $"http://127.0.0.1:{deadPort}/" });
 
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.NotNull(result.Exception);
@@ -277,11 +276,11 @@ public sealed class HttpGetHealthCheckTests(LoopbackServerFixture server) : ICla
 
     private static int GetFreePort()
     {
-        var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
+        var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         try
         {
-            return ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            return ((IPEndPoint)listener.LocalEndpoint).Port;
         }
         finally
         {

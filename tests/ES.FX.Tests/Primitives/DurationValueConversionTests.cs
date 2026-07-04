@@ -10,10 +10,14 @@ namespace ES.FX.Tests.Primitives;
 ///     Each factor is pinned two ways against a reference unit whose factor is exercised
 ///     independently, forming a chain back to <see cref="DurationUnit.Nanosecond" /> (== 1):
 ///     <list type="bullet">
-///         <item>An exact-length equality: N of the unit is the same absolute length as M of a smaller
-///         reference unit, so <c>CompareTo</c> ties on length and only the unit ordinal breaks it.</item>
-///         <item>An off-by-one strictness: (N*value ± reference) crosses the boundary, so the length
-///         comparison flips. A wrong factor breaks at least one of these.</item>
+///         <item>
+///             An exact-length equality: N of the unit is the same absolute length as M of a smaller
+///             reference unit, so <c>CompareTo</c> ties on length and only the unit ordinal breaks it.
+///         </item>
+///         <item>
+///             An off-by-one strictness: (N*value ± reference) crosses the boundary, so the length
+///             comparison flips. A wrong factor breaks at least one of these.
+///         </item>
 ///     </list>
 ///     Expected boundaries are literal integer relationships from the unit definitions
 ///     (1 Tick == 100 ns, 1 Minute == 60 s, ...), never recomputed via the code under test.
@@ -97,7 +101,8 @@ public class DurationValueConversionTests
 
         // Minute (60 s) is shorter than an Hour (3600 s) and longer than 59 Seconds.
         Assert.True(D(1, DurationUnit.Minute) > D(59, DurationUnit.Second));
-        Assert.True(D(60, DurationUnit.Minute).CompareTo(D(1, DurationUnit.Hour)) < 0); // 3600 s tie, Minute ordinal < Hour
+        Assert.True(D(60, DurationUnit.Minute).CompareTo(D(1, DurationUnit.Hour)) <
+                    0); // 3600 s tie, Minute ordinal < Hour
         Assert.True(D(59, DurationUnit.Minute) < D(1, DurationUnit.Hour));
         Assert.True(D(61, DurationUnit.Minute) > D(1, DurationUnit.Hour));
 
@@ -109,7 +114,8 @@ public class DurationValueConversionTests
         // Decade (3600 days) is 10 Years and one tenth of a Century (36000 days).
         Assert.True(D(1, DurationUnit.Decade) > D(3_599, DurationUnit.Day));
         Assert.True(D(1, DurationUnit.Decade) < D(3_601, DurationUnit.Day));
-        Assert.True(D(10, DurationUnit.Decade).CompareTo(D(1, DurationUnit.Century)) < 0); // 36000 days tie, Decade ordinal < Century
+        Assert.True(D(10, DurationUnit.Decade).CompareTo(D(1, DurationUnit.Century)) <
+                    0); // 36000 days tie, Decade ordinal < Century
         Assert.True(D(9, DurationUnit.Decade) < D(1, DurationUnit.Century));
         Assert.True(D(11, DurationUnit.Decade) > D(1, DurationUnit.Century));
     }

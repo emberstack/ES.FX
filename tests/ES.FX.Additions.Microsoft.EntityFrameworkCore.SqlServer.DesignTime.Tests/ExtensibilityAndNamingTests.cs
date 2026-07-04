@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Testcontainers.MsSql;
 
 namespace ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.Tests;

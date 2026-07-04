@@ -21,4 +21,11 @@ public sealed class ZendeskApiException : Exception
 
     /// <summary>The raw response body returned by Zendesk (truncated), if any.</summary>
     public string? ResponseBody { get; }
+
+    /// <summary>
+    ///     The server-requested wait before retrying, from the <c>Retry-After</c> header (typically sent with
+    ///     <c>429 Too Many Requests</c>), if any. A date-form header is converted to a delay when the response is
+    ///     read; past dates clamp to <see cref="TimeSpan.Zero" />.
+    /// </summary>
+    public TimeSpan? RetryAfter { get; init; }
 }

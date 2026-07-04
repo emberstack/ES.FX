@@ -1,9 +1,11 @@
 using System.Net;
+using System.Net.Sockets;
 using ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.Http;
 using ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace ES.FX.Ignite.OpenTelemetry.Exporter.Seq.Tests;
 
@@ -21,93 +23,10 @@ public sealed class HealthCheckFactoryTests
     private static HostApplicationBuilder CreateBuilder() =>
         Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { Args = [] });
 
-    /// <summary>
-    ///     A minimal loopback HTTP server. Records every requested path and answers each configured path with a
-    ///     fixed status code (defaulting to 404 for anything unmapped). Lets a test prove which absolute URL the
-    ///     Spark-built health check actually hit.
-    /// </summary>
-    private sealed class LoopbackServer : IDisposable
-    {
-        private readonly HttpListener _listener = new();
-        private readonly Dictionary<string, HttpStatusCode> _routes;
-        private readonly List<string> _requestedPaths = [];
-        private readonly Lock _sync = new();
-
-        public LoopbackServer(Dictionary<string, HttpStatusCode> routes)
-        {
-            _routes = routes;
-            var port = GetFreePort();
-            BaseUrl = $"http://127.0.0.1:{port}";
-            _listener.Prefixes.Add($"{BaseUrl}/");
-            _listener.Start();
-            _ = Task.Run(Loop);
-        }
-
-        public string BaseUrl { get; }
-
-        public IReadOnlyList<string> RequestedPaths
-        {
-            get
-            {
-                lock (_sync) return _requestedPaths.ToArray();
-            }
-        }
-
-        private async Task Loop()
-        {
-            while (_listener.IsListening)
-            {
-                HttpListenerContext context;
-                try
-                {
-                    context = await _listener.GetContextAsync();
-                }
-                catch
-                {
-                    return;
-                }
-
-                var path = context.Request.Url!.AbsolutePath;
-                lock (_sync) _requestedPaths.Add(path);
-
-                context.Response.StatusCode =
-                    (int)(_routes.TryGetValue(path, out var status) ? status : HttpStatusCode.NotFound);
-                context.Response.Close();
-            }
-        }
-
-        private static int GetFreePort()
-        {
-            var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
-            listener.Start();
-            try
-            {
-                return ((IPEndPoint)listener.LocalEndpoint).Port;
-            }
-            finally
-            {
-                listener.Stop();
-            }
-        }
-
-        public void Dispose()
-        {
-            try
-            {
-                _listener.Stop();
-                _listener.Close();
-            }
-            catch
-            {
-                // best-effort teardown
-            }
-        }
-    }
-
     private static HealthCheckRegistration GetSeqRegistration(IServiceProvider sp)
     {
         var registrations = sp.GetRequiredService<
-                Microsoft.Extensions.Options.IOptions<HealthCheckServiceOptions>>()
+                IOptions<HealthCheckServiceOptions>>()
             .Value.Registrations;
         return Assert.Single(registrations,
             r => r.Name.StartsWith(SeqOpenTelemetryExporterSpark.Name));
@@ -263,7 +182,7 @@ public sealed class HealthCheckFactoryTests
 
     private static int GetFreePort()
     {
-        var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+        var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         try
         {
@@ -272,6 +191,95 @@ public sealed class HealthCheckFactoryTests
         finally
         {
             listener.Stop();
+        }
+    }
+
+    /// <summary>
+    ///     A minimal loopback HTTP server. Records every requested path and answers each configured path with a
+    ///     fixed status code (defaulting to 404 for anything unmapped). Lets a test prove which absolute URL the
+    ///     Spark-built health check actually hit.
+    /// </summary>
+    private sealed class LoopbackServer : IDisposable
+    {
+        private readonly HttpListener _listener = new();
+        private readonly List<string> _requestedPaths = [];
+        private readonly Dictionary<string, HttpStatusCode> _routes;
+        private readonly Lock _sync = new();
+
+        public LoopbackServer(Dictionary<string, HttpStatusCode> routes)
+        {
+            _routes = routes;
+            var port = GetFreePort();
+            BaseUrl = $"http://127.0.0.1:{port}";
+            _listener.Prefixes.Add($"{BaseUrl}/");
+            _listener.Start();
+            _ = Task.Run(Loop);
+        }
+
+        public string BaseUrl { get; }
+
+        public IReadOnlyList<string> RequestedPaths
+        {
+            get
+            {
+                lock (_sync)
+                {
+                    return _requestedPaths.ToArray();
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                _listener.Stop();
+                _listener.Close();
+            }
+            catch
+            {
+                // best-effort teardown
+            }
+        }
+
+        private async Task Loop()
+        {
+            while (_listener.IsListening)
+            {
+                HttpListenerContext context;
+                try
+                {
+                    context = await _listener.GetContextAsync();
+                }
+                catch
+                {
+                    return;
+                }
+
+                var path = context.Request.Url!.AbsolutePath;
+                lock (_sync)
+                {
+                    _requestedPaths.Add(path);
+                }
+
+                context.Response.StatusCode =
+                    (int)(_routes.TryGetValue(path, out var status) ? status : HttpStatusCode.NotFound);
+                context.Response.Close();
+            }
+        }
+
+        private static int GetFreePort()
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            try
+            {
+                return ((IPEndPoint)listener.LocalEndpoint).Port;
+            }
+            finally
+            {
+                listener.Stop();
+            }
         }
     }
 }

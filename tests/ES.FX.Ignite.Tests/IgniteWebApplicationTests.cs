@@ -1,9 +1,7 @@
 using System.Net;
-using ES.FX.Ignite.Configuration;
 using ES.FX.Ignite.Hosting;
 using ES.FX.Ignite.Spark.HealthChecks;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -128,7 +126,7 @@ public class IgniteWebApplicationTests
         var builder = CreateWebBuilder();
         builder.Ignite();
         builder.Services.AddHealthChecks()
-            .AddCheck("readiness-only", () => HealthCheckResult.Unhealthy("down"), tags: ["ready"]);
+            .AddCheck("readiness-only", () => HealthCheckResult.Unhealthy("down"), ["ready"]);
 
         await using var app = builder.Build();
         app.Ignite();
@@ -152,7 +150,7 @@ public class IgniteWebApplicationTests
         builder.Ignite();
         builder.Services.AddHealthChecks()
             .AddCheck("live-check", () => HealthCheckResult.Unhealthy("dead"),
-                tags: [HealthChecksTags.Live]);
+                [HealthChecksTags.Live]);
 
         await using var app = builder.Build();
         app.Ignite();

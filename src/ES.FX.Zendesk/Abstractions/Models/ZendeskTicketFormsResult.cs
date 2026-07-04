@@ -18,4 +18,8 @@ public sealed record ZendeskTicketFormsResult
     /// <summary>The URL of the next page of results, if any.</summary>
     [JsonPropertyName("next_page")]
     public string? NextPage { get; init; }
+
+    /// <summary>Cursor-pagination metadata (populated when the request used cursor pagination).</summary>
+    [JsonPropertyName("meta")]
+    public ZendeskCursorMeta? Meta { get; init; }
 }

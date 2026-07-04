@@ -51,13 +51,15 @@ public class ZendeskTicketToolsTests
     {
         var expected = new ZendeskTicketCommentsResult { Count = 3 };
         var (tools, tickets) = Create();
-        tickets.Setup(api => api.GetCommentsAsync(99, 1, 25, "plain", It.IsAny<CancellationToken>()))
+        tickets.Setup(api => api.GetCommentsAsync(99, 1, 25, "plain", It.IsAny<IReadOnlyList<string>?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await tools.Comments(99, 1, 25, "plain", TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        tickets.Verify(api => api.GetCommentsAsync(99, 1, 25, "plain", It.IsAny<CancellationToken>()), Times.Once);
+        tickets.Verify(api => api.GetCommentsAsync(99, 1, 25, "plain", It.IsAny<IReadOnlyList<string>?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -65,7 +67,8 @@ public class ZendeskTicketToolsTests
     {
         var expected = new ZendeskTicketAuditsResult { Count = 2 };
         var (tools, tickets) = Create();
-        tickets.Setup(api => api.GetAuditsAsync(99, null, 25, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        tickets.Setup(api => api.GetAuditsAsync(99, null, 25, It.IsAny<IReadOnlyList<string>?>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(expected);
 
         var result = await tools.Audits(99, null, 25, TestContext.Current.CancellationToken);
 

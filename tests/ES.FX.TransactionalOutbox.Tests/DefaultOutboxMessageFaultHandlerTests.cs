@@ -42,11 +42,11 @@ public class DefaultOutboxMessageFaultHandlerTests
     }
 
     [Theory]
-    [InlineData(1, 10)]     // 10 * 2^0
-    [InlineData(2, 20)]     // 10 * 2^1
-    [InlineData(3, 40)]     // 10 * 2^2
-    [InlineData(4, 80)]     // 10 * 2^3
-    [InlineData(5, 160)]    // 10 * 2^4
+    [InlineData(1, 10)] // 10 * 2^0
+    [InlineData(2, 20)] // 10 * 2^1
+    [InlineData(3, 40)] // 10 * 2^2
+    [InlineData(4, 80)] // 10 * 2^3
+    [InlineData(5, 160)] // 10 * 2^4
     public async Task HandleAsync_Applies_Exponential_Backoff(int attempts, double expectedSeconds)
     {
         var action = await HandleAsync(attempts);

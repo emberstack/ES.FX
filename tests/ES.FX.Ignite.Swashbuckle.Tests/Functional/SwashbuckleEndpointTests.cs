@@ -1,6 +1,6 @@
 using System.Net;
+using ES.FX.Ignite.Swashbuckle.Configuration;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ES.FX.Ignite.Swashbuckle.Tests.Functional;
@@ -50,7 +50,7 @@ public class SwashbuckleEndpointTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task SwaggerUiEnabledFalse_UiReturns404_ButDocumentStillServed()
     {
-        using var scopedFactory = FactoryWithSettings(swaggerEnabled: true, swaggerUiEnabled: false);
+        using var scopedFactory = FactoryWithSettings(true, false);
         var client = scopedFactory.CreateClient();
 
         var uiResponse = await client.GetAsync(SwaggerUiPath, TestContext.Current.CancellationToken);
@@ -63,7 +63,7 @@ public class SwashbuckleEndpointTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task SwaggerEnabledFalse_DocumentReturns404()
     {
-        using var scopedFactory = FactoryWithSettings(swaggerEnabled: false, swaggerUiEnabled: true);
+        using var scopedFactory = FactoryWithSettings(false, true);
         var client = scopedFactory.CreateClient();
 
         var docResponse = await client.GetAsync(SwaggerDocumentPath, TestContext.Current.CancellationToken);
@@ -74,13 +74,13 @@ public class SwashbuckleEndpointTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task BothDisabled_UiAndDocumentReturn404()
     {
-        using var scopedFactory = FactoryWithSettings(swaggerEnabled: false, swaggerUiEnabled: false);
+        using var scopedFactory = FactoryWithSettings(false, false);
         var client = scopedFactory.CreateClient();
 
         // Sanity: the bound settings actually reflect the disabled flags in this host.
         using var scope = scopedFactory.Services.CreateScope();
         var settings = scope.ServiceProvider
-            .GetRequiredService<ES.FX.Ignite.Swashbuckle.Configuration.SwashbuckleSparkSettings>();
+            .GetRequiredService<SwashbuckleSparkSettings>();
         Assert.False(settings.SwaggerEnabled);
         Assert.False(settings.SwaggerUIEnabled);
 

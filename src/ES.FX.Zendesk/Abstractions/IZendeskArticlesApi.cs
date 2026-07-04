@@ -20,4 +20,39 @@ public interface IZendeskArticlesApi
 
     /// <summary>Returns a single article, including its full body (<c>GET /api/v2/help_center/articles/{id}</c>).</summary>
     Task<ZendeskArticle> GetByIdAsync(long id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Lists Help Center articles (<c>GET /api/v2/help_center/[{locale}/]articles.json</c>;
+    ///     <c>articles</c> envelope, cursor-paginated). Optionally scoped to a section.
+    /// </summary>
+    /// <param name="locale">Optional locale segment (e.g. <c>en-us</c>); agents may omit it.</param>
+    /// <param name="sectionId">When set, lists the articles of that section only.</param>
+    /// <param name="pageSize">The cursor page size (max 100).</param>
+    /// <param name="afterCursor">The cursor from the previous page's <c>Meta.AfterCursor</c>.</param>
+    /// <param name="include">
+    ///     Sideloads (<c>users</c>, <c>sections</c>, <c>categories</c>) resolved inline as sibling arrays.
+    /// </param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    Task<ZendeskArticlesResult> ListAsync(string? locale = null, long? sectionId = null, int? pageSize = null,
+        string? afterCursor = null, IReadOnlyList<string>? include = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Lists Help Center sections (<c>GET /api/v2/help_center/[{locale}/]sections.json</c>), optionally
+    ///     scoped to a category.
+    /// </summary>
+    Task<ZendeskHelpCenterSectionsResult> ListSectionsAsync(string? locale = null, long? categoryId = null,
+        int? page = null, int? perPage = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns a Help Center section by id (<c>GET /api/v2/help_center/[{locale}/]sections/{id}.json</c>).</summary>
+    Task<ZendeskHelpCenterSection> GetSectionByIdAsync(long id, string? locale = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Lists Help Center categories (<c>GET /api/v2/help_center/[{locale}/]categories.json</c>).</summary>
+    Task<ZendeskHelpCenterCategoriesResult> ListCategoriesAsync(string? locale = null, int? page = null,
+        int? perPage = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns a Help Center category by id (<c>GET /api/v2/help_center/[{locale}/]categories/{id}.json</c>).</summary>
+    Task<ZendeskHelpCenterCategory> GetCategoryByIdAsync(long id, string? locale = null,
+        CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using ES.FX.Additions.System.Text.Json.Serialization;
@@ -61,7 +60,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         // Guard runs only after the null short-circuit, so a non-null payload is required to reach it.
         Assert.Throws<ArgumentNullException>(() =>
-            "{}".TryJsonDeserialize(out SgPerson? _, (JsonTypeInfo<SgPerson>)null!));
+            "{}".TryJsonDeserialize(out var _, (JsonTypeInfo<SgPerson>)null!));
     }
 
     // ==================== TryJsonDeserialize<T>(Stream, JsonTypeInfo) ====================
@@ -98,7 +97,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         using var stream = StreamOf("{}");
         Assert.Throws<ArgumentNullException>(() =>
-            stream.TryJsonDeserialize(out SgPerson? _, (JsonTypeInfo<SgPerson>)null!));
+            stream.TryJsonDeserialize(out var _, (JsonTypeInfo<SgPerson>)null!));
     }
 
     // ==================== JsonDeserializeOrDefault<T>(string, JsonTypeInfo) ====================
@@ -224,7 +223,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         var source = new SgPerson { Name = "Ada" };
         Assert.Throws<ArgumentNullException>(() =>
-            source.ConvertViaJson((JsonTypeInfo<SgPerson>)null!, PersonInfo));
+            source.ConvertViaJson(null!, PersonInfo));
     }
 
     [Fact]
@@ -261,7 +260,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     public void TryConvertViaJson_TypeInfo_IncompatibleTarget_ReturnsFalse()
     {
         // Serialize an int (JSON number) then try to read it as SgPerson -> fails -> false.
-        var ok = 42.TryConvertViaJson(out SgPerson? person, IntInfo, PersonInfo);
+        var ok = 42.TryConvertViaJson(out var person, IntInfo, PersonInfo);
         Assert.False(ok);
         Assert.Null(person);
     }
@@ -271,7 +270,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         var source = new SgPerson { Name = "Ada" };
         Assert.Throws<ArgumentNullException>(() =>
-            source.TryConvertViaJson(out SgPerson? _, (JsonTypeInfo<SgPerson>)null!, PersonInfo));
+            source.TryConvertViaJson(out var _, null!, PersonInfo));
     }
 
     [Fact]
@@ -279,7 +278,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         var source = new SgPerson { Name = "Ada" };
         Assert.Throws<ArgumentNullException>(() =>
-            source.TryConvertViaJson(out SgPerson? _, PersonInfo, (JsonTypeInfo<SgPerson>)null!));
+            source.TryConvertViaJson(out var _, PersonInfo, (JsonTypeInfo<SgPerson>)null!));
     }
 }
 
@@ -294,4 +293,4 @@ public sealed class SgPerson
 [JsonSerializable(typeof(SgPerson))]
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(int))]
-internal partial class SgJsonContext : JsonSerializerContext;
+internal class SgJsonContext : JsonSerializerContext;

@@ -13,4 +13,8 @@ public sealed record ZendeskCustomFieldOption
     [JsonPropertyName("raw_name")] public string? RawName { get; init; }
     [JsonPropertyName("value")] public string? Value { get; init; }
     [JsonPropertyName("default")] public bool? Default { get; init; }
+
+    /// <summary>Whether a ticket can be solved while this option is selected.</summary>
+    [JsonPropertyName("allow_solving")]
+    public bool? AllowSolving { get; init; }
 }

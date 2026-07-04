@@ -6,8 +6,6 @@ namespace ES.FX.TransactionalOutbox.Tests;
 
 public class DefaultOutboxSerializerTests
 {
-    public sealed record SamplePayload(int Id, string Name, IReadOnlyList<string> Tags);
-
     private static DefaultOutboxSerializer CreateSerializer(JsonSerializerOptions? options = null) =>
         new(new DefaultPayloadTypeProvider(), options);
 
@@ -138,26 +136,6 @@ public class DefaultOutboxSerializerTests
         Assert.Equal("Could not deserialize message", ex.Message);
     }
 
-    // Custom provider that both round-trips a type via an injected header and augments headers in place
-    // during Serialize. Proves the SetTypeHeaders/GetType contract drives type resolution end to end.
-    private sealed class HeaderDrivenTypeProvider : IPayloadTypeProvider
-    {
-        public const string TypeHeaderKey = "x-payload-type";
-
-        public string GetPayloadType(Type payloadType) => "opaque-token";
-
-        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Test resolves types via reflection.")]
-        public Type GetType(string payloadType, IReadOnlyDictionary<string, string> headers)
-        {
-            // Ignore the opaque payloadType token; resolve strictly from the header injected during Serialize.
-            var aqn = headers[TypeHeaderKey];
-            return Type.GetType(aqn) ?? throw new InvalidOperationException($"Type '{aqn}' not found.");
-        }
-
-        public void SetTypeHeaders(Type payloadType, IDictionary<string, string> headers) =>
-            headers[TypeHeaderKey] = payloadType.AssemblyQualifiedName!;
-    }
-
     [Fact]
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Test uses reflection-based JSON.")]
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Test uses reflection-based JSON.")]
@@ -211,14 +189,6 @@ public class DefaultOutboxSerializerTests
         Assert.Equal(2, deserializedHeaders.Count);
     }
 
-    // Derived type proving the protected TypeProvider/Options accessors are reachable by subclasses.
-    private sealed class DerivedSerializer(IPayloadTypeProvider typeProvider, JsonSerializerOptions? options = null)
-        : DefaultOutboxSerializer(typeProvider, options)
-    {
-        public IPayloadTypeProvider ExposedTypeProvider => TypeProvider;
-        public JsonSerializerOptions ExposedOptions => Options;
-    }
-
     [Fact]
     public void Protected_Accessors_Are_Reachable_By_Derived_Class()
     {
@@ -237,5 +207,35 @@ public class DefaultOutboxSerializerTests
 
         // A default options instance is used (non-null) when none is supplied.
         Assert.NotNull(derived.ExposedOptions);
+    }
+
+    public sealed record SamplePayload(int Id, string Name, IReadOnlyList<string> Tags);
+
+    // Custom provider that both round-trips a type via an injected header and augments headers in place
+    // during Serialize. Proves the SetTypeHeaders/GetType contract drives type resolution end to end.
+    private sealed class HeaderDrivenTypeProvider : IPayloadTypeProvider
+    {
+        public const string TypeHeaderKey = "x-payload-type";
+
+        public string GetPayloadType(Type payloadType) => "opaque-token";
+
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Test resolves types via reflection.")]
+        public Type GetType(string payloadType, IReadOnlyDictionary<string, string> headers)
+        {
+            // Ignore the opaque payloadType token; resolve strictly from the header injected during Serialize.
+            var aqn = headers[TypeHeaderKey];
+            return Type.GetType(aqn) ?? throw new InvalidOperationException($"Type '{aqn}' not found.");
+        }
+
+        public void SetTypeHeaders(Type payloadType, IDictionary<string, string> headers) =>
+            headers[TypeHeaderKey] = payloadType.AssemblyQualifiedName!;
+    }
+
+    // Derived type proving the protected TypeProvider/Options accessors are reachable by subclasses.
+    private sealed class DerivedSerializer(IPayloadTypeProvider typeProvider, JsonSerializerOptions? options = null)
+        : DefaultOutboxSerializer(typeProvider, options)
+    {
+        public IPayloadTypeProvider ExposedTypeProvider => TypeProvider;
+        public JsonSerializerOptions ExposedOptions => Options;
     }
 }

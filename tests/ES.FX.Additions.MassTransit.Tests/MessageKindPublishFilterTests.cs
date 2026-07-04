@@ -1,11 +1,13 @@
 using ES.FX.Additions.MassTransit.MessageKind;
+using ES.FX.ComponentModel.DataAnnotations;
 using MassTransit;
 using Moq;
 
 namespace ES.FX.Additions.MassTransit.Tests;
 
 /// <summary>
-///     Direct functional coverage of <see cref="MessageKindPublishFilter{T}" />.<see cref="MessageKindPublishFilter{T}.Send" />.
+///     Direct functional coverage of <see cref="MessageKindPublishFilter{T}" />.
+///     <see cref="MessageKindPublishFilter{T}.Send" />.
 ///     <para>
 ///         Focus is the kind-resolution logic and header stamping. <see cref="PublishContext{T}" /> and its
 ///         <see cref="SendHeaders" /> are interfaces, so they are mocked; no broker is required. Each test asserts both
@@ -48,7 +50,7 @@ public sealed class MessageKindPublishFilterTests
         var (context, headers, next) = SetupContext<IAccountOpened>(new AccountOpened(Guid.NewGuid()));
 
         // Guard: the concrete type genuinely has no kind, so only the T-fallback can produce the header.
-        Assert.Null(ES.FX.ComponentModel.DataAnnotations.KindAttribute.For(typeof(AccountOpened)));
+        Assert.Null(KindAttribute.For(typeof(AccountOpened)));
 
         var filter = new MessageKindPublishFilter<IAccountOpened>();
 

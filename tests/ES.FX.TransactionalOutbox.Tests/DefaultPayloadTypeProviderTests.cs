@@ -8,8 +8,6 @@ public class DefaultPayloadTypeProviderTests
     private static readonly IReadOnlyDictionary<string, string> NoHeaders =
         new Dictionary<string, string>();
 
-    public sealed record Probe(int Value);
-
     [Fact]
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Test resolves types via reflection.")]
     public void GetType_Resolves_Type_From_AssemblyQualifiedName()
@@ -81,4 +79,6 @@ public class DefaultPayloadTypeProviderTests
 
         Assert.Equal(typeof(Probe), resolved);
     }
+
+    public sealed record Probe(int Value);
 }

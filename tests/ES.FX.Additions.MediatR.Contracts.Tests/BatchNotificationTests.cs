@@ -5,8 +5,6 @@ namespace ES.FX.Additions.MediatR.Contracts.Tests;
 
 public class BatchNotificationTests
 {
-    public sealed record Event(string Kind);
-
     [Fact]
     public void BatchNotification_ImplementsINotification()
     {
@@ -76,6 +74,8 @@ public class BatchNotificationTests
         Assert.Contains(iface, i => i == typeof(INotification));
         Assert.DoesNotContain(iface, i => i == typeof(IBaseRequest));
     }
+
+    public sealed record Event(string Kind);
 
     // where TNotification : INotification — will not compile if the contract regresses.
     private sealed class FirstHandler : INotificationHandler<BatchNotification<string>>

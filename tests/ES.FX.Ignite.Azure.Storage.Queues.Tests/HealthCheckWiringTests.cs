@@ -12,7 +12,8 @@ namespace ES.FX.Ignite.Azure.Storage.Queues.Tests;
 ///     Confirms the observability wiring performed by
 ///     <see cref="AzureQueueStorageHostingExtensions.IgniteAzureQueueServiceClient" /> and the runtime behavior of the
 ///     registered <c>SimpleQueueServiceHealthCheck</c>. The health check is <c>internal</c>, so it is exercised through
-///     the registered <see cref="HealthCheckService" /> against a real <see cref="Azure.Storage.Queues.QueueServiceClient" />.
+///     the registered <see cref="HealthCheckService" /> against a real
+///     <see cref="Azure.Storage.Queues.QueueServiceClient" />.
 /// </summary>
 public class HealthCheckWiringTests
 {

@@ -1,3 +1,5 @@
+using ES.FX.Zendesk.Abstractions;
+
 namespace ES.FX.Zendesk.Configuration;
 
 /// <summary>
@@ -17,10 +19,11 @@ public class ZendeskOAuthOptions
     public string? ClientSecret { get; set; }
 
     /// <summary>
-    ///     The space-separated OAuth scopes to request. Defaults to <c>read</c>. Use e.g. <c>read write</c> or
-    ///     resource scopes (<c>users:read</c>, <c>tickets:write</c>, ...) when write tools are enabled.
+    ///     The space-separated OAuth scopes to request. Defaults to <c>read</c> — see
+    ///     <c>ZendeskOAuthScopes</c>. Use e.g. <c>read write</c> or resource scopes (<c>users:read</c>,
+    ///     <c>tickets:write</c>, ...) when write operations are used.
     /// </summary>
-    public string? Scope { get; set; } = "read";
+    public string? Scope { get; set; } = ZendeskOAuthScopes.Read;
 
     /// <summary>
     ///     Optional requested token lifetime in seconds (Zendesk accepts 300–172800). When <c>null</c>, Zendesk's

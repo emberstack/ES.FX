@@ -2,7 +2,6 @@ using Azure.Storage.Queues;
 using ES.FX.Ignite.Azure.Storage.Queues.Configuration;
 using ES.FX.Ignite.Azure.Storage.Queues.Hosting;
 using ES.FX.Ignite.Spark.Exceptions;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

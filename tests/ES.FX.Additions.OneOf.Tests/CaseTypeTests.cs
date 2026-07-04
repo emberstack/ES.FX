@@ -30,25 +30,25 @@ public class CaseTypeTests
     }
 
     [Fact]
-    public void Fatal_DefaultInstances_AreEqual() => Assert.Equal(new Fatal(), default(Fatal));
+    public void Fatal_DefaultInstances_AreEqual() => Assert.Equal(new Fatal(), default);
 
     [Fact]
-    public void Canceled_DefaultInstances_AreEqual() => Assert.Equal(new Canceled(), default(Canceled));
+    public void Canceled_DefaultInstances_AreEqual() => Assert.Equal(new Canceled(), default);
 
     [Fact]
-    public void TimedOut_DefaultInstances_AreEqual() => Assert.Equal(new TimedOut(), default(TimedOut));
+    public void TimedOut_DefaultInstances_AreEqual() => Assert.Equal(new TimedOut(), default);
 
     [Fact]
-    public void Deferred_DefaultInstances_AreEqual() => Assert.Equal(new Deferred(), default(Deferred));
+    public void Deferred_DefaultInstances_AreEqual() => Assert.Equal(new Deferred(), default);
 
     [Fact]
-    public void InProgress_DefaultInstances_AreEqual() => Assert.Equal(new InProgress(), default(InProgress));
+    public void InProgress_DefaultInstances_AreEqual() => Assert.Equal(new InProgress(), default);
 
     [Fact]
-    public void Interrupted_DefaultInstances_AreEqual() => Assert.Equal(new Interrupted(), default(Interrupted));
+    public void Interrupted_DefaultInstances_AreEqual() => Assert.Equal(new Interrupted(), default);
 
     [Fact]
-    public void Unknown_DefaultInstances_AreEqual() => Assert.Equal(new Unknown(), default(Unknown));
+    public void Unknown_DefaultInstances_AreEqual() => Assert.Equal(new Unknown(), default);
 
     [Fact]
     public void DistinctNonGenericCaseTypes_AreNotInterchangeable()

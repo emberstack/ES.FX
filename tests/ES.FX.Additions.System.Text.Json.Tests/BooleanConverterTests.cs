@@ -13,16 +13,6 @@ public class BooleanConverterTests
         return o;
     }
 
-    private sealed class BoolBox
-    {
-        [JsonPropertyName("value")] public bool Value { get; set; }
-    }
-
-    private sealed class NullableBoolBox
-    {
-        [JsonPropertyName("value")] public bool? Value { get; set; }
-    }
-
     // ---- Factory CanConvert / CreateConverter ----
 
     [Fact]
@@ -61,7 +51,7 @@ public class BooleanConverterTests
     [InlineData("false", false)]
     [InlineData("\"true\"", true)]
     [InlineData("\"false\"", false)]
-    [InlineData("\"True\"", true)]   // case-insensitive bool.TryParse
+    [InlineData("\"True\"", true)] // case-insensitive bool.TryParse
     [InlineData("\"FALSE\"", false)]
     [InlineData("\"1\"", true)]
     [InlineData("\"0\"", false)]
@@ -166,5 +156,15 @@ public class BooleanConverterTests
         var box = JsonSerializer.Deserialize<BoolBox>("{\"value\":\"1\"}", Options());
         var json = JsonSerializer.Serialize(box, Options());
         Assert.Contains("\"value\":true", json);
+    }
+
+    private sealed class BoolBox
+    {
+        [JsonPropertyName("value")] public bool Value { get; set; }
+    }
+
+    private sealed class NullableBoolBox
+    {
+        [JsonPropertyName("value")] public bool? Value { get; set; }
     }
 }

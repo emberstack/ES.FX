@@ -26,6 +26,12 @@ internal sealed class ZendeskAuthenticationDelegatingHandler(IZendeskAccessToken
         if (request.Options.TryGetValue(SkipAuthentication, out var skip) && skip)
             return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
+        // Buffer any request content up front so the one-shot 401 retry below can replay it. A forward-only
+        // content stream would otherwise already be consumed by the first attempt, making the retry send a
+        // corrupt/empty body (relevant once write operations ship; GETs carry no content).
+        if (request.Content is not null)
+            await request.Content.LoadIntoBufferAsync(cancellationToken).ConfigureAwait(false);
+
         var token = await tokenProvider.GetAccessTokenAsync(false, cancellationToken).ConfigureAwait(false);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 

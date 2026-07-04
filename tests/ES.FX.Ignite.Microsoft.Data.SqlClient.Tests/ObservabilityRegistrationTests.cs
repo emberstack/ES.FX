@@ -1,4 +1,3 @@
-using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -54,9 +53,9 @@ public class ObservabilityRegistrationTests
     public void HealthCheck_Registration_Keyed_Name_Is_Suffixed()
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
-        builder.IgniteSqlServerClient("database", serviceKey: "primary",
-            configureSettings: s => s.HealthChecks.Enabled = true,
-            configureOptions: o => o.ConnectionString = DummyConnectionString);
+        builder.IgniteSqlServerClient("database", "primary",
+            s => s.HealthChecks.Enabled = true,
+            o => o.ConnectionString = DummyConnectionString);
 
         var app = builder.Build();
         var registration = Assert.Single(GetRegistrations(app));
@@ -115,9 +114,9 @@ public class ObservabilityRegistrationTests
     {
         const string key = "primary";
         var builder = Host.CreateEmptyApplicationBuilder(null);
-        builder.IgniteSqlServerClient("database", serviceKey: key,
-            configureSettings: s => s.HealthChecks.Enabled = true,
-            configureOptions: o => o.ConnectionString = DummyConnectionString);
+        builder.IgniteSqlServerClient("database", key,
+            s => s.HealthChecks.Enabled = true,
+            o => o.ConnectionString = DummyConnectionString);
 
         var app = builder.Build();
         var registration = Assert.Single(GetRegistrations(app));

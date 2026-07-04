@@ -4,6 +4,7 @@ using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context.Entities;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.MariaDb;
 using Xunit;
+using Xunit.Sdk;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests;
 
@@ -65,7 +66,7 @@ public class MySqlOutboxProviderSkipLockedTests : IAsyncLifetime
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
-            throw new Xunit.Sdk.XunitException(
+            throw new XunitException(
                 $"Second reader did not complete within {SecondReaderBudget.TotalSeconds:0}s. " +
                 "This indicates the read BLOCKED on a row lock held by another transaction, which is exactly " +
                 "the behaviour of a plain 'FOR UPDATE' - the 'SKIP LOCKED' clause is missing or ineffective.");

@@ -11,31 +11,6 @@ namespace ES.FX.Additions.Asp.Versioning.Tests;
 
 public class EndpointConventionBuilderExtensionsTests
 {
-    // ----------------------------------------------------------------------
-    // Structural contract of HasApiVersions using a lightweight fake builder.
-    // These assert the extension's own logic (guard, fluency, per-element
-    // forwarding) without needing the full routing/versioning collation pass.
-    // ----------------------------------------------------------------------
-
-    /// <summary>A minimal <see cref="IEndpointConventionBuilder" /> that captures the conventions added to it.</summary>
-    private sealed class CapturingConventionBuilder : IEndpointConventionBuilder
-    {
-        public List<Action<EndpointBuilder>> Conventions { get; } = [];
-
-        public void Add(Action<EndpointBuilder> convention) => Conventions.Add(convention);
-
-        /// <summary>Replays the captured conventions against a fresh endpoint builder and returns its metadata.</summary>
-        public IList<object> ReplayMetadata()
-        {
-            var endpointBuilder = new RouteEndpointBuilder(
-                _ => Task.CompletedTask,
-                RoutePatternFactory.Parse("/test"),
-                0);
-            foreach (var convention in Conventions) convention(endpointBuilder);
-            return endpointBuilder.Metadata;
-        }
-    }
-
     [Fact]
     public void HasApiVersions_NullApiVersions_ThrowsArgumentNullException()
     {
@@ -216,5 +191,29 @@ public class EndpointConventionBuilderExtensionsTests
 
         // The versioning layer collates declarations into a distinct, ordered set.
         Assert.Equal([new ApiVersion(1, 0), new ApiVersion(2, 0)], model.DeclaredApiVersions);
+    }
+    // ----------------------------------------------------------------------
+    // Structural contract of HasApiVersions using a lightweight fake builder.
+    // These assert the extension's own logic (guard, fluency, per-element
+    // forwarding) without needing the full routing/versioning collation pass.
+    // ----------------------------------------------------------------------
+
+    /// <summary>A minimal <see cref="IEndpointConventionBuilder" /> that captures the conventions added to it.</summary>
+    private sealed class CapturingConventionBuilder : IEndpointConventionBuilder
+    {
+        public List<Action<EndpointBuilder>> Conventions { get; } = [];
+
+        public void Add(Action<EndpointBuilder> convention) => Conventions.Add(convention);
+
+        /// <summary>Replays the captured conventions against a fresh endpoint builder and returns its metadata.</summary>
+        public IList<object> ReplayMetadata()
+        {
+            var endpointBuilder = new RouteEndpointBuilder(
+                _ => Task.CompletedTask,
+                RoutePatternFactory.Parse("/test"),
+                0);
+            foreach (var convention in Conventions) convention(endpointBuilder);
+            return endpointBuilder.Metadata;
+        }
     }
 }

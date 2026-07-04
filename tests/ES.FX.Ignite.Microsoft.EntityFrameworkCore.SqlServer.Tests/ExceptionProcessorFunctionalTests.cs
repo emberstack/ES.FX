@@ -59,8 +59,8 @@ public class ExceptionProcessorFunctionalTests(SqlServerContainerFixture sqlServ
         var secondContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
         secondContext.TestUsers.Add(new TestUser { Id = id });
 
-        await Assert.ThrowsAsync<UniqueConstraintException>(
-            () => secondContext.SaveChangesAsync(TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<UniqueConstraintException>(() =>
+            secondContext.SaveChangesAsync(TestContext.Current.CancellationToken));
 
         return;
 

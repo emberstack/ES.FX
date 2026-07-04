@@ -34,18 +34,18 @@ public class NamespacedNameTests
     // ---- TryParse: malformed inputs must be REJECTED ----------------------------
 
     [Theory]
-    [InlineData("ns/")]      // trailing slash, empty name
-    [InlineData("/name")]    // leading slash, empty namespace
-    [InlineData("a//b")]     // double slash => 3 segments
-    [InlineData("/")]        // both empty
-    [InlineData("//")]       // 3 empty segments
-    [InlineData("a/b/c")]    // too many segments
-    [InlineData("  /  ")]    // whitespace-only around slash
-    [InlineData("ns/ ")]     // whitespace-only name
-    [InlineData(" /name")]   // whitespace-only namespace
-    [InlineData("")]         // empty
-    [InlineData("   ")]      // whitespace
-    [InlineData(null)]       // null
+    [InlineData("ns/")] // trailing slash, empty name
+    [InlineData("/name")] // leading slash, empty namespace
+    [InlineData("a//b")] // double slash => 3 segments
+    [InlineData("/")] // both empty
+    [InlineData("//")] // 3 empty segments
+    [InlineData("a/b/c")] // too many segments
+    [InlineData("  /  ")] // whitespace-only around slash
+    [InlineData("ns/ ")] // whitespace-only name
+    [InlineData(" /name")] // whitespace-only namespace
+    [InlineData("")] // empty
+    [InlineData("   ")] // whitespace
+    [InlineData(null)] // null
     public void TryParse_MalformedInput_ReturnsFalseAndEmpty(string? value)
     {
         Assert.False(NamespacedName.TryParse(value, out var nsName));

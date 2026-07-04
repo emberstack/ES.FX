@@ -18,16 +18,6 @@ public class UnixTimeConverterTests
         return o;
     }
 
-    private sealed class DtoBox
-    {
-        [JsonPropertyName("t")] public DateTimeOffset T { get; set; }
-    }
-
-    private sealed class NullableDtoBox
-    {
-        [JsonPropertyName("t")] public DateTimeOffset? T { get; set; }
-    }
-
     // ==================== SECONDS (non-nullable) ====================
 
     [Fact]
@@ -279,5 +269,15 @@ public class UnixTimeConverterTests
         var ex = Assert.ThrowsAny<JsonException>(() =>
             JsonSerializer.Deserialize<NullableDtoBox>($"{{\"t\":{long.MaxValue}}}", o));
         Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
+    }
+
+    private sealed class DtoBox
+    {
+        [JsonPropertyName("t")] public DateTimeOffset T { get; set; }
+    }
+
+    private sealed class NullableDtoBox
+    {
+        [JsonPropertyName("t")] public DateTimeOffset? T { get; set; }
     }
 }

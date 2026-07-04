@@ -52,7 +52,7 @@ public sealed class MessageKindProviderReceiveContextTests
     public void GetType_HeaderMissing_ReturnsNull()
     {
         // TryGetHeader returns false => provider must short-circuit to null without touching the string overload.
-        var context = ReceiveContextWithHeader(headerValue: null, headerPresent: false);
+        var context = ReceiveContextWithHeader(null, false);
 
         Assert.Null(MessageKindProvider.GetType(context));
     }

@@ -9,21 +9,24 @@ namespace ES.FX.Zendesk.Attachments;
 
 /// <summary>
 ///     Default <see cref="IZendeskAttachmentsApi" /> implementation. Reads attachment metadata via the shared
-///     Zendesk <see cref="HttpClient" /> and then streams the <c>content_url</c>, capping the downloaded payload to
-///     keep tool responses bounded. Zendesk documents that <c>content_url</c> can point to externally hosted files,
-///     so credentials are only sent when the URL resolves to the configured Zendesk host — never to third parties.
+///     Zendesk <see cref="HttpClient" /> and then streams the <c>content_url</c> — fully by default, or capped
+///     when the caller supplies <c>maxContentBytes</c>. Zendesk documents that <c>content_url</c> can point to
+///     externally hosted files, so credentials are only sent when the URL resolves to the configured Zendesk
+///     host — never to third parties.
 /// </summary>
 internal sealed class ZendeskAttachmentsApi(HttpClient httpClient, ILogger<ZendeskAttachmentsApi> logger)
     : ZendeskResourceApi(httpClient, logger), IZendeskAttachmentsApi
 {
-    /// <summary>The maximum number of content bytes downloaded before truncating (1 MiB).</summary>
-    private const int MaxContentBytes = 1024 * 1024;
-
     private const int CopyBufferBytes = 8192;
 
     /// <inheritdoc />
-    public async Task<ZendeskAttachmentContent> GetContentAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<ZendeskAttachmentContent> GetContentAsync(long id, int? maxContentBytes = null,
+        CancellationToken cancellationToken = default)
     {
+        if (maxContentBytes is <= 0)
+            throw new ArgumentOutOfRangeException(nameof(maxContentBytes), maxContentBytes,
+                "The download cap must be positive.");
+
         var response = await GetAsync<ZendeskAttachmentResponse>($"attachments/{id}.json", "Zendesk.Attachments.Get",
             cancellationToken).ConfigureAwait(false);
         var attachment = response.Attachment
@@ -32,7 +35,8 @@ internal sealed class ZendeskAttachmentsApi(HttpClient httpClient, ILogger<Zende
         if (string.IsNullOrWhiteSpace(attachment.ContentUrl))
             throw new InvalidOperationException($"Zendesk attachment '{id}' has no downloadable content URL.");
 
-        var (bytes, truncated) = await DownloadAsync(attachment.ContentUrl, cancellationToken).ConfigureAwait(false);
+        var (bytes, truncated) = await DownloadAsync(attachment.ContentUrl, maxContentBytes, cancellationToken)
+            .ConfigureAwait(false);
 
         // Unknown/unsupported declared charsets fall back to base64 so the original bytes are never mis-decoded.
         var textEncoding = IsTextContentType(attachment.ContentType)
@@ -66,7 +70,7 @@ internal sealed class ZendeskAttachmentsApi(HttpClient httpClient, ILogger<Zende
         };
     }
 
-    private async Task<(byte[] Bytes, bool Truncated)> DownloadAsync(string contentUrl,
+    private async Task<(byte[] Bytes, bool Truncated)> DownloadAsync(string contentUrl, int? maxContentBytes,
         CancellationToken cancellationToken)
     {
         if (!Uri.TryCreate(contentUrl, UriKind.Absolute, out var uri))
@@ -90,13 +94,21 @@ internal sealed class ZendeskAttachmentsApi(HttpClient httpClient, ILogger<Zende
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         using var buffer = new MemoryStream();
+
+        // No cap requested: download the whole payload (Zendesk stores files up to 50 MB).
+        if (maxContentBytes is null)
+        {
+            await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
+            return (buffer.ToArray(), false);
+        }
+
         var chunk = new byte[CopyBufferBytes];
         var truncated = false;
 
         int read;
         while ((read = await stream.ReadAsync(chunk, cancellationToken).ConfigureAwait(false)) > 0)
         {
-            var remaining = MaxContentBytes - (int)buffer.Length;
+            var remaining = maxContentBytes.Value - (int)buffer.Length;
             if (read < remaining)
             {
                 buffer.Write(chunk, 0, read);

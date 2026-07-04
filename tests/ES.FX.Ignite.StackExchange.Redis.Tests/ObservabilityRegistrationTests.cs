@@ -1,5 +1,4 @@
 using ES.FX.Ignite.Spark.Configuration;
-using ES.FX.Ignite.StackExchange.Redis.Configuration;
 using ES.FX.Ignite.StackExchange.Redis.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;

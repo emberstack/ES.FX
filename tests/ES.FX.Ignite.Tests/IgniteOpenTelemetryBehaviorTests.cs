@@ -12,7 +12,9 @@ namespace ES.FX.Ignite.Tests;
 
 /// <summary>
 ///     Behavioral coverage for the OpenTelemetry wiring performed by
-///     <see cref="IgniteHostingExtensions.Ignite(IHostApplicationBuilder, System.Action{ES.FX.Ignite.Configuration.IgniteSettings}?, string)" />.
+///     <see
+///         cref="IgniteHostingExtensions.Ignite(IHostApplicationBuilder, System.Action{ES.FX.Ignite.Configuration.IgniteSettings}?, string)" />
+///     .
 ///     Unlike a presence check on the MeterProvider/TracerProvider (which exist regardless of what
 ///     instrumentation or exporters are wired inside the builder lambdas), these tests observe the REAL
 ///     effects: which meters/activity sources the built providers actually subscribe to, and whether the

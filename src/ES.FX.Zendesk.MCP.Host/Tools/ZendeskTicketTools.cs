@@ -67,7 +67,8 @@ public sealed class ZendeskTicketTools(IZendeskClient zendeskApiClient)
         string? bodyFormat = "plain",
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Tickets.GetCommentsAsync(ticketId, page, perPage, bodyFormat, cancellationToken));
+            zendeskApiClient.Tickets.GetCommentsAsync(ticketId, page, perPage, bodyFormat,
+                cancellationToken: cancellationToken));
 
     /// <summary>Returns a ticket's change history (audits/events).</summary>
     [McpServerTool(Name = "zendesk_tickets_audits", ReadOnly = true, OpenWorld = true)]
@@ -86,7 +87,8 @@ public sealed class ZendeskTicketTools(IZendeskClient zendeskApiClient)
         int? perPage = 25,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Tickets.GetAuditsAsync(ticketId, page, perPage, cancellationToken));
+            zendeskApiClient.Tickets.GetAuditsAsync(ticketId, page, perPage,
+                cancellationToken: cancellationToken));
 
     /// <summary>Returns timing/lifecycle metrics for a ticket.</summary>
     [McpServerTool(Name = "zendesk_tickets_metrics", ReadOnly = true, OpenWorld = true)]

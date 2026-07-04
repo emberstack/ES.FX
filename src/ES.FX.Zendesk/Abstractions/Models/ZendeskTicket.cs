@@ -110,6 +110,13 @@ public sealed record ZendeskTicket
     [JsonPropertyName("is_public")]
     public bool? IsPublic { get; init; }
 
+    /// <summary>
+    ///     The number of public comments — populated only when the request sideloads <c>comment_count</c>
+    ///     (<c>include=comment_count</c>).
+    /// </summary>
+    [JsonPropertyName("comment_count")]
+    public long? CommentCount { get; init; }
+
     /// <summary>An external id for linking to a system outside Zendesk.</summary>
     [JsonPropertyName("external_id")]
     public string? ExternalId { get; init; }

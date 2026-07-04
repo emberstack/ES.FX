@@ -1,7 +1,7 @@
 using ES.FX.TransactionalOutbox.Delivery;
 using ES.FX.TransactionalOutbox.MassTransit.Delivery;
-using global::MassTransit;
-using global::MassTransit.Testing;
+using MassTransit;
+using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 

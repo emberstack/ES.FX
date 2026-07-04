@@ -30,7 +30,7 @@ public class SimpleSqlServerHealthCheckTests
                 "SqlServerClient",
                 Mock.Of<IHealthCheck>(),
                 failureStatus,
-                tags: null)
+                null)
         };
 
     [Theory]

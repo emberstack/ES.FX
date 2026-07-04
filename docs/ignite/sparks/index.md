@@ -90,6 +90,12 @@ Every Spark, grouped by function.
 | [Azure Blob Storage](./azure-storage-blobs.md) | Registers a `BlobServiceClient` for Azure Blob Storage. |
 | [Azure Queue Storage](./azure-storage-queues.md) | Registers a `QueueServiceClient` for Azure Queue Storage. |
 
+### External services
+
+| Spark | Purpose |
+| --- | --- |
+| [Zendesk](./zendesk.md) | Registers the [ES.FX.Zendesk](../../libraries/zendesk-client.md) typed `IZendeskClient` (OAuth `client_credentials`) with a live health check and tracing. |
+
 ### API & documentation
 
 | Spark | Purpose |
@@ -97,7 +103,6 @@ Every Spark, grouped by function.
 | [API versioning](./asp-versioning.md) | Wires `Asp.Versioning` into Ignite for versioned API endpoints. |
 | [NSwag](./nswag.md) | Generates OpenAPI documents and UI via NSwag (adds a post-build `app.IgniteNSwag()` step). |
 | [Swashbuckle](./swashbuckle.md) | Generates OpenAPI documents and Swagger UI via Swashbuckle. |
-| [Model Context Protocol](./model-context-protocol.md) | Hosts a Model Context Protocol (MCP) server, based on the `ModelContextProtocol.AspNetCore` SDK. |
 
 ### Observability
 

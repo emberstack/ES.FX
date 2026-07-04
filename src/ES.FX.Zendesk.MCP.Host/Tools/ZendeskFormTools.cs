@@ -17,7 +17,8 @@ public sealed class ZendeskFormTools(IZendeskClient zendeskApiClient)
         "Lists all Zendesk ticket forms (id, name, display name, active/default flags, and the ticket field ids on " +
         "each form). Read-only.")]
     public Task<ZendeskTicketFormsResult> Search(CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Forms.ListAsync(cancellationToken));
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Forms.ListAsync(cancellationToken: cancellationToken));
 
     /// <summary>Returns a Zendesk ticket form by id.</summary>
     [McpServerTool(Name = "zendesk_forms_read", ReadOnly = true, OpenWorld = true)]

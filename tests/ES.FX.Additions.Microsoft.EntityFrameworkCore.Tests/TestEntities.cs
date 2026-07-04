@@ -1,9 +1,12 @@
+using ES.FX.Additions.Microsoft.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests;
 
-/// <summary>An entity that is NOT mapped by convention (no DbSet). It only becomes part of the model when a
-/// registered configure action maps it explicitly, letting tests observe whether callbacks ran.</summary>
+/// <summary>
+///     An entity that is NOT mapped by convention (no DbSet). It only becomes part of the model when a
+///     registered configure action maps it explicitly, letting tests observe whether callbacks ran.
+/// </summary>
 public class Widget
 {
     public int Id { get; set; }
@@ -27,7 +30,7 @@ public abstract class ConfigurableContextBase(DbContextOptions options) : DbCont
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        Extensions.BuilderExtensions.ConfigureFromExtension(modelBuilder, _options);
+        BuilderExtensions.ConfigureFromExtension(modelBuilder, _options);
     }
 }
 

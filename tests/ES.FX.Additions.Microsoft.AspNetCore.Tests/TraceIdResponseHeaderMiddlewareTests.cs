@@ -30,8 +30,8 @@ public class TraceIdResponseHeaderMiddlewareTests
         using var listener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
-            SampleUsingParentId = (ref ActivityCreationOptions<string> _) => ActivitySamplingResult.AllData
+            Sample = (ref _) => ActivitySamplingResult.AllData,
+            SampleUsingParentId = (ref _) => ActivitySamplingResult.AllData
         };
         ActivitySource.AddActivityListener(listener);
 
@@ -99,8 +99,8 @@ public class TraceIdResponseHeaderMiddlewareTests
         using var listener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
-            SampleUsingParentId = (ref ActivityCreationOptions<string> _) => ActivitySamplingResult.AllData
+            Sample = (ref _) => ActivitySamplingResult.AllData,
+            SampleUsingParentId = (ref _) => ActivitySamplingResult.AllData
         };
         ActivitySource.AddActivityListener(listener);
 
@@ -139,8 +139,8 @@ public class TraceIdResponseHeaderMiddlewareTests
     /// </summary>
     private sealed class CapturingResponseFeature(IHeaderDictionary headers) : IHttpResponseFeature
     {
-        public Func<object, Task>? OnStartingCallback { get; private set; }
         private object? _onStartingState;
+        public Func<object, Task>? OnStartingCallback { get; private set; }
 
         public int StatusCode { get; set; } = 200;
         public string? ReasonPhrase { get; set; }

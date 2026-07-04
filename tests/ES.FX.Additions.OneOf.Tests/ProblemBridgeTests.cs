@@ -75,7 +75,7 @@ public class ProblemBridgeTests
     public void TryPickProblem_MatchesOnRuntimeType_DerivedProblemStillMatches()
     {
         // Problem is a record with subtypes possible; ensure an 'is Problem' check honors inheritance.
-        var derived = new ValidationProblem(title: "Invalid");
+        var derived = new ValidationProblem("Invalid");
         ResultOrProblem union = derived;
 
         Assert.True(union.TryPickProblem(out var extracted));

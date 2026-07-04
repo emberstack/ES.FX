@@ -85,7 +85,7 @@ public class SqlServerOutboxProviderQueryTests : IAsyncLifetime
         var now = DateTimeOffset.UtcNow;
 
         // A locked row (Lock IS NOT NULL) - must be skipped by the WHERE clause.
-        context.Set<Outbox>().Add(NewOutbox(now.AddMinutes(-5), @lock: Guid.NewGuid()));
+        context.Set<Outbox>().Add(NewOutbox(now.AddMinutes(-5), Guid.NewGuid()));
         // A still-delayed row (DeliveryDelayedUntil in the future) - must be skipped.
         context.Set<Outbox>().Add(NewOutbox(now.AddMinutes(-4), delayedUntil: now.AddHours(1)));
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -109,7 +109,7 @@ public class SqlServerOutboxProviderQueryTests : IAsyncLifetime
 
         var now = DateTimeOffset.UtcNow;
 
-        var locked = NewOutbox(now.AddMinutes(-10), @lock: Guid.NewGuid());
+        var locked = NewOutbox(now.AddMinutes(-10), Guid.NewGuid());
         var delayed = NewOutbox(now.AddMinutes(-9), delayedUntil: now.AddHours(1));
         // An expired-delay row IS eligible (DeliveryDelayedUntil < now).
         var eligibleOlder = NewOutbox(now.AddMinutes(-8), delayedUntil: now.AddMinutes(-1));

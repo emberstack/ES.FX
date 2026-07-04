@@ -101,7 +101,7 @@ public class OutboxDeliveryBookkeepingTests(ITestOutputHelper output)
     public async Task Delivery_Bookkeeping_Is_Observed_By_Handler_Across_Retries()
     {
         var databaseName = Guid.NewGuid().ToString();
-        var handler = new ContextCapturingHandler(failUntilAttempt: 3);
+        var handler = new ContextCapturingHandler(3);
         var faultHandler = new RedeliverFaultHandler(TimeSpan.FromMilliseconds(20));
 
         using var host = BuildHost(databaseName, handler, output, faultHandler);
@@ -153,7 +153,7 @@ public class OutboxDeliveryBookkeepingTests(ITestOutputHelper output)
     public async Task Delivery_Bookkeeping_Is_Persisted_On_Message_After_First_Attempt()
     {
         var databaseName = Guid.NewGuid().ToString();
-        var handler = new ContextCapturingHandler(failUntilAttempt: int.MaxValue); // always fault
+        var handler = new ContextCapturingHandler(int.MaxValue); // always fault
         // Long redeliver delay so the outbox stays delayed and the row is not attempted again in the window.
         var faultHandler = new RedeliverFaultHandler(TimeSpan.FromMinutes(10));
 

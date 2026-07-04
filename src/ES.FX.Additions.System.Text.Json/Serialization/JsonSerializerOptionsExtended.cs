@@ -84,7 +84,7 @@ public static class JsonSerializerOptionsExtended
     /// </summary>
     private static JsonSerializerOptions CreateReadOnly(JsonSerializerOptions options)
     {
-        options.MakeReadOnly(populateMissingResolver: true);
+        options.MakeReadOnly(true);
         return options;
     }
 }

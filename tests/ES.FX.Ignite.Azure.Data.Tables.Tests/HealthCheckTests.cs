@@ -56,7 +56,8 @@ public class HealthCheckTests
             .Returns(MakePage(new TableItem("table-a"), new TableItem("table-b")));
 
         using var host = BuildHostWithMockClient(clientMock);
-        var report = await host.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync(TestContext.Current.CancellationToken);
+        var report = await host.Services.GetRequiredService<HealthCheckService>()
+            .CheckHealthAsync(TestContext.Current.CancellationToken);
 
         var entry = Assert.Single(report.Entries);
         Assert.Equal(HealthStatus.Healthy, entry.Value.Status);
@@ -73,7 +74,8 @@ public class HealthCheckTests
             .Returns(MakePage());
 
         using var host = BuildHostWithMockClient(clientMock);
-        var report = await host.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync(TestContext.Current.CancellationToken);
+        var report = await host.Services.GetRequiredService<HealthCheckService>()
+            .CheckHealthAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HealthStatus.Healthy, report.Status);
     }
@@ -89,7 +91,8 @@ public class HealthCheckTests
 
         // Default FailureStatus (null) means the health check reports Unhealthy.
         using var host = BuildHostWithMockClient(clientMock);
-        var report = await host.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync(TestContext.Current.CancellationToken);
+        var report = await host.Services.GetRequiredService<HealthCheckService>()
+            .CheckHealthAsync(TestContext.Current.CancellationToken);
 
         var entry = Assert.Single(report.Entries);
         Assert.Equal(HealthStatus.Unhealthy, entry.Value.Status);
@@ -107,7 +110,8 @@ public class HealthCheckTests
 
         // FailureStatus flows through HealthCheckRegistration into context.Registration.FailureStatus.
         using var host = BuildHostWithMockClient(clientMock, failureStatus: HealthStatus.Degraded);
-        var report = await host.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync(TestContext.Current.CancellationToken);
+        var report = await host.Services.GetRequiredService<HealthCheckService>()
+            .CheckHealthAsync(TestContext.Current.CancellationToken);
 
         var entry = Assert.Single(report.Entries);
         Assert.Equal(HealthStatus.Degraded, entry.Value.Status);
@@ -122,8 +126,9 @@ public class HealthCheckTests
             .Setup(c => c.QueryAsync((string?)null, It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .Returns(MakePage(new TableItem("keyed-table")));
 
-        using var host = BuildHostWithMockClient(clientMock, serviceKey: "keyed");
-        var report = await host.Services.GetRequiredService<HealthCheckService>().CheckHealthAsync(TestContext.Current.CancellationToken);
+        using var host = BuildHostWithMockClient(clientMock, "keyed");
+        var report = await host.Services.GetRequiredService<HealthCheckService>()
+            .CheckHealthAsync(TestContext.Current.CancellationToken);
 
         var entry = Assert.Single(report.Entries);
         Assert.Equal(HealthStatus.Healthy, entry.Value.Status);

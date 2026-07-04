@@ -11,6 +11,12 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 [McpServerToolType]
 public sealed class ZendeskAttachmentTools(IZendeskClient zendeskApiClient)
 {
+    /// <summary>
+    ///     The library downloads attachments fully by default; the TOOL caps at 1 MiB so agent responses stay
+    ///     bounded.
+    /// </summary>
+    private const int MaxToolContentBytes = 1024 * 1024;
+
     /// <summary>Downloads an attachment's content.</summary>
     [McpServerTool(Name = "zendesk_attachments_read", ReadOnly = true, OpenWorld = true)]
     [Description(
@@ -22,5 +28,6 @@ public sealed class ZendeskAttachmentTools(IZendeskClient zendeskApiClient)
         [Description("The numeric attachment id (from a comment's attachments[].id).")]
         long id,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Attachments.GetContentAsync(id, cancellationToken));
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Attachments.GetContentAsync(id, MaxToolContentBytes, cancellationToken));
 }

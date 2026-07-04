@@ -1,5 +1,4 @@
 using ES.FX.Additions.MassTransit.MediatR.Consumers;
-using ES.FX.Additions.MediatR.Contracts.Batches;
 using MassTransit;
 using MassTransit.Testing;
 using MediatR;
@@ -16,6 +15,8 @@ namespace ES.FX.Additions.MassTransit.MediatR.Tests;
 /// </summary>
 public class MediatorConsumerTests
 {
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     /// <summary>
     ///     Spins up a MassTransit in-memory harness with the supplied consumer configuration and a mocked
     ///     <see cref="IMediator" />. Returns the started harness and the mock for assertions. Caller owns
@@ -35,8 +36,6 @@ public class MediatorConsumerTests
         await harness.Start();
         return (harness, mediator, provider);
     }
-
-    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
     public async Task Single_consumer_publishes_when_message_is_a_notification()

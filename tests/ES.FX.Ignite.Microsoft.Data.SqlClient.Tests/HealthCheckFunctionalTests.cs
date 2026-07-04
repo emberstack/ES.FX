@@ -1,4 +1,3 @@
-using ES.FX.Ignite.Microsoft.Data.SqlClient.Configuration;
 using ES.FX.Ignite.Microsoft.Data.SqlClient.Hosting;
 using ES.FX.Shared.SqlServer.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;

@@ -16,11 +16,13 @@ public class ZendeskAttachmentToolsTests
         var tools = new ZendeskAttachmentTools(client.Object);
 
         var expected = new ZendeskAttachmentContent { Id = 88, FileName = "log.txt", Encoding = "utf-8" };
-        attachments.Setup(api => api.GetContentAsync(88, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        attachments.Setup(api => api.GetContentAsync(88, It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
 
         var result = await tools.Read(88, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        attachments.Verify(api => api.GetContentAsync(88, It.IsAny<CancellationToken>()), Times.Once);
+        // The library default is unlimited — the TOOL must cap at 1 MiB to keep agent responses bounded.
+        attachments.Verify(api => api.GetContentAsync(88, 1024 * 1024, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -124,7 +124,8 @@ public class QueryStringToHeaderMiddlewareTests
         // Belt-and-suspenders: assert the injected header name never materialized anywhere.
         var injected = Uri.EscapeDataString("value\r\nInjected: evil");
         using var server = TestServerFactory.CreateWithMiddleware<QueryStringToHeaderMiddleware>();
-        var response = await server.CreateClient().GetAsync($"/?{Prefix}Safe={injected}", TestContext.Current.CancellationToken);
+        var response = await server.CreateClient()
+            .GetAsync($"/?{Prefix}Safe={injected}", TestContext.Current.CancellationToken);
 
         Assert.False(response.Headers.TryGetValues("Echo-Injected", out _));
         Assert.False(response.Headers.TryGetValues("Injected", out _));

@@ -19,6 +19,10 @@ namespace Microsoft.Extensions.DependencyInjection;
 [PublicAPI]
 public static class ZendeskClientServiceCollectionExtensions
 {
+    // Zendesk asks API clients to identify themselves with a descriptive User-Agent.
+    private static readonly ProductInfoHeaderValue UserAgent = new(
+        "ES.FX.Zendesk", typeof(ZendeskClient).Assembly.GetName().Version?.ToString(3) ?? "1.0.0");
+
     /// <summary>
     ///     Registers <see cref="IZendeskClient" /> as a typed <see cref="HttpClient" /> together with the OAuth
     ///     token provider and options validation. Expects the corresponding named
@@ -44,7 +48,8 @@ public static class ZendeskClientServiceCollectionExtensions
         services.TryAddSingleton(TimeProvider.System);
 
         // Dedicated token-endpoint client — has NO auth handler, so acquiring a token does not recurse.
-        services.AddHttpClient(tokenClientName);
+        services.AddHttpClient(tokenClientName,
+            httpClient => httpClient.DefaultRequestHeaders.UserAgent.Add(UserAgent));
 
         // OAuth token provider (singleton per instance: owns the token cache + refresh lock).
         services.AddKeyedSingleton<IZendeskAccessTokenProvider>(serviceKey, (serviceProvider, _) =>
@@ -64,6 +69,7 @@ public static class ZendeskClientServiceCollectionExtensions
                 httpClient.BaseAddress = options.GetBaseAddress();
                 httpClient.DefaultRequestHeaders.Accept.Add(
                     new MediaTypeWithQualityHeaderValue("application/json"));
+                httpClient.DefaultRequestHeaders.UserAgent.Add(UserAgent);
             })
             .AddHttpMessageHandler(serviceProvider =>
                 new ZendeskAuthenticationDelegatingHandler(

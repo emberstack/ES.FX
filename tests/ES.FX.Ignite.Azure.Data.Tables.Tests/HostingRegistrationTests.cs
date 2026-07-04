@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace ES.FX.Ignite.Azure.Data.Tables.Tests;
 
@@ -51,7 +52,8 @@ public class HostingRegistrationTests
     {
         var builder = CreateBuilder(
             new KeyValuePair<string, string?>(
-                SettingsKey($"{nameof(AzureDataTablesSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}"),
+                SettingsKey(
+                    $"{nameof(AzureDataTablesSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}"),
                 "false"),
             new KeyValuePair<string, string?>(
                 SettingsKey($"{nameof(AzureDataTablesSparkSettings.Tracing)}:{nameof(HealthCheckSettings.Enabled)}"),
@@ -71,7 +73,8 @@ public class HostingRegistrationTests
     {
         var builder = CreateBuilder(
             new KeyValuePair<string, string?>(
-                SettingsKey($"{nameof(AzureDataTablesSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}"),
+                SettingsKey(
+                    $"{nameof(AzureDataTablesSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}"),
                 enabled.ToString()));
 
         builder.IgniteAzureTableServiceClient();
@@ -83,7 +86,7 @@ public class HostingRegistrationTests
         if (enabled)
         {
             var registrations = provider.GetRequiredService<
-                Microsoft.Extensions.Options.IOptions<HealthCheckServiceOptions>>().Value.Registrations;
+                IOptions<HealthCheckServiceOptions>>().Value.Registrations;
             var registration = Assert.Single(registrations);
             Assert.Equal("Azure-TableServiceClient", registration.Name);
             Assert.Contains("Azure", registration.Tags);
@@ -98,7 +101,7 @@ public class HostingRegistrationTests
         builder.IgniteAzureTableServiceClient(serviceKey: "primary");
 
         var registrations = builder.Build().Services.GetRequiredService<
-            Microsoft.Extensions.Options.IOptions<HealthCheckServiceOptions>>().Value.Registrations;
+            IOptions<HealthCheckServiceOptions>>().Value.Registrations;
 
         var registration = Assert.Single(registrations);
         Assert.Equal("Azure-TableServiceClient-[primary]", registration.Name);
@@ -131,7 +134,7 @@ public class HostingRegistrationTests
 
         // Two distinct health-check registrations, one per key.
         var registrations = app.Services.GetRequiredService<
-            Microsoft.Extensions.Options.IOptions<HealthCheckServiceOptions>>().Value.Registrations;
+            IOptions<HealthCheckServiceOptions>>().Value.Registrations;
         Assert.Equal(2, registrations.Count);
     }
 
@@ -141,7 +144,8 @@ public class HostingRegistrationTests
         var builder = CreateBuilder(
             // Config enables health checks; the delegate should override it to disabled.
             new KeyValuePair<string, string?>(
-                SettingsKey($"{nameof(AzureDataTablesSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}"),
+                SettingsKey(
+                    $"{nameof(AzureDataTablesSparkSettings.HealthChecks)}:{nameof(HealthCheckSettings.Enabled)}"),
                 "true"));
 
         var delegateObservedEnabled = false;

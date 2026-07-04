@@ -17,7 +17,7 @@ public class KubernetesHealthCheckTests
                 "kubernetes",
                 Mock.Of<IHealthCheck>(),
                 failureStatus,
-                tags: null)
+                null)
         };
 
     /// <summary>
@@ -174,8 +174,7 @@ public class KubernetesHealthCheckTests
 
         // The catch filter `when (cancellationToken.IsCancellationRequested)` must rethrow,
         // NOT swallow into an Unhealthy result.
-        await Assert.ThrowsAsync<OperationCanceledException>(
-            () => sut.CheckHealthAsync(CreateContext(), cts.Token));
+        await Assert.ThrowsAsync<OperationCanceledException>(() => sut.CheckHealthAsync(CreateContext(), cts.Token));
     }
 
     [Fact]
@@ -196,8 +195,7 @@ public class KubernetesHealthCheckTests
         client.SetupGet(c => c.Version).Returns(version.Object);
         var sut = new KubernetesHealthCheck(client.Object);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(
-            () => sut.CheckHealthAsync(CreateContext(), cts.Token));
+        await Assert.ThrowsAsync<OperationCanceledException>(() => sut.CheckHealthAsync(CreateContext(), cts.Token));
 
         version.Verify(
             v => v.GetCodeWithHttpMessagesAsync(

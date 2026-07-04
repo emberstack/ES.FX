@@ -12,6 +12,11 @@ namespace ES.FX.Additions.Microsoft.Data.SqlClient.Tests;
 /// </summary>
 public class SqlServerSafeQueryTests
 {
+    // Short connect timeout so the "unreachable" tests fail fast rather than hanging.
+    private const string UnreachableConnectionString =
+        "Server=tcp:localhost,1;Database=Test;User ID=sa;Password=Passw0rd!;" +
+        "TrustServerCertificate=True;Connect Timeout=1";
+
     [Fact]
     public void CommandText_IsTheCanonicalConnectivityProbe()
     {
@@ -71,9 +76,4 @@ public class SqlServerSafeQueryTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             connection.ExecuteSafeQueryAsync(cancellationToken: cts.Token));
     }
-
-    // Short connect timeout so the "unreachable" tests fail fast rather than hanging.
-    private const string UnreachableConnectionString =
-        "Server=tcp:localhost,1;Database=Test;User ID=sa;Password=Passw0rd!;" +
-        "TrustServerCertificate=True;Connect Timeout=1";
 }

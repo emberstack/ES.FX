@@ -42,7 +42,7 @@ public class IgniteAzureClientTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: null,
+            null,
             BuildClientConfigurationSection());
 
         using var provider = services.BuildServiceProvider();
@@ -62,7 +62,7 @@ public class IgniteAzureClientTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: key,
+            key,
             BuildClientConfigurationSection());
 
         using var provider = services.BuildServiceProvider();
@@ -83,7 +83,7 @@ public class IgniteAzureClientTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: key,
+            key,
             BuildClientConfigurationSection());
 
         using var provider = services.BuildServiceProvider();
@@ -102,7 +102,7 @@ public class IgniteAzureClientTests
 
         // Whitespace key is normalized to null by the helper => default (unkeyed) registration.
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: "   ",
+            "   ",
             BuildClientConfigurationSection());
 
         using var provider = services.BuildServiceProvider();
@@ -121,9 +121,9 @@ public class IgniteAzureClientTests
         var configureInvoked = false;
 
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: null,
+            null,
             BuildClientConfigurationSection(),
-            configureOptions: options =>
+            options =>
             {
                 configureInvoked = true;
                 // Mutate an option to prove the delegate can influence the built client.
@@ -144,9 +144,9 @@ public class IgniteAzureClientTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: null,
+            null,
             BuildClientConfigurationSection(),
-            configureOptions: null);
+            null);
 
         using var provider = services.BuildServiceProvider();
 
@@ -160,7 +160,7 @@ public class IgniteAzureClientTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: null,
+            null,
             BuildClientConfigurationSection());
 
         using var provider = services.BuildServiceProvider();
@@ -177,10 +177,10 @@ public class IgniteAzureClientTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: "alpha",
+            "alpha",
             BuildClientConfigurationSection("alpha"));
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: "beta",
+            "beta",
             BuildClientConfigurationSection("beta"));
 
         using var provider = services.BuildServiceProvider();

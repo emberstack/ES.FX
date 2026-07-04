@@ -9,4 +9,8 @@ public sealed record ZendeskTicketCommentsResult
     [JsonPropertyName("count")] public int? Count { get; init; }
     [JsonPropertyName("next_page")] public string? NextPage { get; init; }
     [JsonPropertyName("previous_page")] public string? PreviousPage { get; init; }
+
+    /// <summary>Sideloaded comment authors (populated only when the request asks to include <c>users</c>).</summary>
+    [JsonPropertyName("users")]
+    public IReadOnlyList<ZendeskUser>? Users { get; init; }
 }

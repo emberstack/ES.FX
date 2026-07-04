@@ -8,12 +8,6 @@ namespace ES.FX.Additions.MassTransit.Tests;
 /// </summary>
 public sealed class FormatterTests
 {
-    /// <summary>Records what the base formatter was asked to format so fallthrough can be asserted.</summary>
-    private sealed class StubEntityNameFormatter : IEntityNameFormatter
-    {
-        public string FormatEntityName<TMessage>() => "base:" + typeof(TMessage).Name;
-    }
-
     // ---------- KindEntityNameFormatter ----------
 
     [Fact]
@@ -61,7 +55,7 @@ public sealed class FormatterTests
     [Fact]
     public void KindEntityNameFormatter_FaultFallbackDisabled_UsesBaseForKindOnlyFault()
     {
-        var formatter = new KindEntityNameFormatter(new StubEntityNameFormatter(), faultFallbackToKind: false);
+        var formatter = new KindEntityNameFormatter(new StubEntityNameFormatter(), false);
 
         // With fallback disabled and no FaultKind, it defers to the base formatter for the Fault<> type.
         Assert.Equal("base:" + typeof(Fault<InvoiceIssued>).Name,
@@ -71,7 +65,7 @@ public sealed class FormatterTests
     [Fact]
     public void KindEntityNameFormatter_FaultFallbackDisabled_StillUsesExplicitFaultKind()
     {
-        var formatter = new KindEntityNameFormatter(new StubEntityNameFormatter(), faultFallbackToKind: false);
+        var formatter = new KindEntityNameFormatter(new StubEntityNameFormatter(), false);
 
         // Explicit FaultKind is honored regardless of the fallback flag.
         Assert.Equal("payment-fault", formatter.FormatEntityName<Fault<PaymentRequested>>());
@@ -128,11 +122,14 @@ public sealed class FormatterTests
         Type? seen = null;
         var formatter = new AggregatePrefixEntityNameFormatter(
             new StubEntityNameFormatter(),
-            prefixProviders: [t =>
-            {
-                seen = t;
-                return "x";
-            }]);
+            prefixProviders:
+            [
+                t =>
+                {
+                    seen = t;
+                    return "x";
+                }
+            ]);
 
         formatter.FormatEntityName<OrderShipped>();
 
@@ -165,5 +162,11 @@ public sealed class FormatterTests
 
         // For a type without [Kind], the base DefaultEndpointNameFormatter behavior is preserved.
         Assert.Equal(defaultFormatter.Message<PlainMessage>(), kindFormatter.Message<PlainMessage>());
+    }
+
+    /// <summary>Records what the base formatter was asked to format so fallthrough can be asserted.</summary>
+    private sealed class StubEntityNameFormatter : IEntityNameFormatter
+    {
+        public string FormatEntityName<TMessage>() => "base:" + typeof(TMessage).Name;
     }
 }

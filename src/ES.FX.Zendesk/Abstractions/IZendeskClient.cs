@@ -32,4 +32,28 @@ public interface IZendeskClient
 
     /// <summary>Operations against Zendesk <c>attachments</c> (authenticated content download).</summary>
     IZendeskAttachmentsApi Attachments { get; }
+
+    /// <summary>Operations against the unified <c>search</c> API (count, cursor-based export).</summary>
+    IZendeskSearchApi Search { get; }
+
+    /// <summary>Operations against the Zendesk <c>views</c> resource (saved ticket filters).</summary>
+    IZendeskViewsApi Views { get; }
+
+    /// <summary>Operations against the Zendesk <c>brands</c> resource.</summary>
+    IZendeskBrandsApi Brands { get; }
+
+    /// <summary>Operations against the Zendesk <c>custom_statuses</c> resource.</summary>
+    IZendeskCustomStatusesApi CustomStatuses { get; }
+
+    /// <summary>Operations against the Zendesk <c>job_statuses</c> resource (async bulk-job polling).</summary>
+    IZendeskJobStatusesApi JobStatuses { get; }
+
+    /// <summary>Operations against the Zendesk <c>tags</c> resource (account-wide tag usage).</summary>
+    IZendeskTagsApi Tags { get; }
+
+    /// <summary>Operations against the Zendesk <c>suspended_tickets</c> resource.</summary>
+    IZendeskSuspendedTicketsApi SuspendedTickets { get; }
+
+    /// <summary>Operations against the Zendesk <c>uploads</c> resource (attachment uploads for comments).</summary>
+    IZendeskUploadsApi Uploads { get; }
 }

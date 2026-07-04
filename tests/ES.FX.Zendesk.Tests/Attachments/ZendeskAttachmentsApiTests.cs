@@ -30,7 +30,7 @@ public class ZendeskAttachmentsApiTests
     {
         var (api, handler) = CreateApi("text/plain", "hello logs"u8.ToArray());
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("log.txt", content.FileName);
         Assert.Equal("utf-8", content.Encoding);
@@ -40,28 +40,58 @@ public class ZendeskAttachmentsApiTests
     }
 
     [Fact]
+    public async Task GetContentAsync_Honors_A_Caller_Supplied_Cap()
+    {
+        var (api, _) = CreateApi("text/plain", "hello logs"u8.ToArray());
+
+        var content = await api.GetContentAsync(88, maxContentBytes: 5,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(content.Truncated);
+        Assert.Equal("hello", content.Content); // exactly the caller's cap
+
+        // A cap above the payload size downloads everything untruncated.
+        var (bigApi, _) = CreateApi("text/plain", "hello logs"u8.ToArray());
+        var full = await bigApi.GetContentAsync(88, maxContentBytes: 8 * 1024 * 1024,
+            cancellationToken: TestContext.Current.CancellationToken);
+        Assert.False(full.Truncated);
+        Assert.Equal("hello logs", full.Content);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task GetContentAsync_Rejects_A_NonPositive_Cap(int cap)
+    {
+        var (api, _) = CreateApi("text/plain", "x"u8.ToArray());
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            api.GetContentAsync(88, cap, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task GetContentAsync_Returns_Binary_As_Base64()
     {
         var bytes = new byte[] { 1, 2, 3, 250, 251 };
         var (api, _) = CreateApi("image/png", bytes);
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("base64", content.Encoding);
         Assert.Equal(Convert.ToBase64String(bytes), content.Content);
     }
 
     [Fact]
-    public async Task GetContentAsync_Truncates_Oversize_Content()
+    public async Task GetContentAsync_Default_Is_Unlimited()
     {
         var bytes = new byte[MaxContentBytes + 100];
         Array.Fill(bytes, (byte)'A');
         var (api, _) = CreateApi("text/plain", bytes);
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken);
 
-        Assert.True(content.Truncated);
-        Assert.Equal(MaxContentBytes, content.Content.Length); // capped
+        Assert.False(content.Truncated); // no cap by default — the whole payload comes back
+        Assert.Equal(MaxContentBytes + 100, content.Content.Length);
     }
 
     [Fact]
@@ -71,7 +101,7 @@ public class ZendeskAttachmentsApiTests
         Array.Fill(bytes, (byte)'A');
         var (api, _) = CreateApi("text/plain", bytes);
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, MaxContentBytes, TestContext.Current.CancellationToken);
 
         Assert.False(content.Truncated); // complete payload — the flag must not lie
         Assert.Equal(MaxContentBytes, content.Content.Length);
@@ -84,7 +114,7 @@ public class ZendeskAttachmentsApiTests
         Array.Fill(bytes, (byte)'A');
         var (api, _) = CreateApi("text/plain", bytes);
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, MaxContentBytes, TestContext.Current.CancellationToken);
 
         Assert.True(content.Truncated);
         Assert.Equal(MaxContentBytes, content.Content.Length);
@@ -101,7 +131,7 @@ public class ZendeskAttachmentsApiTests
         euro.CopyTo(bytes, MaxContentBytes - 1);
         var (api, _) = CreateApi("text/plain", bytes);
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, MaxContentBytes, TestContext.Current.CancellationToken);
 
         Assert.True(content.Truncated);
         Assert.DoesNotContain('�', content.Content);
@@ -115,7 +145,7 @@ public class ZendeskAttachmentsApiTests
         var bytes = new byte[] { (byte)'c', (byte)'a', (byte)'f', 0xE9 };
         var (api, _) = CreateApi("text/csv; charset=iso-8859-1", bytes);
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("utf-8", content.Encoding);
         Assert.Equal("café", content.Content);
@@ -128,7 +158,7 @@ public class ZendeskAttachmentsApiTests
         var bytes = new byte[] { (byte)'c', (byte)'a', (byte)'f', 0xE9 };
         var (api, _) = CreateApi("text/csv; charset=not-a-charset", bytes);
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("base64", content.Encoding);
         Assert.Equal(Convert.ToBase64String(bytes), content.Content);
@@ -139,7 +169,7 @@ public class ZendeskAttachmentsApiTests
     {
         var (api, handler) = CreateApi("text/plain", "x"u8.ToArray());
 
-        await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("Bearer", handler.MetadataAuthScheme);
         Assert.Equal("Bearer", handler.ContentAuthScheme); // tenant host — credentials expected
@@ -153,7 +183,7 @@ public class ZendeskAttachmentsApiTests
         var (api, handler) = CreateApi("text/plain", "x"u8.ToArray(),
             "https://cdn.example.com/files/log.txt");
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("x", content.Content);
         Assert.Equal("Bearer", handler.MetadataAuthScheme); // API call stays authenticated
@@ -167,7 +197,7 @@ public class ZendeskAttachmentsApiTests
             "http://cdn.example.com/files/log.txt");
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await api.GetContentAsync(88, TestContext.Current.CancellationToken));
+            await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -178,7 +208,7 @@ public class ZendeskAttachmentsApiTests
         var (api, handler) = CreateApi("text/plain", "x"u8.ToArray(),
             "https://other-tenant.zendesk.com/attachments/token/abc/?name=log.txt");
 
-        var content = await api.GetContentAsync(88, TestContext.Current.CancellationToken);
+        var content = await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("x", content.Content);
         Assert.Equal("Bearer", handler.MetadataAuthScheme);
@@ -194,7 +224,7 @@ public class ZendeskAttachmentsApiTests
             "http://acme.zendesk.com/attachments/token/abc/?name=log.txt");
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await api.GetContentAsync(88, TestContext.Current.CancellationToken));
+            await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -204,7 +234,7 @@ public class ZendeskAttachmentsApiTests
         handler.MetadataJson = "{}";
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await api.GetContentAsync(88, TestContext.Current.CancellationToken));
+            await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -214,7 +244,7 @@ public class ZendeskAttachmentsApiTests
         handler.MetadataJson = """{ "attachment": { "id": 88, "file_name": "log.txt" } }""";
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await api.GetContentAsync(88, TestContext.Current.CancellationToken));
+            await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -225,7 +255,7 @@ public class ZendeskAttachmentsApiTests
         handler.ContentStatus = HttpStatusCode.Forbidden;
 
         var exception = await Assert.ThrowsAsync<ZendeskApiException>(async () =>
-            await api.GetContentAsync(88, TestContext.Current.CancellationToken));
+            await api.GetContentAsync(88, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(HttpStatusCode.Forbidden, exception.StatusCode);
     }
 

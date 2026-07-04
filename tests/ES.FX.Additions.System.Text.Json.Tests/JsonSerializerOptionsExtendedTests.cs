@@ -12,12 +12,6 @@ public class JsonSerializerOptionsExtendedTests
         Blue = 2
     }
 
-    private sealed class Sample
-    {
-        public string FirstName { get; set; } = "";
-        public Color Favorite { get; set; }
-    }
-
     // ---- IsReadOnly ----
 
     [Fact]
@@ -186,5 +180,11 @@ public class JsonSerializerOptionsExtendedTests
         Assert.NotNull(back);
         Assert.Equal(original.FirstName, back!.FirstName);
         Assert.Equal(original.Favorite, back.Favorite);
+    }
+
+    private sealed class Sample
+    {
+        public string FirstName { get; set; } = "";
+        public Color Favorite { get; set; }
     }
 }

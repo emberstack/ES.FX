@@ -128,7 +128,7 @@ public class IgniteAzureBlobServiceClientTests
         using var app = builder.Build();
 
         // A null service key registers the settings under the default (null) key.
-        var settings = app.Services.GetRequiredKeyedService<AzureBlobStorageSparkSettings>(serviceKey: null);
+        var settings = app.Services.GetRequiredKeyedService<AzureBlobStorageSparkSettings>(null);
         NotNull(settings);
         False(settings.Tracing.Enabled);
     }

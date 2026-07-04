@@ -1,5 +1,4 @@
 using System.Net;
-using System.Reflection;
 using ES.FX.Ignite.StackExchange.Redis.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Moq;
@@ -33,7 +32,7 @@ public class SimpleRedisHealthCheckTests
                 "Redis",
                 Mock.Of<IHealthCheck>(),
                 failureStatus,
-                tags: null)
+                null)
         };
 
     private static Mock<IConnectionMultiplexer> CreateMultiplexer(
@@ -103,7 +102,8 @@ public class SimpleRedisHealthCheckTests
         var multiplexer = CreateMultiplexer(ServerType.Standalone, server, database);
         var sut = CreateHealthCheck(multiplexer.Object);
 
-        var result = await sut.CheckHealthAsync(CreateContext(HealthStatus.Degraded), TestContext.Current.CancellationToken);
+        var result =
+            await sut.CheckHealthAsync(CreateContext(HealthStatus.Degraded), TestContext.Current.CancellationToken);
 
         Assert.Equal(HealthStatus.Degraded, result.Status);
     }

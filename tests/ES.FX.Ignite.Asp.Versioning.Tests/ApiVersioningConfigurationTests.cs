@@ -52,7 +52,7 @@ public class ApiVersioningConfigurationTests
         var customReader = new HeaderApiVersionReader("api-version");
 
         var builder = Host.CreateEmptyApplicationBuilder(null);
-        builder.IgniteApiVersioning(configureApiVersioningOptions: options =>
+        builder.IgniteApiVersioning(options =>
         {
             delegateInvoked = true;
             // Capture the state at invocation to prove the defaults were applied *before* the delegate.

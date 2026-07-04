@@ -41,7 +41,7 @@ public class ConnectionStringGuardTests
     public void ResolveSqlConnection_Throws_For_Keyed_When_ConnectionString_Missing()
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
-        builder.IgniteSqlServerClient("database", serviceKey: "primary");
+        builder.IgniteSqlServerClient("database", "primary");
 
         var app = builder.Build();
 

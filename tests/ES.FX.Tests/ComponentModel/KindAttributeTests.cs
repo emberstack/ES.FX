@@ -4,16 +4,6 @@ namespace ES.FX.Tests.ComponentModel;
 
 public class KindAttributeTests
 {
-    [Kind("decorated-kind")]
-    private class DecoratedType;
-
-    private class UndecoratedType;
-
-    [FaultKind("decorated-fault")]
-    private class DecoratedFaultType;
-
-    private class UndecoratedFaultType;
-
     // ---- KindAttribute ----
 
     [Fact]
@@ -83,4 +73,14 @@ public class KindAttributeTests
         Assert.Equal(first, second);
         Assert.Equal("decorated-fault", second);
     }
+
+    [Kind("decorated-kind")]
+    private class DecoratedType;
+
+    private class UndecoratedType;
+
+    [FaultKind("decorated-fault")]
+    private class DecoratedFaultType;
+
+    private class UndecoratedFaultType;
 }

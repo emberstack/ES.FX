@@ -55,7 +55,8 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
         [Description("The numeric Zendesk user ids to resolve.")]
         long[] ids,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Users.GetManyAsync(ids, cancellationToken));
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Users.GetManyAsync(ids, cancellationToken: cancellationToken));
 
     /// <summary>Returns the tickets a user has requested (their ticket history).</summary>
     [McpServerTool(Name = "zendesk_users_requested_tickets", ReadOnly = true, OpenWorld = true)]

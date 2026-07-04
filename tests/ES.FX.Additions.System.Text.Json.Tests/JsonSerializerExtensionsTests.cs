@@ -1,17 +1,10 @@
 using System.Text;
-using System.Text.Json;
 using ES.FX.Additions.System.Text.Json.Serialization;
 
 namespace ES.FX.Additions.System.Text.Json.Tests;
 
 public class JsonSerializerExtensionsTests
 {
-    private sealed class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
-
     private static Stream StreamOf(string s) => new MemoryStream(Encoding.UTF8.GetBytes(s));
 
     // ==================== TryJsonDeserialize (string) ====================
@@ -220,5 +213,11 @@ public class JsonSerializerExtensionsTests
         var ok = "{broken".TryConvertViaJson<Person>(out var person);
         Assert.False(ok);
         Assert.Null(person);
+    }
+
+    private sealed class Person
+    {
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 }

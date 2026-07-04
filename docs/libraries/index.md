@@ -1,6 +1,6 @@
 ---
 title: Framework libraries
-description: The standalone ES.FX feature libraries — Transactional Outbox and Migrations — and how to use their public APIs.
+description: The standalone ES.FX feature libraries — Transactional Outbox, Migrations, and the Zendesk API client — and how to use their public APIs.
 ---
 
 ES.FX ships a small set of standalone feature libraries that solve one recurring problem each and stand
@@ -14,6 +14,7 @@ into Ignite when you want it to.
 | --- | --- | --- |
 | [**Transactional Outbox**](./transactional-outbox.md) | `ES.FX.TransactionalOutbox` (+ `.EntityFrameworkCore`, provider packages, `.MassTransit`) | Reliable message dispatch tied to your EF Core transaction — enqueue a message in the same `SaveChanges` that writes your data, then a hosted service delivers it. |
 | [**Migrations**](./migrations.md) | `ES.FX.Migrations` (+ `ES.FX.Ignite.Migrations`) | A DI-driven migration runner: implement `IMigrationsTask`, register it, and a hosted service applies every task at startup. |
+| [**Zendesk API client**](./zendesk-client.md) | `ES.FX.Zendesk` (+ `ES.FX.Ignite.Zendesk` Spark) | A typed, OAuth-authenticated client for the Zendesk Support REST API — resource-grouped operations, typed errors with `Retry-After`, and OpenTelemetry tracing. |
 
 Both libraries are independently consumable. Each has its own page below with the full end-to-end walkthrough.
 
@@ -53,10 +54,30 @@ runner from the Ignite Spark angle.
 
 ---
 
+## Zendesk API client
+
+The [Zendesk API client](./zendesk-client.md) is a typed client for the Zendesk Support REST API and
+Help Center, built on `IHttpClientFactory`. Register it with `AddZendeskClient()` and inject
+`IZendeskClient` — seventeen resource-grouped areas (`Tickets`, `Users`, `Organizations`, `Groups`,
+`Search`, `Views`, `Articles`, `TicketFields`, `Macros`, `Forms`, `Brands`, `CustomStatuses`,
+`JobStatuses`, `Tags`, `SuspendedTickets`, `Uploads`, `Attachments`) covering reads **and** writes that
+mirror the Zendesk API, with offset **and** cursor pagination, OAuth `client_credentials`
+authentication (cached, single-flight token refresh), a typed `ZendeskApiException` (status, body,
+`Retry-After`), and OpenTelemetry tracing.
+
+See the [Zendesk API client](./zendesk-client.md) page for the full walkthrough: registration and keyed
+multi-tenant instances, the resource areas, configuration and secret hygiene, the OAuth model, error
+handling and rate limits, and observability. The [Zendesk Spark](../ignite/sparks/zendesk.md) page
+covers the Ignite integration (config binding, startup validation, live health check, tracing).
+
+---
+
 ## See also
 
 - [Transactional Outbox](./transactional-outbox.md)
 - [Migrations](./migrations.md)
+- [Zendesk API client](./zendesk-client.md)
+- [Zendesk Spark](../ignite/sparks/zendesk.md)
 - [Transactional Outbox — EF Core additions](../additions/entity-framework-core.md)
 - [MassTransit additions](../additions/masstransit.md)
 - [Entity Framework Core Spark](../ignite/sparks/entity-framework-core.md)

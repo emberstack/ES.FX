@@ -54,7 +54,7 @@ public class ConditionalRegistrationTests
     [Fact]
     public void EndpointsDisabled_DoesNotRegister_EndpointsAutoValidation()
     {
-        var builder = BuildWith(endpointsEnabled: false, mvcEnabled: false);
+        var builder = BuildWith(false, false);
 
         // The settings singleton must still be registered regardless of the feature flags.
         Assert.Contains(builder.Services, d => d.ServiceType == typeof(FluentValidationSparkSettings));
@@ -68,7 +68,7 @@ public class ConditionalRegistrationTests
     [Fact]
     public void EndpointsEnabled_Registers_EndpointsAutoValidation()
     {
-        var builder = BuildWith(endpointsEnabled: true, mvcEnabled: false);
+        var builder = BuildWith(true, false);
 
         Assert.Contains(builder.Services,
             d => d.ServiceType == typeof(IFluentValidationAutoValidationResultFactory));
@@ -79,7 +79,7 @@ public class ConditionalRegistrationTests
     public void MvcDisabled_DoesNotRegister_MvcAutoValidation()
     {
         // Enable only endpoints so any MVC-namespaced service can only come from the MVC branch.
-        var builder = BuildWith(endpointsEnabled: true, mvcEnabled: false);
+        var builder = BuildWith(true, false);
 
         Assert.False(HasServiceFromNamespace(builder.Services, MvcNamespace));
     }
@@ -88,7 +88,7 @@ public class ConditionalRegistrationTests
     public void MvcEnabled_Registers_MvcAutoValidation()
     {
         // Enable only MVC so any MVC-namespaced service isolates the MVC branch from the endpoints branch.
-        var builder = BuildWith(endpointsEnabled: false, mvcEnabled: true);
+        var builder = BuildWith(false, true);
 
         Assert.True(HasServiceFromNamespace(builder.Services, MvcNamespace));
 
@@ -102,7 +102,7 @@ public class ConditionalRegistrationTests
     [Fact]
     public void BothDisabled_RegistersOnlySettings_NoAutoValidation()
     {
-        var builder = BuildWith(endpointsEnabled: false, mvcEnabled: false);
+        var builder = BuildWith(false, false);
 
         Assert.Contains(builder.Services, d => d.ServiceType == typeof(FluentValidationSparkSettings));
         Assert.False(HasServiceFromNamespace(builder.Services, EndpointsNamespace));
@@ -114,7 +114,7 @@ public class ConditionalRegistrationTests
     [Fact]
     public void BothEnabled_RegistersBothBranches()
     {
-        var builder = BuildWith(endpointsEnabled: true, mvcEnabled: true);
+        var builder = BuildWith(true, true);
 
         Assert.True(HasServiceFromNamespace(builder.Services, EndpointsNamespace));
         Assert.True(HasServiceFromNamespace(builder.Services, MvcNamespace));
@@ -128,8 +128,8 @@ public class ConditionalRegistrationTests
         var invoked = false;
 
         AutoValidationEndpointsConfiguration? captured = null;
-        var builder = BuildWith(endpointsEnabled: true, mvcEnabled: false,
-            configureEndpoints: config =>
+        var builder = BuildWith(true, false,
+            config =>
             {
                 invoked = true;
                 captured = config;
@@ -148,7 +148,7 @@ public class ConditionalRegistrationTests
         var invoked = false;
 
         AutoValidationMvcConfiguration? captured = null;
-        var builder = BuildWith(endpointsEnabled: false, mvcEnabled: true,
+        var builder = BuildWith(false, true,
             configureMvc: config =>
             {
                 invoked = true;
@@ -167,8 +167,8 @@ public class ConditionalRegistrationTests
     {
         var invoked = false;
 
-        BuildWith(endpointsEnabled: false, mvcEnabled: true,
-            configureEndpoints: _ => invoked = true);
+        BuildWith(false, true,
+            _ => invoked = true);
 
         // The endpoints branch is skipped, so its configuration delegate must never run.
         Assert.False(invoked);
@@ -179,7 +179,7 @@ public class ConditionalRegistrationTests
     {
         var invoked = false;
 
-        BuildWith(endpointsEnabled: true, mvcEnabled: false,
+        BuildWith(true, false,
             configureMvc: _ => invoked = true);
 
         // The MVC branch is skipped, so its configuration delegate must never run.

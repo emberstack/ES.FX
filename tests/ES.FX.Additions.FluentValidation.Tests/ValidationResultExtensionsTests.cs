@@ -6,17 +6,6 @@ namespace ES.FX.Additions.FluentValidation.Tests;
 
 public class ValidationResultExtensionsTests
 {
-    private sealed record Person(string Name, int Age);
-
-    private sealed class PersonValidator : AbstractValidator<Person>
-    {
-        public PersonValidator()
-        {
-            RuleFor(p => p.Name).NotEmpty();
-            RuleFor(p => p.Age).GreaterThanOrEqualTo(0);
-        }
-    }
-
     [Fact]
     public void ToValidationErrors_ValidResult_ReturnsEmptyDictionary()
     {
@@ -100,8 +89,19 @@ public class ValidationResultExtensionsTests
     {
         var result = new ValidationResult();
 
-        IDictionary<string, string[]> errors = result.ToValidationErrors();
+        var errors = result.ToValidationErrors();
 
         Assert.NotNull(errors);
+    }
+
+    private sealed record Person(string Name, int Age);
+
+    private sealed class PersonValidator : AbstractValidator<Person>
+    {
+        public PersonValidator()
+        {
+            RuleFor(p => p.Name).NotEmpty();
+            RuleFor(p => p.Age).GreaterThanOrEqualTo(0);
+        }
     }
 }

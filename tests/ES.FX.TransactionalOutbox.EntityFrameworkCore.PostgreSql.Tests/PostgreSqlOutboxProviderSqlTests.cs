@@ -1,5 +1,6 @@
 using ES.FX.TransactionalOutbox.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -35,24 +36,6 @@ public class PostgreSqlOutboxProviderSqlTests : IAsyncLifetime
             DeliveryDelayedUntil = delayedUntil
         };
 
-    // ---- Gap: schema-qualified branch of GetTableName ----
-
-    private sealed class CustomSchemaDbContext(DbContextOptions<CustomSchemaDbContext> options) : DbContext(options)
-    {
-        public const string Schema = "outbox_schema";
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Outbox>(entity =>
-            {
-                entity.ToTable("__Outboxes", Schema);
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.RowVersion).IsRowVersion();
-            });
-            base.OnModelCreating(modelBuilder);
-        }
-    }
-
     [Fact]
     public async Task GetNextExclusiveOutbox_Works_For_Schema_Qualified_Table()
     {
@@ -78,25 +61,6 @@ public class PostgreSqlOutboxProviderSqlTests : IAsyncLifetime
         Assert.Equal(expected.Id, result.Id);
     }
 
-    // ---- Gap: custom column mapping in GetColumnName ----
-
-    private sealed class CustomColumnsDbContext(DbContextOptions<CustomColumnsDbContext> options) : DbContext(options)
-    {
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Outbox>(entity =>
-            {
-                entity.ToTable("__Outboxes");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.AddedAt).HasColumnName("added_at_custom");
-                entity.Property(e => e.Lock).HasColumnName("lock_custom");
-                entity.Property(e => e.DeliveryDelayedUntil).HasColumnName("delayed_until_custom");
-                entity.Property(e => e.RowVersion).IsRowVersion();
-            });
-            base.OnModelCreating(modelBuilder);
-        }
-    }
-
     [Fact]
     public async Task GetNextExclusiveOutbox_Works_For_Remapped_Columns()
     {
@@ -110,7 +74,7 @@ public class PostgreSqlOutboxProviderSqlTests : IAsyncLifetime
         // Unlocked, undelayed row that should be selected.
         var ready = NewOutbox(DateTimeOffset.UtcNow.AddMinutes(-5));
         // Locked row that must be ignored (Lock IS NULL filter on the remapped column).
-        var locked = NewOutbox(DateTimeOffset.UtcNow.AddMinutes(-10), @lock: Guid.NewGuid());
+        var locked = NewOutbox(DateTimeOffset.UtcNow.AddMinutes(-10), Guid.NewGuid());
         // Delayed row that must be ignored (DeliveryDelayedUntil filter on the remapped column).
         var delayed = NewOutbox(DateTimeOffset.UtcNow.AddMinutes(-10),
             delayedUntil: DateTimeOffset.UtcNow.AddHours(1));
@@ -128,22 +92,6 @@ public class PostgreSqlOutboxProviderSqlTests : IAsyncLifetime
 
         Assert.NotNull(result);
         Assert.Equal(ready.Id, result.Id);
-    }
-
-    // ---- Gap: FOR UPDATE SKIP LOCKED concurrency ----
-
-    private sealed class SkipLockDbContext(DbContextOptions<SkipLockDbContext> options) : DbContext(options)
-    {
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Outbox>(entity =>
-            {
-                entity.ToTable("__Outboxes");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.RowVersion).IsRowVersion();
-            });
-            base.OnModelCreating(modelBuilder);
-        }
     }
 
     private DbContextOptions<SkipLockDbContext> SkipLockOptions() =>
@@ -226,7 +174,7 @@ public class PostgreSqlOutboxProviderSqlTests : IAsyncLifetime
         // Each consumer takes exactly one row and holds the lock, forcing the next consumer to the next
         // candidate in the provider's ordering.
         var contexts = new List<SkipLockDbContext>();
-        var transactions = new List<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>();
+        var transactions = new List<IDbContextTransaction>();
         var returnedIds = new List<Guid>();
         try
         {
@@ -321,5 +269,58 @@ public class PostgreSqlOutboxProviderSqlTests : IAsyncLifetime
 
         await txA.RollbackAsync(TestContext.Current.CancellationToken);
         await txB.RollbackAsync(TestContext.Current.CancellationToken);
+    }
+
+    // ---- Gap: schema-qualified branch of GetTableName ----
+
+    private sealed class CustomSchemaDbContext(DbContextOptions<CustomSchemaDbContext> options) : DbContext(options)
+    {
+        public const string Schema = "outbox_schema";
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Outbox>(entity =>
+            {
+                entity.ToTable("__Outboxes", Schema);
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.RowVersion).IsRowVersion();
+            });
+            base.OnModelCreating(modelBuilder);
+        }
+    }
+
+    // ---- Gap: custom column mapping in GetColumnName ----
+
+    private sealed class CustomColumnsDbContext(DbContextOptions<CustomColumnsDbContext> options) : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Outbox>(entity =>
+            {
+                entity.ToTable("__Outboxes");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.AddedAt).HasColumnName("added_at_custom");
+                entity.Property(e => e.Lock).HasColumnName("lock_custom");
+                entity.Property(e => e.DeliveryDelayedUntil).HasColumnName("delayed_until_custom");
+                entity.Property(e => e.RowVersion).IsRowVersion();
+            });
+            base.OnModelCreating(modelBuilder);
+        }
+    }
+
+    // ---- Gap: FOR UPDATE SKIP LOCKED concurrency ----
+
+    private sealed class SkipLockDbContext(DbContextOptions<SkipLockDbContext> options) : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Outbox>(entity =>
+            {
+                entity.ToTable("__Outboxes");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.RowVersion).IsRowVersion();
+            });
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

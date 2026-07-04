@@ -5,8 +5,6 @@ namespace ES.FX.Additions.MediatR.Contracts.Tests;
 
 public class BatchRequestTests
 {
-    public sealed record Person(string Name, int Age);
-
     [Fact]
     public void BatchRequest_ImplementsIRequest()
     {
@@ -64,8 +62,8 @@ public class BatchRequestTests
         var b = new BatchRequest<int> { Items = items };
         var c = new BatchRequest<int> { Items = [1, 2, 3] };
 
-        Assert.Equal(a, b);        // same list reference => equal
-        Assert.NotEqual(a, c);     // different list reference => not equal
+        Assert.Equal(a, b); // same list reference => equal
+        Assert.NotEqual(a, c); // different list reference => not equal
     }
 
     [Fact]
@@ -93,6 +91,8 @@ public class BatchRequestTests
         Assert.Contains(iface, i => i == typeof(IRequest));
         Assert.Contains(iface, i => i == typeof(IBaseRequest));
     }
+
+    public sealed record Person(string Name, int Age);
 
     // where TRequest : IRequest — will not compile if BatchRequest<T> stops being IRequest.
     private sealed class SumHandler : IRequestHandler<BatchRequest<int>>

@@ -12,24 +12,6 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests;
 /// </summary>
 public class PostgreSqlOutboxProviderModelGuardTests
 {
-    /// <summary>
-    ///     A DbContext that maps a regular entity but deliberately does NOT call <c>AddOutbox()</c>,
-    ///     so the <see cref="Outbox" /> entity type is not present in the model.
-    /// </summary>
-    private sealed class NoOutboxDbContext(DbContextOptions<NoOutboxDbContext> options) : DbContext(options)
-    {
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<TestOrder>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
-            });
-            // Intentionally no modelBuilder.AddOutbox();
-            base.OnModelCreating(modelBuilder);
-        }
-    }
-
     [Fact]
     public async Task GetNextExclusiveOutboxWithoutDelay_Throws_When_Outbox_Not_In_Model()
     {
@@ -48,5 +30,23 @@ public class PostgreSqlOutboxProviderModelGuardTests
 
         Assert.Contains(typeof(Outbox).ToString(), exception.Message);
         Assert.Contains(nameof(NoOutboxDbContext), exception.Message);
+    }
+
+    /// <summary>
+    ///     A DbContext that maps a regular entity but deliberately does NOT call <c>AddOutbox()</c>,
+    ///     so the <see cref="Outbox" /> entity type is not present in the model.
+    /// </summary>
+    private sealed class NoOutboxDbContext(DbContextOptions<NoOutboxDbContext> options) : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TestOrder>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
+            });
+            // Intentionally no modelBuilder.AddOutbox();
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

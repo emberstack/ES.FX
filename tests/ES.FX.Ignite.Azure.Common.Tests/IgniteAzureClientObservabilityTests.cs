@@ -54,7 +54,7 @@ public class IgniteAzureClientObservabilityTests
         };
 
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: null,
+            null,
             new TracingSettings { Enabled = false },
             healthCheckSettings,
             StubHealthCheckFactory);
@@ -80,7 +80,7 @@ public class IgniteAzureClientObservabilityTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: key,
+            key,
             new TracingSettings { Enabled = false },
             new HealthCheckSettings { Enabled = true },
             StubHealthCheckFactory);
@@ -106,7 +106,7 @@ public class IgniteAzureClientObservabilityTests
         };
 
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: null,
+            null,
             new TracingSettings { Enabled = false },
             settings,
             StubHealthCheckFactory);
@@ -124,7 +124,7 @@ public class IgniteAzureClientObservabilityTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: null,
+            null,
             new TracingSettings { Enabled = false },
             new HealthCheckSettings { Enabled = false },
             StubHealthCheckFactory);
@@ -150,7 +150,7 @@ public class IgniteAzureClientObservabilityTests
 
         TableServiceClient? capturedClient = null;
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: key,
+            key,
             new TracingSettings { Enabled = false },
             new HealthCheckSettings { Enabled = true },
             (_, client) =>
@@ -178,12 +178,12 @@ public class IgniteAzureClientObservabilityTests
         // GetRequiredKeyedService<TClient>(null), which maps to the DEFAULT (unkeyed) registration.
         // Register a default client so the factory can actually build.
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: null,
+            null,
             FakeClientSection());
 
         TableServiceClient? capturedClient = null;
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: null,
+            null,
             new TracingSettings { Enabled = false },
             new HealthCheckSettings { Enabled = true },
             (_, client) =>
@@ -203,20 +203,21 @@ public class IgniteAzureClientObservabilityTests
     }
 
     [Fact]
-    public void HealthCheck_WhitespaceServiceKey_NormalizedToDefault_NameHasNoKeySuffix_AndFactoryResolvesDefaultClient()
+    public void
+        HealthCheck_WhitespaceServiceKey_NormalizedToDefault_NameHasNoKeySuffix_AndFactoryResolvesDefaultClient()
     {
         var services = new ServiceCollection();
 
         // A default client for the null-key (normalized) factory lookup to resolve.
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
-            serviceKey: null,
+            null,
             FakeClientSection());
 
         TableServiceClient? capturedClient = null;
         // Whitespace key must be normalized to null: name shape "Azure-{ClientTypeName}" (no "-[   ]"),
         // and the factory must resolve the DEFAULT client (not a whitespace-keyed one).
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: "   ",
+            "   ",
             new TracingSettings { Enabled = false },
             new HealthCheckSettings { Enabled = true },
             (_, client) =>
@@ -244,7 +245,7 @@ public class IgniteAzureClientObservabilityTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: null,
+            null,
             new TracingSettings { Enabled = true },
             new HealthCheckSettings { Enabled = false },
             StubHealthCheckFactory);
@@ -275,7 +276,7 @@ public class IgniteAzureClientObservabilityTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: null,
+            null,
             new TracingSettings { Enabled = true },
             new HealthCheckSettings { Enabled = false },
             StubHealthCheckFactory);
@@ -320,7 +321,7 @@ public class IgniteAzureClientObservabilityTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: null,
+            null,
             new TracingSettings { Enabled = true },
             new HealthCheckSettings { Enabled = false },
             StubHealthCheckFactory);
@@ -342,7 +343,7 @@ public class IgniteAzureClientObservabilityTests
         var services = new ServiceCollection();
 
         services.IgniteAzureClientObservability<TableServiceClient>(
-            serviceKey: null,
+            null,
             new TracingSettings { Enabled = false },
             new HealthCheckSettings { Enabled = false },
             StubHealthCheckFactory);

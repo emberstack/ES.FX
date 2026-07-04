@@ -61,4 +61,25 @@ public class ZendeskClientRegistrationTests
         Assert.Contains("acme-a.zendesk.com", routing.ApiHosts);
         Assert.Contains("acme-b.zendesk.com", routing.ApiHosts);
     }
+
+    [Fact]
+    public async Task Sends_Product_User_Agent_On_Api_And_Token_Requests()
+    {
+        var routing = new RoutingHandler();
+        var services = new ServiceCollection();
+        services.ConfigureHttpClientDefaults(b => b.ConfigurePrimaryHttpMessageHandler(() => routing));
+        services.AddZendeskClient(options =>
+        {
+            options.Subdomain = "acme";
+            options.OAuth.ClientId = "cid";
+            options.OAuth.ClientSecret = "secret";
+        });
+
+        await using var provider = services.BuildServiceProvider();
+        await provider.GetRequiredService<IZendeskClient>()
+            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+
+        Assert.StartsWith("ES.FX.Zendesk/", routing.LastApiUserAgent);
+        Assert.StartsWith("ES.FX.Zendesk/", routing.LastTokenUserAgent);
+    }
 }

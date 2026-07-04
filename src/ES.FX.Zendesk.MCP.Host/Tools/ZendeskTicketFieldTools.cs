@@ -16,14 +16,10 @@ public sealed class ZendeskTicketFieldTools(IZendeskClient zendeskApiClient)
     [Description(
         "Lists ticket field definitions — maps custom field ids to human titles, types, and dropdown option " +
         "value→label pairs. Needed to interpret the raw custom field values stored on a ticket. Read-only.")]
-    public Task<ZendeskTicketFieldsResult> List(
-        [Description("The 1-based page number (optional).")]
-        int? page = null,
-        [Description("Results per page (default 100, max 100).")]
-        int? perPage = 100,
-        CancellationToken cancellationToken = default)
+    public Task<ZendeskTicketFieldsResult> List(CancellationToken cancellationToken)
+        // Unpaginated on purpose: without paging params Zendesk returns ALL fields (accounts cap at ~400).
         => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.TicketFields.ListAsync(page, perPage, cancellationToken));
+            zendeskApiClient.TicketFields.ListAsync(cancellationToken: cancellationToken));
 
     /// <summary>Returns a single ticket field definition by id.</summary>
     [McpServerTool(Name = "zendesk_ticket_fields_read", ReadOnly = true, OpenWorld = true)]

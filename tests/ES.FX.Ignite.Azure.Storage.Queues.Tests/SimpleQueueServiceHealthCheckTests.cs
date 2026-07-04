@@ -24,13 +24,13 @@ public class SimpleQueueServiceHealthCheckTests
 
     private static IHealthCheck CreateHealthCheck(QueueServiceClient client)
     {
-        var type = typeof(AzureQueueStorageSpark).Assembly.GetType(HealthCheckTypeName, throwOnError: true)!;
+        var type = typeof(AzureQueueStorageSpark).Assembly.GetType(HealthCheckTypeName, true)!;
         var instance = Activator.CreateInstance(
             type,
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-            binder: null,
-            args: [client],
-            culture: null);
+            null,
+            [client],
+            null);
         return (IHealthCheck)instance!;
     }
 
@@ -40,11 +40,11 @@ public class SimpleQueueServiceHealthCheckTests
             "queue",
             Mock.Of<IHealthCheck>(),
             failureStatus,
-            tags: null)
+            null)
     };
 
     private static QueueItem SampleQueue(string name) =>
-        QueuesModelFactory.QueueItem(name, metadata: null);
+        QueuesModelFactory.QueueItem(name, null);
 
     /// <summary>
     ///     Healthy branch: the page-list probe yields a page and the check breaks out after the first one.
@@ -55,7 +55,7 @@ public class SimpleQueueServiceHealthCheckTests
     {
         var page = Page<QueueItem>.FromValues(
             [SampleQueue("q1")],
-            continuationToken: null,
+            null,
             Mock.Of<Response>());
         var pageable = AsyncPageable<QueueItem>.FromPages([page]);
 
@@ -88,7 +88,7 @@ public class SimpleQueueServiceHealthCheckTests
     {
         var page = Page<QueueItem>.FromValues(
             [SampleQueue("q1")],
-            continuationToken: null,
+            null,
             Mock.Of<Response>());
         var pageable = AsyncPageable<QueueItem>.FromPages([page]);
 
@@ -236,7 +236,7 @@ public class SimpleQueueServiceHealthCheckTests
             PagesEnumerated++;
             yield return Page<QueueItem>.FromValues(
                 [firstPageItem],
-                continuationToken: "next",
+                "next",
                 Mock.Of<Response>());
 
             PagesEnumerated++;

@@ -14,43 +14,6 @@ namespace ES.FX.Ignite.Serilog.Tests.Hosting;
 
 public class SerilogHostingExtensionsBehaviorTests
 {
-    /// <summary>
-    ///     A simple in-memory Serilog sink that records every <see cref="LogEvent" /> it receives.
-    /// </summary>
-    private sealed class CollectingSink : ILogEventSink
-    {
-        public ConcurrentQueue<LogEvent> Events { get; } = new();
-
-        public void Emit(LogEvent logEvent) => Events.Enqueue(logEvent);
-    }
-
-    /// <summary>
-    ///     A Microsoft.Extensions.Logging provider that records the messages it receives so we can assert whether
-    ///     Serilog forwarded events to MEL providers (the <c>writeToProviders</c> toggle).
-    /// </summary>
-    private sealed class RecordingLoggerProvider : ILoggerProvider
-    {
-        public ConcurrentQueue<string> Messages { get; } = new();
-
-        public Microsoft.Extensions.Logging.ILogger CreateLogger(string categoryName) =>
-            new RecordingLogger(Messages);
-
-        public void Dispose()
-        {
-        }
-
-        private sealed class RecordingLogger(ConcurrentQueue<string> messages) : Microsoft.Extensions.Logging.ILogger
-        {
-            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-            public bool IsEnabled(MelLogLevel logLevel) => true;
-
-            public void Log<TState>(MelLogLevel logLevel, EventId eventId, TState state, Exception? exception,
-                Func<TState, Exception?, string> formatter) =>
-                messages.Enqueue(formatter(state, exception));
-        }
-    }
-
     [Fact]
     public void ApplyDefaultConfiguration_True_RegistersApplicationNameEnricher()
     {
@@ -83,7 +46,7 @@ public class SerilogHostingExtensionsBehaviorTests
         var sink = new CollectingSink();
         var builder = WebApplication.CreateBuilder([]);
 
-        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), applyDefaultConfiguration: true);
+        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), true);
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();
@@ -104,7 +67,7 @@ public class SerilogHostingExtensionsBehaviorTests
         var sink = new CollectingSink();
         var builder = WebApplication.CreateBuilder([]);
 
-        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), applyDefaultConfiguration: false);
+        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), false);
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();
@@ -126,7 +89,7 @@ public class SerilogHostingExtensionsBehaviorTests
         var sink = new CollectingSink();
         var builder = WebApplication.CreateBuilder([]);
 
-        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), applyDefaultConfiguration: false);
+        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), false);
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();
@@ -142,7 +105,7 @@ public class SerilogHostingExtensionsBehaviorTests
         var sink = new CollectingSink();
         var builder = WebApplication.CreateBuilder([]);
 
-        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), applyDefaultConfiguration: true);
+        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), true);
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();
@@ -180,7 +143,7 @@ public class SerilogHostingExtensionsBehaviorTests
         {
             cfg.WriteTo.Sink(sink);
             cfg.MinimumLevel.Fatal();
-        }, applyDefaultConfiguration: true);
+        }, true);
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();
@@ -239,7 +202,7 @@ public class SerilogHostingExtensionsBehaviorTests
             ["Serilog:MinimumLevel:Default"] = "Warning"
         });
 
-        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), applyDefaultConfiguration: false);
+        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), false);
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();
@@ -249,5 +212,42 @@ public class SerilogHostingExtensionsBehaviorTests
 
         var evt = Assert.Single(sink.Events);
         Assert.Equal(LogEventLevel.Warning, evt.Level);
+    }
+
+    /// <summary>
+    ///     A simple in-memory Serilog sink that records every <see cref="LogEvent" /> it receives.
+    /// </summary>
+    private sealed class CollectingSink : ILogEventSink
+    {
+        public ConcurrentQueue<LogEvent> Events { get; } = new();
+
+        public void Emit(LogEvent logEvent) => Events.Enqueue(logEvent);
+    }
+
+    /// <summary>
+    ///     A Microsoft.Extensions.Logging provider that records the messages it receives so we can assert whether
+    ///     Serilog forwarded events to MEL providers (the <c>writeToProviders</c> toggle).
+    /// </summary>
+    private sealed class RecordingLoggerProvider : ILoggerProvider
+    {
+        public ConcurrentQueue<string> Messages { get; } = new();
+
+        public Microsoft.Extensions.Logging.ILogger CreateLogger(string categoryName) =>
+            new RecordingLogger(Messages);
+
+        public void Dispose()
+        {
+        }
+
+        private sealed class RecordingLogger(ConcurrentQueue<string> messages) : Microsoft.Extensions.Logging.ILogger
+        {
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+            public bool IsEnabled(MelLogLevel logLevel) => true;
+
+            public void Log<TState>(MelLogLevel logLevel, EventId eventId, TState state, Exception? exception,
+                Func<TState, Exception?, string> formatter) =>
+                messages.Enqueue(formatter(state, exception));
+        }
     }
 }

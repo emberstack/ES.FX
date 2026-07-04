@@ -27,8 +27,7 @@ public class RelationalDbContextMigrationsTaskTests
             NullLogger<RelationalDbContextMigrationsTask<TestDbContext>>.Instance, context);
 
         // GetPendingMigrationsAsync on the in-memory provider is not supported and throws.
-        await Assert.ThrowsAnyAsync<Exception>(
-            () => sut.ApplyMigrations(TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<Exception>(() => sut.ApplyMigrations(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -42,8 +41,7 @@ public class RelationalDbContextMigrationsTaskTests
         await using var context = CreateInMemoryContext();
         var sut = new RelationalDbContextMigrationsTask<TestDbContext>(logger.Object, context);
 
-        await Assert.ThrowsAnyAsync<Exception>(
-            () => sut.ApplyMigrations(TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<Exception>(() => sut.ApplyMigrations(TestContext.Current.CancellationToken));
 
         logger.Verify(l => l.Log(
                 LogLevel.Information,

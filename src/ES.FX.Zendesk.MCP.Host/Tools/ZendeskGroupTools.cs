@@ -23,7 +23,8 @@ public sealed class ZendeskGroupTools(IZendeskClient zendeskApiClient)
             "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 100,
         CancellationToken cancellationToken = default)
-        => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Groups.ListAsync(page, perPage, cancellationToken));
+        => ZendeskToolInvoker.InvokeAsync(() =>
+            zendeskApiClient.Groups.ListAsync(page, perPage, cancellationToken: cancellationToken));
 
     /// <summary>Returns a Zendesk group by id.</summary>
     [McpServerTool(Name = "zendesk_groups_read", ReadOnly = true, OpenWorld = true)]
@@ -51,5 +52,6 @@ public sealed class ZendeskGroupTools(IZendeskClient zendeskApiClient)
         int? perPage = 100,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Groups.GetMembershipsAsync(groupId, page, perPage, cancellationToken));
+            zendeskApiClient.Groups.GetMembershipsAsync(groupId, page, perPage,
+                cancellationToken: cancellationToken));
 }

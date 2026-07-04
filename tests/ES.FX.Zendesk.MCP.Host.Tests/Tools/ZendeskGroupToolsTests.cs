@@ -20,7 +20,8 @@ public class ZendeskGroupToolsTests
     {
         var expected = new ZendeskGroupsResult { Count = 3 };
         var (tools, groups) = Create();
-        groups.Setup(api => api.ListAsync(null, 100, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        groups.Setup(api => api.ListAsync(null, 100, It.IsAny<IReadOnlyList<string>?>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(expected);
 
         var result = await tools.List(null, 100, TestContext.Current.CancellationToken);
 
@@ -44,12 +45,14 @@ public class ZendeskGroupToolsTests
     {
         var expected = new ZendeskGroupMembershipsResult { Count = 4 };
         var (tools, groups) = Create();
-        groups.Setup(api => api.GetMembershipsAsync(55, null, 100, It.IsAny<CancellationToken>()))
+        groups.Setup(api => api.GetMembershipsAsync(55, null, 100, It.IsAny<IReadOnlyList<string>?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await tools.Memberships(55, null, 100, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        groups.Verify(api => api.GetMembershipsAsync(55, null, 100, It.IsAny<CancellationToken>()), Times.Once);
+        groups.Verify(api => api.GetMembershipsAsync(55, null, 100, It.IsAny<IReadOnlyList<string>?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

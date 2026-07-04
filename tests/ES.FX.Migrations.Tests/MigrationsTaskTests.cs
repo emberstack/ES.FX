@@ -24,7 +24,7 @@ public class MigrationsTaskTests
         // The interface declares a defaulted CancellationToken parameter. Invoking through the interface without
         // supplying a token must yield CancellationToken.None. Passing a token here would defeat the assertion.
 #pragma warning disable xUnit1051
-        await ((IMigrationsTask)task).ApplyMigrations();
+        await task.ApplyMigrations();
 #pragma warning restore xUnit1051
 
         Assert.Equal(CancellationToken.None, task.LastCancellationToken);
@@ -39,7 +39,7 @@ public class MigrationsTaskTests
 
         using var cts = new CancellationTokenSource();
 
-        await ((IMigrationsTask)task).ApplyMigrations(cts.Token);
+        await task.ApplyMigrations(cts.Token);
 
         Assert.Equal(cts.Token, task.LastCancellationToken);
     }
@@ -62,8 +62,9 @@ public class MigrationsTaskTests
         var boom = new InvalidOperationException("migration failed");
         IMigrationsTask task = new ThrowingMigrationsTask(boom);
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => task.ApplyMigrations(TestContext.Current.CancellationToken));
+        var thrown =
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                task.ApplyMigrations(TestContext.Current.CancellationToken));
 
         // The exact faulting exception must propagate through the awaited Task — no wrapping, no swallowing.
         Assert.Same(boom, thrown);

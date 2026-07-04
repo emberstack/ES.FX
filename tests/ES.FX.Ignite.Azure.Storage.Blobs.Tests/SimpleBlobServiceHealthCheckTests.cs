@@ -21,13 +21,13 @@ public class SimpleBlobServiceHealthCheckTests
 
     private static IHealthCheck CreateHealthCheck(BlobServiceClient client)
     {
-        var type = typeof(AzureBlobStorageSpark).Assembly.GetType(HealthCheckTypeName, throwOnError: true)!;
+        var type = typeof(AzureBlobStorageSpark).Assembly.GetType(HealthCheckTypeName, true)!;
         var instance = Activator.CreateInstance(
             type,
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-            binder: null,
-            args: [client],
-            culture: null);
+            null,
+            [client],
+            null);
         return (IHealthCheck)instance!;
     }
 
@@ -37,7 +37,7 @@ public class SimpleBlobServiceHealthCheckTests
             "blob",
             Mock.Of<IHealthCheck>(),
             failureStatus,
-            tags: null)
+            null)
     };
 
     [Fact]
@@ -47,7 +47,7 @@ public class SimpleBlobServiceHealthCheckTests
         // first page). This is the "Healthy" branch without needing a real blob endpoint.
         var page = Page<BlobContainerItem>.FromValues(
             [],
-            continuationToken: null,
+            null,
             Mock.Of<Response>());
         var pageable = AsyncPageable<BlobContainerItem>.FromPages([page]);
 

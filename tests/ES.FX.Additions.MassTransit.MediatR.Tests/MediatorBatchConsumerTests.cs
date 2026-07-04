@@ -20,6 +20,8 @@ public class MediatorBatchConsumerTests
 {
     private const int BatchSize = 3;
 
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     private static async Task<(ITestHarness Harness, Mock<IMediator> Mediator, ServiceProvider Provider)>
         StartHarnessAsync(Action<IBusRegistrationConfigurator> configureConsumers)
     {
@@ -34,8 +36,6 @@ public class MediatorBatchConsumerTests
         await harness.Start();
         return (harness, mediator, provider);
     }
-
-    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
     public async Task Batch_consumer_publishes_batch_notification_when_element_type_is_a_notification()

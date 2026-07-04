@@ -3,7 +3,6 @@ using ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Hosting;
 using ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.Context;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.Configuration.OpenTelemetry;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -126,7 +125,7 @@ public class ObservabilityAndOptionsTests
         var registration = Assert.Single(options.Registrations, r => r.Name == expectedName);
 
         // The health-checks default timeout is System.Threading.Timeout.InfiniteTimeSpan (-1 ms).
-        Assert.Equal(System.Threading.Timeout.InfiniteTimeSpan, registration.Timeout);
+        Assert.Equal(Timeout.InfiniteTimeSpan, registration.Timeout);
     }
 
     [Fact]

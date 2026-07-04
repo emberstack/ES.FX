@@ -122,14 +122,12 @@ public class MediatorBatchConsumerDirectTests
 
         public static FakeBatch<T> Empty { get; } = new([]);
 
-        public static FakeBatch<T> Of(params T[] messages) => new(messages);
+        public int Count => _items.Length;
 
         public IEnumerator<ConsumeContext<T>> GetEnumerator() =>
             ((IEnumerable<ConsumeContext<T>>)_items).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => _items.GetEnumerator();
-
-        public int Count => _items.Length;
 
         public ConsumeContext<T> this[int index] => _items[index];
 
@@ -140,5 +138,7 @@ public class MediatorBatchConsumerDirectTests
         public DateTime FirstMessageReceived => DateTime.UtcNow;
 
         public DateTime LastMessageReceived => DateTime.UtcNow;
+
+        public static FakeBatch<T> Of(params T[] messages) => new(messages);
     }
 }

@@ -22,15 +22,6 @@ public sealed class UseMessageKindHarnessTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    // Contract local to this test so its kind is unique and only registered through the harness.
-    [Kind("harness-widget-created")]
-    public sealed record WidgetCreated(Guid Id);
-
-    public sealed class WidgetCreatedConsumer : IConsumer<WidgetCreated>
-    {
-        public Task Consume(ConsumeContext<WidgetCreated> context) => Task.CompletedTask;
-    }
-
     private static ServiceProvider BuildHarnessProvider() =>
         new ServiceCollection()
             .AddMassTransitTestHarness(cfg =>
@@ -129,6 +120,15 @@ public sealed class UseMessageKindHarnessTests
         var cfg = new Mock<IBusFactoryConfigurator>().Object;
 
         Assert.Throws<ArgumentNullException>(() =>
-            MessageKindExtensions.UseMessageKind(cfg, null!));
+            cfg.UseMessageKind(null!));
+    }
+
+    // Contract local to this test so its kind is unique and only registered through the harness.
+    [Kind("harness-widget-created")]
+    public sealed record WidgetCreated(Guid Id);
+
+    public sealed class WidgetCreatedConsumer : IConsumer<WidgetCreated>
+    {
+        public Task Consume(ConsumeContext<WidgetCreated> context) => Task.CompletedTask;
     }
 }

@@ -27,16 +27,14 @@ namespace ES.FX.Additions.MassTransit.Tests;
 /// </summary>
 public sealed class TryResendUsingMessageKindFilterTests
 {
+    private static (string Body, ContentType ContentType)? _capturedEnvelope;
+    private static readonly SemaphoreSlim CaptureGate = new(1, 1);
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     // Cast to the explicitly-implemented IFilter<ReceiveContext>.Send.
     private static Task InvokeSend(TryResendUsingMessageKindFilter filter, ReceiveContext context,
         IPipe<ReceiveContext> next) =>
         ((IFilter<ReceiveContext>)filter).Send(context, next);
-
-    // Contract used by the envelope-replay tests. A unique kind keeps the process-global provider cache clean.
-    [Kind("resend-target-8f21")]
-    public sealed record ResendTarget(Guid Id);
 
     // =========================================================================================================
     // Branch: the kind header does not resolve to a type -> next.Send passthrough; serializer never touched.
@@ -78,25 +76,6 @@ public sealed class TryResendUsingMessageKindFilterTests
 
         next.Verify(n => n.Send(context.Object), Times.Once);
     }
-
-    // =========================================================================================================
-    // Envelope-replay infrastructure: capture one real MassTransit JSON envelope for a ResendTarget message.
-    // =========================================================================================================
-
-    private sealed class CapturingConsumer : IConsumer<ResendTarget>
-    {
-        public static readonly TaskCompletionSource<(string Body, ContentType ContentType)> Captured =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        public Task Consume(ConsumeContext<ResendTarget> context)
-        {
-            Captured.TrySetResult((context.ReceiveContext.Body.GetString(), context.ReceiveContext.ContentType!));
-            return Task.CompletedTask;
-        }
-    }
-
-    private static (string Body, ContentType ContentType)? _capturedEnvelope;
-    private static readonly SemaphoreSlim CaptureGate = new(1, 1);
 
     // Captures a genuine MassTransit envelope (JSON string + content type) once. The provider is disposed
     // immediately afterwards: we only keep the serialized bytes, so nothing depends on live bus plumbing.
@@ -237,7 +216,7 @@ public sealed class TryResendUsingMessageKindFilterTests
         var spy = SpySendEndpoint();
         // contentType: null -> filter selects DefaultSerializer; the captured body uses the default MT JSON type,
         // so deserialization still succeeds and the message is resent.
-        var (context, _, inputAddress) = BuildReplayContext(body, contentType: null, "resend-target-8f21", spy.Provider);
+        var (context, _, inputAddress) = BuildReplayContext(body, null, "resend-target-8f21", spy.Provider);
 
         var next = new Mock<IPipe<ReceiveContext>>();
         next.Setup(n => n.Send(It.IsAny<ReceiveContext>())).Returns(Task.CompletedTask);
@@ -317,17 +296,37 @@ public sealed class TryResendUsingMessageKindFilterTests
         Mock.Get(spy.Provider).Verify(p => p.GetSendEndpoint(inputAddress), Times.Once);
     }
 
-    [Kind("resend-unrelated-interface-contract")]
-    public interface IUnrelatedContract
-    {
-        string SomeValue { get; }
-    }
-
     private static ConcurrentDictionary<string, SystemTextJsonMessageSerializer> GetSerializerCache()
     {
         var field = typeof(TryResendUsingMessageKindFilter)
             .GetField("Serializers", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.NotNull(field);
         return (ConcurrentDictionary<string, SystemTextJsonMessageSerializer>)field!.GetValue(null)!;
+    }
+
+    // Contract used by the envelope-replay tests. A unique kind keeps the process-global provider cache clean.
+    [Kind("resend-target-8f21")]
+    public sealed record ResendTarget(Guid Id);
+
+    // =========================================================================================================
+    // Envelope-replay infrastructure: capture one real MassTransit JSON envelope for a ResendTarget message.
+    // =========================================================================================================
+
+    private sealed class CapturingConsumer : IConsumer<ResendTarget>
+    {
+        public static readonly TaskCompletionSource<(string Body, ContentType ContentType)> Captured =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task Consume(ConsumeContext<ResendTarget> context)
+        {
+            Captured.TrySetResult((context.ReceiveContext.Body.GetString(), context.ReceiveContext.ContentType!));
+            return Task.CompletedTask;
+        }
+    }
+
+    [Kind("resend-unrelated-interface-contract")]
+    public interface IUnrelatedContract
+    {
+        string SomeValue { get; }
     }
 }

@@ -52,7 +52,7 @@ public class SqlServerSafeQueryFunctionalTests(SqlServerContainerFixture sqlServ
     {
         using var connection = CreateConnection();
 
-        var result = connection.ExecuteSafeQuery(close: false);
+        var result = connection.ExecuteSafeQuery(false);
 
         Assert.True(result);
         Assert.Equal(ConnectionState.Open, connection.State);
@@ -65,7 +65,7 @@ public class SqlServerSafeQueryFunctionalTests(SqlServerContainerFixture sqlServ
         await using var connection = CreateConnection();
 
         var result = await connection.ExecuteSafeQueryAsync(
-            close: false, cancellationToken: TestContext.Current.CancellationToken);
+            false, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         Assert.Equal(ConnectionState.Open, connection.State);
@@ -80,7 +80,7 @@ public class SqlServerSafeQueryFunctionalTests(SqlServerContainerFixture sqlServ
         connection.Open();
         Assert.Equal(ConnectionState.Open, connection.State);
 
-        var result = connection.ExecuteSafeQuery(close: false);
+        var result = connection.ExecuteSafeQuery(false);
 
         Assert.True(result);
         Assert.Equal(ConnectionState.Open, connection.State);
@@ -95,7 +95,7 @@ public class SqlServerSafeQueryFunctionalTests(SqlServerContainerFixture sqlServ
         Assert.Equal(ConnectionState.Open, connection.State);
 
         var result = await connection.ExecuteSafeQueryAsync(
-            close: false, cancellationToken: TestContext.Current.CancellationToken);
+            false, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         Assert.Equal(ConnectionState.Open, connection.State);

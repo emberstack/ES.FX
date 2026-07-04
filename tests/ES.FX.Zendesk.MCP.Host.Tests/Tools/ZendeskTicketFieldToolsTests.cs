@@ -20,12 +20,14 @@ public class ZendeskTicketFieldToolsTests
     {
         var expected = new ZendeskTicketFieldsResult { Count = 10 };
         var (tools, fields) = Create();
-        fields.Setup(api => api.ListAsync(null, 100, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        fields.Setup(api => api.ListAsync(It.IsAny<int?>(), It.IsAny<string?>(),
+            It.IsAny<IReadOnlyList<string>?>(), It.IsAny<CancellationToken>())).ReturnsAsync(expected);
 
-        var result = await tools.List(null, 100, TestContext.Current.CancellationToken);
+        var result = await tools.List(TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        fields.Verify(api => api.ListAsync(null, 100, It.IsAny<CancellationToken>()), Times.Once);
+        // The tool deliberately requests the unpaginated full list (no cursor arguments).
+        fields.Verify(api => api.ListAsync(null, null, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

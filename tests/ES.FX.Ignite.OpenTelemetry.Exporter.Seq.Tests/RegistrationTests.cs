@@ -101,8 +101,8 @@ public class RegistrationTests
     {
         var builder = CreateBuilder();
         builder.IgniteSeqOpenTelemetryExporter("primary",
-            configureSettings: s => s.Enabled = true,
-            configureOptions: o =>
+            s => s.Enabled = true,
+            o =>
             {
                 o.IngestionEndpoint = "http://seq:5341";
                 o.HealthUrl = "http://seq:5341/health";
@@ -375,11 +375,11 @@ public class RegistrationTests
     {
         var builder = CreateBuilder();
         builder.IgniteSeqOpenTelemetryExporter("alpha",
-            configureSettings: s => s.Enabled = true,
-            configureOptions: o => o.IngestionEndpoint = "http://alpha:5341");
+            s => s.Enabled = true,
+            o => o.IngestionEndpoint = "http://alpha:5341");
         builder.IgniteSeqOpenTelemetryExporter("beta",
-            configureSettings: s => s.Enabled = false,
-            configureOptions: o => o.IngestionEndpoint = "http://beta:5341");
+            s => s.Enabled = false,
+            o => o.IngestionEndpoint = "http://beta:5341");
 
         using var host = builder.Build();
         var sp = host.Services;
@@ -398,10 +398,10 @@ public class RegistrationTests
     public void DuplicateName_Throws_ReconfigurationNotSupported()
     {
         var builder = CreateBuilder();
-        builder.IgniteSeqOpenTelemetryExporter("dup", configureSettings: s => s.Enabled = true);
+        builder.IgniteSeqOpenTelemetryExporter("dup", s => s.Enabled = true);
 
         Assert.Throws<ReconfigurationNotSupportedException>(() =>
-            builder.IgniteSeqOpenTelemetryExporter("dup", configureSettings: s => s.Enabled = true));
+            builder.IgniteSeqOpenTelemetryExporter("dup", s => s.Enabled = true));
     }
 
     // ------------------------------------------------------------------

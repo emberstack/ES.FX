@@ -1,5 +1,6 @@
 using Azure;
 using Azure.Security.KeyVault.Secrets;
+using ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Configuration;
 using ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +27,7 @@ public class HealthCheckTests
 
     private static async Task<HealthReportEntry> RunHealthCheckAsync(
         Mock<SecretClient> mockClient,
-        Action<Configuration.AzureKeyVaultSecretsSparkSettings>? configureSettings = null)
+        Action<AzureKeyVaultSecretsSparkSettings>? configureSettings = null)
     {
         var builder = Host.CreateEmptyApplicationBuilder(null);
         builder.Configuration.AddInMemoryCollection([
@@ -43,8 +44,7 @@ public class HealthCheckTests
         var app = builder.Build();
 
         var healthCheckService = app.Services.GetRequiredService<HealthCheckService>();
-        var report = await healthCheckService.CheckHealthAsync(
-            registration => registration.Name == HealthCheckName);
+        var report = await healthCheckService.CheckHealthAsync(registration => registration.Name == HealthCheckName);
 
         True(report.Entries.ContainsKey(HealthCheckName),
             $"Expected a health check named '{HealthCheckName}' to be registered.");

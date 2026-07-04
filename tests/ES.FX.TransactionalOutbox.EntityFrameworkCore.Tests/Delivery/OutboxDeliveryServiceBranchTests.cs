@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Reflection;
 using ES.FX.TransactionalOutbox.Delivery;
 using ES.FX.TransactionalOutbox.Delivery.Actions;
 using ES.FX.TransactionalOutbox.Delivery.Faults;
@@ -324,13 +325,11 @@ public class OutboxDeliveryServiceBranchTests(ITestOutputHelper output)
     private sealed class GatedMessageHandler : IOutboxMessageHandler
     {
         private readonly ConcurrentBag<TestOrder> _delivered = new();
-        private volatile bool _ready;
         private int _isReadyCallCount;
+        private volatile bool _ready;
 
         public IReadOnlyCollection<TestOrder> Delivered => _delivered.ToList();
         public int IsReadyCallCount => _isReadyCallCount;
-
-        public void SetReady() => _ready = true;
 
         public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default)
         {
@@ -344,6 +343,8 @@ public class OutboxDeliveryServiceBranchTests(ITestOutputHelper output)
             Interlocked.Increment(ref _isReadyCallCount);
             return ValueTask.FromResult(_ready);
         }
+
+        public void SetReady() => _ready = true;
     }
 
     private sealed class DiscardingFaultHandler : IOutboxMessageFaultHandler
@@ -376,22 +377,22 @@ public class OutboxDeliveryServiceBranchTests(ITestOutputHelper output)
         private int _faultCount;
         public int FaultCount => _faultCount;
 
-        private static DeliveryFaultResult CreateUnknownResult()
-        {
-            var ctor = typeof(DeliveryFaultResult).GetConstructor(
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-                binder: null,
-                [typeof(IMessageAction)],
-                modifiers: null);
-            Assert.NotNull(ctor);
-            return (DeliveryFaultResult)ctor!.Invoke([new UnknownMessageAction()]);
-        }
-
         public ValueTask<DeliveryFaultResult> HandleAsync(OutboxMessageFaultContext context,
             CancellationToken cancellationToken = default)
         {
             Interlocked.Increment(ref _faultCount);
             return ValueTask.FromResult(UnknownResult);
+        }
+
+        private static DeliveryFaultResult CreateUnknownResult()
+        {
+            var ctor = typeof(DeliveryFaultResult).GetConstructor(
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                null,
+                [typeof(IMessageAction)],
+                null);
+            Assert.NotNull(ctor);
+            return (DeliveryFaultResult)ctor!.Invoke([new UnknownMessageAction()]);
         }
     }
 

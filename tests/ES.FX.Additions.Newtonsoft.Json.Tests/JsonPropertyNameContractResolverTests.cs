@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using ES.FX.Additions.Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace ES.FX.Additions.Newtonsoft.Json.Tests;
@@ -12,39 +13,6 @@ public class JsonPropertyNameContractResolverTests
     {
         ContractResolver = new JsonPropertyNameContractResolver()
     };
-
-    // ------- POCOs -------
-
-    private sealed class RenamedPoco
-    {
-        [JsonPropertyName("first_name")] public string? FirstName { get; set; }
-
-        [JsonPropertyName("last_name")] public string? LastName { get; set; }
-
-        // No attribute: should keep the CLR member name.
-        public int Age { get; set; }
-    }
-
-    private sealed class PrecedencePoco
-    {
-        // System.Text.Json attribute must win over Newtonsoft's [JsonProperty].
-        [JsonProperty("newtonsoft_name")]
-        [JsonPropertyName("system_text_json_name")]
-        public string? Value { get; set; }
-    }
-
-    private sealed class NewtonsoftOnlyPoco
-    {
-        // Only Newtonsoft's attribute present -> the resolver must not disturb it.
-        [JsonProperty("nsj_only")] public string? Value { get; set; }
-    }
-
-    private sealed class FieldPoco
-    {
-        [JsonPropertyName("renamed_field")]
-        [JsonProperty] // opt the public field into serialization
-        public string? RawField;
-    }
 
     // ------- Serialization -------
 
@@ -180,7 +148,7 @@ public class JsonPropertyNameContractResolverTests
     [Fact]
     public void Resolver_IsDefaultContractResolver()
     {
-        Assert.IsAssignableFrom<global::Newtonsoft.Json.Serialization.DefaultContractResolver>(
+        Assert.IsAssignableFrom<DefaultContractResolver>(
             new JsonPropertyNameContractResolver());
     }
 
@@ -197,5 +165,37 @@ public class JsonPropertyNameContractResolverTests
         var obj = JObject.Parse(sw.ToString());
 
         Assert.Equal("Ada", (string?)obj["first_name"]);
+    }
+
+    // ------- POCOs -------
+
+    private sealed class RenamedPoco
+    {
+        [JsonPropertyName("first_name")] public string? FirstName { get; set; }
+
+        [JsonPropertyName("last_name")] public string? LastName { get; set; }
+
+        // No attribute: should keep the CLR member name.
+        public int Age { get; set; }
+    }
+
+    private sealed class PrecedencePoco
+    {
+        // System.Text.Json attribute must win over Newtonsoft's [JsonProperty].
+        [JsonProperty("newtonsoft_name")]
+        [JsonPropertyName("system_text_json_name")]
+        public string? Value { get; set; }
+    }
+
+    private sealed class NewtonsoftOnlyPoco
+    {
+        // Only Newtonsoft's attribute present -> the resolver must not disturb it.
+        [JsonProperty("nsj_only")] public string? Value { get; set; }
+    }
+
+    private sealed class FieldPoco
+    {
+        [JsonPropertyName("renamed_field")] [JsonProperty] // opt the public field into serialization
+        public string? RawField;
     }
 }

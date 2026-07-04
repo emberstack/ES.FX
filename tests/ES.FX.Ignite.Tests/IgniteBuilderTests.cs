@@ -10,11 +10,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace ES.FX.Ignite.Tests;
 
 /// <summary>
-///     Covers the pre-build (phase 1) <see cref="IgniteHostingExtensions.Ignite(IHostApplicationBuilder, Action{IgniteSettings}?, string)" />
+///     Covers the pre-build (phase 1)
+///     <see cref="IgniteHostingExtensions.Ignite(IHostApplicationBuilder, Action{IgniteSettings}?, string)" />
 ///     activation: argument guards, configuration binding, the <c>configureSettings</c> delegate, and the
 ///     conditional service registrations it performs based on <see cref="IgniteSettings" />.
 /// </summary>
@@ -215,8 +218,8 @@ public class IgniteBuilderTests
 
         using var provider = builder.Services.BuildServiceProvider();
         // AddOpenTelemetry().WithMetrics/.WithTracing registers the providers.
-        Assert.NotNull(provider.GetService<global::OpenTelemetry.Metrics.MeterProvider>());
-        Assert.NotNull(provider.GetService<global::OpenTelemetry.Trace.TracerProvider>());
+        Assert.NotNull(provider.GetService<MeterProvider>());
+        Assert.NotNull(provider.GetService<TracerProvider>());
     }
 
     [Fact]
@@ -230,7 +233,7 @@ public class IgniteBuilderTests
         builder.Ignite();
 
         using var provider = builder.Services.BuildServiceProvider();
-        Assert.Null(provider.GetService<global::OpenTelemetry.Metrics.MeterProvider>());
-        Assert.Null(provider.GetService<global::OpenTelemetry.Trace.TracerProvider>());
+        Assert.Null(provider.GetService<MeterProvider>());
+        Assert.Null(provider.GetService<TracerProvider>());
     }
 }

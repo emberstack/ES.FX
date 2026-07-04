@@ -1,6 +1,5 @@
 using ES.FX.Additions.Microsoft.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests;
 

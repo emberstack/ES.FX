@@ -1,8 +1,5 @@
-using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.Tests;
@@ -19,9 +16,6 @@ public sealed class LoopbackServerFixture : IAsyncLifetime
 
     /// <summary>Base address of the running loopback server, e.g. <c>http://127.0.0.1:5xxxx</c>.</summary>
     public string BaseAddress { get; private set; } = null!;
-
-    /// <summary>Returns an absolute URI on the loopback server for the given relative path.</summary>
-    public string Url(string path) => $"{BaseAddress}{path}";
 
     public async ValueTask InitializeAsync()
     {
@@ -76,4 +70,7 @@ public sealed class LoopbackServerFixture : IAsyncLifetime
             await _app.DisposeAsync();
         }
     }
+
+    /// <summary>Returns an absolute URI on the loopback server for the given relative path.</summary>
+    public string Url(string path) => $"{BaseAddress}{path}";
 }

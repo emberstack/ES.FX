@@ -4,29 +4,6 @@ namespace ES.FX.TransactionalOutbox.Tests;
 
 public class OutboxMessageHandlerTests
 {
-    /// <summary>
-    ///     A handler that relies entirely on the default interface members and only implements the required
-    ///     <see cref="IOutboxMessageHandler.HandleAsync" />. It does NOT override <c>IsReadyAsync</c>, so the
-    ///     default interface method is exercised.
-    /// </summary>
-    private sealed class DefaultsOnlyHandler : IOutboxMessageHandler
-    {
-        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default) =>
-            ValueTask.CompletedTask;
-    }
-
-    /// <summary>
-    ///     A handler that overrides the default readiness gate to prove consumers can opt out of delivery.
-    /// </summary>
-    private sealed class NotReadyHandler : IOutboxMessageHandler
-    {
-        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default) =>
-            ValueTask.CompletedTask;
-
-        public ValueTask<bool> IsReadyAsync(CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(false);
-    }
-
     [Fact]
     public async Task IsReadyAsync_Default_Implementation_Returns_True()
     {
@@ -58,5 +35,28 @@ public class OutboxMessageHandlerTests
         var ready = await handler.IsReadyAsync(TestContext.Current.CancellationToken);
 
         Assert.False(ready);
+    }
+
+    /// <summary>
+    ///     A handler that relies entirely on the default interface members and only implements the required
+    ///     <see cref="IOutboxMessageHandler.HandleAsync" />. It does NOT override <c>IsReadyAsync</c>, so the
+    ///     default interface method is exercised.
+    /// </summary>
+    private sealed class DefaultsOnlyHandler : IOutboxMessageHandler
+    {
+        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default) =>
+            ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    ///     A handler that overrides the default readiness gate to prove consumers can opt out of delivery.
+    /// </summary>
+    private sealed class NotReadyHandler : IOutboxMessageHandler
+    {
+        public ValueTask HandleAsync(OutboxMessageContext context, CancellationToken cancellationToken = default) =>
+            ValueTask.CompletedTask;
+
+        public ValueTask<bool> IsReadyAsync(CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(false);
     }
 }

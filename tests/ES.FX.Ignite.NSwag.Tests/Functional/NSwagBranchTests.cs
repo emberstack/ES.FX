@@ -1,10 +1,11 @@
+using System.Net;
 using ES.FX.Ignite.NSwag.Hosting;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NSwag.AspNetCore;
+using SwaggerThemes;
 
 namespace ES.FX.Ignite.NSwag.Tests.Functional;
 
@@ -38,8 +39,8 @@ public class NSwagBranchTests
         var app = builder.Build();
 
         app.IgniteNSwag(
-            useSwaggerUi: useSwaggerUi,
-            useSwaggerUiDarkMode: useSwaggerUiDarkMode,
+            useSwaggerUi,
+            useSwaggerUiDarkMode,
             configureSwaggerUiSettings: configureSwaggerUiSettings);
 
         // A minimal endpoint so the generated document has at least one path.
@@ -59,35 +60,6 @@ public class NSwagBranchTests
         {
             BaseAddress = new Uri("http://localhost/")
         };
-    }
-
-    /// <summary>
-    ///     The TestServer handler does not follow redirects on its own. This wraps it so that a single
-    ///     redirect (the /swagger/ -> /swagger/index.html hop) is transparently followed.
-    /// </summary>
-    private sealed class RedirectFollowingHandler(HttpMessageHandler inner) : DelegatingHandler(inner)
-    {
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            var response = await base.SendAsync(request, cancellationToken);
-            var redirects = 0;
-            while ((response.StatusCode == System.Net.HttpStatusCode.Found ||
-                    response.StatusCode == System.Net.HttpStatusCode.MovedPermanently) &&
-                   response.Headers.Location is not null &&
-                   redirects++ < 5)
-            {
-                var location = response.Headers.Location;
-                var target = location.IsAbsoluteUri
-                    ? location
-                    : new Uri(request.RequestUri!, location);
-                response.Dispose();
-                var followUp = new HttpRequestMessage(HttpMethod.Get, target);
-                response = await base.SendAsync(followUp, cancellationToken);
-            }
-
-            return response;
-        }
     }
 
     [Fact]
@@ -113,12 +85,12 @@ public class NSwagBranchTests
     [Fact]
     public async Task UseSwaggerUiFalse_UiIsAbsentButDocumentStillServed()
     {
-        await using var app = await BuildAppAsync(useSwaggerUi: false);
+        await using var app = await BuildAppAsync(false);
         var client = CreateClient(app);
 
         // UI must NOT be wired up.
         var uiResponse = await client.GetAsync("/swagger/", TestContext.Current.CancellationToken);
-        Assert.Equal(System.Net.HttpStatusCode.NotFound, uiResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, uiResponse.StatusCode);
 
         // The OpenAPI document endpoint must still work (UseOpenApi always runs).
         var docResponse = await client.GetAsync(
@@ -129,7 +101,7 @@ public class NSwagBranchTests
     [Fact]
     public async Task UseSwaggerUiTrue_UiIsServed()
     {
-        await using var app = await BuildAppAsync(useSwaggerUi: true);
+        await using var app = await BuildAppAsync(true);
         var client = CreateClient(app);
 
         var response = await client.GetAsync("/swagger/", TestContext.Current.CancellationToken);
@@ -150,7 +122,7 @@ public class NSwagBranchTests
         // SwaggerThemes' UniversalDark CSS overrides the .swagger-ui background/colors.
         Assert.Contains("<style", html);
         // The theme redefines swagger-ui CSS variables/selectors; assert a dark-theme marker.
-        var expectedCss = SwaggerThemes.SwaggerTheme.GetSwaggerThemeCss(SwaggerThemes.Theme.UniversalDark);
+        var expectedCss = SwaggerTheme.GetSwaggerThemeCss(Theme.UniversalDark);
         // Grab a stable, non-trivial fragment of the theme CSS and assert it is present verbatim.
         var fragment = ExtractStableCssFragment(expectedCss);
         Assert.Contains(fragment, html);
@@ -166,7 +138,7 @@ public class NSwagBranchTests
         response.EnsureSuccessStatusCode();
         var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        var expectedCss = SwaggerThemes.SwaggerTheme.GetSwaggerThemeCss(SwaggerThemes.Theme.UniversalDark);
+        var expectedCss = SwaggerTheme.GetSwaggerThemeCss(Theme.UniversalDark);
         var fragment = ExtractStableCssFragment(expectedCss);
         Assert.DoesNotContain(fragment, html);
     }
@@ -257,5 +229,34 @@ public class NSwagBranchTests
         Assert.StartsWith("@media (prefers-color-scheme: dark)", normalized);
         // Take a long, distinctive leading chunk of the actual theme CSS.
         return normalized[..Math.Min(120, normalized.Length)];
+    }
+
+    /// <summary>
+    ///     The TestServer handler does not follow redirects on its own. This wraps it so that a single
+    ///     redirect (the /swagger/ -> /swagger/index.html hop) is transparently followed.
+    /// </summary>
+    private sealed class RedirectFollowingHandler(HttpMessageHandler inner) : DelegatingHandler(inner)
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = await base.SendAsync(request, cancellationToken);
+            var redirects = 0;
+            while ((response.StatusCode == HttpStatusCode.Found ||
+                    response.StatusCode == HttpStatusCode.MovedPermanently) &&
+                   response.Headers.Location is not null &&
+                   redirects++ < 5)
+            {
+                var location = response.Headers.Location;
+                var target = location.IsAbsoluteUri
+                    ? location
+                    : new Uri(request.RequestUri!, location);
+                response.Dispose();
+                var followUp = new HttpRequestMessage(HttpMethod.Get, target);
+                response = await base.SendAsync(followUp, cancellationToken);
+            }
+
+            return response;
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System.Data;
 using ES.FX.Additions.Microsoft.Data.SqlClient.Abstractions;
 using ES.FX.Additions.Microsoft.Data.SqlClient.Factories;
 using Microsoft.Data.SqlClient;
@@ -30,7 +31,7 @@ public class DelegateSqlConnectionFactoryTests
     {
         using var provider = new ServiceCollection().BuildServiceProvider();
         var factory = new DelegateSqlConnectionFactory(provider, _ => new SqlConnection());
-        Assert.IsType<ISqlConnectionFactory>(factory, exactMatch: false);
+        Assert.IsType<ISqlConnectionFactory>(factory, false);
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public class DelegateSqlConnectionFactoryTests
 
         Assert.NotNull(connection);
         // Constructing a SqlConnection does not open it; state must be Closed and no server is contacted.
-        Assert.Equal(System.Data.ConnectionState.Closed, connection.State);
+        Assert.Equal(ConnectionState.Closed, connection.State);
         Assert.Equal("Test", connection.Database);
     }
 
