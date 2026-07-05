@@ -6,13 +6,13 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP read tools for Zendesk brands (multibrand accounts). Namespaced <c>zendesk_brands_*</c>.
+///     MCP read tools for Zendesk brands (multibrand accounts). Namespaced <c>brands_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskBrandTools(IZendeskClient zendeskApiClient)
 {
     /// <summary>Lists Zendesk brands.</summary>
-    [McpServerTool(Name = "zendesk_brands_list", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "brands_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists Zendesk brands — decodes the brand_id carried on tickets in multibrand accounts. Cursor " +
         "pagination: pass pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. " +
@@ -28,7 +28,7 @@ public sealed class ZendeskBrandTools(IZendeskClient zendeskApiClient)
                 cancellationToken: cancellationToken));
 
     /// <summary>Returns a Zendesk brand by id.</summary>
-    [McpServerTool(Name = "zendesk_brands_read", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "brands_get", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns a single Zendesk brand by id — the name/subdomain behind a ticket's brand_id. Read-only.")]
     public Task<ZendeskBrand> Read(

@@ -27,6 +27,13 @@
 		<ProjectReference Include="..\..\src\ES.FX.Zendesk.MCP.Host\ES.FX.Zendesk.MCP.Host.csproj" />
 	</ItemGroup>
 
+	<!-- Committed tool-profile snapshots asserted by ZendeskToolProfileSnapshotTests; copied next to the test
+	     assembly so the test reads the exact committed bytes and fails on drift. Regeneration: run the failing
+	     test, which writes the up-to-date sets to these files (see the test's remarks). -->
+	<ItemGroup>
+		<None Include="Profiles\*.include.txt" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<Using Include="Xunit" />
 	</ItemGroup>

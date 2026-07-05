@@ -7,7 +7,7 @@ namespace ES.FX.Zendesk.Abstractions.Models;
 ///     A single custom field value stored on a ticket: the field's <see cref="Id" /> plus its raw
 ///     <see cref="Value" />. The value is heterogeneous (string, number, boolean, or array), so it is exposed as a
 ///     <see cref="JsonElement" />. Resolve the id to a human title and decode option values with
-///     <c>zendesk_ticket_fields_list</c> / <c>zendesk_ticket_fields_read</c>.
+///     <c>IZendeskTicketFieldsApi.ListAsync</c> / <c>GetByIdAsync</c>.
 /// </summary>
 public sealed record ZendeskTicketCustomFieldValue
 {

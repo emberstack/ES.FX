@@ -7,7 +7,7 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP write tools for Zendesk custom ticket statuses. Namespaced <c>zendesk_custom_statuses_*</c>.
+///     MCP write tools for Zendesk custom ticket statuses. Namespaced <c>custom_statuses_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskCustomStatusWriteTools(
@@ -15,7 +15,7 @@ public sealed class ZendeskCustomStatusWriteTools(
     IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Creates a Zendesk custom ticket status.</summary>
-    [McpServerTool(Name = "zendesk_custom_statuses_create", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "custom_statuses_create", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk custom ticket status (admin-only). 'status_category' (new/open/pending/hold/solved) and " +
@@ -32,7 +32,7 @@ public sealed class ZendeskCustomStatusWriteTools(
             () => zendeskApiClient.CustomStatuses.CreateAsync(status, cancellationToken: cancellationToken), status);
 
     /// <summary>Updates a Zendesk custom ticket status by id.</summary>
-    [McpServerTool(Name = "zendesk_custom_statuses_update", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "custom_statuses_update", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Updates a Zendesk custom ticket status by id (admin-only). 'status_category' cannot be changed; deactivate " +
@@ -51,7 +51,7 @@ public sealed class ZendeskCustomStatusWriteTools(
             new { id, status });
 
     /// <summary>Deletes a Zendesk custom ticket status by id.</summary>
-    [McpServerTool(Name = "zendesk_custom_statuses_delete", ReadOnly = false, Destructive = true, Idempotent = true,
+    [McpServerTool(Name = "custom_statuses_delete", ReadOnly = false, Destructive = true, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Deletes a Zendesk custom ticket status by id (admin-only). Zendesk rejects the delete unless the status " +

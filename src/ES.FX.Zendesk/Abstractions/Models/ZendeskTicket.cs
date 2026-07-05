@@ -69,7 +69,7 @@ public sealed record ZendeskTicket
 
     /// <summary>
     ///     The custom field values stored on the ticket (raw id + value). Decode the ids to titles/option labels
-    ///     with <c>zendesk_ticket_fields_list</c> / <c>zendesk_ticket_fields_read</c>.
+    ///     with <c>IZendeskTicketFieldsApi.ListAsync</c> / <c>GetByIdAsync</c>.
     /// </summary>
     [JsonPropertyName("custom_fields")]
     public IReadOnlyList<ZendeskTicketCustomFieldValue>? CustomFields { get; init; }
@@ -102,7 +102,7 @@ public sealed record ZendeskTicket
     [JsonPropertyName("problem_id")]
     public long? ProblemId { get; init; }
 
-    /// <summary>For a <c>problem</c> ticket, whether any incidents are linked to it (see <c>zendesk_tickets_incidents</c>).</summary>
+    /// <summary>For a <c>problem</c> ticket, whether any incidents are linked to it (see <c>IZendeskTicketsApi.GetIncidentsAsync</c>).</summary>
     [JsonPropertyName("has_incidents")]
     public bool? HasIncidents { get; init; }
 

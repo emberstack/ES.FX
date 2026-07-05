@@ -8,13 +8,13 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
 ///     MCP write tools for Zendesk macros (canned responses — admin configuration). Namespaced
-///     <c>zendesk_macros_*</c>.
+///     <c>macros_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskMacroWriteTools(IZendeskClient zendeskApiClient, IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Creates a Zendesk macro.</summary>
-    [McpServerTool(Name = "zendesk_macros_create", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "macros_create", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk macro (canned response / bulk action). This changes account-wide configuration — the " +
@@ -32,12 +32,12 @@ public sealed class ZendeskMacroWriteTools(IZendeskClient zendeskApiClient, IMcp
             macro);
 
     /// <summary>Updates a Zendesk macro.</summary>
-    [McpServerTool(Name = "zendesk_macros_update", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "macros_update", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Updates a Zendesk macro by id. This changes account-wide configuration, not a single ticket. WARNING: " +
         "sending 'actions' replaces the macro's whole action array — read the current macro with " +
-        "zendesk_macros_read first and include ALL actions when changing any one. Returns the updated macro. " +
+        "macros_get first and include ALL actions when changing any one. Returns the updated macro. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes " +
         "made) in dry-run mode.")]
     public Task<object> Update(
@@ -52,7 +52,7 @@ public sealed class ZendeskMacroWriteTools(IZendeskClient zendeskApiClient, IMcp
             new { id, macro });
 
     /// <summary>Deletes a Zendesk macro.</summary>
-    [McpServerTool(Name = "zendesk_macros_delete", ReadOnly = false, Destructive = true, Idempotent = true,
+    [McpServerTool(Name = "macros_delete", ReadOnly = false, Destructive = true, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Deletes a Zendesk macro by id. This changes account-wide configuration — the macro disappears for every " +

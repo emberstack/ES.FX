@@ -18,6 +18,7 @@ namespace ES.FX.Zendesk.MCP.Host.Tests.Hosting;
 ///     unit tests cannot: tool registration drift, conditional write-tool registration, the MCP endpoint mapping,
 ///     Origin validation, and the execution-mode header travelling through the request pipeline.
 /// </summary>
+[Collection(HostEnvironmentCollection.Name)]
 public class McpHostIntegrationTests
 {
     private static WebApplicationFactory<Program> CreateFactory(Dictionary<string, string?>? settings = null) =>
@@ -182,7 +183,7 @@ public class McpHostIntegrationTests
         using var client = factory.CreateClient();
 
         var request = McpRequest(
-            """{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"zendesk_tickets_delete","arguments":{"id":1}}}""");
+            """{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"tickets_delete","arguments":{"id":1}}}""");
         request.Headers.Add("X-Mcp-Execution-Mode", "read-only");
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -205,7 +206,7 @@ public class McpHostIntegrationTests
         using var client = factory.CreateClient();
 
         var request = McpRequest(
-            """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"zendesk_tickets_delete","arguments":{"id":1}}}""");
+            """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"tickets_delete","arguments":{"id":1}}}""");
         request.Headers.Add("X-Mcp-Execution-Mode", "dry-run");
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);

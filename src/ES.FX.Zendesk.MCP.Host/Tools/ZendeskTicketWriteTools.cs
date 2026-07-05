@@ -8,20 +8,20 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
 ///     MCP write tools for Zendesk tickets (create/update/delete/merge/spam/restore/tags/comments/import).
-///     Namespaced <c>zendesk_tickets_*</c>; every tool routes through <see cref="ZendeskToolInvoker" /> so the
+///     Namespaced <c>tickets_*</c>; every tool routes through <see cref="ZendeskToolInvoker" /> so the
 ///     server execution mode (read-only / dry-run) is always honored.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Creates a Zendesk ticket.</summary>
-    [McpServerTool(Name = "zendesk_tickets_create", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "tickets_create", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk ticket. The write model's 'comment' becomes the ticket description and is effectively " +
         "required; business rules (triggers/automations) and notifications fire. Attach files by putting upload " +
-        "tokens from zendesk_uploads_create in comment.uploads. For historical data (no triggers/notifications) use " +
-        "zendesk_tickets_import instead. Returns the created ticket. Write operation — honors the server execution " +
+        "tokens from uploads_create in comment.uploads. For historical data (no triggers/notifications) use " +
+        "tickets_import instead. Returns the created ticket. Write operation — honors the server execution " +
         "mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Create(
         [Description(
@@ -34,16 +34,16 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.CreateAsync(ticket, cancellationToken), ticket);
 
     /// <summary>Creates up to 100 Zendesk tickets as an async job.</summary>
-    [McpServerTool(Name = "zendesk_tickets_create_many", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "tickets_create_many", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Creates up to 100 Zendesk tickets in one call as an async job. Returns a job_status — poll " +
-        "zendesk_job_statuses_read until completed; per-ticket outcomes (including partial failures) are in the " +
-        "job's results. For historical/backfill data prefer zendesk_tickets_import_many, which skips triggers and " +
+        "job_statuses_get until completed; per-ticket outcomes (including partial failures) are in the " +
+        "job's results. For historical/backfill data prefer tickets_import_many, which skips triggers and " +
         "notifications. Write operation — honors the server execution mode: rejected in read-only mode, simulated " +
         "(no changes made) in dry-run mode.")]
     public Task<object> CreateMany(
-        [Description("The tickets to create (1-100 per call). Same shape as zendesk_tickets_create.")]
+        [Description("The tickets to create (1-100 per call). Same shape as tickets_create.")]
         ZendeskTicketWrite[] tickets,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -51,14 +51,14 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.CreateManyAsync(tickets, cancellationToken), tickets);
 
     /// <summary>Updates a Zendesk ticket by id.</summary>
-    [McpServerTool(Name = "zendesk_tickets_update", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "tickets_update", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Updates a Zendesk ticket by id — only the fields set on the write model are sent, everything else is left " +
         "untouched. To reply to the requester, set comment.body with comment.public=true; for an internal agent " +
         "note set comment.public=false (Zendesk defaults to public — always set the flag explicitly when adding a " +
         "comment). Concurrent updates fail with 409 Conflict; for explicit optimistic locking set safe_update=true " +
-        "plus updated_stamp (the ticket's latest updated_at from zendesk_tickets_read). Returns the updated ticket " +
+        "plus updated_stamp (the ticket's latest updated_at from tickets_get). Returns the updated ticket " +
         "and the audit of the change. Write operation — honors the server execution mode: rejected in read-only " +
         "mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Update(
@@ -74,13 +74,13 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.UpdateAsync(id, ticket, cancellationToken), new { id, ticket });
 
     /// <summary>Applies the same change to up to 100 tickets as an async job.</summary>
-    [McpServerTool(Name = "zendesk_tickets_update_many", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "tickets_update_many", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Applies the SAME change to up to 100 tickets as an async job. For tag edits use the change's " +
         "additional_tags / remove_tags (not 'tags') — that is also the only way to change tags on closed tickets. " +
-        "For different changes per ticket use zendesk_tickets_update_many_batch. Returns a job_status — poll " +
-        "zendesk_job_statuses_read until completed. Write operation — honors the server execution mode: rejected " +
+        "For different changes per ticket use tickets_update_many_batch. Returns a job_status — poll " +
+        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
         "in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> UpdateMany(
         [Description("The numeric ids of the tickets to update (1-100 per call).")]
@@ -95,12 +95,12 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.UpdateManyAsync(ids, change, cancellationToken), new { ids, change });
 
     /// <summary>Applies per-ticket changes to up to 100 tickets as an async job.</summary>
-    [McpServerTool(Name = "zendesk_tickets_update_many_batch", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "tickets_update_many_batch", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Applies PER-TICKET changes to up to 100 tickets as an async job — every item MUST carry its 'id'. For the " +
-        "same change across many tickets prefer zendesk_tickets_update_many. Returns a job_status — poll " +
-        "zendesk_job_statuses_read until completed. Write operation — honors the server execution mode: rejected " +
+        "same change across many tickets prefer tickets_update_many. Returns a job_status — poll " +
+        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
         "in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> UpdateManyBatch(
         [Description("The per-ticket changes (1-100 per call); every item must have 'id' set.")]
@@ -111,11 +111,11 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.UpdateManyAsync(tickets, cancellationToken), tickets);
 
     /// <summary>Soft-deletes a Zendesk ticket.</summary>
-    [McpServerTool(Name = "zendesk_tickets_delete", ReadOnly = false, Destructive = true, Idempotent = true,
+    [McpServerTool(Name = "tickets_delete", ReadOnly = false, Destructive = true, Idempotent = true,
         OpenWorld = true)]
     [Description(
-        "Soft-deletes a ticket. Recoverable for ~30 days via zendesk_tickets_restore; after that Zendesk purges it. " +
-        "For irreversible removal see zendesk_tickets_delete_permanently. Returns a completion acknowledgement. " +
+        "Soft-deletes a ticket. Recoverable for ~30 days via tickets_restore; after that Zendesk purges it. " +
+        "For irreversible removal see tickets_delete_permanently. Returns a completion acknowledgement. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes " +
         "made) in dry-run mode.")]
     public Task<object> Delete(
@@ -127,11 +127,11 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.DeleteAsync(id, cancellationToken), new { id });
 
     /// <summary>Soft-deletes up to 100 tickets as an async job.</summary>
-    [McpServerTool(Name = "zendesk_tickets_delete_many", ReadOnly = false, Destructive = true, Idempotent = false,
+    [McpServerTool(Name = "tickets_delete_many", ReadOnly = false, Destructive = true, Idempotent = false,
         OpenWorld = true)]
     [Description(
-        "Soft-deletes up to 100 tickets as an async job. Recoverable for ~30 days via zendesk_tickets_restore(_many). " +
-        "Returns a job_status — poll zendesk_job_statuses_read until completed. Write operation — honors the server " +
+        "Soft-deletes up to 100 tickets as an async job. Recoverable for ~30 days via tickets_restore(_many). " +
+        "Returns a job_status — poll job_statuses_get until completed. Write operation — honors the server " +
         "execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> DeleteMany(
         [Description("The numeric ids of the tickets to soft-delete (1-100 per call).")]
@@ -142,13 +142,13 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.DeleteManyAsync(ids, cancellationToken), new { ids });
 
     /// <summary>Merges source tickets into a target ticket as an async job.</summary>
-    [McpServerTool(Name = "zendesk_tickets_merge", ReadOnly = false, Destructive = true, Idempotent = false,
+    [McpServerTool(Name = "tickets_merge", ReadOnly = false, Destructive = true, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Merges source tickets into a target ticket as an async job — the sources are closed and their " +
         "conversations folded into the target; a merge cannot be undone. Merge comments default to private " +
         "(internal); set the *_comment_is_public flags to make them visible to requesters. Returns a job_status — " +
-        "poll zendesk_job_statuses_read until completed. Write operation — honors the server execution mode: " +
+        "poll job_statuses_get until completed. Write operation — honors the server execution mode: " +
         "rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Merge(
         [Description("The numeric id of the ticket that survives (receives the merged conversations).")]
@@ -181,7 +181,7 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             });
 
     /// <summary>Marks a ticket as spam and suspends its requester.</summary>
-    [McpServerTool(Name = "zendesk_tickets_mark_spam", ReadOnly = false, Destructive = true, Idempotent = false,
+    [McpServerTool(Name = "tickets_mark_spam", ReadOnly = false, Destructive = true, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Marks a ticket as spam AND suspends its requester — the requester can no longer submit tickets until " +
@@ -197,11 +197,11 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.MarkAsSpamAsync(id, cancellationToken), new { id });
 
     /// <summary>Marks up to 100 tickets as spam as an async job.</summary>
-    [McpServerTool(Name = "zendesk_tickets_mark_spam_many", ReadOnly = false, Destructive = true, Idempotent = false,
+    [McpServerTool(Name = "tickets_mark_spam_many", ReadOnly = false, Destructive = true, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Marks up to 100 tickets as spam as an async job, suspending their requesters. Returns a job_status — poll " +
-        "zendesk_job_statuses_read until completed. Write operation — honors the server execution mode: rejected " +
+        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
         "in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MarkSpamMany(
         [Description("The numeric ids of the tickets to mark as spam (1-100 per call).")]
@@ -212,10 +212,10 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.MarkManyAsSpamAsync(ids, cancellationToken), new { ids });
 
     /// <summary>Restores a soft-deleted ticket.</summary>
-    [McpServerTool(Name = "zendesk_tickets_restore", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "tickets_restore", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
-        "Restores a soft-deleted ticket (undoes zendesk_tickets_delete within the ~30-day recovery window). " +
+        "Restores a soft-deleted ticket (undoes tickets_delete within the ~30-day recovery window). " +
         "Returns a completion acknowledgement. Write operation — honors the server execution mode: rejected in " +
         "read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Restore(
@@ -227,7 +227,7 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.RestoreDeletedAsync(id, cancellationToken), new { id });
 
     /// <summary>Restores up to 100 soft-deleted tickets.</summary>
-    [McpServerTool(Name = "zendesk_tickets_restore_many", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "tickets_restore_many", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Restores up to 100 soft-deleted tickets in one call. Unlike most bulk ticket operations this endpoint is " +
@@ -242,12 +242,12 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.RestoreManyDeletedAsync(ids, cancellationToken), new { ids });
 
     /// <summary>Permanently deletes an already soft-deleted ticket (irreversible).</summary>
-    [McpServerTool(Name = "zendesk_tickets_delete_permanently", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "tickets_delete_permanently", ReadOnly = false, Destructive = true,
         Idempotent = true, OpenWorld = true)]
     [Description(
-        "PERMANENTLY deletes a ticket that was already soft-deleted (zendesk_tickets_delete first). IRREVERSIBLE — " +
+        "PERMANENTLY deletes a ticket that was already soft-deleted (tickets_delete first). IRREVERSIBLE — " +
         "the ticket cannot be recovered afterwards. Async even for a single ticket: returns a job_status — poll " +
-        "zendesk_job_statuses_read until completed. Write operation — honors the server execution mode: rejected " +
+        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
         "in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> DeletePermanently(
         [Description("The numeric id of the already soft-deleted ticket.")]
@@ -258,11 +258,11 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.DeletePermanentlyAsync(id, cancellationToken), new { id });
 
     /// <summary>Permanently deletes up to 100 soft-deleted tickets as an async job (irreversible).</summary>
-    [McpServerTool(Name = "zendesk_tickets_delete_permanently_many", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "tickets_delete_permanently_many", ReadOnly = false, Destructive = true,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "PERMANENTLY deletes up to 100 already soft-deleted tickets as an async job. IRREVERSIBLE — the tickets " +
-        "cannot be recovered afterwards. Returns a job_status — poll zendesk_job_statuses_read until completed. " +
+        "cannot be recovered afterwards. Returns a job_status — poll job_statuses_get until completed. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes " +
         "made) in dry-run mode.")]
     public Task<object> DeletePermanentlyMany(
@@ -274,12 +274,12 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             () => zendeskApiClient.Tickets.DeleteManyPermanentlyAsync(ids, cancellationToken), new { ids });
 
     /// <summary>Replaces a ticket's whole tag set.</summary>
-    [McpServerTool(Name = "zendesk_tickets_tags_set", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "tickets_tags_set", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "REPLACES a ticket's whole tag set with the given tags — any tag not in the list is removed. To add or " +
-        "remove specific tags without touching the rest, use zendesk_tickets_tags_add / zendesk_tickets_tags_remove. " +
-        "Does not work on closed tickets (use additional_tags/remove_tags via zendesk_tickets_update_many for " +
+        "remove specific tags without touching the rest, use tickets_tags_add / tickets_tags_remove. " +
+        "Does not work on closed tickets (use additional_tags/remove_tags via tickets_update_many for " +
         "those). Returns the ticket's resulting tag list. Write operation — honors the server execution mode: " +
         "rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> TagsSet(
@@ -294,11 +294,11 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             new { ticketId, tags });
 
     /// <summary>Adds tags to a ticket without removing existing ones.</summary>
-    [McpServerTool(Name = "zendesk_tickets_tags_add", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "tickets_tags_add", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Adds tags to a ticket without touching its existing tags. Optionally pass updatedStamp (the ticket's " +
-        "latest updated_at from zendesk_tickets_read) for optimistic-concurrency protection: if the ticket changed " +
+        "latest updated_at from tickets_get) for optimistic-concurrency protection: if the ticket changed " +
         "in the meantime, Zendesk rejects the call with 409 Conflict instead of silently overwriting — re-read and " +
         "retry. Does not work on closed tickets. Returns the ticket's resulting tag list. Write operation — honors " +
         "the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
@@ -318,11 +318,11 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             new { ticketId, tags, updatedStamp });
 
     /// <summary>Removes tags from a ticket.</summary>
-    [McpServerTool(Name = "zendesk_tickets_tags_remove", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "tickets_tags_remove", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Removes the given tags from a ticket, leaving other tags in place. Optionally pass updatedStamp (the " +
-        "ticket's latest updated_at from zendesk_tickets_read) for optimistic-concurrency protection: a concurrent " +
+        "ticket's latest updated_at from tickets_get) for optimistic-concurrency protection: a concurrent " +
         "change makes the call fail with 409 Conflict instead of silently overwriting — re-read and retry. Does " +
         "not work on closed tickets. Returns the ticket's resulting tag list. Write operation — honors the server " +
         "execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
@@ -342,12 +342,12 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             new { ticketId, tags, updatedStamp });
 
     /// <summary>Makes a public ticket comment private.</summary>
-    [McpServerTool(Name = "zendesk_tickets_comment_make_private", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "tickets_comments_make_private", ReadOnly = false, Destructive = true,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Makes a public ticket comment private (an internal note). ONE-WAY: Zendesk has no make-public — the only " +
         "way back is deleting and re-adding the content as a new public comment. Find comment ids with " +
-        "zendesk_tickets_comments. Returns a completion acknowledgement. Write operation — honors the server " +
+        "tickets_comments_list. Returns a completion acknowledgement. Write operation — honors the server " +
         "execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> CommentMakePrivate(
         [Description("The numeric Zendesk ticket id.")]
@@ -361,12 +361,12 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             new { ticketId, commentId });
 
     /// <summary>Permanently redacts a comment attachment (irreversible).</summary>
-    [McpServerTool(Name = "zendesk_tickets_comment_attachment_redact", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "tickets_comments_attachment_redact", ReadOnly = false, Destructive = true,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "PERMANENTLY redacts an attachment on a ticket comment, replacing the file with an empty 'redacted.txt'. " +
         "IRREVERSIBLE — the original file cannot be recovered — and not possible once the ticket is closed. Find " +
-        "comment and attachment ids with zendesk_tickets_comments. Returns the redacted attachment. Write " +
+        "comment and attachment ids with tickets_comments_list. Returns the redacted attachment. Write " +
         "operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in " +
         "dry-run mode.")]
     public Task<object> CommentAttachmentRedact(
@@ -384,10 +384,10 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             new { ticketId, commentId, attachmentId });
 
     /// <summary>Imports a historical ticket (admin-only; no triggers/notifications).</summary>
-    [McpServerTool(Name = "zendesk_tickets_import", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "tickets_import", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
-        "Imports a HISTORICAL ticket (admin-only) — unlike zendesk_tickets_create it accepts a whole comment " +
+        "Imports a HISTORICAL ticket (admin-only) — unlike tickets_create it accepts a whole comment " +
         "conversation and historical created_at/updated_at/solved_at timestamps, and it skips triggers, " +
         "notifications, metrics, and SLAs. Set archiveImmediately=true to send closed tickets straight to the " +
         "archive (recommended for backfills). Returns the imported ticket. Write operation — honors the server " +
@@ -407,16 +407,16 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
             new { ticket, archiveImmediately });
 
     /// <summary>Imports up to 100 historical tickets as an async job (admin-only).</summary>
-    [McpServerTool(Name = "zendesk_tickets_import_many", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "tickets_import_many", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Imports up to 100 HISTORICAL tickets as an async job (admin-only) — the bulk form of " +
-        "zendesk_tickets_import: whole comment conversations and historical timestamps are accepted; triggers, " +
+        "tickets_import: whole comment conversations and historical timestamps are accepted; triggers, " +
         "notifications, metrics, and SLAs are skipped. Set archiveImmediately=true to send closed tickets straight " +
-        "to the archive. Returns a job_status — poll zendesk_job_statuses_read until completed. Write operation — " +
+        "to the archive. Returns a job_status — poll job_statuses_get until completed. Write operation — " +
         "honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> ImportMany(
-        [Description("The historical tickets to import (1-100 per call). Same shape as zendesk_tickets_import.")]
+        [Description("The historical tickets to import (1-100 per call). Same shape as tickets_import.")]
         ZendeskTicketImport[] tickets,
         [Description("Send the tickets directly to the archive after import (only valid for closed tickets).")]
         bool archiveImmediately = false,

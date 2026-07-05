@@ -8,7 +8,7 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
 ///     MCP write tools for Zendesk ticket field definitions (admin configuration). Namespaced
-///     <c>zendesk_ticket_fields_*</c>.
+///     <c>ticket_fields_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskTicketFieldWriteTools(
@@ -16,7 +16,7 @@ public sealed class ZendeskTicketFieldWriteTools(
     IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Creates a Zendesk ticket field.</summary>
-    [McpServerTool(Name = "zendesk_ticket_fields_create", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "ticket_fields_create", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk ticket field definition (admin-only). This changes account-wide configuration, not a " +
@@ -34,14 +34,14 @@ public sealed class ZendeskTicketFieldWriteTools(
             field);
 
     /// <summary>Updates a Zendesk ticket field.</summary>
-    [McpServerTool(Name = "zendesk_ticket_fields_update", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "ticket_fields_update", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Updates a Zendesk ticket field definition by id (admin-only). This changes account-wide configuration, " +
         "not a single ticket. 'type' is immutable and cannot be changed. WARNING: sending custom_field_options " +
         "replaces the field's whole option set — omitted options are DELETED and their values removed from " +
-        "tickets; read the current field with zendesk_ticket_fields_read first and send every option you want to " +
-        "keep, or use zendesk_ticket_fields_options_set to change a single option safely. Returns the updated " +
+        "tickets; read the current field with ticket_fields_get first and send every option you want to " +
+        "keep, or use ticket_fields_options_create_or_update to change a single option safely. Returns the updated " +
         "ticket field. Write operation — honors the server execution mode: rejected in read-only mode, simulated " +
         "(no changes made) in dry-run mode.")]
     public Task<object> Update(
@@ -58,7 +58,7 @@ public sealed class ZendeskTicketFieldWriteTools(
             new { id, field });
 
     /// <summary>Deletes a Zendesk ticket field.</summary>
-    [McpServerTool(Name = "zendesk_ticket_fields_delete", ReadOnly = false, Destructive = true, Idempotent = true,
+    [McpServerTool(Name = "ticket_fields_delete", ReadOnly = false, Destructive = true, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Deletes a Zendesk ticket field definition by id (admin-only). This changes account-wide configuration — " +
@@ -75,13 +75,13 @@ public sealed class ZendeskTicketFieldWriteTools(
             new { id });
 
     /// <summary>Creates or updates a single custom field option on a drop-down ticket field.</summary>
-    [McpServerTool(Name = "zendesk_ticket_fields_options_set", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "ticket_fields_options_create_or_update", ReadOnly = false, Destructive = false,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Creates or updates a single custom field option on a drop-down (tagger/multiselect) ticket field " +
         "(admin-only, upsert semantics: include the option 'id' to update an existing option, omit it to create " +
         "one; rate-limited to 100 calls/min). This changes account-wide configuration, not a single ticket. " +
-        "Safer than replacing the whole option set via zendesk_ticket_fields_update. Returns the created or " +
+        "Safer than replacing the whole option set via ticket_fields_update. Returns the created or " +
         "updated custom field option. Write operation — honors the server execution mode: rejected in read-only " +
         "mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> SetOption(
@@ -97,7 +97,7 @@ public sealed class ZendeskTicketFieldWriteTools(
             new { ticketFieldId, option });
 
     /// <summary>Deletes a custom field option from a drop-down ticket field.</summary>
-    [McpServerTool(Name = "zendesk_ticket_fields_options_delete", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "ticket_fields_options_delete", ReadOnly = false, Destructive = true,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Deletes a single custom field option from a drop-down (tagger/multiselect) ticket field by option id " +

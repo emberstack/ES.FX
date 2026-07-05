@@ -21,42 +21,52 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     // Zendesk API client (Spark): config binding, authentication, typed HttpClient, live health check, tracing.
     builder.IgniteZendeskClient();
 
+    var mcpOptions = builder.GetMcpOptions();
+
+    // Area gate (Mcp:Tools:Areas). Empty = all areas (backward compatible). An unknown/misspelled area throws
+    // here with the list of valid areas — fail-closed, mirroring the execution-mode resolver. This composes with
+    // the read-only baseline gate below via AND: read-only drops the write classes, the area gate drops classes
+    // outside the configured areas.
+    var areaGate = ZendeskToolAreaGate.FromConfiguration(mcpOptions.Tools.Areas, typeof(Program).Assembly);
+
     // MCP server (wired directly — MCP is a building block of this app, not a standalone package) + tools.
     var mcpServer = builder.AddZendeskMcpServer()
-        .WithTools<ZendeskUserTools>()
-        .WithTools<ZendeskTicketTools>()
-        .WithTools<ZendeskFormTools>()
-        .WithTools<ZendeskOrganizationTools>()
-        .WithTools<ZendeskGroupTools>()
-        .WithTools<ZendeskArticleTools>()
-        .WithTools<ZendeskTicketFieldTools>()
-        .WithTools<ZendeskMacroTools>()
-        .WithTools<ZendeskAttachmentTools>()
-        .WithTools<ZendeskSearchTools>()
-        .WithTools<ZendeskViewTools>()
-        .WithTools<ZendeskBrandTools>()
-        .WithTools<ZendeskCustomStatusTools>()
-        .WithTools<ZendeskJobStatusTools>()
-        .WithTools<ZendeskTagTools>()
-        .WithTools<ZendeskSuspendedTicketTools>();
+        .WithToolsInArea<ZendeskUserTools>(areaGate)
+        .WithToolsInArea<ZendeskTicketTools>(areaGate)
+        .WithToolsInArea<ZendeskFormTools>(areaGate)
+        .WithToolsInArea<ZendeskOrganizationTools>(areaGate)
+        .WithToolsInArea<ZendeskGroupTools>(areaGate)
+        .WithToolsInArea<ZendeskArticleTools>(areaGate)
+        .WithToolsInArea<ZendeskTicketFieldTools>(areaGate)
+        .WithToolsInArea<ZendeskMacroTools>(areaGate)
+        .WithToolsInArea<ZendeskAttachmentTools>(areaGate)
+        .WithToolsInArea<ZendeskSearchTools>(areaGate)
+        .WithToolsInArea<ZendeskViewTools>(areaGate)
+        .WithToolsInArea<ZendeskBrandTools>(areaGate)
+        .WithToolsInArea<ZendeskCustomStatusTools>(areaGate)
+        .WithToolsInArea<ZendeskJobStatusTools>(areaGate)
+        .WithToolsInArea<ZendeskTagTools>(areaGate)
+        .WithToolsInArea<ZendeskSuspendedTicketTools>(areaGate);
 
     // Write tools are registered only when the configured baseline allows them: with a ReadOnly baseline the
     // per-request header can only tighten, so write tools could never execute — omitting them keeps the
-    // agent's tool list truthful. ZendeskToolInvoker still enforces the effective mode on every call.
-    if (!builder.GetMcpOptions().Execution.Mode.IsReadOnly())
+    // agent's tool list truthful. ZendeskToolInvoker still enforces the effective mode on every call. Each write
+    // class is additionally subject to the area gate (AND), so Areas=tickets + ReadOnly=false registers only the
+    // ticket write tools.
+    if (!mcpOptions.Execution.Mode.IsReadOnly())
         mcpServer
-            .WithTools<ZendeskTicketWriteTools>()
-            .WithTools<ZendeskUserWriteTools>()
-            .WithTools<ZendeskOrganizationWriteTools>()
-            .WithTools<ZendeskGroupWriteTools>()
-            .WithTools<ZendeskFormWriteTools>()
-            .WithTools<ZendeskTicketFieldWriteTools>()
-            .WithTools<ZendeskMacroWriteTools>()
-            .WithTools<ZendeskViewWriteTools>()
-            .WithTools<ZendeskBrandWriteTools>()
-            .WithTools<ZendeskCustomStatusWriteTools>()
-            .WithTools<ZendeskSuspendedTicketWriteTools>()
-            .WithTools<ZendeskUploadWriteTools>();
+            .WithToolsInArea<ZendeskTicketWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskUserWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskOrganizationWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskGroupWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskFormWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskTicketFieldWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskMacroWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskViewWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskBrandWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskCustomStatusWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskSuspendedTicketWriteTools>(areaGate)
+            .WithToolsInArea<ZendeskUploadWriteTools>(areaGate);
 
     var app = builder.Build();
 

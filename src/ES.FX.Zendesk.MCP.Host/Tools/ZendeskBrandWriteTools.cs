@@ -7,13 +7,13 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP write tools for Zendesk brands (multibrand accounts). Namespaced <c>zendesk_brands_*</c>.
+///     MCP write tools for Zendesk brands (multibrand accounts). Namespaced <c>brands_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskBrandWriteTools(IZendeskClient zendeskApiClient, IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Creates a Zendesk brand.</summary>
-    [McpServerTool(Name = "zendesk_brands_create", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "brands_create", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk brand (admin-only account configuration). 'name' and 'subdomain' are required. Returns " +
@@ -29,7 +29,7 @@ public sealed class ZendeskBrandWriteTools(IZendeskClient zendeskApiClient, IMcp
             () => zendeskApiClient.Brands.CreateAsync(brand, cancellationToken: cancellationToken), brand);
 
     /// <summary>Updates a Zendesk brand by id.</summary>
-    [McpServerTool(Name = "zendesk_brands_update", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "brands_update", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Updates a Zendesk brand by id (admin-only account configuration). Returns the updated brand. " +
@@ -45,11 +45,11 @@ public sealed class ZendeskBrandWriteTools(IZendeskClient zendeskApiClient, IMcp
             new { id, brand });
 
     /// <summary>Soft-deletes a Zendesk brand by id.</summary>
-    [McpServerTool(Name = "zendesk_brands_delete", ReadOnly = false, Destructive = true, Idempotent = true,
+    [McpServerTool(Name = "brands_delete", ReadOnly = false, Destructive = true, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Soft-deletes a Zendesk brand by id (admin-only, account-wide configuration change). If the brand is the " +
-        "account default, make another brand the default first (zendesk_brands_update with default = true). " +
+        "account default, make another brand the default first (brands_update with default = true). " +
         "Returns a completion acknowledgement. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Delete(

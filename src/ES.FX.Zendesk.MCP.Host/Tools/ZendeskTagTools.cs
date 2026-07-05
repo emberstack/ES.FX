@@ -6,13 +6,13 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP read tools for Zendesk tags (account-wide tag usage). Namespaced <c>zendesk_tags_*</c>.
+///     MCP read tools for Zendesk tags (account-wide tag usage). Namespaced <c>tags_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskTagTools(IZendeskClient zendeskApiClient)
 {
     /// <summary>Lists the most popular Zendesk tags with usage counts.</summary>
-    [McpServerTool(Name = "zendesk_tags_list", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "tags_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists the most popular Zendesk tags of the last 60 days with usage counts (up to 20,000 tags, decreasing " +
         "popularity; subject to its own rate limit). Prefer cursor pagination (pass pageSize/afterCursor; the " +
@@ -33,7 +33,7 @@ public sealed class ZendeskTagTools(IZendeskClient zendeskApiClient)
                 afterCursor: afterCursor, cancellationToken: cancellationToken));
 
     /// <summary>Returns the account-wide tag count.</summary>
-    [McpServerTool(Name = "zendesk_tags_count", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "tags_count", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the (cached, approximate) account-wide Zendesk tag count; 'refreshed_at' indicates when the " +
         "cached value was computed. Read-only.")]
@@ -41,7 +41,7 @@ public sealed class ZendeskTagTools(IZendeskClient zendeskApiClient)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Tags.CountAsync(cancellationToken));
 
     /// <summary>Suggests Zendesk tag names matching a prefix.</summary>
-    [McpServerTool(Name = "zendesk_tags_autocomplete", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "tags_autocomplete", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Suggests Zendesk tag names matching a prefix (minimum two characters; up to 15 suggestions drawn from " +
         "the most-used tags of the last 60 days). Use to find the exact spelling of a tag before searching or " +

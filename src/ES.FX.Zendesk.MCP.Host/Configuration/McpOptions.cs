@@ -33,4 +33,9 @@ public class McpOptions
     ///     Execution-mode options (read-only / dry-run) for write operations.
     /// </summary>
     public McpExecutionOptions Execution { get; set; } = new();
+
+    /// <summary>
+    ///     Tool-surface options (area gating) controlling which tool areas are registered.
+    /// </summary>
+    public McpToolsOptions Tools { get; set; } = new();
 }

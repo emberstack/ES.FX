@@ -4,6 +4,45 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tests.Tools;
 
 /// <summary>
+///     Shared naming vocabulary for the tool-naming invariants, kept in one place so the sweep test and any
+///     future consumers agree on what counts as a read verb or a destructive verb.
+/// </summary>
+internal static class ZendeskToolNaming
+{
+    /// <summary>
+    ///     The controlled read-verb set. A tool name is a <em>read</em> name iff one of its underscore-delimited
+    ///     segments is one of these verbs (the verb may be followed by qualifier segments such as
+    ///     <c>_many</c>, <c>_active</c>, <c>_by_external_id</c>, <c>_incremental</c>). Every other name is a write.
+    /// </summary>
+    internal static readonly string[] ReadVerbs = ["get", "list", "search", "count", "export", "autocomplete"];
+
+    /// <summary>
+    ///     The destructive verbs, expressed as segment sequences so a verb is matched on word boundaries — never
+    ///     as a substring. <c>merge</c> the verb (<c>tickets_merge</c>) is destructive; <c>merges</c> the noun
+    ///     (<c>organizations_merges_get</c>, a read) is not.
+    /// </summary>
+    internal static readonly string[][] DestructiveVerbs =
+        [["delete"], ["merge"], ["redact"], ["mark", "spam"]];
+
+    /// <summary>Whether the name is a read name under the controlled read-verb rule.</summary>
+    internal static bool IsReadName(string name) =>
+        name.Split('_').Any(segment => ReadVerbs.Contains(segment));
+
+    /// <summary>Whether the name contains a destructive verb as a whole segment (or segment sequence).</summary>
+    internal static bool ContainsDestructiveVerb(string name)
+    {
+        var segments = name.Split('_');
+        return DestructiveVerbs.Any(verb =>
+        {
+            for (var start = 0; start + verb.Length <= segments.Length; start++)
+                if (segments.Skip(start).Take(verb.Length).SequenceEqual(verb))
+                    return true;
+            return false;
+        });
+    }
+}
+
+/// <summary>
 ///     Reflection sweep over every <see cref="McpServerToolTypeAttribute" /> class in the host assembly,
 ///     enforcing the annotation conventions the execution-mode security model relies on: the read/write split
 ///     encoded in the class name must match the <see cref="McpServerToolAttribute.ReadOnly" /> annotation
@@ -74,6 +113,39 @@ public class ZendeskToolAnnotationSweepTests
             .Where(tool => destructiveMarkers.Any(marker =>
                 tool.Attribute.Name!.Contains(marker, StringComparison.OrdinalIgnoreCase)))
             .Where(tool => !tool.Attribute.Destructive)
+            .Select(tool => $"{tool.Type.Name}.{tool.Method.Name} ({tool.Attribute.Name})")
+            .ToList();
+
+        Assert.Empty(offenders);
+    }
+
+    [Fact]
+    public void Read_Verb_Suffix_Matches_ReadOnly_Annotation()
+    {
+        // THE naming invariant: a tool name is a read name (some segment is one of get|list|search|count|export|
+        // autocomplete, optionally + qualifier segments) IFF ReadOnly=true. This is the machine guarantee that
+        // the resource-first names are honest — the read/write split is legible from the name alone, without
+        // consulting annotations (which MCP clients like Hermes never see). A failure here is a NAMING bug from
+        // the rename: fix the tool name (or move the tool to the correct read/write class), never weaken this.
+        var offenders = DeclaredTools()
+            .Where(tool => ZendeskToolNaming.IsReadName(tool.Attribute.Name!) != tool.Attribute.ReadOnly)
+            .Select(tool =>
+                $"{tool.Type.Name}.{tool.Method.Name} ({tool.Attribute.Name}): " +
+                $"IsReadName={ZendeskToolNaming.IsReadName(tool.Attribute.Name!)} but ReadOnly={tool.Attribute.ReadOnly}")
+            .ToList();
+
+        Assert.Empty(offenders);
+    }
+
+    [Fact]
+    public void Destructive_Verb_In_Name_Implies_Destructive_Annotation()
+    {
+        // A name containing a destructive verb (delete|merge|redact|mark_spam, matched on word boundaries so
+        // organizations_merges_get — a read — is NOT flagged) must carry Destructive=true. The converse is not
+        // required: a tool may be destructive without one of these verbs (e.g. tickets_comments_make_private).
+        var offenders = DeclaredTools()
+            .Where(tool => ZendeskToolNaming.ContainsDestructiveVerb(tool.Attribute.Name!) &&
+                           !tool.Attribute.Destructive)
             .Select(tool => $"{tool.Type.Name}.{tool.Method.Name} ({tool.Attribute.Name})")
             .ToList();
 

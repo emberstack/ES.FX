@@ -7,13 +7,13 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP write tools for Zendesk views (saved, shared ticket filters). Namespaced <c>zendesk_views_*</c>.
+///     MCP write tools for Zendesk views (saved, shared ticket filters). Namespaced <c>views_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskViewWriteTools(IZendeskClient zendeskApiClient, IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Creates a Zendesk view.</summary>
-    [McpServerTool(Name = "zendesk_views_create", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "views_create", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk view (a saved, shared ticket filter). 'title' and at least one 'all' condition on " +
@@ -29,11 +29,11 @@ public sealed class ZendeskViewWriteTools(IZendeskClient zendeskApiClient, IMcpE
             () => zendeskApiClient.Views.CreateAsync(view, cancellationToken: cancellationToken), view);
 
     /// <summary>Updates a Zendesk view by id.</summary>
-    [McpServerTool(Name = "zendesk_views_update", ReadOnly = false, Destructive = false, Idempotent = true,
+    [McpServerTool(Name = "views_update", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Updates a Zendesk view by id. WARNING: the 'all'/'any' condition arrays are replaced wholesale — read the " +
-        "view first with zendesk_views_read and send the COMPLETE condition sets when touching any condition. " +
+        "view first with views_get and send the COMPLETE condition sets when touching any condition. " +
         "Returns the updated view. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Update(
@@ -49,7 +49,7 @@ public sealed class ZendeskViewWriteTools(IZendeskClient zendeskApiClient, IMcpE
             new { id, view });
 
     /// <summary>Deletes a Zendesk view by id.</summary>
-    [McpServerTool(Name = "zendesk_views_delete", ReadOnly = false, Destructive = true, Idempotent = true,
+    [McpServerTool(Name = "views_delete", ReadOnly = false, Destructive = true, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Deletes a Zendesk view by id. Admin configuration change with account-wide effect: a shared view " +

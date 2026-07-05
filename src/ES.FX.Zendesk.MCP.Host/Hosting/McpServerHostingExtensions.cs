@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using ES.FX.Zendesk.MCP.Host.Configuration;
 using ES.FX.Zendesk.MCP.Host.Diagnostics;
 using ES.FX.Zendesk.MCP.Host.Execution;
+using ES.FX.Zendesk.MCP.Host.Tools;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 
@@ -52,6 +54,21 @@ public static class McpServerHostingExtensions
         builder.Configuration.GetSection(McpOptions.SectionKey).Bind(options);
         return options;
     }
+
+    /// <summary>
+    ///     Registers a tool class only when the area gate admits its area, otherwise leaves the builder unchanged.
+    ///     This composes with the read-only registration gate in <c>Program.cs</c> (which already omits the
+    ///     <c>*WriteTools</c> classes under a read-only baseline) via AND: a class is registered only when it
+    ///     passes both gates.
+    /// </summary>
+    /// <typeparam name="TTool">The <see cref="ModelContextProtocol.Server.McpServerToolTypeAttribute" /> tool class.</typeparam>
+    /// <param name="builder">The MCP server builder.</param>
+    /// <param name="gate">The area gate built from <c>Mcp:Tools:Areas</c>.</param>
+    /// <returns>The builder, for chaining.</returns>
+    public static IMcpServerBuilder WithToolsInArea<[DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)]
+        TTool>(this IMcpServerBuilder builder, ZendeskToolAreaGate gate)
+        => gate.Allows<TTool>() ? builder.WithTools<TTool>() : builder;
 
     /// <summary>
     ///     Maps the MCP endpoints onto the application pipeline. Call after <c>app.Ignite()</c>.

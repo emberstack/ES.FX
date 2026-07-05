@@ -15,56 +15,60 @@ over the Streamable HTTP transport.
 
 ## Tools
 
-**168 tools** namespaced `zendesk_{resource}_{verb}`, mirroring the Zendesk API: **81 read tools**
-(`ReadOnly = true`) and **87 write tools** (`ReadOnly = false`, with truthful `Destructive`/`Idempotent`
-annotations). Write tools are gated by the [execution mode](#execution-modes-read-only--dry-run) and are **not
-registered at all** when the configured baseline is `ReadOnly`, so a read-only deployment advertises a purely
-read-only tool list.
+**168 tools** named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` (snake_case, no product
+prefix — MCP clients namespace by server): **81 read tools** (`ReadOnly = true`) and **87 write tools**
+(`ReadOnly = false`, with truthful `Destructive`/`Idempotent` annotations). Every read tool ends in a
+controlled read verb (`get`/`list`/`search`/`count`/`export`/`autocomplete`); any other verb denotes a write,
+so a tool's risk class is legible from its name (and enforced by a test). Write tools are gated by the
+[execution mode](#execution-modes-read-only--dry-run) and are **not registered at all** when the configured
+baseline is `ReadOnly`, so a read-only deployment advertises a purely read-only tool list. The exposed surface
+can be narrowed further by resource area via `Mcp:Tools:Areas` — see the
+[filtering guide](../../docs/libraries/zendesk-mcp-server.md#filtering-the-tool-surface).
 
 Conventions shared by all tools:
 
 - **Pagination** — offset-paginated tools take `page`/`perPage` and return `count` + `next_page` (search-style
   tools default `perPage` to 25); cursor-paginated tools take `pageSize`/`afterCursor` and return
-  `meta.has_more` + `meta.after_cursor`. `zendesk_ticket_fields_list` takes no paging parameters and returns
+  `meta.has_more` + `meta.after_cursor`. `ticket_fields_list` takes no paging parameters and returns
   the full set in one call (a documented Zendesk exception).
 - **Sideloads** — list/read tools accept `include` (e.g. `users`, `groups`, `organizations`) where the Zendesk
   endpoint supports it, returning sibling arrays that remove per-id follow-up lookups.
 - **Errors** — Zendesk failures surface to the agent with the real HTTP status and response body (never the
   SDK's opaque generic error), including `Retry-After` semantics on 429s.
 - **Bulk writes** — bulk operations (≤100 items unless noted) return a `job_status`; poll
-  `zendesk_job_statuses_read` until `completed`/`failed`.
+  `job_statuses_get` until `completed`/`failed`.
 
 ### Read tools (81)
 
-| Area | Tools (`zendesk_…`) |
+| Area | Tools |
 | --- | --- |
-| Users (15) | `users_whoami`, `users_read`, `users_read_many`, `users_search`, `users_requested_tickets`, `users_list`, `users_count`, `users_autocomplete`, `users_related`, `users_identities`, `users_groups`, `users_organizations`, `users_assigned_tickets`, `users_ccd_tickets`, `users_tags` |
-| Tickets (15) | `tickets_read`, `tickets_search`, `tickets_comments`, `tickets_audits`, `tickets_metrics`, `tickets_metric_events`, `tickets_incidents`, `tickets_side_conversations`, `tickets_list`, `tickets_read_many`, `tickets_count`, `tickets_read_by_external_id`, `tickets_collaborators`, `tickets_comments_count`, `tickets_incremental` |
-| Organizations (11) | `organizations_read`, `organizations_tickets`, `organizations_list`, `organizations_count`, `organizations_read_many`, `organizations_search`, `organizations_autocomplete`, `organizations_users`, `organizations_memberships`, `organizations_merge_status`, `organizations_tags` |
-| Groups (6) | `groups_list`, `groups_read`, `groups_memberships`, `groups_assignable`, `groups_count`, `groups_users` |
-| Help Center (7) | `articles_search`, `articles_read`, `articles_list`, `articles_sections`, `articles_section_read`, `articles_categories`, `articles_category_read` |
-| Ticket fields (3) | `ticket_fields_list`, `ticket_fields_read`, `ticket_fields_options` |
-| Macros (3) | `macros_list`, `macros_read`, `macros_list_active` |
-| Forms (2) | `forms_search`, `forms_read` |
-| Views (4) | `views_list`, `views_read`, `views_tickets`, `views_count` |
-| Search (2) | `search_count`, `search_export_tickets` (cursor-only deep export, no 1k cap) |
-| Brands (2) | `brands_list`, `brands_read` |
-| Custom statuses (2) | `custom_statuses_list`, `custom_statuses_read` |
-| Job statuses (3) | `job_statuses_list`, `job_statuses_read`, `job_statuses_read_many` |
+| Users (15) | `users_me_get`, `users_get`, `users_get_many`, `users_search`, `users_tickets_requested_list`, `users_list`, `users_count`, `users_autocomplete`, `users_related_get`, `users_identities_list`, `users_groups_list`, `users_organizations_list`, `users_tickets_assigned_list`, `users_tickets_ccd_list`, `users_tags_list` |
+| Tickets (16) | `tickets_get`, `tickets_search`, `tickets_comments_list`, `tickets_audits_list`, `tickets_metrics_get`, `tickets_metric_events_export`, `tickets_incidents_list`, `tickets_side_conversations_list`, `tickets_list`, `tickets_get_many`, `tickets_count`, `tickets_get_by_external_id`, `tickets_collaborators_list`, `tickets_comments_count`, `tickets_export_incremental`, `tickets_search_export` (cursor-only deep export, no 1k cap) |
+| Organizations (11) | `organizations_get`, `organizations_tickets_list`, `organizations_list`, `organizations_count`, `organizations_get_many`, `organizations_get_by_name_or_external_id`, `organizations_autocomplete`, `organizations_users_list`, `organizations_memberships_list`, `organizations_merges_get`, `organizations_tags_list` |
+| Groups (6) | `groups_list`, `groups_get`, `groups_memberships_list`, `groups_assignable_list`, `groups_count`, `groups_users_list` |
+| Help Center (7) | `articles_search`, `articles_get`, `articles_list`, `articles_sections_list`, `articles_sections_get`, `articles_categories_list`, `articles_categories_get` |
+| Ticket fields (3) | `ticket_fields_list`, `ticket_fields_get`, `ticket_fields_options_list` |
+| Macros (3) | `macros_list`, `macros_get`, `macros_list_active` |
+| Forms (2) | `forms_list`, `forms_get` |
+| Views (4) | `views_list`, `views_get`, `views_tickets_list`, `views_count` |
+| Search (1) | `search_count` |
+| Brands (2) | `brands_list`, `brands_get` |
+| Custom statuses (2) | `custom_statuses_list`, `custom_statuses_get` |
+| Job statuses (3) | `job_statuses_list`, `job_statuses_get`, `job_statuses_get_many` |
 | Tags (3) | `tags_list`, `tags_count`, `tags_autocomplete` |
-| Suspended tickets (2) | `suspended_tickets_list`, `suspended_tickets_read` |
-| Attachments (1) | `attachments_read` (authenticated content download; text or size-capped base64) |
+| Suspended tickets (2) | `suspended_tickets_list`, `suspended_tickets_get` |
+| Attachments (1) | `attachments_get` (authenticated content download; text or size-capped base64) |
 
 ### Write tools (87)
 
-| Area | Tools (`zendesk_…`) |
+| Area | Tools |
 | --- | --- |
-| Tickets (21) | `tickets_create`, `tickets_create_many`, `tickets_update` (public reply / internal note via `comment.public`; 409 optimistic locking via `SafeUpdate`/`UpdatedStamp`), `tickets_update_many`, `tickets_update_many_batch`, `tickets_delete`, `tickets_delete_many`, `tickets_merge`, `tickets_mark_spam`, `tickets_mark_spam_many`, `tickets_restore`, `tickets_restore_many`, `tickets_delete_permanently`, `tickets_delete_permanently_many`, `tickets_tags_set`, `tickets_tags_add`, `tickets_tags_remove`, `tickets_comment_make_private`, `tickets_comment_attachment_redact`, `tickets_import`, `tickets_import_many` |
+| Tickets (21) | `tickets_create`, `tickets_create_many`, `tickets_update` (public reply / internal note via `comment.public`; 409 optimistic locking via `SafeUpdate`/`UpdatedStamp`), `tickets_update_many`, `tickets_update_many_batch`, `tickets_delete`, `tickets_delete_many`, `tickets_merge`, `tickets_mark_spam`, `tickets_mark_spam_many`, `tickets_restore`, `tickets_restore_many`, `tickets_delete_permanently`, `tickets_delete_permanently_many`, `tickets_tags_set`, `tickets_tags_add`, `tickets_tags_remove`, `tickets_comments_make_private`, `tickets_comments_attachment_redact`, `tickets_import`, `tickets_import_many` |
 | Users (17) | `users_create`, `users_create_or_update`, `users_create_many`, `users_create_or_update_many`, `users_update`, `users_update_many`, `users_update_many_batch`, `users_merge`, `users_delete`, `users_delete_many`, `users_delete_permanently`, `users_identities_create`, `users_identities_update`, `users_identities_make_primary`, `users_identities_verify`, `users_identities_request_verification`, `users_identities_delete` |
-| Organizations (14) | `organizations_create`, `organizations_create_many`, `organizations_create_or_update`, `organizations_update`, `organizations_update_many`, `organizations_update_many_batch`, `organizations_delete`, `organizations_delete_many`, `organizations_merge` (poll `organizations_merge_status`), `organizations_memberships_create`, `organizations_memberships_create_many`, `organizations_memberships_delete`, `organizations_memberships_delete_many`, `organizations_memberships_make_default` |
+| Organizations (14) | `organizations_create`, `organizations_create_many`, `organizations_create_or_update`, `organizations_update`, `organizations_update_many`, `organizations_update_many_batch`, `organizations_delete`, `organizations_delete_many`, `organizations_merge` (poll `organizations_merges_get`), `organizations_memberships_create`, `organizations_memberships_create_many`, `organizations_memberships_delete`, `organizations_memberships_delete_many`, `organizations_memberships_make_default` |
 | Groups (8) | `groups_create`, `groups_update`, `groups_delete`, `groups_memberships_create`, `groups_memberships_create_many`, `groups_memberships_delete`, `groups_memberships_delete_many`, `groups_memberships_make_default` |
 | Forms (4) | `forms_create`, `forms_update`, `forms_delete`, `forms_clone` |
-| Ticket fields (5) | `ticket_fields_create`, `ticket_fields_update`, `ticket_fields_delete`, `ticket_fields_options_set`, `ticket_fields_options_delete` |
+| Ticket fields (5) | `ticket_fields_create`, `ticket_fields_update`, `ticket_fields_delete`, `ticket_fields_options_create_or_update`, `ticket_fields_options_delete` |
 | Macros (3) | `macros_create`, `macros_update`, `macros_delete` |
 | Views (3) | `views_create`, `views_update`, `views_delete` |
 | Brands (3) | `brands_create`, `brands_update`, `brands_delete` |

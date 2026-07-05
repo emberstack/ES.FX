@@ -7,13 +7,13 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
 ///     MCP read tools for Zendesk suspended tickets — inbound messages held out of the ticket stream.
-///     Namespaced <c>zendesk_suspended_tickets_*</c>.
+///     Namespaced <c>suspended_tickets_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskSuspendedTicketTools(IZendeskClient zendeskApiClient)
 {
     /// <summary>Lists Zendesk suspended tickets.</summary>
-    [McpServerTool(Name = "zendesk_suspended_tickets_list", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "suspended_tickets_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists suspended tickets — inbound emails Zendesk held out of the ticket stream (spam suspicion, " +
         "automated senders, etc.) that are NOT tickets yet; each carries a 'cause' explaining the suspension. " +
@@ -30,7 +30,7 @@ public sealed class ZendeskSuspendedTicketTools(IZendeskClient zendeskApiClient)
                 cancellationToken: cancellationToken));
 
     /// <summary>Returns a Zendesk suspended ticket by id.</summary>
-    [McpServerTool(Name = "zendesk_suspended_tickets_read", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "suspended_tickets_get", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns a single suspended ticket by id — an inbound email Zendesk held out of the ticket stream (it is " +
         "not a ticket yet), including its 'cause' (why it was suspended), author, subject, and content. The id is " +

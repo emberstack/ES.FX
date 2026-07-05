@@ -7,7 +7,7 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP write tools for Zendesk groups and group memberships. Namespaced <c>zendesk_groups_*</c>. Every tool
+///     MCP write tools for Zendesk groups and group memberships. Namespaced <c>groups_*</c>. Every tool
 ///     honors the server execution mode via <see cref="ZendeskToolInvoker.InvokeWriteAsync{T}" />.
 /// </summary>
 [McpServerToolType]
@@ -16,7 +16,7 @@ public sealed class ZendeskGroupWriteTools(
     IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Creates a Zendesk group.</summary>
-    [McpServerTool(Name = "zendesk_groups_create", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "groups_create", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Creates a Zendesk group (agent team). Decide 'is_public' at creation time — a private group can never be " +
@@ -34,7 +34,7 @@ public sealed class ZendeskGroupWriteTools(
             group);
 
     /// <summary>Updates a Zendesk group by id.</summary>
-    [McpServerTool(Name = "zendesk_groups_update", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "groups_update", ReadOnly = false, Destructive = false,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Updates a Zendesk group by id. Only the fields set in the payload change. A private group cannot be made " +
@@ -52,7 +52,7 @@ public sealed class ZendeskGroupWriteTools(
             new { id, group });
 
     /// <summary>Soft-deletes a Zendesk group by id.</summary>
-    [McpServerTool(Name = "zendesk_groups_delete", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "groups_delete", ReadOnly = false, Destructive = true,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Soft-deletes a Zendesk group by id. Returns a completion acknowledgement. Write operation — honors the " +
@@ -67,7 +67,7 @@ public sealed class ZendeskGroupWriteTools(
             new { id });
 
     /// <summary>Assigns an agent to a group.</summary>
-    [McpServerTool(Name = "zendesk_groups_memberships_create", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "groups_memberships_create", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Assigns a Zendesk agent to a group by creating a group membership. Set makeDefault so tickets assigned " +
@@ -90,11 +90,11 @@ public sealed class ZendeskGroupWriteTools(
             new { userId, groupId, makeDefault });
 
     /// <summary>Assigns up to 100 agents to groups as an async job.</summary>
-    [McpServerTool(Name = "zendesk_groups_memberships_create_many", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "groups_memberships_create_many", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Assigns up to 100 Zendesk agents to groups in a single call. Each item needs 'user_id' and 'group_id'. " +
-        "Returns a job_status — poll zendesk_job_statuses_read until completed. Write operation — honors the " +
+        "Returns a job_status — poll job_statuses_get until completed. Write operation — honors the " +
         "server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsCreateMany(
         [Description("The memberships to create (1-100). Each item needs 'user_id' and 'group_id'.")]
@@ -107,11 +107,11 @@ public sealed class ZendeskGroupWriteTools(
             new { memberships });
 
     /// <summary>Removes a group membership by its membership id.</summary>
-    [McpServerTool(Name = "zendesk_groups_memberships_delete", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "groups_memberships_delete", ReadOnly = false, Destructive = true,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Removes a Zendesk group membership by its MEMBERSHIP id (not the user or group id — list them with " +
-        "zendesk_groups_memberships). Side effect: Zendesk schedules a job un-assigning the agent's working " +
+        "groups_memberships_list). Side effect: Zendesk schedules a job un-assigning the agent's working " +
         "tickets in that group. Returns a completion acknowledgement. Write operation — honors the server " +
         "execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsDelete(
@@ -125,11 +125,11 @@ public sealed class ZendeskGroupWriteTools(
             new { membershipId });
 
     /// <summary>Removes up to 100 group memberships as an async job.</summary>
-    [McpServerTool(Name = "zendesk_groups_memberships_delete_many", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "groups_memberships_delete_many", ReadOnly = false, Destructive = true,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Removes up to 100 Zendesk group memberships by their MEMBERSHIP ids. Returns a job_status — poll " +
-        "zendesk_job_statuses_read until completed. Write operation — honors the server execution mode: rejected " +
+        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
         "in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsDeleteMany(
         [Description("The numeric group membership ids to remove (1-100).")]
@@ -142,7 +142,7 @@ public sealed class ZendeskGroupWriteTools(
             new { membershipIds });
 
     /// <summary>Makes a group membership the agent's default.</summary>
-    [McpServerTool(Name = "zendesk_groups_memberships_make_default", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "groups_memberships_make_default", ReadOnly = false, Destructive = false,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Makes a group membership the agent's default group. Returns the user's FULL group membership list (the " +

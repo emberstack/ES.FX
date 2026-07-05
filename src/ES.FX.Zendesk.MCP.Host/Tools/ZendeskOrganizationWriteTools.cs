@@ -8,7 +8,7 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
 ///     MCP write tools for Zendesk organizations and organization memberships. Namespaced
-///     <c>zendesk_organizations_*</c>. Every tool honors the server execution mode via
+///     <c>organizations_*</c>. Every tool honors the server execution mode via
 ///     <see cref="ZendeskToolInvoker.InvokeWriteAsync{T}" />.
 /// </summary>
 [McpServerToolType]
@@ -17,7 +17,7 @@ public sealed class ZendeskOrganizationWriteTools(
     IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Creates a Zendesk organization.</summary>
-    [McpServerTool(Name = "zendesk_organizations_create", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_create", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Creates a Zendesk organization. The name must be unique across the account. Returns the created " +
@@ -33,11 +33,11 @@ public sealed class ZendeskOrganizationWriteTools(
             organization);
 
     /// <summary>Creates up to 100 Zendesk organizations as an async job.</summary>
-    [McpServerTool(Name = "zendesk_organizations_create_many", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_create_many", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Creates up to 100 Zendesk organizations in a single call. Returns a job_status — poll " +
-        "zendesk_job_statuses_read until completed; per-item outcomes are in the job's results. Write operation — " +
+        "job_statuses_get until completed; per-item outcomes are in the job's results. Write operation — " +
         "honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> CreateMany(
         [Description("The organizations to create (1-100). Each 'name' must be unique.")]
@@ -50,7 +50,7 @@ public sealed class ZendeskOrganizationWriteTools(
             new { organizations });
 
     /// <summary>Creates or updates a Zendesk organization, matching by id or external id.</summary>
-    [McpServerTool(Name = "zendesk_organizations_create_or_update", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_create_or_update", ReadOnly = false, Destructive = false,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Creates or updates a Zendesk organization. Matching uses 'id' or 'external_id' — NOT the name; sending " +
@@ -69,7 +69,7 @@ public sealed class ZendeskOrganizationWriteTools(
             organization);
 
     /// <summary>Updates a Zendesk organization by id.</summary>
-    [McpServerTool(Name = "zendesk_organizations_update", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_update", ReadOnly = false, Destructive = false,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Updates a Zendesk organization by id. Only the fields set in the payload change — except 'domain_names', " +
@@ -89,11 +89,11 @@ public sealed class ZendeskOrganizationWriteTools(
             new { id, organization });
 
     /// <summary>Applies the same change to up to 100 organizations as an async job.</summary>
-    [McpServerTool(Name = "zendesk_organizations_update_many", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_update_many", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Applies the SAME change to up to 100 Zendesk organizations by id. For per-organization changes use " +
-        "zendesk_organizations_update_many_batch instead. Returns a job_status — poll zendesk_job_statuses_read " +
+        "organizations_update_many_batch instead. Returns a job_status — poll job_statuses_get " +
         "until completed. Write operation — honors the server execution mode: rejected in read-only mode, " +
         "simulated (no changes made) in dry-run mode.")]
     public Task<object> UpdateMany(
@@ -109,12 +109,12 @@ public sealed class ZendeskOrganizationWriteTools(
             new { ids, change });
 
     /// <summary>Applies per-organization changes to up to 100 organizations as an async job.</summary>
-    [McpServerTool(Name = "zendesk_organizations_update_many_batch", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_update_many_batch", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Applies PER-ORGANIZATION changes to up to 100 Zendesk organizations in a single call; every item must " +
-        "carry its 'id'. For the same change across many ids use zendesk_organizations_update_many instead. " +
-        "Returns a job_status — poll zendesk_job_statuses_read until completed. Write operation — honors the " +
+        "carry its 'id'. For the same change across many ids use organizations_update_many instead. " +
+        "Returns a job_status — poll job_statuses_get until completed. Write operation — honors the " +
         "server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> UpdateManyBatch(
         [Description("The per-organization changes (1-100). Every item must include 'id'.")]
@@ -127,7 +127,7 @@ public sealed class ZendeskOrganizationWriteTools(
             new { organizations });
 
     /// <summary>Deletes a Zendesk organization by id.</summary>
-    [McpServerTool(Name = "zendesk_organizations_delete", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "organizations_delete", ReadOnly = false, Destructive = true,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Deletes a Zendesk organization by id. PERMANENT — organizations have no soft-delete or restore; user and " +
@@ -144,11 +144,11 @@ public sealed class ZendeskOrganizationWriteTools(
             new { id });
 
     /// <summary>Deletes up to 100 Zendesk organizations as an async job.</summary>
-    [McpServerTool(Name = "zendesk_organizations_delete_many", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "organizations_delete_many", ReadOnly = false, Destructive = true,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Deletes up to 100 Zendesk organizations by id. PERMANENT — organizations have no soft-delete or restore. " +
-        "Returns a job_status — poll zendesk_job_statuses_read until completed. Write operation — honors the " +
+        "Returns a job_status — poll job_statuses_get until completed. Write operation — honors the " +
         "server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> DeleteMany(
         [Description("The numeric organization ids to delete (1-100).")]
@@ -160,13 +160,13 @@ public sealed class ZendeskOrganizationWriteTools(
             new { ids });
 
     /// <summary>Merges one Zendesk organization into another (irreversible).</summary>
-    [McpServerTool(Name = "zendesk_organizations_merge", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "organizations_merge", ReadOnly = false, Destructive = true,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Merges a Zendesk organization INTO another: the loser organization is DELETED and its users, tickets and " +
         "domain names move to the winner. Irreversible; admin-only. The merge runs asynchronously but is NOT a " +
         "job_status — the returned organization_merge carries an opaque string id; poll " +
-        "zendesk_organizations_merge_status with it until status is 'complete'. Write operation — honors the " +
+        "organizations_merges_get with it until status is 'complete'. Write operation — honors the " +
         "server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Merge(
         [Description("The id of the organization to merge and delete (the loser).")]
@@ -181,7 +181,7 @@ public sealed class ZendeskOrganizationWriteTools(
             new { loserOrganizationId, winnerOrganizationId });
 
     /// <summary>Links a user to an organization.</summary>
-    [McpServerTool(Name = "zendesk_organizations_memberships_create", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_memberships_create", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Links a Zendesk user to an organization by creating an organization membership. Fails with 422 if the " +
@@ -202,11 +202,11 @@ public sealed class ZendeskOrganizationWriteTools(
             new { userId, organizationId, makeDefault });
 
     /// <summary>Creates up to 100 organization memberships as an async job.</summary>
-    [McpServerTool(Name = "zendesk_organizations_memberships_create_many", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_memberships_create_many", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Creates up to 100 Zendesk organization memberships (user-to-organization links) in a single call. Each " +
-        "item needs 'user_id' and 'organization_id'. Returns a job_status — poll zendesk_job_statuses_read until " +
+        "item needs 'user_id' and 'organization_id'. Returns a job_status — poll job_statuses_get until " +
         "completed. Write operation — honors the server execution mode: rejected in read-only mode, simulated (no " +
         "changes made) in dry-run mode.")]
     public Task<object> MembershipsCreateMany(
@@ -220,11 +220,11 @@ public sealed class ZendeskOrganizationWriteTools(
             new { memberships });
 
     /// <summary>Removes an organization membership by its membership id.</summary>
-    [McpServerTool(Name = "zendesk_organizations_memberships_delete", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "organizations_memberships_delete", ReadOnly = false, Destructive = true,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Removes a Zendesk organization membership by its MEMBERSHIP id (not the user or organization id — list " +
-        "them with zendesk_organizations_memberships). Side effect: Zendesk schedules a job un-assigning the " +
+        "them with organizations_memberships_list). Side effect: Zendesk schedules a job un-assigning the " +
         "user's working tickets for that organization. Returns a completion acknowledgement. Write operation — " +
         "honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsDelete(
@@ -238,11 +238,11 @@ public sealed class ZendeskOrganizationWriteTools(
             new { membershipId });
 
     /// <summary>Removes up to 100 organization memberships as an async job.</summary>
-    [McpServerTool(Name = "zendesk_organizations_memberships_delete_many", ReadOnly = false, Destructive = true,
+    [McpServerTool(Name = "organizations_memberships_delete_many", ReadOnly = false, Destructive = true,
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Removes up to 100 Zendesk organization memberships by their MEMBERSHIP ids. Returns a job_status — poll " +
-        "zendesk_job_statuses_read until completed. Write operation — honors the server execution mode: rejected " +
+        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
         "in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsDeleteMany(
         [Description("The numeric organization membership ids to remove (1-100).")]
@@ -255,7 +255,7 @@ public sealed class ZendeskOrganizationWriteTools(
             new { membershipIds });
 
     /// <summary>Makes an organization membership the user's default.</summary>
-    [McpServerTool(Name = "zendesk_organizations_memberships_make_default", ReadOnly = false, Destructive = false,
+    [McpServerTool(Name = "organizations_memberships_make_default", ReadOnly = false, Destructive = false,
         Idempotent = true, OpenWorld = true)]
     [Description(
         "Makes an organization membership the user's default organization. Returns the user's FULL organization " +

@@ -6,7 +6,7 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP tools for Zendesk attachments. Namespaced <c>zendesk_attachments_*</c>.
+///     MCP tools for Zendesk attachments. Namespaced <c>attachments_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskAttachmentTools(IZendeskClient zendeskApiClient)
@@ -18,7 +18,7 @@ public sealed class ZendeskAttachmentTools(IZendeskClient zendeskApiClient)
     private const int MaxToolContentBytes = 1024 * 1024;
 
     /// <summary>Downloads an attachment's content.</summary>
-    [McpServerTool(Name = "zendesk_attachments_read", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "attachments_get", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Downloads a ticket attachment's content by id (attachments appear on ticket comments). Text/JSON/CSV/XML " +
         "come back as decoded text ('encoding':'utf-8'); other binary comes back size-capped as base64 " +

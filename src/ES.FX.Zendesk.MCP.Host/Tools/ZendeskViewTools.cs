@@ -6,16 +6,16 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP read tools for Zendesk views (saved, shared ticket filters). Namespaced <c>zendesk_views_*</c>.
+///     MCP read tools for Zendesk views (saved, shared ticket filters). Namespaced <c>views_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskViewTools(IZendeskClient zendeskApiClient)
 {
     /// <summary>Lists Zendesk views.</summary>
-    [McpServerTool(Name = "zendesk_views_list", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "views_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists Zendesk views (saved, shared ticket filters), optionally only active ones. Use " +
-        "zendesk_views_tickets to see the tickets a view currently matches. Cursor pagination: pass " +
+        "views_tickets_list to see the tickets a view currently matches. Cursor pagination: pass " +
         "pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. Read-only.")]
     public Task<ZendeskViewsResult> List(
         [Description("When true, only active views; when false, only inactive views (optional).")]
@@ -30,7 +30,7 @@ public sealed class ZendeskViewTools(IZendeskClient zendeskApiClient)
                 cancellationToken: cancellationToken));
 
     /// <summary>Returns a Zendesk view by id.</summary>
-    [McpServerTool(Name = "zendesk_views_read", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "views_get", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns a single Zendesk view by id, including its conditions (the all/any filter rules) and execution " +
         "(columns, sorting/grouping). Read-only.")]
@@ -41,7 +41,7 @@ public sealed class ZendeskViewTools(IZendeskClient zendeskApiClient)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Views.GetByIdAsync(id, cancellationToken));
 
     /// <summary>Returns the tickets currently matching a view.</summary>
-    [McpServerTool(Name = "zendesk_views_tickets", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "views_tickets_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the tickets currently matching a view. Offset pagination: count/next_page indicate more pages. " +
         "Sideload related records with include (users, groups, organizations) to resolve ids inline. Read-only.")]
@@ -61,7 +61,7 @@ public sealed class ZendeskViewTools(IZendeskClient zendeskApiClient)
                 cancellationToken: cancellationToken));
 
     /// <summary>Returns the (cached) ticket count of a view.</summary>
-    [McpServerTool(Name = "zendesk_views_count", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "views_count", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the (cached) ticket count of a view — cheaper than listing its tickets. Counts for large views " +
         "are approximate; 'fresh' indicates whether the cached value is current. Read-only.")]

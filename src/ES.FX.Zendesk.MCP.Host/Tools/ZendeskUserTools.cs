@@ -6,13 +6,13 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP tools for Zendesk users. Namespaced <c>zendesk_users_*</c> to mirror the Zendesk API structure.
+///     MCP tools for Zendesk users. Namespaced <c>users_*</c> to mirror the Zendesk API structure.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
 {
     /// <summary>Returns the Zendesk user associated with the configured credentials.</summary>
-    [McpServerTool(Name = "zendesk_users_whoami", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_me_get", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the Zendesk user associated with the configured API credentials (the authenticated account). " +
         "Use to verify connectivity and identity. Read-only; makes no changes.")]
@@ -20,7 +20,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Users.GetCurrentUserAsync(cancellationToken));
 
     /// <summary>Returns a Zendesk user by id.</summary>
-    [McpServerTool(Name = "zendesk_users_read", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_get", ReadOnly = true, OpenWorld = true)]
     [Description("Returns a single Zendesk user by numeric id. Read-only.")]
     public Task<ZendeskUser> Read(
         [Description("The numeric Zendesk user id.")]
@@ -29,7 +29,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Users.GetByIdAsync(id, cancellationToken));
 
     /// <summary>Searches Zendesk users.</summary>
-    [McpServerTool(Name = "zendesk_users_search", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_search", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Searches Zendesk users. The query matches name, email, phone, external id, and supports filters such as " +
         "\"role:agent\" or \"email:jane@example.com\". Returns a page of users plus the total count. Read-only.")]
@@ -46,7 +46,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.SearchAsync(query, page, perPage, cancellationToken));
 
     /// <summary>Returns many users by id in one call (batch resolution).</summary>
-    [McpServerTool(Name = "zendesk_users_read_many", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_get_many", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns many Zendesk users by id in one call — use to resolve the requester/assignee/author/CC ids " +
         "found on tickets, comments, and audits to names/emails without one call per id. Lists larger than 100 ids " +
@@ -63,7 +63,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.GetManyAsync(ids, include: include, cancellationToken: cancellationToken));
 
     /// <summary>Returns the tickets a user has requested (their ticket history).</summary>
-    [McpServerTool(Name = "zendesk_users_requested_tickets", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_tickets_requested_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the tickets requested by a user — their support history. Useful context: prior issues, repeat " +
         "complaints, what was already tried, and whether the current issue is a reopen or duplicate. Read-only.")]
@@ -83,10 +83,10 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.GetRequestedTicketsAsync(userId, page, perPage, include, cancellationToken));
 
     /// <summary>Lists Zendesk users, optionally filtered by role.</summary>
-    [McpServerTool(Name = "zendesk_users_list", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists Zendesk users, optionally filtered by role (\"end-user\", \"agent\", or \"admin\"). Prefer " +
-        "zendesk_users_search or zendesk_users_autocomplete when looking for a specific person. Cursor pagination: " +
+        "users_search or users_autocomplete when looking for a specific person. Cursor pagination: " +
         "pass pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. Read-only.")]
     public Task<ZendeskUsersResult> List(
         [Description("Optional role filter: \"end-user\", \"agent\", or \"admin\".")]
@@ -104,7 +104,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
                 cancellationToken: cancellationToken));
 
     /// <summary>Returns the (cached, approximate) user count, optionally filtered by role.</summary>
-    [McpServerTool(Name = "zendesk_users_count", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_count", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the user count, optionally filtered by role (\"end-user\", \"agent\", or \"admin\"). Counts over " +
         "100,000 are approximate — cached and refreshed roughly every 24 hours (refreshed_at may be null while " +
@@ -117,7 +117,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.CountAsync(role, cancellationToken: cancellationToken));
 
     /// <summary>Suggests users whose name or e-mail starts with a prefix.</summary>
-    [McpServerTool(Name = "zendesk_users_autocomplete", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_autocomplete", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Suggests Zendesk users whose name or e-mail starts with a prefix (minimum two characters) — a cheap " +
         "type-ahead lookup when you have a partial name. Offset-paginated only: count/next_page indicate more pages. " +
@@ -135,7 +135,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.AutocompleteAsync(name, page, perPage, cancellationToken));
 
     /// <summary>Returns a user's related ticket/subscription counts.</summary>
-    [McpServerTool(Name = "zendesk_users_related", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_related_get", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns a user's related information — counts of requested/assigned tickets and subscriptions. A quick " +
         "gauge of how active a user is before pulling their full ticket lists. Read-only.")]
@@ -147,7 +147,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.GetRelatedInformationAsync(userId, cancellationToken));
 
     /// <summary>Lists a user's identities (e-mails, phone numbers, social handles).</summary>
-    [McpServerTool(Name = "zendesk_users_identities", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_identities_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists a user's identities — e-mail addresses, phone numbers, and social handles, with primary/verified " +
         "flags. Use to see all the contact points behind a user record. Cursor pagination: pass pageSize/afterCursor; " +
@@ -164,10 +164,10 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.GetIdentitiesAsync(userId, pageSize, afterCursor, cancellationToken));
 
     /// <summary>Lists the groups an agent belongs to.</summary>
-    [McpServerTool(Name = "zendesk_users_groups", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_groups_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists the groups an agent belongs to — the teams their tickets can be routed through. Complements " +
-        "zendesk_groups_memberships (group → agents). count/next_page indicate more pages. Read-only.")]
+        "groups_memberships_list (group → agents). count/next_page indicate more pages. Read-only.")]
     public Task<ZendeskGroupsResult> Groups(
         [Description("The numeric Zendesk user id (an agent).")]
         long userId,
@@ -181,7 +181,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.GetGroupsAsync(userId, page, perPage, cancellationToken));
 
     /// <summary>Lists the organizations a user belongs to.</summary>
-    [McpServerTool(Name = "zendesk_users_organizations", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_organizations_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists the organizations a user belongs to — the companies/accounts their tickets are attributed to. " +
         "count/next_page indicate more pages. Read-only.")]
@@ -198,7 +198,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.GetOrganizationsAsync(userId, page, perPage, cancellationToken));
 
     /// <summary>Returns the tickets assigned to an agent.</summary>
-    [McpServerTool(Name = "zendesk_users_assigned_tickets", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_tickets_assigned_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the tickets assigned to an agent — their current and past workload. count/next_page indicate more " +
         "pages. Read-only.")]
@@ -218,7 +218,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.GetAssignedTicketsAsync(userId, page, perPage, include, cancellationToken));
 
     /// <summary>Returns the tickets a user is CC'd on.</summary>
-    [McpServerTool(Name = "zendesk_users_ccd_tickets", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_tickets_ccd_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the tickets a user is CC'd on — issues they follow without being the requester or assignee. " +
         "count/next_page indicate more pages. Read-only.")]
@@ -238,7 +238,7 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
             zendeskApiClient.Users.GetCcdTicketsAsync(userId, page, perPage, include, cancellationToken));
 
     /// <summary>Lists a user's tags.</summary>
-    [McpServerTool(Name = "zendesk_users_tags", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "users_tags_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists a user's tags as plain strings. Requires user tagging to be enabled in Zendesk Support. Read-only.")]
     public Task<ZendeskTagNamesResult> Tags(

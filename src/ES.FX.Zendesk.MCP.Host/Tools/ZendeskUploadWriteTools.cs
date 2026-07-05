@@ -8,20 +8,20 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
 ///     MCP write tools for Zendesk uploads (attachment uploads consumed by ticket comments).
-///     Namespaced <c>zendesk_uploads_*</c>.
+///     Namespaced <c>uploads_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskUploadWriteTools(IZendeskClient zendeskApiClient, IMcpExecutionModeAccessor executionMode)
 {
     /// <summary>Uploads a file for attaching to a ticket comment.</summary>
-    [McpServerTool(Name = "zendesk_uploads_create", ReadOnly = false, Destructive = false, Idempotent = false,
+    [McpServerTool(Name = "uploads_create", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
         "Uploads a file to Zendesk (50 MB limit) for attaching to a ticket comment. Returns an upload whose 'token' " +
         "is passed to the ticket comment's uploads when creating/updating a ticket; to bundle multiple files onto " +
         "one token, pass the returned token back into this tool for each subsequent file. Tokens are single-use and " +
         "expire after 60 minutes; until consumed, the file is reachable by any authenticated user via its " +
-        "content_url. Discard an unwanted upload with zendesk_uploads_delete. " +
+        "content_url. Discard an unwanted upload with uploads_delete. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Create(
         [Description("The file name; its extension must match the actual content.")]
@@ -53,7 +53,7 @@ public sealed class ZendeskUploadWriteTools(IZendeskClient zendeskApiClient, IMc
     }
 
     /// <summary>Deletes an unconsumed upload by its token.</summary>
-    [McpServerTool(Name = "zendesk_uploads_delete", ReadOnly = false, Destructive = true, Idempotent = true,
+    [McpServerTool(Name = "uploads_delete", ReadOnly = false, Destructive = true, Idempotent = true,
         OpenWorld = true)]
     [Description(
         "Deletes an unconsumed Zendesk upload by its token, discarding the uploaded file(s) before they are " +
@@ -61,7 +61,7 @@ public sealed class ZendeskUploadWriteTools(IZendeskClient zendeskApiClient, IMc
         "Returns a completion acknowledgement. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Delete(
-        [Description("The upload token returned by zendesk_uploads_create.")]
+        [Description("The upload token returned by uploads_create.")]
         string token,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"delete upload token '{token}'",

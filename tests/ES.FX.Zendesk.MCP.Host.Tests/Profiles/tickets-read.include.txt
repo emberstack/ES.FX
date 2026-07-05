@@ -1,0 +1,16 @@
+tickets_audits_list
+tickets_collaborators_list
+tickets_comments_count
+tickets_comments_list
+tickets_count
+tickets_export_incremental
+tickets_get
+tickets_get_by_external_id
+tickets_get_many
+tickets_incidents_list
+tickets_list
+tickets_metric_events_export
+tickets_metrics_get
+tickets_search
+tickets_search_export
+tickets_side_conversations_list

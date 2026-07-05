@@ -295,4 +295,25 @@ public class ZendeskTicketToolsTests
         Assert.Contains("404", exception.Message);
         Assert.Contains("RecordNotFound", exception.Message);
     }
+
+    [Fact]
+    public async Task SearchExport_Delegates_To_The_Search_Api()
+    {
+        // tickets_search_export is a ticket-area tool (its name says so) that delegates to the unified
+        // Search API's cursor export. It lives on ZendeskTicketTools to keep the search area homogeneous.
+        var expected = new ZendeskTicketSearchExportResults();
+        var search = new Mock<IZendeskSearchApi>();
+        var client = new Mock<IZendeskClient>();
+        client.SetupGet(c => c.Search).Returns(search.Object);
+        var tools = new ZendeskTicketTools(client.Object);
+        search.Setup(api => api.ExportTicketsAsync("status:open", 100, "cursor-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
+
+        var result = await tools.SearchExport("status:open", 100, "cursor-1",
+            TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        search.Verify(api => api.ExportTicketsAsync("status:open", 100, "cursor-1",
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

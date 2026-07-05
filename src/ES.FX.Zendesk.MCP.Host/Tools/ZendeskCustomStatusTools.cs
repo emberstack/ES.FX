@@ -6,13 +6,13 @@ using ModelContextProtocol.Server;
 namespace ES.FX.Zendesk.MCP.Host.Tools;
 
 /// <summary>
-///     MCP read tools for Zendesk custom ticket statuses. Namespaced <c>zendesk_custom_statuses_*</c>.
+///     MCP read tools for Zendesk custom ticket statuses. Namespaced <c>custom_statuses_*</c>.
 /// </summary>
 [McpServerToolType]
 public sealed class ZendeskCustomStatusTools(IZendeskClient zendeskApiClient)
 {
     /// <summary>Lists Zendesk custom ticket statuses.</summary>
-    [McpServerTool(Name = "zendesk_custom_statuses_list", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "custom_statuses_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists custom ticket statuses — decodes the custom_status_id carried on tickets when custom statuses are " +
         "enabled. Not paginated: the full list is returned. Filter by active, default, or a comma-separated list " +
@@ -30,7 +30,7 @@ public sealed class ZendeskCustomStatusTools(IZendeskClient zendeskApiClient)
                 statusCategories: statusCategories, cancellationToken: cancellationToken));
 
     /// <summary>Returns a Zendesk custom ticket status by id.</summary>
-    [McpServerTool(Name = "zendesk_custom_statuses_read", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "custom_statuses_get", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns a single custom ticket status by id — the labels and status category behind a ticket's " +
         "custom_status_id. Read-only.")]

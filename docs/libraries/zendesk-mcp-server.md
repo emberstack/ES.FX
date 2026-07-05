@@ -119,6 +119,9 @@ server behavior lives under `Mcp`. All keys are environment-overridable (`__` ma
       "Mode": "Default",                // Default | DryRun | ReadOnly
       "AllowHeaderOverride": true,
       "HeaderName": "X-Mcp-Execution-Mode"
+    },
+    "Tools": {
+      "Areas": []                       // [] = all areas; e.g. ["tickets","users"] registers only those. See Filtering.
     }
   }
 }
@@ -127,6 +130,159 @@ server behavior lives under `Mcp`. All keys are environment-overridable (`__` ma
 The OAuth model, keyed multi-tenant instances, and secret hygiene are covered on the
 [Zendesk API client](./zendesk-client.md#authentication) and [Zendesk Spark](../ignite/sparks/zendesk.md)
 pages. **Write tools require the OAuth scope to include `write`** (`"read write"`).
+
+## Filtering the tool surface
+
+MCP clients filter tools by **exact name only** — there is no glob, prefix, or regex matching, and clients
+(Hermes, Claude, and others) do **not** consult the MCP `readOnlyHint` / `destructiveHint` annotations when
+deciding what to expose. So narrowing the surface to "only reads", "only tickets", or "only ticket reads" is
+best done **server-side**, with a client include-list as the fallback when you cannot change the deployment.
+Three levers, in order of preference:
+
+1. **Read-only deployment** — set `Mcp:Execution:Mode = ReadOnly`. The write tool classes are never
+   registered, so the advertised surface is exactly the 81 read tools. No client config required.
+2. **Area gating** — set `Mcp:Tools:Areas` to the resource areas you want. Only tool classes in those areas
+   are registered, and it composes with the execution mode via **AND**:
+   - `Areas: ["tickets"]` → all ticket tools (reads **and** writes).
+   - `Areas: ["tickets"]` with `Mode: ReadOnly` → only ticket **read** tools.
+
+   An empty/absent list registers all areas (backward compatible). An **unknown area fails startup**
+   (fail-closed) with the list of valid areas, rather than silently exposing nothing. Valid areas:
+   `tickets`, `ticket_fields`, `users`, `organizations`, `groups`, `articles`, `macros`, `forms`, `views`,
+   `brands`, `custom_statuses`, `job_statuses`, `tags`, `suspended_tickets`, `attachments`, `uploads`,
+   `search`.
+3. **Client include-list** — when you cannot change the deployment, list exact tool names in the client
+   config. The ready-made profiles below are snapshot-tested in the host test project
+   (`ZendeskToolProfileSnapshotTests`), so they never drift from the real tool surface.
+
+> [!TIP]
+> Prefer the server-side levers (1 and 2) when you control the deployment: a read-only or area-scoped server
+> *cannot* be talked into exposing more, whereas a client include-list is only as good as the client's config.
+
+### Hermes example
+
+Hermes matches `tools.include` by exact tool name (and `include` wins over `exclude`):
+
+```yaml
+mcp_servers:
+  zendesk:
+    url: "http://localhost:8080"
+    tools:
+      include: [tickets_get, tickets_search, tickets_comments_list, tickets_create, tickets_update]
+```
+
+### Include-list profiles
+
+One tool name per line; kept in sync with the source by `ZendeskToolProfileSnapshotTests`.
+
+**Only ticket reads** — equivalent to `Areas: ["tickets"]` + `Mode: ReadOnly`:
+
+```
+tickets_audits_list
+tickets_collaborators_list
+tickets_comments_count
+tickets_comments_list
+tickets_count
+tickets_export_incremental
+tickets_get
+tickets_get_by_external_id
+tickets_get_many
+tickets_incidents_list
+tickets_list
+tickets_metric_events_export
+tickets_metrics_get
+tickets_search
+tickets_search_export
+tickets_side_conversations_list
+```
+
+<details>
+<summary><strong>All read tools</strong> (81) — equivalent to <code>Mode: ReadOnly</code></summary>
+
+```
+articles_categories_get
+articles_categories_list
+articles_get
+articles_list
+articles_search
+articles_sections_get
+articles_sections_list
+attachments_get
+brands_get
+brands_list
+custom_statuses_get
+custom_statuses_list
+forms_get
+forms_list
+groups_assignable_list
+groups_count
+groups_get
+groups_list
+groups_memberships_list
+groups_users_list
+job_statuses_get
+job_statuses_get_many
+job_statuses_list
+macros_get
+macros_list
+macros_list_active
+organizations_autocomplete
+organizations_count
+organizations_get
+organizations_get_by_name_or_external_id
+organizations_get_many
+organizations_list
+organizations_memberships_list
+organizations_merges_get
+organizations_tags_list
+organizations_tickets_list
+organizations_users_list
+search_count
+suspended_tickets_get
+suspended_tickets_list
+tags_autocomplete
+tags_count
+tags_list
+ticket_fields_get
+ticket_fields_list
+ticket_fields_options_list
+tickets_audits_list
+tickets_collaborators_list
+tickets_comments_count
+tickets_comments_list
+tickets_count
+tickets_export_incremental
+tickets_get
+tickets_get_by_external_id
+tickets_get_many
+tickets_incidents_list
+tickets_list
+tickets_metric_events_export
+tickets_metrics_get
+tickets_search
+tickets_search_export
+tickets_side_conversations_list
+users_autocomplete
+users_count
+users_get
+users_get_many
+users_groups_list
+users_identities_list
+users_list
+users_me_get
+users_organizations_list
+users_related_get
+users_search
+users_tags_list
+users_tickets_assigned_list
+users_tickets_ccd_list
+users_tickets_requested_list
+views_count
+views_get
+views_list
+views_tickets_list
+```
+</details>
 
 ## Security (deployment)
 
@@ -159,14 +315,21 @@ observe `Retry-After` on `429`).
 
 ## Tools
 
-168 tools, namespaced `zendesk_{resource}_{verb}` to mirror the Zendesk API. Conventions shared by all tools:
+168 tools, named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` — snake_case, with **no
+product prefix** (MCP clients already namespace tools by server, so a `zendesk_` prefix would only stutter as
+`mcp_zendesk_zendesk_…`). The **area** leads so related tools sort together, and every read tool ends in a
+controlled read verb (`get` / `list` / `search` / `count` / `export` / `autocomplete`) while any other verb
+denotes a write — so a tool's risk class is legible from its name alone. This is machine-enforced: a test
+(`ZendeskToolAnnotationSweepTests`) asserts the read-verb suffix matches the `ReadOnly` annotation and that
+destructive verbs (`delete` / `merge` / `redact` / `mark_spam`) carry `Destructive = true`. Conventions shared
+by all tools:
 
 - **Pagination** — offset-paginated tools take `page`/`perPage` and return `count` + `next_page`;
   cursor-paginated tools take `pageSize`/`afterCursor` and return `meta.has_more` + `meta.after_cursor`.
 - **Sideloads** — list/read tools accept an `include` parameter where the Zendesk endpoint supports it,
   returning related records as sibling arrays to avoid per-id follow-up calls.
 - **Bulk writes** — bulk operations (≤100 items unless noted) return a `job_status`; poll
-  `zendesk_job_statuses_read` until it reports `completed`/`failed`.
+  `job_statuses_get` until it reports `completed`/`failed`.
 
 ### Read tools (81 total)
 
@@ -176,316 +339,316 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_users_whoami` | Returns the Zendesk user associated with the configured credentials. |
-| `zendesk_users_read` | Returns a Zendesk user by id. |
-| `zendesk_users_search` | Searches Zendesk users. |
-| `zendesk_users_read_many` | Returns many users by id in one call (batch resolution). |
-| `zendesk_users_requested_tickets` | Returns the tickets a user has requested (their ticket history). |
-| `zendesk_users_list` | Lists Zendesk users, optionally filtered by role. |
-| `zendesk_users_count` | Returns the (cached, approximate) user count, optionally filtered by role. |
-| `zendesk_users_autocomplete` | Suggests users whose name or e-mail starts with a prefix. |
-| `zendesk_users_related` | Returns a user's related ticket/subscription counts. |
-| `zendesk_users_identities` | Lists a user's identities (e-mails, phone numbers, social handles). |
-| `zendesk_users_groups` | Lists the groups an agent belongs to. |
-| `zendesk_users_organizations` | Lists the organizations a user belongs to. |
-| `zendesk_users_assigned_tickets` | Returns the tickets assigned to an agent. |
-| `zendesk_users_ccd_tickets` | Returns the tickets a user is CC'd on. |
-| `zendesk_users_tags` | Lists a user's tags. |
+| `users_me_get` | Returns the Zendesk user associated with the configured credentials. |
+| `users_get` | Returns a Zendesk user by id. |
+| `users_search` | Searches Zendesk users. |
+| `users_get_many` | Returns many users by id in one call (batch resolution). |
+| `users_tickets_requested_list` | Returns the tickets a user has requested (their ticket history). |
+| `users_list` | Lists Zendesk users, optionally filtered by role. |
+| `users_count` | Returns the (cached, approximate) user count, optionally filtered by role. |
+| `users_autocomplete` | Suggests users whose name or e-mail starts with a prefix. |
+| `users_related_get` | Returns a user's related ticket/subscription counts. |
+| `users_identities_list` | Lists a user's identities (e-mails, phone numbers, social handles). |
+| `users_groups_list` | Lists the groups an agent belongs to. |
+| `users_organizations_list` | Lists the organizations a user belongs to. |
+| `users_tickets_assigned_list` | Returns the tickets assigned to an agent. |
+| `users_tickets_ccd_list` | Returns the tickets a user is CC'd on. |
+| `users_tags_list` | Lists a user's tags. |
 
 #### Tickets
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_tickets_read` | Returns a Zendesk ticket by id. |
-| `zendesk_tickets_search` | Searches Zendesk tickets. |
-| `zendesk_tickets_comments` | Returns the conversation thread (comments) on a ticket. |
-| `zendesk_tickets_audits` | Returns a ticket's change history (audits/events). |
-| `zendesk_tickets_metrics` | Returns timing/lifecycle metrics for a ticket. |
-| `zendesk_tickets_incidents` | Returns the incidents linked to a problem ticket. |
-| `zendesk_tickets_side_conversations` | Returns a ticket's side conversations (vendor/escalation threads). |
-| `zendesk_tickets_metric_events` | Exports SLA/metric events across tickets (breach timeline). |
-| `zendesk_tickets_list` | Lists tickets. |
-| `zendesk_tickets_read_many` | Returns many tickets by id in one call. |
-| `zendesk_tickets_count` | Returns the account's total ticket count. |
-| `zendesk_tickets_read_by_external_id` | Returns the tickets carrying an external id. |
-| `zendesk_tickets_collaborators` | Lists the collaborators (CCs) of a ticket. |
-| `zendesk_tickets_comments_count` | Returns a ticket's comment count. |
-| `zendesk_tickets_incremental` | Exports tickets incrementally (cursor-based incremental export). |
+| `tickets_get` | Returns a Zendesk ticket by id. |
+| `tickets_search` | Searches Zendesk tickets. |
+| `tickets_comments_list` | Returns the conversation thread (comments) on a ticket. |
+| `tickets_audits_list` | Returns a ticket's change history (audits/events). |
+| `tickets_metrics_get` | Returns timing/lifecycle metrics for a ticket. |
+| `tickets_incidents_list` | Returns the incidents linked to a problem ticket. |
+| `tickets_side_conversations_list` | Returns a ticket's side conversations (vendor/escalation threads). |
+| `tickets_metric_events_export` | Exports SLA/metric events across tickets (breach timeline). |
+| `tickets_list` | Lists tickets. |
+| `tickets_get_many` | Returns many tickets by id in one call. |
+| `tickets_count` | Returns the account's total ticket count. |
+| `tickets_get_by_external_id` | Returns the tickets carrying an external id. |
+| `tickets_collaborators_list` | Lists the collaborators (CCs) of a ticket. |
+| `tickets_comments_count` | Returns a ticket's comment count. |
+| `tickets_export_incremental` | Exports tickets incrementally (cursor-based incremental export). |
 
 #### Organizations
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_organizations_read` | Returns a Zendesk organization by id. |
-| `zendesk_organizations_tickets` | Returns the tickets belonging to an organization. |
-| `zendesk_organizations_list` | Lists Zendesk organizations. |
-| `zendesk_organizations_count` | Returns the approximate organization count. |
-| `zendesk_organizations_read_many` | Returns many Zendesk organizations by id. |
-| `zendesk_organizations_search` | Looks up organizations by exact name or external id. |
-| `zendesk_organizations_autocomplete` | Suggests organizations whose name starts with a prefix. |
-| `zendesk_organizations_users` | Lists the users of an organization. |
-| `zendesk_organizations_memberships` | Lists an organization's memberships. |
-| `zendesk_organizations_merge_status` | Returns an organization merge job's status. |
-| `zendesk_organizations_tags` | Lists an organization's tags. |
+| `organizations_get` | Returns a Zendesk organization by id. |
+| `organizations_tickets_list` | Returns the tickets belonging to an organization. |
+| `organizations_list` | Lists Zendesk organizations. |
+| `organizations_count` | Returns the approximate organization count. |
+| `organizations_get_many` | Returns many Zendesk organizations by id. |
+| `organizations_get_by_name_or_external_id` | Looks up organizations by exact name or external id. |
+| `organizations_autocomplete` | Suggests organizations whose name starts with a prefix. |
+| `organizations_users_list` | Lists the users of an organization. |
+| `organizations_memberships_list` | Lists an organization's memberships. |
+| `organizations_merges_get` | Returns an organization merge job's status. |
+| `organizations_tags_list` | Lists an organization's tags. |
 
 #### Groups
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_groups_list` | Lists Zendesk groups. |
-| `zendesk_groups_read` | Returns a Zendesk group by id. |
-| `zendesk_groups_memberships` | Lists the agents that belong to a group. |
-| `zendesk_groups_assignable` | Lists the groups assignable to tickets for the current agent. |
-| `zendesk_groups_count` | Returns the approximate group count. |
-| `zendesk_groups_users` | Lists the users of a group. |
+| `groups_list` | Lists Zendesk groups. |
+| `groups_get` | Returns a Zendesk group by id. |
+| `groups_memberships_list` | Lists the agents that belong to a group. |
+| `groups_assignable_list` | Lists the groups assignable to tickets for the current agent. |
+| `groups_count` | Returns the approximate group count. |
+| `groups_users_list` | Lists the users of a group. |
 
 #### Help Center (articles / sections / categories)
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_articles_search` | Full-text searches Help Center knowledge base articles. |
-| `zendesk_articles_read` | Returns a single Help Center article including its full body. |
-| `zendesk_articles_list` | Lists Help Center articles, optionally scoped to a section. |
-| `zendesk_articles_sections` | Lists Help Center sections, optionally scoped to a category. |
-| `zendesk_articles_section_read` | Returns a single Help Center section by id. |
-| `zendesk_articles_categories` | Lists Help Center categories. |
-| `zendesk_articles_category_read` | Returns a single Help Center category by id. |
+| `articles_search` | Full-text searches Help Center knowledge base articles. |
+| `articles_get` | Returns a single Help Center article including its full body. |
+| `articles_list` | Lists Help Center articles, optionally scoped to a section. |
+| `articles_sections_list` | Lists Help Center sections, optionally scoped to a category. |
+| `articles_sections_get` | Returns a single Help Center section by id. |
+| `articles_categories_list` | Lists Help Center categories. |
+| `articles_categories_get` | Returns a single Help Center category by id. |
 
 #### Ticket fields
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_ticket_fields_list` | Lists ticket field definitions. |
-| `zendesk_ticket_fields_read` | Returns a single ticket field definition by id. |
-| `zendesk_ticket_fields_options` | Lists the custom options of a drop-down ticket field. |
+| `ticket_fields_list` | Lists ticket field definitions. |
+| `ticket_fields_get` | Returns a single ticket field definition by id. |
+| `ticket_fields_options_list` | Lists the custom options of a drop-down ticket field. |
 
 #### Macros
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_macros_list` | Lists Zendesk macros. |
-| `zendesk_macros_list_active` | Lists only the macros usable by the current agent. |
-| `zendesk_macros_read` | Returns a single macro including its actions. |
+| `macros_list` | Lists Zendesk macros. |
+| `macros_list_active` | Lists only the macros usable by the current agent. |
+| `macros_get` | Returns a single macro including its actions. |
 
 #### Ticket forms
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_forms_search` | Lists Zendesk ticket forms. |
-| `zendesk_forms_read` | Returns a Zendesk ticket form by id. |
+| `forms_list` | Lists Zendesk ticket forms. |
+| `forms_get` | Returns a Zendesk ticket form by id. |
 
 #### Views
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_views_list` | Lists Zendesk views. |
-| `zendesk_views_read` | Returns a Zendesk view by id. |
-| `zendesk_views_tickets` | Returns the tickets currently matching a view. |
-| `zendesk_views_count` | Returns the (cached) ticket count of a view. |
+| `views_list` | Lists Zendesk views. |
+| `views_get` | Returns a Zendesk view by id. |
+| `views_tickets_list` | Returns the tickets currently matching a view. |
+| `views_count` | Returns the (cached) ticket count of a view. |
 
 #### Search
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_search_count` | Returns the number of results a search query matches. |
-| `zendesk_search_export_tickets` | Exports ticket search results with cursor pagination (no 1,000-result cap). |
+| `search_count` | Returns the number of results a search query matches. |
+| `tickets_search_export` | Exports ticket search results with cursor pagination (no 1,000-result cap). |
 
 #### Brands
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_brands_list` | Lists Zendesk brands. |
-| `zendesk_brands_read` | Returns a Zendesk brand by id. |
+| `brands_list` | Lists Zendesk brands. |
+| `brands_get` | Returns a Zendesk brand by id. |
 
 #### Custom statuses
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_custom_statuses_list` | Lists Zendesk custom ticket statuses. |
-| `zendesk_custom_statuses_read` | Returns a Zendesk custom ticket status by id. |
+| `custom_statuses_list` | Lists Zendesk custom ticket statuses. |
+| `custom_statuses_get` | Returns a Zendesk custom ticket status by id. |
 
 #### Job statuses
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_job_statuses_list` | Lists recent Zendesk job statuses. |
-| `zendesk_job_statuses_read` | Returns a Zendesk job status by id. |
-| `zendesk_job_statuses_read_many` | Returns many Zendesk job statuses in one request. |
+| `job_statuses_list` | Lists recent Zendesk job statuses. |
+| `job_statuses_get` | Returns a Zendesk job status by id. |
+| `job_statuses_get_many` | Returns many Zendesk job statuses in one request. |
 
 #### Tags
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_tags_list` | Lists the most popular Zendesk tags with usage counts. |
-| `zendesk_tags_count` | Returns the account-wide tag count. |
-| `zendesk_tags_autocomplete` | Suggests Zendesk tag names matching a prefix. |
+| `tags_list` | Lists the most popular Zendesk tags with usage counts. |
+| `tags_count` | Returns the account-wide tag count. |
+| `tags_autocomplete` | Suggests Zendesk tag names matching a prefix. |
 
 #### Suspended tickets
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_suspended_tickets_list` | Lists Zendesk suspended tickets. |
-| `zendesk_suspended_tickets_read` | Returns a Zendesk suspended ticket by id. |
+| `suspended_tickets_list` | Lists Zendesk suspended tickets. |
+| `suspended_tickets_get` | Returns a Zendesk suspended ticket by id. |
 
 #### Attachments
 
 | Tool | What it does |
 | --- | --- |
-| `zendesk_attachments_read` | Downloads an attachment's content (text inline, binary as size-capped base64). |
+| `attachments_get` | Downloads an attachment's content (text inline, binary as size-capped base64). |
 
 ### Write tools (87 total)
 
 Write tools are annotated `ReadOnly = false` and are gated by the [execution mode](#execution-modes):
 rejected under `ReadOnly`, simulated under `DryRun`. Rows marked **destructive** carry `Destructive = true`
 (they delete, purge, merge, redact, or otherwise irreversibly alter data). Bulk tools noted as "async job"
-return a `job_status` — poll `zendesk_job_statuses_read`.
+return a `job_status` — poll `job_statuses_get`.
 
 #### Tickets
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_tickets_create` | write | Creates a Zendesk ticket. |
-| `zendesk_tickets_create_many` | write | Creates up to 100 Zendesk tickets as an async job. |
-| `zendesk_tickets_update` | write | Updates a Zendesk ticket by id (public reply / internal note via `comment.public`). |
-| `zendesk_tickets_update_many` | write | Applies the same change to up to 100 tickets as an async job. |
-| `zendesk_tickets_update_many_batch` | write | Applies per-ticket changes to up to 100 tickets as an async job. |
-| `zendesk_tickets_delete` | **destructive** | Soft-deletes a Zendesk ticket. |
-| `zendesk_tickets_delete_many` | **destructive** | Soft-deletes up to 100 tickets as an async job. |
-| `zendesk_tickets_merge` | **destructive** | Merges source tickets into a target ticket as an async job. |
-| `zendesk_tickets_mark_spam` | **destructive** | Marks a ticket as spam and suspends its requester. |
-| `zendesk_tickets_mark_spam_many` | **destructive** | Marks up to 100 tickets as spam as an async job. |
-| `zendesk_tickets_restore` | write | Restores a soft-deleted ticket. |
-| `zendesk_tickets_restore_many` | write | Restores up to 100 soft-deleted tickets. |
-| `zendesk_tickets_delete_permanently` | **destructive** | Permanently deletes an already soft-deleted ticket (irreversible). |
-| `zendesk_tickets_delete_permanently_many` | **destructive** | Permanently deletes up to 100 soft-deleted tickets as an async job (irreversible). |
-| `zendesk_tickets_tags_set` | write | Replaces a ticket's whole tag set. |
-| `zendesk_tickets_tags_add` | write | Adds tags to a ticket without removing existing ones. |
-| `zendesk_tickets_tags_remove` | write | Removes tags from a ticket. |
-| `zendesk_tickets_comment_make_private` | **destructive** | Makes a public ticket comment private (one-way). |
-| `zendesk_tickets_comment_attachment_redact` | **destructive** | Permanently redacts a comment attachment (irreversible). |
-| `zendesk_tickets_import` | write | Imports a historical ticket (admin-only; no triggers/notifications). |
-| `zendesk_tickets_import_many` | write | Imports up to 100 historical tickets as an async job (admin-only). |
+| `tickets_create` | write | Creates a Zendesk ticket. |
+| `tickets_create_many` | write | Creates up to 100 Zendesk tickets as an async job. |
+| `tickets_update` | write | Updates a Zendesk ticket by id (public reply / internal note via `comment.public`). |
+| `tickets_update_many` | write | Applies the same change to up to 100 tickets as an async job. |
+| `tickets_update_many_batch` | write | Applies per-ticket changes to up to 100 tickets as an async job. |
+| `tickets_delete` | **destructive** | Soft-deletes a Zendesk ticket. |
+| `tickets_delete_many` | **destructive** | Soft-deletes up to 100 tickets as an async job. |
+| `tickets_merge` | **destructive** | Merges source tickets into a target ticket as an async job. |
+| `tickets_mark_spam` | **destructive** | Marks a ticket as spam and suspends its requester. |
+| `tickets_mark_spam_many` | **destructive** | Marks up to 100 tickets as spam as an async job. |
+| `tickets_restore` | write | Restores a soft-deleted ticket. |
+| `tickets_restore_many` | write | Restores up to 100 soft-deleted tickets. |
+| `tickets_delete_permanently` | **destructive** | Permanently deletes an already soft-deleted ticket (irreversible). |
+| `tickets_delete_permanently_many` | **destructive** | Permanently deletes up to 100 soft-deleted tickets as an async job (irreversible). |
+| `tickets_tags_set` | write | Replaces a ticket's whole tag set. |
+| `tickets_tags_add` | write | Adds tags to a ticket without removing existing ones. |
+| `tickets_tags_remove` | write | Removes tags from a ticket. |
+| `tickets_comments_make_private` | **destructive** | Makes a public ticket comment private (one-way). |
+| `tickets_comments_attachment_redact` | **destructive** | Permanently redacts a comment attachment (irreversible). |
+| `tickets_import` | write | Imports a historical ticket (admin-only; no triggers/notifications). |
+| `tickets_import_many` | write | Imports up to 100 historical tickets as an async job (admin-only). |
 
 #### Users
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_users_create` | write | Creates a Zendesk user. |
-| `zendesk_users_create_or_update` | write | Creates or updates a Zendesk user matched by e-mail or external id (upsert). |
-| `zendesk_users_create_many` | write | Creates up to 100 Zendesk users as an async job. |
-| `zendesk_users_create_or_update_many` | write | Creates or updates up to 100 Zendesk users as an async job. |
-| `zendesk_users_update` | write | Updates a Zendesk user by id. |
-| `zendesk_users_update_many` | write | Applies the same change to up to 100 Zendesk users as an async job. |
-| `zendesk_users_update_many_batch` | write | Applies per-user changes to up to 100 Zendesk users as an async job. |
-| `zendesk_users_merge` | **destructive** | Merges one end user into another; the loser is absorbed and the winner survives. |
-| `zendesk_users_delete` | **destructive** | Soft-deletes a Zendesk user. |
-| `zendesk_users_delete_many` | **destructive** | Soft-deletes up to 100 Zendesk users as an async job. |
-| `zendesk_users_delete_permanently` | **destructive** | Permanently deletes an already soft-deleted Zendesk user (irreversible). |
-| `zendesk_users_identities_create` | write | Adds an identity (e-mail, phone, social handle) to a Zendesk user. |
-| `zendesk_users_identities_update` | write | Updates a Zendesk user identity's value or verification state. |
-| `zendesk_users_identities_make_primary` | write | Makes an identity the user's primary identity. |
-| `zendesk_users_identities_verify` | write | Marks a Zendesk user identity as verified. |
-| `zendesk_users_identities_request_verification` | write | Sends a verification e-mail for a Zendesk user identity. |
-| `zendesk_users_identities_delete` | **destructive** | Deletes a Zendesk user identity. |
+| `users_create` | write | Creates a Zendesk user. |
+| `users_create_or_update` | write | Creates or updates a Zendesk user matched by e-mail or external id (upsert). |
+| `users_create_many` | write | Creates up to 100 Zendesk users as an async job. |
+| `users_create_or_update_many` | write | Creates or updates up to 100 Zendesk users as an async job. |
+| `users_update` | write | Updates a Zendesk user by id. |
+| `users_update_many` | write | Applies the same change to up to 100 Zendesk users as an async job. |
+| `users_update_many_batch` | write | Applies per-user changes to up to 100 Zendesk users as an async job. |
+| `users_merge` | **destructive** | Merges one end user into another; the loser is absorbed and the winner survives. |
+| `users_delete` | **destructive** | Soft-deletes a Zendesk user. |
+| `users_delete_many` | **destructive** | Soft-deletes up to 100 Zendesk users as an async job. |
+| `users_delete_permanently` | **destructive** | Permanently deletes an already soft-deleted Zendesk user (irreversible). |
+| `users_identities_create` | write | Adds an identity (e-mail, phone, social handle) to a Zendesk user. |
+| `users_identities_update` | write | Updates a Zendesk user identity's value or verification state. |
+| `users_identities_make_primary` | write | Makes an identity the user's primary identity. |
+| `users_identities_verify` | write | Marks a Zendesk user identity as verified. |
+| `users_identities_request_verification` | write | Sends a verification e-mail for a Zendesk user identity. |
+| `users_identities_delete` | **destructive** | Deletes a Zendesk user identity. |
 
 #### Organizations
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_organizations_create` | write | Creates a Zendesk organization. |
-| `zendesk_organizations_create_many` | write | Creates up to 100 Zendesk organizations as an async job. |
-| `zendesk_organizations_create_or_update` | write | Creates or updates a Zendesk organization, matching by id or external id. |
-| `zendesk_organizations_update` | write | Updates a Zendesk organization by id. |
-| `zendesk_organizations_update_many` | write | Applies the same change to up to 100 organizations as an async job. |
-| `zendesk_organizations_update_many_batch` | write | Applies per-organization changes to up to 100 organizations as an async job. |
-| `zendesk_organizations_delete` | **destructive** | Deletes a Zendesk organization by id (permanent; no restore). |
-| `zendesk_organizations_delete_many` | **destructive** | Deletes up to 100 Zendesk organizations as an async job (permanent). |
-| `zendesk_organizations_merge` | **destructive** | Merges one Zendesk organization into another (irreversible). |
-| `zendesk_organizations_memberships_create` | write | Links a user to an organization. |
-| `zendesk_organizations_memberships_create_many` | write | Creates up to 100 organization memberships as an async job. |
-| `zendesk_organizations_memberships_delete` | **destructive** | Removes an organization membership by its membership id. |
-| `zendesk_organizations_memberships_delete_many` | **destructive** | Removes up to 100 organization memberships as an async job. |
-| `zendesk_organizations_memberships_make_default` | write | Makes an organization membership the user's default. |
+| `organizations_create` | write | Creates a Zendesk organization. |
+| `organizations_create_many` | write | Creates up to 100 Zendesk organizations as an async job. |
+| `organizations_create_or_update` | write | Creates or updates a Zendesk organization, matching by id or external id. |
+| `organizations_update` | write | Updates a Zendesk organization by id. |
+| `organizations_update_many` | write | Applies the same change to up to 100 organizations as an async job. |
+| `organizations_update_many_batch` | write | Applies per-organization changes to up to 100 organizations as an async job. |
+| `organizations_delete` | **destructive** | Deletes a Zendesk organization by id (permanent; no restore). |
+| `organizations_delete_many` | **destructive** | Deletes up to 100 Zendesk organizations as an async job (permanent). |
+| `organizations_merge` | **destructive** | Merges one Zendesk organization into another (irreversible). |
+| `organizations_memberships_create` | write | Links a user to an organization. |
+| `organizations_memberships_create_many` | write | Creates up to 100 organization memberships as an async job. |
+| `organizations_memberships_delete` | **destructive** | Removes an organization membership by its membership id. |
+| `organizations_memberships_delete_many` | **destructive** | Removes up to 100 organization memberships as an async job. |
+| `organizations_memberships_make_default` | write | Makes an organization membership the user's default. |
 
 #### Groups
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_groups_create` | write | Creates a Zendesk group. |
-| `zendesk_groups_update` | write | Updates a Zendesk group by id. |
-| `zendesk_groups_delete` | **destructive** | Soft-deletes a Zendesk group by id. |
-| `zendesk_groups_memberships_create` | write | Assigns an agent to a group. |
-| `zendesk_groups_memberships_create_many` | write | Assigns up to 100 agents to groups as an async job. |
-| `zendesk_groups_memberships_delete` | **destructive** | Removes a group membership by its membership id. |
-| `zendesk_groups_memberships_delete_many` | **destructive** | Removes up to 100 group memberships as an async job. |
-| `zendesk_groups_memberships_make_default` | write | Makes a group membership the agent's default. |
+| `groups_create` | write | Creates a Zendesk group. |
+| `groups_update` | write | Updates a Zendesk group by id. |
+| `groups_delete` | **destructive** | Soft-deletes a Zendesk group by id. |
+| `groups_memberships_create` | write | Assigns an agent to a group. |
+| `groups_memberships_create_many` | write | Assigns up to 100 agents to groups as an async job. |
+| `groups_memberships_delete` | **destructive** | Removes a group membership by its membership id. |
+| `groups_memberships_delete_many` | **destructive** | Removes up to 100 group memberships as an async job. |
+| `groups_memberships_make_default` | write | Makes a group membership the agent's default. |
 
 #### Ticket forms
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_forms_create` | write | Creates a Zendesk ticket form. |
-| `zendesk_forms_update` | write | Updates a Zendesk ticket form. |
-| `zendesk_forms_delete` | **destructive** | Deletes a Zendesk ticket form. |
-| `zendesk_forms_clone` | write | Clones a Zendesk ticket form. |
+| `forms_create` | write | Creates a Zendesk ticket form. |
+| `forms_update` | write | Updates a Zendesk ticket form. |
+| `forms_delete` | **destructive** | Deletes a Zendesk ticket form. |
+| `forms_clone` | write | Clones a Zendesk ticket form. |
 
 #### Ticket fields
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_ticket_fields_create` | write | Creates a Zendesk ticket field. |
-| `zendesk_ticket_fields_update` | write | Updates a Zendesk ticket field. |
-| `zendesk_ticket_fields_delete` | **destructive** | Deletes a Zendesk ticket field (irreversible; strips its values from every ticket). |
-| `zendesk_ticket_fields_options_set` | write | Creates or updates a single custom field option on a drop-down ticket field. |
-| `zendesk_ticket_fields_options_delete` | **destructive** | Deletes a custom field option from a drop-down ticket field. |
+| `ticket_fields_create` | write | Creates a Zendesk ticket field. |
+| `ticket_fields_update` | write | Updates a Zendesk ticket field. |
+| `ticket_fields_delete` | **destructive** | Deletes a Zendesk ticket field (irreversible; strips its values from every ticket). |
+| `ticket_fields_options_create_or_update` | write | Creates or updates a single custom field option on a drop-down ticket field. |
+| `ticket_fields_options_delete` | **destructive** | Deletes a custom field option from a drop-down ticket field. |
 
 #### Macros
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_macros_create` | write | Creates a Zendesk macro. |
-| `zendesk_macros_update` | write | Updates a Zendesk macro. |
-| `zendesk_macros_delete` | **destructive** | Deletes a Zendesk macro. |
+| `macros_create` | write | Creates a Zendesk macro. |
+| `macros_update` | write | Updates a Zendesk macro. |
+| `macros_delete` | **destructive** | Deletes a Zendesk macro. |
 
 #### Views
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_views_create` | write | Creates a Zendesk view. |
-| `zendesk_views_update` | write | Updates a Zendesk view by id. |
-| `zendesk_views_delete` | **destructive** | Deletes a Zendesk view by id. |
+| `views_create` | write | Creates a Zendesk view. |
+| `views_update` | write | Updates a Zendesk view by id. |
+| `views_delete` | **destructive** | Deletes a Zendesk view by id. |
 
 #### Brands
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_brands_create` | write | Creates a Zendesk brand. |
-| `zendesk_brands_update` | write | Updates a Zendesk brand by id. |
-| `zendesk_brands_delete` | **destructive** | Soft-deletes a Zendesk brand by id. |
+| `brands_create` | write | Creates a Zendesk brand. |
+| `brands_update` | write | Updates a Zendesk brand by id. |
+| `brands_delete` | **destructive** | Soft-deletes a Zendesk brand by id. |
 
 #### Custom statuses
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_custom_statuses_create` | write | Creates a Zendesk custom ticket status. |
-| `zendesk_custom_statuses_update` | write | Updates a Zendesk custom ticket status by id. |
-| `zendesk_custom_statuses_delete` | **destructive** | Deletes a Zendesk custom ticket status by id. |
+| `custom_statuses_create` | write | Creates a Zendesk custom ticket status. |
+| `custom_statuses_update` | write | Updates a Zendesk custom ticket status by id. |
+| `custom_statuses_delete` | **destructive** | Deletes a Zendesk custom ticket status by id. |
 
 #### Suspended tickets
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_suspended_tickets_recover` | write | Recovers a suspended ticket into a real ticket. |
-| `zendesk_suspended_tickets_recover_many` | write | Recovers up to 100 suspended tickets, preserving their original requesters. |
-| `zendesk_suspended_tickets_delete` | **destructive** | Deletes a suspended ticket by id. |
-| `zendesk_suspended_tickets_delete_many` | **destructive** | Deletes up to 100 suspended tickets. |
+| `suspended_tickets_recover` | write | Recovers a suspended ticket into a real ticket. |
+| `suspended_tickets_recover_many` | write | Recovers up to 100 suspended tickets, preserving their original requesters. |
+| `suspended_tickets_delete` | **destructive** | Deletes a suspended ticket by id. |
+| `suspended_tickets_delete_many` | **destructive** | Deletes up to 100 suspended tickets. |
 
 #### Uploads
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `zendesk_uploads_create` | write | Uploads a file (base64 content) and returns a token for attaching to a ticket comment. |
-| `zendesk_uploads_delete` | **destructive** | Deletes an unconsumed upload by its token. |
+| `uploads_create` | write | Uploads a file (base64 content) and returns a token for attaching to a ticket comment. |
+| `uploads_delete` | **destructive** | Deletes an unconsumed upload by its token. |
 
 ## Run
 
