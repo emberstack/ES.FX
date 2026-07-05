@@ -28,10 +28,16 @@ public sealed class ZendeskTicketTools(IZendeskClient zendeskApiClient)
     [McpServerTool(Name = "zendesk_tickets_search", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Searches Zendesk tickets using the Zendesk search query syntax; the query is automatically scoped to " +
-        "tickets. Examples: \"status:open priority:high\", \"requester:jane@example.com\", \"created>2026-01-01\", " +
-        "\"tags:vip\". Returns a page of tickets plus the total count. Read-only.")]
+        "tickets. Ordering is controlled ONLY by the sortBy/sortOrder parameters — Zendesk search has NO in-query " +
+        "sort operator, so never put 'order:' or 'sort:' in the query (they are parsed as free-text terms and " +
+        "silently shrink the result set). For the most recent N tickets: query \"created>2000-01-01\", sortBy " +
+        "\"created_at\", sortOrder \"desc\", perPage N. Other examples: \"status:open priority:high\", " +
+        "\"requester:jane@example.com\", \"tags:vip\". Returns a page of tickets plus the total match count in " +
+        "'count' (compare it against the page length to tell 'few matches' from 'more pages available'). Read-only.")]
     public Task<ZendeskTicketSearchResults> Search(
-        [Description("The Zendesk search query (type:ticket is added automatically).")]
+        [Description(
+            "The Zendesk search query in Zendesk search syntax (type:ticket is added automatically). Field " +
+            "selectors only — do NOT include sort/order operators; order with sortBy/sortOrder instead.")]
         string query,
         [Description("Sort field: created_at, updated_at, priority, status, or ticket_type (optional).")]
         string? sortBy = null,
