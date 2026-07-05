@@ -30,7 +30,7 @@ lower one, never the reverse — so you can adopt any layer in isolation.
 | **Additions** (`ES.FX.Additions.*`) | Focused, low-opinion helpers — each package augments exactly **one** third-party dependency and nothing else. | [Additions catalog](./additions/index.md) |
 | **Hosting** (`ES.FX.Hosting`) | `ProgramEntry` / `ProgramEntryBuilder` — a lifecycle wrapper around `Main` with structured startup, error handling, and graceful shutdown. | [Application hosting](./development/hosting.md) |
 | **Ignite** (`ES.FX.Ignite` + Sparks) | The opinionated bootstrap and its pluggable **Sparks** — self-contained service integrations that bind config, register DI, add health checks, and wire OpenTelemetry. | [Ignite overview](./ignite/index.md) |
-| **Feature libraries** | Standalone libraries independent of Ignite: **Transactional Outbox**, **Migrations**, and the **Zendesk API client**. | [Framework libraries](./libraries/index.md) |
+| **Feature libraries** | Standalone libraries independent of Ignite: **Transactional Outbox**, **Migrations**, the **Zendesk API client**, and the **Hermes Agent API client**. | [Framework libraries](./libraries/index.md) |
 
 ## Meet Ignite
 
@@ -67,8 +67,9 @@ For the full walkthrough, see the [Quickstart](./getting-started/quickstart.md) 
 | Plug a service into Ignite | [Sparks catalog](./ignite/sparks/index.md) |
 | Add a helper for a specific third-party library | [Additions catalog](./additions/index.md) |
 | Use the core error-handling and primitive types | [Results & Problems](./development/results-and-problems.md), [Primitives](./development/primitives.md) |
-| Use a standalone feature library | [Transactional Outbox](./libraries/transactional-outbox.md), [Migrations](./libraries/migrations.md), [Zendesk client](./libraries/zendesk-client.md) |
+| Use a standalone feature library | [Transactional Outbox](./libraries/transactional-outbox.md), [Migrations](./libraries/migrations.md), [Zendesk client](./libraries/zendesk-client.md), [Hermes Agent client](./libraries/hermes-agent-client.md) |
 | Expose Zendesk to an AI agent (MCP server) | [Zendesk MCP server](./libraries/zendesk-mcp-server.md) |
+| Drive a Nous Research Hermes agent from .NET | [Hermes Agent client](./libraries/hermes-agent-client.md) → [Hermes Agent Spark](./ignite/sparks/hermes-agent.md) |
 | Build, test, or contribute to the framework | [Development guide](./development/index.md) |
 
 ## See also

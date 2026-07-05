@@ -13,6 +13,7 @@
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.MassTransit/ES.FX.TransactionalOutbox.MassTransit.csproj" Id="513497bb-2cd5-49e5-84a3-98bd5eea6f42" />
     <Project Path="src/ES.FX.TransactionalOutbox/ES.FX.TransactionalOutbox.csproj" Id="cbbc21f8-48f8-4d63-af6b-e64c33da8e4d" />
+    <Project Path="src/ES.FX.NousResearch.HermesAgent/ES.FX.NousResearch.HermesAgent.csproj" />
     <Project Path="src/ES.FX.Zendesk/ES.FX.Zendesk.csproj" />
     <Project Path="src/ES.FX/ES.FX.csproj" />
   </Folder>
@@ -56,6 +57,7 @@
     <Project Path="src/ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer/ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/ES.FX.Ignite.Microsoft.EntityFrameworkCore/ES.FX.Ignite.Microsoft.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.Ignite.Migrations/ES.FX.Ignite.Migrations.csproj" />
+    <Project Path="src/ES.FX.Ignite.NousResearch.HermesAgent/ES.FX.Ignite.NousResearch.HermesAgent.csproj" />
     <Project Path="src/ES.FX.Ignite.NSwag/ES.FX.Ignite.NSwag.csproj" />
     <Project Path="src/ES.FX.Ignite.OpenTelemetry.Exporter.Seq/ES.FX.Ignite.OpenTelemetry.Exporter.Seq.csproj" />
     <Project Path="src/ES.FX.Ignite.Serilog/ES.FX.Ignite.Serilog.csproj" />
@@ -142,6 +144,10 @@
   </Folder>
   <Folder Name="/tests/MCP/">
     <Project Path="tests/ES.FX.Zendesk.MCP.Host.Tests/ES.FX.Zendesk.MCP.Host.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/NousResearch/">
+    <Project Path="tests/ES.FX.NousResearch.HermesAgent.Tests/ES.FX.NousResearch.HermesAgent.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.NousResearch.HermesAgent.Tests/ES.FX.Ignite.NousResearch.HermesAgent.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Zendesk/">
     <Project Path="tests/ES.FX.Zendesk.Tests/ES.FX.Zendesk.Tests.csproj" />

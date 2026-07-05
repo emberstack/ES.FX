@@ -13,7 +13,7 @@ Markdown. Use it as the source of truth for architecture and usage instead of du
 - **Additions** (one-per-dependency helpers) → [`docs/additions/`](docs/additions/index.md)
 - **Ignite & Sparks** (the bootstrap, configuration model, per-Spark reference, *creating a Spark*) →
   [`docs/ignite/`](docs/ignite/index.md)
-- **Feature libraries** (Transactional Outbox, Migrations, Zendesk API client) → [`docs/libraries/`](docs/libraries/index.md)
+- **Feature libraries** (Transactional Outbox, Migrations, Zendesk API client, Hermes Agent API client) → [`docs/libraries/`](docs/libraries/index.md)
 
 > **Keep the docs in sync.** `docs/` is a first-class deliverable, not an afterthought. When you add,
 > change, or remove a public API, package, Spark, or convention, update the matching `docs/` page **in the
@@ -72,8 +72,8 @@ Five independently consumable layers; dependencies point downward only:
    handling, and graceful shutdown. → [`docs/development/hosting.md`](docs/development/hosting.md)
 4. **ES.FX.Ignite** (+ `ES.FX.Ignite.Spark` base + the `ES.FX.Ignite.{Provider}` **Sparks**) — the
    opinionated bootstrap. → [`docs/ignite/`](docs/ignite/index.md)
-5. **Feature libraries** — Transactional Outbox, Migrations, and the Zendesk API client, usable without
-   Ignite. → [`docs/libraries/`](docs/libraries/index.md)
+5. **Feature libraries** — Transactional Outbox, Migrations, the Zendesk API client, and the Hermes
+   Agent API client, usable without Ignite. → [`docs/libraries/`](docs/libraries/index.md)
 
 Ignite activates in **two phases**: `builder.Ignite(...)` on `IHostApplicationBuilder` (pre-build), then
 `app.Ignite()` on `IHost` (post-build). A **Spark** plugs a service into Ignite (config binding, DI
@@ -87,6 +87,12 @@ A newer Zendesk vertical spans the layers: `ES.FX.Zendesk` (typed Zendesk API cl
 deployable MCP server app exposing the client as 168 read/write MCP tools,
 [`docs/libraries/zendesk-mcp-server.md`](docs/libraries/zendesk-mcp-server.md); its MCP wiring is
 host-inline — there is no MCP Spark package).
+
+A NousResearch Hermes Agent vertical follows the same pattern (client + Spark, no MCP host):
+`ES.FX.NousResearch.HermesAgent` (typed Hermes Agent API client,
+[`docs/libraries/hermes-agent-client.md`](docs/libraries/hermes-agent-client.md)) and
+`ES.FX.Ignite.NousResearch.HermesAgent` (its Spark,
+[`docs/ignite/sparks/hermes-agent.md`](docs/ignite/sparks/hermes-agent.md)).
 
 ## Conventions & Build Configuration
 

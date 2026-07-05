@@ -262,7 +262,7 @@ Disable it via configuration (`Ignite:Zendesk:Settings:Tracing:Enabled = false`)
 ### Resilience
 
 Ignite applies the standard resilience handler to **every** `HttpClient` by default
-(`Ignite:HttpClient:StandardResilienceHandlerEnabled`), including this one — transient failures and
+(`Ignite:Settings:HttpClient:StandardResilienceHandlerEnabled`), including this one — transient failures and
 `429 Too Many Requests` are retried honoring `Retry-After`, with no Spark-specific wiring. When
 retries are exhausted, the thrown `ZendeskApiException` still carries the last `RetryAfter` hint.
 

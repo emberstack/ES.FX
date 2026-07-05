@@ -149,7 +149,7 @@ jobs:
       - name: artifacts - nuget - gather
         run: |
           mkdir -p .artifacts/nuget
-          find . -name "*.nupkg" -exec cp {} .artifacts/nuget/ \;
+          find . -name "*.nupkg" -not -path "./.artifacts/*" -exec cp {} .artifacts/nuget/ \;
 
       - name: artifacts - nuget - upload
         uses: actions/upload-artifact@v7

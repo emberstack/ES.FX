@@ -67,7 +67,7 @@ A curated `NoWarn` list suppresses the noisier XML-doc diagnostics (`CS1591` and
 Any project whose name starts with `ES.FX` and does **not** contain `.Tests` is a package project. `Directory.Build.props` turns these into packages automatically:
 
 - `GeneratePackageOnBuild` is `true` — building the project also produces the `.nupkg`. No separate `dotnet pack` step is required.
-- Packages are written to `.artifacts/nuget` (relative to the solution root, via `PackageOutputDir`).
+- Packages are written to `.artifacts/nuget` (at the repo root, via `PackageOutputPath`).
 - Every package embeds the repo-root `README.md` (`PackageReadmeFile`) and `package.icon.png` (`PackageIcon`), is `Authors=emberstack` / `Company=EmberStack`, MIT-licensed (`PackageLicenseExpression=MIT`), and points `RepositoryUrl` at the GitHub repo.
 
 Test projects (`*.Tests`) opt out: `GeneratePackageOnBuild` is forced back to `false`, they are decorated with `[ExcludeFromCodeCoverage]`, and they emit a per-project TRX logger to `.artifacts/TestResults`.

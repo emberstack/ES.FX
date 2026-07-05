@@ -1,6 +1,6 @@
 ---
 title: Framework libraries
-description: The standalone ES.FX feature libraries — Transactional Outbox, Migrations, and the Zendesk API client — and how to use their public APIs.
+description: The standalone ES.FX feature libraries — Transactional Outbox, Migrations, the Zendesk API client, and the Hermes Agent API client — and how to use their public APIs.
 ---
 
 ES.FX ships a small set of standalone feature libraries that solve one recurring problem each and stand
@@ -15,6 +15,7 @@ into Ignite when you want it to.
 | [**Transactional Outbox**](./transactional-outbox.md) | `ES.FX.TransactionalOutbox` (+ `.EntityFrameworkCore`, provider packages, `.MassTransit`) | Reliable message dispatch tied to your EF Core transaction — enqueue a message in the same `SaveChanges` that writes your data, then a hosted service delivers it. |
 | [**Migrations**](./migrations.md) | `ES.FX.Migrations` (+ `ES.FX.Ignite.Migrations`) | A DI-driven migration runner: implement `IMigrationsTask`, register it, and a hosted service applies every task at startup. |
 | [**Zendesk API client**](./zendesk-client.md) | `ES.FX.Zendesk` (+ `ES.FX.Ignite.Zendesk` Spark) | A typed, OAuth-authenticated client for the Zendesk Support REST API — resource-grouped operations, typed errors with `Retry-After`, and OpenTelemetry tracing. |
+| [**Hermes Agent API client**](./hermes-agent-client.md) | `ES.FX.NousResearch.HermesAgent` (+ `ES.FX.Ignite.NousResearch.HermesAgent` Spark) | A typed client for the Nous Research Hermes Agent API server — chat completions, Responses API, asynchronous runs, scheduled jobs, sessions and discovery, with `await foreach` streaming, typed errors, and OpenTelemetry tracing. |
 
 Each library is independently consumable and has its own page below with the full end-to-end walkthrough.
 
@@ -77,6 +78,27 @@ validation. It is an application, not a package.
 
 ---
 
+## Hermes Agent API client
+
+The [Hermes Agent API client](./hermes-agent-client.md) is a typed client for the
+[Nous Research Hermes Agent](https://github.com/NousResearch/hermes-agent) API server, built on
+`IHttpClientFactory`. Register it with `AddHermesAgentClient()` and inject `IHermesAgentClient` — six
+resource-grouped areas (`Chat`, `Responses`, `Runs`, `Jobs`, `Sessions`, `Server`) mirroring the server's
+endpoint groups: the OpenAI-compatible `/v1` surface (chat completions, Responses API, asynchronous runs,
+discovery/health) plus the `/api` scheduled-jobs and sessions surfaces. Streaming endpoints are consumed
+as typed `IAsyncEnumerable<…>` event hierarchies with `await foreach` (unknown event types degrade
+gracefully instead of throwing), authentication is a static bearer key, errors surface as a typed
+`HermesAgentApiException` (status, body, parsed error from both server envelopes, `Retry-After`), and
+every operation is traced via OpenTelemetry.
+
+See the [Hermes Agent API client](./hermes-agent-client.md) page for the full walkthrough: registration
+and keyed multi-server instances, the six API areas with streaming samples, configuration and `ApiKey`
+secret hygiene, error handling and idempotency, the server quirks that affect consumers, and
+observability. The [Hermes Agent Spark](../ignite/sparks/hermes-agent.md) page covers the Ignite
+integration (config binding, startup validation, live health check, tracing).
+
+---
+
 ## See also
 
 - [Transactional Outbox](./transactional-outbox.md)
@@ -84,6 +106,8 @@ validation. It is an application, not a package.
 - [Zendesk API client](./zendesk-client.md)
 - [Zendesk Spark](../ignite/sparks/zendesk.md)
 - [Zendesk MCP server](./zendesk-mcp-server.md)
+- [Hermes Agent API client](./hermes-agent-client.md)
+- [Hermes Agent Spark](../ignite/sparks/hermes-agent.md)
 - [Transactional Outbox — EF Core additions](../additions/entity-framework-core.md)
 - [MassTransit additions](../additions/masstransit.md)
 - [Entity Framework Core Spark](../ignite/sparks/entity-framework-core.md)
