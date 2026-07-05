@@ -107,7 +107,7 @@ server behavior lives under `Mcp`. All keys are environment-overridable (`__` ma
       "OAuth": {                        // OAuth 2.0 client_credentials (confidential client)
         "ClientId": "***",
         "ClientSecret": "***",
-        "Scope": "read"                 // use "read write" to enable the write tools
+        "Scope": "read write"           // full tool surface; drop "write" for a read-only client
       }
     }
   },
