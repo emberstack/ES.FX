@@ -26,6 +26,9 @@ namespace ES.FX.Zendesk.MCP.Host.Tests.Hosting;
 [Collection(HostEnvironmentCollection.Name)]
 public class McpAreaGatingTests
 {
+    /// <summary>Maximum area indices this class ever sets — cleared in full so no index leaks between tests.</summary>
+    private const int MaxAreaIndex = 4;
+
     private static WebApplicationFactory<Program> CreateFactory() =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
@@ -79,8 +82,8 @@ public class McpAreaGatingTests
                 .ToHashSet();
 
             Assert.NotEmpty(registered);
-            Assert.Empty(ticketTools.Except(registered));            // every ticket tool present
-            Assert.Empty(registered.Except(ticketTools));            // and nothing outside the tickets area
+            Assert.Empty(ticketTools.Except(registered)); // every ticket tool present
+            Assert.Empty(registered.Except(ticketTools)); // and nothing outside the tickets area
             Assert.All(registered, name => Assert.Equal("tickets", ZendeskToolArea.OfToolName(name)));
             // search_count is a search-area tool and must NOT leak in with tickets.
             Assert.DoesNotContain("search_count", registered);
@@ -144,9 +147,6 @@ public class McpAreaGatingTests
             ClearHostEnvironment();
         }
     }
-
-    /// <summary>Maximum area indices this class ever sets — cleared in full so no index leaks between tests.</summary>
-    private const int MaxAreaIndex = 4;
 
     /// <summary>Sets <c>Mcp__Tools__Areas__{index}</c> for each supplied area (positional).</summary>
     private static void SetAreas(params string[] areas)

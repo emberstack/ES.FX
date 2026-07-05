@@ -14,7 +14,7 @@ into Ignite when you want it to.
 | --- | --- | --- |
 | [**Transactional Outbox**](./transactional-outbox.md) | `ES.FX.TransactionalOutbox` (+ `.EntityFrameworkCore`, provider packages, `.MassTransit`) | Reliable message dispatch tied to your EF Core transaction — enqueue a message in the same `SaveChanges` that writes your data, then a hosted service delivers it. |
 | [**Migrations**](./migrations.md) | `ES.FX.Migrations` (+ `ES.FX.Ignite.Migrations`) | A DI-driven migration runner: implement `IMigrationsTask`, register it, and a hosted service applies every task at startup. |
-| [**Zendesk API client**](./zendesk-client.md) | `ES.FX.Zendesk` (+ `ES.FX.Ignite.Zendesk` Spark) | A typed, OAuth-authenticated client for the Zendesk Support REST API — resource-grouped operations, typed errors with `Retry-After`, and OpenTelemetry tracing. |
+| [**Zendesk API client**](./zendesk-client.md) | `ES.FX.Zendesk` (+ `ES.FX.Ignite.Zendesk` Spark) | Kiota-generated clients covering the complete Zendesk Support and Help Center REST APIs — typed request builders, OAuth `client_credentials`, typed errors with `Retry-After`, and OpenTelemetry tracing. |
 | [**Hermes Agent API client**](./hermes-agent-client.md) | `ES.FX.NousResearch.HermesAgent` (+ `ES.FX.Ignite.NousResearch.HermesAgent` Spark) | A typed client for the Nous Research Hermes Agent API server — chat completions, Responses API, asynchronous runs, scheduled jobs, sessions and discovery, with `await foreach` streaming, typed errors, and OpenTelemetry tracing. |
 
 Each library is independently consumable and has its own page below with the full end-to-end walkthrough.
@@ -57,24 +57,27 @@ runner from the Ignite Spark angle.
 
 ## Zendesk API client
 
-The [Zendesk API client](./zendesk-client.md) is a typed client for the Zendesk Support REST API and
-Help Center, built on `IHttpClientFactory`. Register it with `AddZendeskClient()` and inject
-`IZendeskClient` — seventeen resource-grouped areas (`Tickets`, `Users`, `Organizations`, `Groups`,
-`Search`, `Views`, `Articles`, `TicketFields`, `Macros`, `Forms`, `Brands`, `CustomStatuses`,
-`JobStatuses`, `Tags`, `SuspendedTickets`, `Uploads`, `Attachments`) covering reads **and** writes that
-mirror the Zendesk API, with offset **and** cursor pagination, OAuth `client_credentials`
-authentication (cached, single-flight token refresh), a typed `ZendeskApiException` (status, body,
-`Retry-After`), and OpenTelemetry tracing.
+The [Zendesk API client](./zendesk-client.md) ships two
+[Kiota](https://learn.microsoft.com/en-us/openapi/kiota/)-generated clients covering the complete
+Zendesk REST API, built on `IHttpClientFactory`: `ZendeskSupportApiClient` (the full Support API — 614
+operations) and `ZendeskHelpCenterApiClient` (the full Help Center API — 177 operations). Register them
+with `AddZendeskClient()` and navigate the typed request builders, which mirror the API's URL structure
+(`zendesk.Api.V2.Tickets[id].GetAsync(…)`). A curated rim adds what the generator cannot: OAuth
+`client_credentials` authentication (cached, single-flight token refresh), a typed
+`ZendeskApiException` (status, body, `Retry-After`), authenticated attachment-content downloads, and
+OpenTelemetry tracing.
 
 See the [Zendesk API client](./zendesk-client.md) page for the full walkthrough: registration and keyed
-multi-tenant instances, the resource areas, configuration and secret hygiene, the OAuth model, error
-handling and rate limits, and observability. The [Zendesk Spark](../ignite/sparks/zendesk.md) page
-covers the Ignite integration (config binding, startup validation, live health check, tracing).
+multi-tenant instances, request-builder usage, the raw-JSON escape hatch and the re-serialization
+hazard, configuration and secret hygiene, the OAuth model, error handling and rate limits, and
+observability. The [Zendesk Spark](../ignite/sparks/zendesk.md) page covers the Ignite integration
+(config binding, startup validation, live health check, tracing).
 
 For exposing Zendesk to an AI agent, the [Zendesk MCP server](./zendesk-mcp-server.md) is a deployable
-[Model Context Protocol](https://modelcontextprotocol.io) host — built on this client and Ignite — that
-publishes the full client surface as 168 read and write MCP tools, with execution-mode gating and Origin
-validation. It is an application, not a package.
+[Model Context Protocol](https://modelcontextprotocol.io) host — built on the generated clients and
+Ignite — that publishes 172 read and write MCP tools with lean-first responses (summary rows by
+default, full records on request), execution-mode gating, and Origin validation. It is an application,
+not a package.
 
 ---
 

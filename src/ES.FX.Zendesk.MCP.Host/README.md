@@ -1,22 +1,25 @@
 # ES.FX.Zendesk.MCP.Host
 
 A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that exposes Zendesk Support as
-namespaced MCP tools — the **full read and write surface** of the `ES.FX.Zendesk` client. Built on
+namespaced MCP tools — a **curated read and write surface** (**172 tools** across 17 resource areas)
+built on the Kiota-generated `ES.FX.Zendesk` clients. Built on
 **ES.FX.Ignite** and the official
 [`ModelContextProtocol.AspNetCore`](https://www.nuget.org/packages/ModelContextProtocol.AspNetCore) SDK, served
 over the Streamable HTTP transport.
 
 > This is a runnable application (not a published NuGet package). It consumes:
-> - **`ES.FX.Zendesk`** — the reusable, HttpClientFactory-based Zendesk API client (supports multiple named/keyed instances).
-> - **`ES.FX.Ignite.Zendesk`** — the Ignite Spark that binds/wires the client (`builder.IgniteZendeskClient(name?, serviceKey?)`).
+> - **`ES.FX.Zendesk`** — the reusable, HttpClientFactory-based Zendesk API clients: the Kiota-generated
+>   `ZendeskSupportApiClient` / `ZendeskHelpCenterApiClient` plus the curated OAuth/error-handling rim
+>   (supports multiple named/keyed instances).
+> - **`ES.FX.Ignite.Zendesk`** — the Ignite Spark that binds/wires the clients (`builder.IgniteZendeskClient(name?, serviceKey?)`).
 >
 > The MCP server itself is wired directly in this app (`Hosting/McpServerHostingExtensions.cs`) rather than a
 > standalone package, since an MCP server is only meaningful as part of a concrete implementation.
 
 ## Tools
 
-**168 tools** named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` (snake_case, no product
-prefix — MCP clients namespace by server): **81 read tools** (`ReadOnly = true`) and **87 write tools**
+**172 tools** named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` (snake_case, no product
+prefix — MCP clients namespace by server): **85 read tools** (`ReadOnly = true`) and **87 write tools**
 (`ReadOnly = false`, with truthful `Destructive`/`Idempotent` annotations). Every read tool ends in a
 controlled read verb (`get`/`list`/`search`/`count`/`export`/`autocomplete`); any other verb denotes a write,
 so a tool's risk class is legible from its name (and enforced by a test). Write tools are gated by the
@@ -27,10 +30,14 @@ can be narrowed further by resource area via `Mcp:Tools:Areas` — see the
 
 Conventions shared by all tools:
 
-- **Pagination** — offset-paginated tools take `page`/`perPage` and return `count` + `next_page` (search-style
-  tools default `perPage` to 25); cursor-paginated tools take `pageSize`/`afterCursor` and return
-  `meta.has_more` + `meta.after_cursor`. `ticket_fields_list` takes no paging parameters and returns
-  the full set in one call (a documented Zendesk exception).
+- **Lean responses** — list/search tools return allowlist summary rows in a uniform metadata-first envelope
+  (`detail`/`count`/`has_more`/`after_cursor`|`next_page`/`note`/`items`); pass `detail:'full'`, or call the
+  per-record `*_get` tool, for complete records. Write tools return minimal confirmations. See the
+  [lean responses guide](../../docs/libraries/zendesk-mcp-server.md#lean-responses).
+- **Pagination** — offset-paginated tools take `page`/`perPage`; cursor-paginated tools take
+  `pageSize`/`afterCursor`. The envelope reports `has_more` plus exactly one continuation field:
+  `next_page` (a page number) or `after_cursor`. Page-size defaults are explicit per tool (25 for entity
+  lists; smaller for heavy rows; never Zendesk's implicit 100).
 - **Sideloads** — list/read tools accept `include` (e.g. `users`, `groups`, `organizations`) where the Zendesk
   endpoint supports it, returning sibling arrays that remove per-id follow-up lookups.
 - **Errors** — Zendesk failures surface to the agent with the real HTTP status and response body (never the
@@ -38,16 +45,16 @@ Conventions shared by all tools:
 - **Bulk writes** — bulk operations (≤100 items unless noted) return a `job_status`; poll
   `job_statuses_get` until `completed`/`failed`.
 
-### Read tools (81)
+### Read tools (85)
 
 | Area | Tools |
 | --- | --- |
 | Users (15) | `users_me_get`, `users_get`, `users_get_many`, `users_search`, `users_tickets_requested_list`, `users_list`, `users_count`, `users_autocomplete`, `users_related_get`, `users_identities_list`, `users_groups_list`, `users_organizations_list`, `users_tickets_assigned_list`, `users_tickets_ccd_list`, `users_tags_list` |
 | Tickets (16) | `tickets_get`, `tickets_search`, `tickets_comments_list`, `tickets_audits_list`, `tickets_metrics_get`, `tickets_metric_events_export`, `tickets_incidents_list`, `tickets_side_conversations_list`, `tickets_list`, `tickets_get_many`, `tickets_count`, `tickets_get_by_external_id`, `tickets_collaborators_list`, `tickets_comments_count`, `tickets_export_incremental`, `tickets_search_export` (cursor-only deep export, no 1k cap) |
-| Organizations (11) | `organizations_get`, `organizations_tickets_list`, `organizations_list`, `organizations_count`, `organizations_get_many`, `organizations_get_by_name_or_external_id`, `organizations_autocomplete`, `organizations_users_list`, `organizations_memberships_list`, `organizations_merges_get`, `organizations_tags_list` |
-| Groups (6) | `groups_list`, `groups_get`, `groups_memberships_list`, `groups_assignable_list`, `groups_count`, `groups_users_list` |
+| Organizations (13) | `organizations_get`, `organizations_tickets_list`, `organizations_tickets_count`, `organizations_list`, `organizations_count`, `organizations_get_many`, `organizations_get_by_name_or_external_id`, `organizations_autocomplete`, `organizations_users_list`, `organizations_users_count`, `organizations_memberships_list`, `organizations_merges_get`, `organizations_tags_list` |
+| Groups (7) | `groups_list`, `groups_get`, `groups_memberships_list`, `groups_assignable_list`, `groups_count`, `groups_users_list`, `groups_users_count` |
 | Help Center (7) | `articles_search`, `articles_get`, `articles_list`, `articles_sections_list`, `articles_sections_get`, `articles_categories_list`, `articles_categories_get` |
-| Ticket fields (3) | `ticket_fields_list`, `ticket_fields_get`, `ticket_fields_options_list` |
+| Ticket fields (4) | `ticket_fields_list`, `ticket_fields_get`, `ticket_fields_get_many`, `ticket_fields_options_list` |
 | Macros (3) | `macros_list`, `macros_get`, `macros_list_active` |
 | Forms (2) | `forms_list`, `forms_get` |
 | Views (4) | `views_list`, `views_get`, `views_tickets_list`, `views_count` |
@@ -94,7 +101,7 @@ environment-overridable (`__` maps to `:`, e.g. `Ignite__Zendesk__OAuth__ClientS
       },
       "Settings": {
         "HealthChecks": { "Enabled": true },   // live GET /users/me on /health/ready
-        "Tracing": { "Enabled": true }         // ES.FX.Zendesk ActivitySource
+        "Tracing": { "Enabled": true }         // both Zendesk tracing sources (curated + Kiota adapter)
       }
     }
   },
@@ -106,6 +113,11 @@ environment-overridable (`__` maps to `:`, e.g. `Ignite__Zendesk__OAuth__ClientS
       "Mode": "Default",                    // Default | DryRun | ReadOnly (gates write tools)
       "AllowHeaderOverride": true,
       "HeaderName": "X-Mcp-Execution-Mode"
+    },
+    "Tools": {
+      "Areas": [],                          // [] = all areas; e.g. ["tickets","users"] registers only those
+      "MaxResponseChars": 60000,            // response-size budget per tool response (min 1000)
+      "MaxResponseCharsByTool": {}          // per-tool overrides, keyed by tool name (case-insensitive)
     }
   }
 }
@@ -113,7 +125,8 @@ environment-overridable (`__` maps to `:`, e.g. `Ignite__Zendesk__OAuth__ClientS
 
 For multiple Zendesk accounts, register additional keyed instances, e.g.
 `builder.IgniteZendeskClient(name: "sandbox", serviceKey: "sandbox")` bound at `Ignite:Zendesk:sandbox`,
-resolved via `GetRequiredKeyedService<IZendeskClient>("sandbox")`.
+resolved via `GetRequiredKeyedService<ZendeskSupportApiClient>("sandbox")` (and likewise for
+`ZendeskHelpCenterApiClient` / `IRequestAdapter`).
 
 ### Authentication (OAuth 2.0 client credentials)
 
@@ -149,7 +162,7 @@ The server enforces a baseline **execution mode** and a request may only ever ma
 | Mode | Read tools | Write tools |
 | --- | --- | --- |
 | `Default` | run | perform changes |
-| `DryRun` | run | **no changes made** — return an explicit `{"status":"dry_run","executed":false,…}` payload describing what would have happened, echoing the request |
+| `DryRun` | run | **no changes made** — return an explicit `{"status":"dry_run","executed":false,…}` payload describing what would have happened (verbatim request echo for single-entity writes, a compact digest for bulk `*_many` writes) |
 | `ReadOnly` | run | **not registered** (baseline) / **rejected** (per-request header) |
 
 A per-request header (`X-Mcp-Execution-Mode: dry-run` \| `read-only`) can tighten the mode but never relax the
@@ -203,6 +216,7 @@ via environment variables or your orchestrator's secret store.
 
 ## Observability
 
-Logging via Serilog; OpenTelemetry traces/metrics via Ignite. The Zendesk client's `ActivitySource`
-(`ES.FX.Zendesk`) is wired in by the Spark; the MCP SDK's `ActivitySource`/`Meter`
-(`Experimental.ModelContextProtocol`) is wired in by the host's `AddZendeskMcpServer()`.
+Logging via Serilog; OpenTelemetry traces/metrics via Ignite. Both Zendesk tracing sources
+(`ES.FX.Zendesk` and the Kiota adapter's `Microsoft.Kiota.Http.HttpClientLibrary`) are wired in by the
+Spark; the MCP SDK's `ActivitySource`/`Meter` (`Experimental.ModelContextProtocol`) is wired in by the
+host's `AddZendeskMcpServer()`.

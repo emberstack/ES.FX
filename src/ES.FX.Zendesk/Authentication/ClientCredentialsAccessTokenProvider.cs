@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using ES.FX.Zendesk.Abstractions;
 using ES.FX.Zendesk.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

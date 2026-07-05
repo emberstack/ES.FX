@@ -62,4 +62,42 @@ public class ZendeskClientOptionsTests
 
         Assert.Equal(new Uri("https://acme.zendesk.com/api/v2/"), options.GetBaseAddress());
     }
+
+    [Fact]
+    public void GetServiceRootAddress_Derives_The_Host_Root_From_Subdomain()
+    {
+        // The generated Kiota clients carry the full /api/v2/… path in their request templates, so the
+        // adapter's base URL must target the host root — not the /api/v2/ base address.
+        var options = new ZendeskClientOptions { Subdomain = "acme" };
+
+        Assert.Equal(new Uri("https://acme.zendesk.com/"), options.GetServiceRootAddress());
+    }
+
+    [Fact]
+    public void GetServiceRootAddress_Strips_The_Api_Suffix_But_Keeps_A_BaseUrl_Path_Prefix()
+    {
+        // A BaseUrl override (proxy, test double) may carry an extra path prefix in front of api/v2 — only
+        // the trailing api/v2/ segment is removed, the prefix must survive.
+        var options = new ZendeskClientOptions { BaseUrl = "https://sandbox.example.com/proxy/api/v2/" };
+
+        Assert.Equal(new Uri("https://sandbox.example.com/proxy/"), options.GetServiceRootAddress());
+    }
+
+    [Fact]
+    public void GetServiceRootAddress_Strips_The_Api_Suffix_Case_Insensitively()
+    {
+        var options = new ZendeskClientOptions { BaseUrl = "https://sandbox.example.com/API/V2" };
+
+        Assert.Equal(new Uri("https://sandbox.example.com/"), options.GetServiceRootAddress());
+    }
+
+    [Fact]
+    public void GetServiceRootAddress_Leaves_A_BaseUrl_Without_The_Api_Suffix_Unchanged()
+    {
+        // A BaseUrl that does not end in api/v2 (e.g. a test double serving from its root) is used as-is —
+        // stripping anything else would break the double's routing.
+        var options = new ZendeskClientOptions { BaseUrl = "https://sandbox.example.com/custom" };
+
+        Assert.Equal(new Uri("https://sandbox.example.com/custom/"), options.GetServiceRootAddress());
+    }
 }

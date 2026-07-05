@@ -33,7 +33,7 @@ public class McpOriginValidationMiddlewareTests
     [Fact]
     public async Task Allows_Requests_Without_Origin_Header()
     {
-        var (context, nextCalled) = await Invoke(new McpOptions(), origin: null);
+        var (context, nextCalled) = await Invoke(new McpOptions(), null);
 
         Assert.True(nextCalled);
         Assert.NotEqual(StatusCodes.Status403Forbidden, context.Response.StatusCode);

@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text;
-using ES.FX.Zendesk.Abstractions;
 using ES.FX.Zendesk.Authentication;
 
 namespace ES.FX.Zendesk.Tests.Authentication;

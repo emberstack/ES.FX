@@ -60,23 +60,23 @@ internal sealed class HermesAgentMessageContentJsonConverter : JsonConverter<Her
                 return HermesAgentMessageContent.FromText(reader.GetString() ?? string.Empty);
 
             case JsonTokenType.StartArray:
+            {
+                var parts = new List<HermesAgentMessageContentPart>();
+                while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                 {
-                    var parts = new List<HermesAgentMessageContentPart>();
-                    while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                    if (reader.TokenType == JsonTokenType.String)
                     {
-                        if (reader.TokenType == JsonTokenType.String)
-                        {
-                            parts.Add(HermesAgentMessageContentPart.FromText(reader.GetString() ?? string.Empty));
-                            continue;
-                        }
-
-                        var part = JsonSerializer.Deserialize<HermesAgentMessageContentPart>(ref reader, options);
-                        if (part is not null)
-                            parts.Add(part);
+                        parts.Add(HermesAgentMessageContentPart.FromText(reader.GetString() ?? string.Empty));
+                        continue;
                     }
 
-                    return HermesAgentMessageContent.FromParts(parts);
+                    var part = JsonSerializer.Deserialize<HermesAgentMessageContentPart>(ref reader, options);
+                    if (part is not null)
+                        parts.Add(part);
                 }
+
+                return HermesAgentMessageContent.FromParts(parts);
+            }
 
             default:
                 throw new JsonException(

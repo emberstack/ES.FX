@@ -1,0 +1,14 @@
+created_at summary
+details omitted
+domain_names summary
+external_id summary
+group_id omitted
+id summary
+name summary
+notes omitted
+organization_fields omitted
+shared_comments summary
+shared_tickets summary
+tags summary
+updated_at summary
+url omitted

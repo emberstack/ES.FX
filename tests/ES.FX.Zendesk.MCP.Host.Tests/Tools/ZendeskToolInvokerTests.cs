@@ -26,8 +26,8 @@ public class ZendeskToolInvokerTests
     [Fact]
     public async Task InvokeAsync_Translates_ZendeskApiException_With_Body()
     {
-        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(
-            () => throw new ZendeskApiException(HttpStatusCode.UnprocessableEntity, "{\"error\":\"nope\"}",
+        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(() =>
+            throw new ZendeskApiException(HttpStatusCode.UnprocessableEntity, "{\"error\":\"nope\"}",
                 "boom")));
 
         Assert.Contains("422", exception.Message);
@@ -38,9 +38,10 @@ public class ZendeskToolInvokerTests
     [Fact]
     public async Task InvokeAsync_Translates_ZendeskApiException_With_RetryAfter_Hint()
     {
-        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(
-            () => throw new ZendeskApiException(HttpStatusCode.TooManyRequests,
-                "{\"error\":\"RateLimited\"}", "boom") { RetryAfter = TimeSpan.FromSeconds(90) }));
+        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(() =>
+            throw new ZendeskApiException(HttpStatusCode.TooManyRequests,
+                    "{\"error\":\"RateLimited\"}", "boom")
+                { RetryAfter = TimeSpan.FromSeconds(90) }));
 
         Assert.Contains("429", exception.Message);
         Assert.Contains("TooManyRequests", exception.Message);
@@ -51,8 +52,8 @@ public class ZendeskToolInvokerTests
     [Fact]
     public async Task InvokeAsync_Translates_ZendeskApiException_Without_RetryAfter_Hint()
     {
-        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(
-            () => throw new ZendeskApiException(HttpStatusCode.TooManyRequests,
+        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(() =>
+            throw new ZendeskApiException(HttpStatusCode.TooManyRequests,
                 "{\"error\":\"RateLimited\"}", "boom")));
 
         Assert.Contains("429", exception.Message);
@@ -66,8 +67,9 @@ public class ZendeskToolInvokerTests
     [InlineData("   ")]
     public async Task InvokeAsync_Translates_ZendeskApiException_Without_Body(string? body)
     {
-        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(
-            () => throw new ZendeskApiException(HttpStatusCode.NotFound, body, "boom")));
+        var exception = await Assert.ThrowsAsync<McpException>(() =>
+            ZendeskToolInvoker.InvokeAsync<int>(() =>
+                throw new ZendeskApiException(HttpStatusCode.NotFound, body, "boom")));
 
         Assert.Contains("404", exception.Message);
         Assert.DoesNotContain("Zendesk response:", exception.Message);
@@ -76,8 +78,8 @@ public class ZendeskToolInvokerTests
     [Fact]
     public async Task InvokeAsync_Passes_Other_Exceptions_Through_Untranslated()
     {
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ZendeskToolInvoker.InvokeAsync<int>(
-            () => throw new InvalidOperationException("untouched")));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ZendeskToolInvoker.InvokeAsync<int>(() => throw new InvalidOperationException("untouched")));
     }
 
     [Fact]
@@ -126,6 +128,50 @@ public class ZendeskToolInvokerTests
         Assert.False(dryRun.Executed);
         Assert.Contains("create a ticket", dryRun.Description);
         Assert.Same(request, dryRun.Request);
+    }
+
+    [Fact]
+    public async Task InvokeWriteAsync_DryRun_Factory_Builds_The_Result_Only_In_DryRun_Mode()
+    {
+        var executed = false;
+
+        var result = await ZendeskToolInvoker.InvokeWriteAsync(Mode(McpExecutionMode.DryRun).Object,
+            "update 2 tickets", () =>
+            {
+                executed = true;
+                return Task.FromResult("payload");
+            }, () => ZendeskDryRunResult.ForBulk("update 2 tickets", "update", "tickets", [1L, 2L]));
+
+        Assert.False(executed);
+        var dryRun = Assert.IsType<ZendeskDryRunResult>(result);
+        Assert.Equal("dry_run", dryRun.Status);
+        Assert.Contains("update 2 tickets", dryRun.Description);
+    }
+
+    [Fact]
+    public async Task InvokeWriteAsync_DryRun_Factory_Is_Not_Invoked_When_Executing()
+    {
+        var factoryCalled = false;
+
+        var result = await ZendeskToolInvoker.InvokeWriteAsync(Mode(McpExecutionMode.Default).Object,
+            "update 2 tickets", () => Task.FromResult("payload"), () =>
+            {
+                factoryCalled = true;
+                return ZendeskDryRunResult.ForBulk("update 2 tickets", "update", "tickets", [1L, 2L]);
+            });
+
+        Assert.False(factoryCalled); // the digest costs nothing on real writes
+        Assert.Equal("payload", result);
+    }
+
+    [Fact]
+    public async Task InvokeWriteAsync_DryRun_Factory_Overload_Still_Rejects_ReadOnly()
+    {
+        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeWriteAsync(
+            Mode(McpExecutionMode.ReadOnly).Object, "update 2 tickets", () => Task.FromResult(1),
+            () => ZendeskDryRunResult.ForBulk("update 2 tickets", "update", "tickets", [1L, 2L])));
+
+        Assert.Contains("read-only", exception.Message);
     }
 
     [Fact]

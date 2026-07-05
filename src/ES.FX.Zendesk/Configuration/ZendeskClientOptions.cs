@@ -36,6 +36,23 @@ public class ZendeskClientOptions
     }
 
     /// <summary>
+    ///     Resolves the service root (the base address without the trailing <c>api/v2/</c> segment). The generated
+    ///     Kiota clients carry the full <c>/api/v2/…</c> path in their request templates, so their
+    ///     <c>RequestAdapter.BaseUrl</c> must target the host root — while preserving any extra path prefix a
+    ///     <see cref="BaseUrl" /> override (proxy, test double) may carry.
+    /// </summary>
+    public Uri GetServiceRootAddress()
+    {
+        var baseAddress = GetBaseAddress().ToString();
+        // Match "/api/v2/" at a segment boundary (never inside a segment like "myapi/v2/"), then strip the
+        // trailing "api/v2/" while keeping the boundary slash.
+        const string apiSuffix = "/api/v2/";
+        if (baseAddress.EndsWith(apiSuffix, StringComparison.OrdinalIgnoreCase))
+            baseAddress = baseAddress[..^(apiSuffix.Length - 1)];
+        return new Uri(baseAddress, UriKind.Absolute);
+    }
+
+    /// <summary>
     ///     Resolves the OAuth token endpoint: <see cref="ZendeskOAuthOptions.TokenEndpoint" /> when set, otherwise
     ///     <c>/oauth/tokens</c> on the same host as <see cref="GetBaseAddress" /> (so a <see cref="BaseUrl" />
     ///     override — sandbox or test double — also redirects token requests, and credentials are never sent to a

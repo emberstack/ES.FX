@@ -1,34 +1,42 @@
 ---
 title: Zendesk API client
-description: A typed, OAuth-authenticated client for the Zendesk Support REST API — resource-grouped operations, typed errors with Retry-After, and OpenTelemetry tracing.
+description: Kiota-generated, OAuth-authenticated clients for the complete Zendesk Support and Help Center REST APIs — typed request builders, typed errors with Retry-After, and OpenTelemetry tracing.
 ---
 
 ## Overview
 
-`ES.FX.Zendesk` is a typed client for the [Zendesk Support REST API](https://developer.zendesk.com/api-reference/)
-(including Help Center articles), built on `IHttpClientFactory`. Register it once with
-`AddZendeskClient()` and inject `IZendeskClient` — a resource-grouped surface
-(`zendesk.Tickets`, `zendesk.Users`, …) that mirrors the Zendesk API structure.
+`ES.FX.Zendesk` ships two [Kiota](https://learn.microsoft.com/en-us/openapi/kiota/)-generated clients
+covering the complete [Zendesk REST API](https://developer.zendesk.com/api-reference/), produced from
+Zendesk's official OpenAPI specifications:
 
-Under the hood the client:
+- `ES.FX.Zendesk.Support.ZendeskSupportApiClient` — the full Support API surface
+  (614 operations across 427 paths).
+- `ES.FX.Zendesk.HelpCenter.ZendeskHelpCenterApiClient` — the full Help Center API surface
+  (177 operations across 116 paths).
 
-- Registers a typed `HttpClient` whose base address targets `https://{subdomain}.zendesk.com/api/v2/`,
-  with `Accept: application/json` and an `ES.FX.Zendesk/{version}` `User-Agent` applied.
-- Authenticates with **OAuth 2.0 `client_credentials`** — tokens are acquired from the tenant's
-  `/oauth/tokens` endpoint, cached per instance, refreshed proactively before expiry, and re-acquired
-  once automatically if a request comes back `401 Unauthorized`.
-- Turns non-success responses into a typed [`ZendeskApiException`](#error-handling) carrying the status
-  code, a bounded response-body prefix, and the `Retry-After` hint.
-- Emits a client span per operation on the `ES.FX.Zendesk` `ActivitySource` (see
-  [Observability](#observability)).
+Around the generated code sits a small **curated rim** that the generator cannot provide:
 
-The surface covers reads **and** writes across seventeen resource areas — see
-[Resource areas](#resource-areas) and [Write operations](#write-operations).
+- **DI registration** — `AddZendeskClient()` wires both clients (plus a shared `IRequestAdapter` and the
+  attachment fetcher) onto an `IHttpClientFactory`-managed `HttpClient`, keyed-capable for
+  multi-tenant setups.
+- **OAuth 2.0 `client_credentials`** — tokens are acquired from the tenant's `/oauth/tokens` endpoint,
+  cached per instance, refreshed proactively before expiry, and re-acquired once automatically if a
+  request comes back `401 Unauthorized`.
+- **Typed errors** — an innermost `ZendeskResponseGuardHandler` turns non-retryable failures into a
+  typed [`ZendeskApiException`](#error-handling) carrying the status code, a bounded response-body
+  prefix, and the `Retry-After` hint.
+- **`ZendeskAttachmentContentFetcher`** — authenticated attachment-content downloads
+  (a raw-binary concern the generated client cannot express).
+
+The generated code lives under `src/ES.FX.Zendesk/Generated/` and is **never edited by hand** — it is
+regenerated from committed spec snapshots by the pipeline documented in
+[`src/ES.FX.Zendesk/OpenApi/README.md`](https://github.com/emberstack/ES.FX/blob/main/src/ES.FX.Zendesk/OpenApi/README.md)
+(see [Regenerating the clients](#regenerating-the-clients)).
 
 > [!TIP]
 > Building on [Ignite](../ignite/index.md)? Use the [Zendesk Spark](../ignite/sparks/zendesk.md)
 > instead: `builder.IgniteZendeskClient()` adds configuration binding, startup validation, a live health
-> check, and tracing wiring on top of this client.
+> check, and tracing wiring on top of this registration.
 
 ## Install
 
@@ -88,35 +96,95 @@ Options are validated (see [Configuration](#configuration)) either at first use 
 
 | Service | Lifetime | Notes |
 | --- | --- | --- |
-| `IZendeskClient` | Transient | Keyed when `serviceKey` is set. Transient on purpose: each resolution gets a fresh factory-managed `HttpClient`, so the pooled handler chain rotates normally. |
+| `ZendeskSupportApiClient` | Transient | Keyed when `serviceKey` is set. Transient on purpose: each resolution gets a fresh factory-managed `HttpClient`, so the pooled handler chain rotates normally. |
+| `ZendeskHelpCenterApiClient` | Transient | Same instance semantics; shares the adapter/handler chain. |
+| `IRequestAdapter` | Transient (keyed) | The Kiota adapter behind both clients — also the [escape hatch](#wire-true-json-and-the-re-serialization-hazard) for raw requests. Authentication happens in the `HttpClient` handler chain, so the adapter itself is anonymous. |
+| `ZendeskAttachmentContentFetcher` | Transient (keyed) | Authenticated [attachment-content downloads](#attachment-content-downloads). |
 | `IZendeskAccessTokenProvider` | Singleton (keyed) | Owns the OAuth token cache and refresh lock for its instance. |
 | Named `HttpClient`s | — | `ES.FX.Zendesk` (or `ES.FX.Zendesk[{key}]`) for the API, plus a `….Token` client without the auth handler for token acquisition. |
 
 `AddZendeskClient` returns the `IHttpClientBuilder` of the underlying named client, so you can chain
 further customization (extra handlers, resilience — see [Rate limits](#rate-limits-and-resilience)).
 
-### Consume the client
+### Consume the clients
 
-Inject `IZendeskClient` and call the resource areas:
+The generated clients expose **request builders**: the URL path becomes a property/indexer chain and
+the HTTP method becomes a `GetAsync` / `PostAsync` / `PutAsync` / `DeleteAsync` call with typed request
+and response models. Inject `ZendeskSupportApiClient` (or `ZendeskHelpCenterApiClient`) and follow the
+path:
 
 ```csharp
-public sealed class SupportOverviewService(IZendeskClient zendesk)
+public sealed class SupportOverviewService(ZendeskSupportApiClient zendesk)
 {
-    public async Task<string> SummarizeAsync(long ticketId, CancellationToken cancellationToken)
+    public async Task<string> DescribeAsync(long ticketId, CancellationToken cancellationToken)
     {
-        var ticket = await zendesk.Tickets.GetByIdAsync(ticketId, cancellationToken);
-        var comments = await zendesk.Tickets.GetCommentsAsync(
-            ticketId, perPage: 25, cancellationToken: cancellationToken);
+        // GET /api/v2/tickets/{ticket_id}
+        var response = await zendesk.Api.V2.Tickets[ticketId]
+            .GetAsync(cancellationToken: cancellationToken);
+        var ticket = response?.Ticket
+            ?? throw new InvalidOperationException($"Ticket {ticketId} returned no payload.");
 
-        return $"{ticket.Subject} — {ticket.Status}, {comments.Count} comments";
+        return $"{ticket.Subject} — {ticket.Status}";
     }
 }
 ```
 
+Query parameters are set through the request-configuration delegate:
+
+```csharp
+// GET /api/v2/search?query=type:ticket status:open
+var results = await zendesk.Api.V2.Search.GetAsync(configuration =>
+{
+    configuration.QueryParameters.Query = "type:ticket status:open";
+    configuration.QueryParameters.SortBy = "updated_at";
+}, cancellationToken);
+```
+
+Writes take a typed request model (models live in `ES.FX.Zendesk.Support.Models` /
+`ES.FX.Zendesk.HelpCenter.Models`):
+
+```csharp
+using ES.FX.Zendesk.Support.Models;
+
+// POST /api/v2/tickets
+var created = await zendesk.Api.V2.Tickets.PostAsync(new TicketCreateRequest
+{
+    Ticket = new TicketObject
+    {
+        Subject = "Printer on fire",
+        Comment = new TicketCommentObject { Body = "The printer is on fire." },
+        Priority = TicketObject_priority.Urgent
+    }
+}, cancellationToken: cancellationToken);
+```
+
+The Help Center client follows the same shape (its builders carry the `.json` path suffix the live
+Help Center API requires, e.g. `ArticlesJson`):
+
+```csharp
+public sealed class KnowledgeBaseService(ZendeskHelpCenterApiClient helpCenter)
+{
+    public async Task<int> CountArticlesAsync(CancellationToken cancellationToken)
+    {
+        // GET /api/v2/help_center/articles.json
+        var response = await helpCenter.Api.V2.Help_center.ArticlesJson
+            .GetAsync(cancellationToken: cancellationToken);
+        return response?.Articles?.Count ?? 0;
+    }
+}
+```
+
+> [!NOTE]
+> The builders mirror Zendesk's URL structure, so the
+> [Zendesk API reference](https://developer.zendesk.com/api-reference/) doubles as the client's
+> operation index: find the endpoint's path and translate it segment-by-segment
+> (`/api/v2/users/me` → `Api.V2.Users.Me`). Each generated method also carries the spec's
+> documentation as XML docs.
+
 ### Register keyed instances
 
-To talk to more than one Zendesk tenant, register each with a distinct `serviceKey` and resolve them as
-keyed services:
+To talk to more than one Zendesk tenant, register each with a distinct `serviceKey` and resolve the
+clients as keyed services:
 
 ```csharp
 builder.Services.AddZendeskClient(options => { options.Subdomain = "acme-support"; /* … */ }, "support");
@@ -125,8 +193,8 @@ builder.Services.AddZendeskClient(options => { options.Subdomain = "acme-sales";
 
 ```csharp
 public sealed class CrossTenantReport(
-    [FromKeyedServices("support")] IZendeskClient support,
-    [FromKeyedServices("sales")] IZendeskClient sales)
+    [FromKeyedServices("support")] ZendeskSupportApiClient support,
+    [FromKeyedServices("sales")] ZendeskSupportApiClient sales)
 {
     // …
 }
@@ -135,104 +203,72 @@ public sealed class CrossTenantReport(
 Each key gets its own options (the options name is the `serviceKey`), its own named `HttpClient`, and
 its own token cache. A `null` key is the default instance, resolvable without a key.
 
-## Resource areas
+## Wire-true JSON and the re-serialization hazard
 
-`IZendeskClient` groups operations by Zendesk resource:
+The generated **models are lossy on re-serialization** — never round-trip a response through them.
+Zendesk's spec marks server-assigned fields (`id`, `created_at`, `url`, counts, `next_page`, …) as
+`readOnly`, and Kiota's generated `Serialize()` skips read-only properties entirely, so
+deserialize-then-reserialize silently strips the most important fields. Typed models are safe for
+**requests** and for **reading** fields in code; they are not a JSON round-trip vehicle. The full
+hazard write-up lives in
+[`src/ES.FX.Zendesk/OpenApi/README.md`](https://github.com/emberstack/ES.FX/blob/main/src/ES.FX.Zendesk/OpenApi/README.md).
 
-| Area | Operations |
-| --- | --- |
-| `Tickets` | Reads: `ListAsync` (cursor), `GetByIdAsync`, `GetManyAsync` (chunked `show_many`), `CountAsync`, `GetByExternalIdAsync`, `SearchAsync` (auto-scoped to `type:ticket`), `GetCommentsAsync` (`bodyFormat`: `plain`/`rich`/`both`), `GetCommentsCountAsync`, `GetCollaboratorsAsync`, `GetAuditsAsync`, `GetMetricsAsync`, `GetIncidentsAsync`, `GetSideConversationsAsync`, `GetMetricEventsAsync` + `GetIncrementalAsync` (incremental exports). Writes: `CreateAsync`, `CreateManyAsync`, `UpdateAsync` (returns ticket + audit), `UpdateManyAsync` (bulk + batch), `DeleteAsync`, `DeleteManyAsync`, `MergeAsync`, `MarkAsSpamAsync` (+many), `RestoreDeletedAsync` (+many), `DeletePermanentlyAsync` (+many), `SetTagsAsync`/`AddTagsAsync`/`RemoveTagsAsync`, `MakeCommentPrivateAsync`, `RedactCommentAttachmentAsync`, `ImportAsync` (+many) |
-| `Users` | Reads: `GetCurrentUserAsync`, `ListAsync` (cursor, role filter), `GetByIdAsync`, `GetManyAsync` (chunked), `CountAsync`, `SearchAsync`, `AutocompleteAsync`, `GetRelatedInformationAsync`, `GetIdentitiesAsync`, `GetGroupsAsync`, `GetOrganizationsAsync`, `GetRequestedTicketsAsync`, `GetAssignedTicketsAsync`, `GetCcdTicketsAsync`. Writes: `CreateAsync`, `CreateOrUpdateAsync` (+many variants), `UpdateAsync`, `UpdateManyAsync` (bulk + batch), `MergeAsync`, `DeleteAsync`, `DeleteManyAsync`, `DeletePermanentlyAsync`, identity `Create`/`Update`/`MakePrimary`/`Verify`/`RequestVerification`/`Delete` |
-| `Organizations` | Reads: `ListAsync` (cursor), `GetByIdAsync`, `GetManyAsync` (chunked), `CountAsync`, `SearchAsync` (exact name/external id), `AutocompleteAsync`, `GetUsersAsync`, `GetMembershipsAsync`, `GetTicketsAsync`. Writes: `CreateAsync` (+many), `CreateOrUpdateAsync`, `UpdateAsync` (+many bulk/batch), `DeleteAsync` (+many), `MergeAsync` + `GetMergeAsync` (async merge with its own envelope), membership `Create` (+many)/`Delete` (+many)/`MakeDefault` |
-| `Groups` | Reads: `ListAsync`, `GetAssignableAsync`, `GetByIdAsync`, `CountAsync`, `GetUsersAsync`, `GetMembershipsAsync`. Writes: `CreateAsync`, `UpdateAsync`, `DeleteAsync`, membership `Create` (+many)/`Delete` (+many)/`MakeDefault` |
-| `Search` | `CountAsync` (size a query cheaply), `ExportTicketsAsync` (cursor-based export — no 1,000-result cap) |
-| `Views` | Reads: `ListAsync`, `GetByIdAsync`, `GetTicketsAsync`, `GetTicketCountAsync`. Writes: `CreateAsync`/`UpdateAsync` (write shape: `All`/`Any` conditions + `Output`), `DeleteAsync` |
-| `Articles` | `SearchAsync` (Help Center full-text; lean results), `GetByIdAsync` (full body), `ListAsync` (cursor; optional section scope), `ListSectionsAsync`, `GetSectionByIdAsync`, `ListCategoriesAsync`, `GetCategoryByIdAsync` |
-| `TicketFields` | Reads: `ListAsync` (cursor or unpaginated — this endpoint has no offset paging), `GetByIdAsync`, `GetOptionsAsync`. Writes: `CreateAsync`, `UpdateAsync` (option set replaces wholesale!), `DeleteAsync`, `CreateOrUpdateOptionAsync`, `DeleteOptionAsync` |
-| `Macros` | Reads: `ListAsync`, `ListActiveAsync`, `GetByIdAsync`. Writes: `CreateAsync`, `UpdateAsync` (actions replace wholesale!), `DeleteAsync` |
-| `Forms` | Reads: `ListAsync` (cursor), `GetByIdAsync`. Writes: `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `CloneAsync` |
-| `Brands` | Reads: `ListAsync` (cursor), `GetByIdAsync`. Writes: `CreateAsync`, `UpdateAsync`, `DeleteAsync` |
-| `CustomStatuses` | Reads: `ListAsync`, `GetByIdAsync`. Writes: `CreateAsync`, `UpdateAsync`, `DeleteAsync` |
-| `JobStatuses` | `ListAsync` (cursor), `GetByIdAsync`, `GetManyAsync` — poll the async jobs returned by bulk writes |
-| `Tags` | `ListAsync` (usage counts; offset **and** cursor — use the cursor for the tail past Zendesk's 10k offset cap), `CountAsync`, `AutocompleteAsync`. Per-entity tag reads live on their areas: `Users.GetTagsAsync`, `Organizations.GetTagsAsync`, `ZendeskTicket.Tags`; tag writes via `SetTagsAsync`/`AddTagsAsync`/`RemoveTagsAsync` (tickets) and the `Tags` property on user/organization writes |
-| `SuspendedTickets` | `ListAsync` (cursor), `GetByIdAsync`, `RecoverAsync` (+many), `DeleteAsync` (+many) |
-| `Uploads` | `UploadAsync` (raw binary; token chaining for multi-file), `DeleteAsync` — tokens attach files to comments |
-| `Attachments` | `GetContentAsync` — authenticated content download |
+When you need the response **exactly as Zendesk sent it** (to persist, forward, or expose to an
+agent — this is how the [Zendesk MCP server](./zendesk-mcp-server.md) works), build the request with
+the generated builder but send it through the registered `IRequestAdapter` and read the raw stream:
 
-A few behaviors worth knowing:
+```csharp
+public sealed class RawTicketReader(ZendeskSupportApiClient zendesk, IRequestAdapter adapter)
+{
+    public async Task<JsonDocument?> GetTicketJsonAsync(long ticketId, CancellationToken cancellationToken)
+    {
+        var request = zendesk.Api.V2.Tickets[ticketId].ToGetRequestInformation();
+        var stream = await adapter.SendPrimitiveAsync<Stream>(request, cancellationToken: cancellationToken);
+        if (stream is null) return null;
 
-- **Pagination** comes in two dialects, mirroring Zendesk. Offset (`page`, `perPage`; max 100 per page)
-  is supported where Zendesk documents it, but Zendesk hard-caps offset paging at 100 pages / 10,000
-  records — beyond that the API returns `400`. **Cursor pagination** (`pageSize`, `afterCursor` →
-  `page[size]`/`page[after]`) has no depth limit and is Zendesk's recommended direction; results expose
-  `Meta` (`HasMore`, `AfterCursor`) — keep passing `Meta.AfterCursor` while `HasMore` is `true`. Some
-  endpoints are cursor-only (job statuses list, brands, search export). The incremental exports page
-  their own way: `GetMetricEventsAsync` by `EndTime`→`startTime`, `GetIncrementalAsync` by
-  `AfterCursor`→`cursor`, both until `EndOfStream` is `true`.
-- **Sideloading (`include`)**: everywhere Zendesk documents it, list/search/batch operations accept an
-  `include` list and return the related records inline as sibling arrays — one roundtrip instead of one
-  call per referenced id. Ticket surfaces (list, search, show_many, per-user/org/view lists, audits,
-  incremental export) sideload `users`/`groups`/`organizations` (+`comment_count` enriching each
-  ticket); comments sideload their authors (`users`); user surfaces sideload
-  `organizations`/`groups`/`identities`; groups and group memberships sideload `users`; ticket fields
-  sideload their creators; Help Center article lists sideload `users`/`sections`/`categories`. Chunked
-  batch calls (`GetManyAsync`) merge and de-duplicate sideloads across chunks. Ticket search uses
-  Zendesk's nested `tickets(...)` include syntax automatically.
-- **DTOs** are immutable `record` types under `ES.FX.Zendesk.Abstractions.Models`, with nullable
-  members matching what Zendesk actually returns.
-- **Well-known values** ship as constants classes in `ES.FX.Zendesk.Abstractions` —
-  `ZendeskTicketStatuses`, `ZendeskTicketPriorities`, `ZendeskTicketTypes`, `ZendeskUserRoles`,
-  `ZendeskIdentityTypes`, `ZendeskStatusCategories`, `ZendeskSideloads`, `ZendeskSortOrders`,
-  `ZendeskTicketSortFields`, `ZendeskCommentBodyFormats`, `ZendeskOAuthScopes`,
-  `ZendeskJobStatusValues`, `ZendeskOrganizationMergeStatuses` — so vocabulary arguments are
-  discoverable and typo-proof (`Status = ZendeskTicketStatuses.Solved`). They are deliberately
-  constants rather than enums: Zendesk's vocabularies grow server-side, and string-typed members keep
-  deserialization resilient to values this client has not seen yet.
+        await using (stream)
+        {
+            return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        }
+    }
+}
+```
+
+Every builder has `To{Method}RequestInformation(...)` counterparts for exactly this purpose — path
+templating, encoding, authentication, and the handler pipeline stay intact; only the typed
+deserialization is bypassed.
+
+## Attachment content downloads
+
+Attachment *metadata* is read through the generated client (`GET /api/v2/attachments/{id}`); the
+*content* behind an attachment's `content_url` is a raw download the generated client cannot express.
+The curated `ZendeskAttachmentContentFetcher` (registered by `AddZendeskClient`) covers it:
+
+```csharp
+public sealed class AttachmentReader(ZendeskAttachmentContentFetcher fetcher)
+{
+    public Task<ZendeskAttachmentContent> FetchAsync(
+        string contentUrl, string? contentType, CancellationToken cancellationToken) =>
+        fetcher.DownloadAsync(contentUrl, contentType, maxContentBytes: 512 * 1024,
+            cancellationToken: cancellationToken);
+}
+```
 
 > [!IMPORTANT]
-> `Attachments.GetContentAsync` downloads the whole payload by default (Zendesk stores files up to
-> 50 MB). Pass `maxContentBytes` to cap the download in bounded contexts — reading stops at the cap and
+> `DownloadAsync` downloads the whole payload by default (Zendesk stores files up to 50 MB). Pass
+> `maxContentBytes` to cap the download in bounded contexts — reading stops at the cap and
 > `Truncated` is set. Text-like content (per the declared content type) is returned decoded; anything
 > else — or an unknown charset — is returned as lossless base64 (`Encoding` says which). Because a
 > Zendesk `content_url` may point at an externally hosted file, the tenant's credentials are only sent
 > to the configured Zendesk host; external HTTPS hosts are fetched anonymously and external non-HTTPS
 > URLs are refused.
 
-## Write operations
-
-Writes use the same typed pattern as reads, with `*Write` request records whose unset (`null`)
-properties are **omitted** from the request — an update sends only the fields you set:
-
-```csharp
-var result = await zendesk.Tickets.UpdateAsync(ticketId, new ZendeskTicketWrite
-{
-    Status = "solved",
-    Comment = new ZendeskTicketCommentWrite { Body = "Fixed — closing.", Public = true }
-}, cancellationToken);
-// result.Ticket is the updated ticket; result.Audit describes the change.
-```
-
-Things to know before writing:
-
-- **OAuth scope**: the configured `Scope` must include `write` (the default is `read`).
-- **Async jobs**: bulk operations (`CreateManyAsync`, `UpdateManyAsync`, `DeleteManyAsync`, merges,
-  spam-marking, permanent deletes) return a `ZendeskJobStatus` — poll it via `JobStatuses.GetByIdAsync`
-  until `Status` is `completed`/`failed`. Bulk requests accept 1–100 items (validated client-side).
-- **Optimistic locking**: since May 2025 Zendesk answers concurrent ticket updates with
-  `409 Conflict`. Set `SafeUpdate = true` + `UpdatedStamp` (the ticket's latest `updated_at`) on
-  `ZendeskTicketWrite` for explicit collision protection, and be prepared to catch a `409`
-  `ZendeskApiException` and retry with fresh data.
-- **Destructive array semantics**: `TicketFields.UpdateAsync` (`CustomFieldOptions`),
-  `Macros.UpdateAsync` (`Actions`), and `Views.UpdateAsync` (`All`/`Any`) replace the whole collection
-  server-side — send the complete set, not a delta.
-- **Attachments**: upload bytes via `Uploads.UploadAsync` (raw binary, 50 MB cap, tokens expire after
-  60 minutes and are single-use), then attach the token through `ZendeskTicketCommentWrite.Uploads`.
-- **Retries duplicate writes**: Zendesk has no idempotency keys. Under Ignite, the standard resilience
-  handler retries transient failures — a retried `POST` that actually reached Zendesk can create a
-  duplicate. Keep that in mind for unattended bulk creates.
-- **Deliberately not implemented** (deprecated or gated): legacy string comment redaction, the
-  `users/me/merge` endpoint (removed), user password endpoints (off by default, no OAuth-scope
-  support), and legacy-CSAT satisfaction-rating creation.
+Capped downloads can be **resumed**: pass `offset` (a raw-byte offset, applied by skip-reading before
+decode — `content_url` downloads don't reliably honor HTTP `Range`) and continue from the previous
+result's `offset + ReturnedBytes`. `ZendeskAttachmentContent.ReturnedBytes` is the number of raw payload
+bytes the content represents; for capped UTF-8 text it can sit slightly under the cap because the cut is
+moved back to a clean character boundary — which is exactly what keeps chained continuations
+mojibake-free. A hand-picked `offset > 0` — or any offset into non-UTF-8 text — may start mid-character.
 
 ## Configuration
 
@@ -241,8 +277,17 @@ Things to know before writing:
 | Member | Type | Default | Purpose |
 | --- | --- | --- | --- |
 | `Subdomain` | `string` | `""` | The `{subdomain}` in `https://{subdomain}.zendesk.com`. Must be a plain DNS label. |
-| `BaseUrl` | `string?` | `null` | Explicit base URL override (sandbox, test double). Takes precedence over `Subdomain`; must be absolute `http(s)`. |
+| `BaseUrl` | `string?` | `null` | Explicit base-address override (sandbox, proxy, test double), **including the `/api/v2/` path** — e.g. `https://sandbox.example.com/api/v2/`. Takes precedence over `Subdomain`; must be absolute `http(s)`. |
 | `OAuth` | `ZendeskOAuthOptions` | — | The OAuth `client_credentials` settings below. |
+
+Two derived addresses matter, because the generated request templates carry the full `/api/v2/…` path:
+
+- `GetBaseAddress()` — the named `HttpClient`'s `BaseAddress`:
+  `https://{subdomain}.zendesk.com/api/v2/` (or the `BaseUrl` override, trailing slash ensured).
+- `GetServiceRootAddress()` — the Kiota adapter's `BaseUrl`: the base address with the trailing
+  `api/v2/` segment stripped (`https://{subdomain}.zendesk.com`), while preserving any extra path
+  prefix a `BaseUrl` override carries (`https://sandbox.example.com/proxy/api/v2/` →
+  `https://sandbox.example.com/proxy/`). `AddZendeskClient` wires both for you.
 
 `ZendeskOAuthOptions` members:
 
@@ -288,32 +333,47 @@ legacy API-token authentication, so it is deliberately not supported). Token flo
 
 ## Error handling
 
-Any non-success Zendesk response throws a `ZendeskApiException`:
+Failures surface as one of **two exception types**, split by whether the resilience pipeline retries
+the status:
+
+- **Non-retryable failures** (4xx other than `408`/`429`) throw a typed `ZendeskApiException`. The
+  innermost `ZendeskResponseGuardHandler` raises it before the Kiota adapter can discard the response
+  body, so the actual Zendesk error JSON survives.
+- **Retryable statuses** (`408`, `429`, `5xx`) pass through the guard untouched — they belong to the
+  resilience handler (see [Rate limits](#rate-limits-and-resilience)). When retries are exhausted,
+  they surface as Kiota's `Microsoft.Kiota.Abstractions.ApiException`, with the status code and
+  response headers — **including `Retry-After`** — preserved.
+
+Callers that handle the raw `HttpResponseMessage` themselves (for example via a Kiota
+`NativeResponseHandler`, which bypasses the adapter's error mapping) can apply the exact same
+translation with the public `ZendeskResponseGuard.EnsureSuccessAsync(response, cancellationToken)` —
+the logic behind the guard handler.
+
+`ZendeskApiException` members:
 
 | Member | Type | Purpose |
 | --- | --- | --- |
 | `StatusCode` | `HttpStatusCode` | The HTTP status Zendesk returned. |
 | `ResponseBody` | `string?` | A bounded prefix (≤ 2 KiB) of the raw response body — Zendesk's actual error JSON. |
-| `RetryAfter` | `TimeSpan?` | The `Retry-After` hint, when present (typically on `429 Too Many Requests`). |
+| `RetryAfter` | `TimeSpan?` | The `Retry-After` hint, when present. |
 
 ```csharp
 try
 {
-    var ticket = await zendesk.Tickets.GetByIdAsync(ticketId, cancellationToken);
+    var response = await zendesk.Api.V2.Tickets[ticketId].GetAsync(cancellationToken: cancellationToken);
 }
 catch (ZendeskApiException exception) when (exception.StatusCode == HttpStatusCode.NotFound)
 {
-    // Unknown ticket id.
+    // Unknown ticket id — exception.ResponseBody carries Zendesk's error JSON.
 }
-catch (ZendeskApiException exception) when (exception.StatusCode == HttpStatusCode.TooManyRequests)
+catch (Microsoft.Kiota.Abstractions.ApiException exception) when (exception.ResponseStatusCode == 429)
 {
-    var wait = exception.RetryAfter ?? TimeSpan.FromSeconds(30);
-    // Back off and retry / surface the wait to the caller.
+    // Rate limited and retries exhausted — Retry-After is in exception.ResponseHeaders.
 }
 ```
 
-Operations that Zendesk answers with an empty envelope (e.g. a missing record inside a `200` response)
-throw `InvalidOperationException` with the operation and id in the message.
+Token acquisition and attachment-content downloads run outside the Kiota adapter, so *their* failures
+— including retry-exhausted `429`s — always throw `ZendeskApiException` (with `RetryAfter` populated).
 
 ### Rate limits and resilience
 
@@ -321,8 +381,10 @@ Zendesk enforces per-minute rate limits and answers `429` with `Retry-After`. Th
 not retry — pair it with a resilience handler:
 
 - **Under Ignite** this is automatic: `builder.Ignite()` applies the standard resilience handler
-  (which honors `Retry-After`) to every `HttpClient` by default.
-- **Standalone**, chain it on the returned builder
+  (which honors `Retry-After`) to every `HttpClient` by default. **Do not add a second one** — the
+  response guard is calibrated to let exactly the statuses that handler retries pass through, and
+  stacking resilience handlers multiplies retry storms.
+- **Standalone**, chain it once on the returned builder
   (requires the `Microsoft.Extensions.Http.Resilience` package):
 
 ```csharp
@@ -331,55 +393,69 @@ builder.Services
     .AddStandardResilienceHandler();
 ```
 
-## Limits
-
-Two kinds of caps exist — client-side ones (ours, graceful) and Zendesk's server-side ones (HTTP errors):
-
-| Limit | Enforced by | Behavior when hit |
-| --- | --- | --- |
-| Attachment download cap (opt-in via `maxContentBytes`; **unlimited by default**) | **Client** | When a cap is set: stops reading, `Truncated = true`, UTF-8-safe trim for text |
-| Error-body capture (2 KiB) | **Client** | Bounds `ZendeskApiException.ResponseBody` only — diagnostics, never data |
-| Comment `bodyFormat` trimming | **Client** | Drops one body representation after receipt (`both` keeps everything) |
-| Bulk writes: 1–100 items | **Zendesk rule, client pre-flight** | `ArgumentException` before the request (Zendesk would answer `400`); batch *reads* chunk instead of rejecting |
-| Upload file size (50 MB) | Zendesk | Server rejection |
-| `per_page` / `page[size]` max 100 | Zendesk | Clamped/rejected by the API |
-| Offset paging: 100 pages / 10,000 records | Zendesk | `400` beyond — use cursor pagination |
-| `/search`: first 1,000 results only | Zendesk | Use `Search.ExportTicketsAsync` (uncapped, cursor) |
-| 5,000 comments per ticket; 64 KB per comment | Zendesk | `422` on writes beyond |
-| Upload tokens: 60 min, single-use | Zendesk | `4xx` on reuse/expiry |
-| Rate limits (account-wide + per-endpoint) | Zendesk | `429`; `RetryAfter` on the exception, auto-retried under Ignite |
+> [!WARNING]
+> Retries duplicate writes: Zendesk has no idempotency keys, so a retried `POST` that actually reached
+> Zendesk can create a duplicate. Keep that in mind for unattended bulk creates.
 
 ## Observability
 
 ### Tracing
 
-Every operation runs inside a client `Activity` on the `ES.FX.Zendesk` `ActivitySource`
-(`ZendeskClientInstrumentation.ActivitySourceName`), named `Zendesk.{Area}.{Operation}` (e.g.
-`Zendesk.Tickets.Search`), with status and exception details recorded on failure. The
-[Zendesk Spark](../ignite/sparks/zendesk.md) wires the source into OpenTelemetry for you; standalone:
+The package exposes **two** `ActivitySource` names on `ZendeskClientInstrumentation` — subscribe to
+both to see the full trace:
+
+| Constant | Value | Emits |
+| --- | --- | --- |
+| `ActivitySourceName` | `ES.FX.Zendesk` | The client's own source, for spans from the curated rim. |
+| `KiotaActivitySourceName` | `Microsoft.Kiota.Http.HttpClientLibrary` | The Kiota request adapter's fixed source (not configurable in the Kiota HTTP library) — one span per generated-client request. |
+
+The [Zendesk Spark](../ignite/sparks/zendesk.md) wires both into OpenTelemetry for you; standalone:
 
 ```csharp
 builder.Services.AddOpenTelemetry()
-    .WithTracing(tracing => tracing.AddSource(ZendeskClientInstrumentation.ActivitySourceName));
+    .WithTracing(tracing => tracing
+        .AddSource(ZendeskClientInstrumentation.ActivitySourceName)
+        .AddSource(ZendeskClientInstrumentation.KiotaActivitySourceName));
 ```
 
 ### Logging
 
-The client logs through the standard `ILogger` pipeline: `Debug` on success, `Warning` on failure
-(with the operation and status code), and nothing on caller-initiated cancellation. Response bodies are
-**never** logged — they can contain requester PII; they remain available on
-`ZendeskApiException.ResponseBody`.
+The curated rim logs through the standard `ILogger` pipeline — for example token acquisition at
+`Debug`, with the token lifetime. Response bodies are **never** logged — they can contain requester
+PII; they remain available on `ZendeskApiException.ResponseBody`.
 
 ### Metrics
 
 The client adds no custom meter — .NET's built-in `http.client.*` metrics already cover request
 counts and durations for the underlying `HttpClient`.
 
+## Regenerating the clients
+
+The generated code is produced by the pipeline in
+[`src/ES.FX.Zendesk/OpenApi/`](https://github.com/emberstack/ES.FX/tree/main/src/ES.FX.Zendesk/OpenApi) and its
+[`README.md`](https://github.com/emberstack/ES.FX/blob/main/src/ES.FX.Zendesk/OpenApi/README.md) is the authoritative
+reference. In short:
+
+- The generated output is **git-ignored** and **regenerated at build time**: `ES.FX.Zendesk.csproj`
+  runs `generate.ps1` before compile, incrementally (only when a committed spec/script/tool-pin input
+  changes), and feeds the result to the compiler hidden from Solution Explorer. Only the spec snapshots,
+  the pipeline scripts, and `Generated/.editorconfig` are committed. Building requires the `kiota` local
+  tool (`dotnet tool restore`) and PowerShell 7 (`pwsh`).
+- `src/ES.FX.Zendesk/OpenApi/generate.ps1` can also be run by hand from the **committed spec snapshots**
+  (`-Refresh` re-downloads Zendesk's latest specs first) — useful when editing a patch.
+- `normalize.ps1` applies **recorded, asserted spec patches** first (Zendesk's published specs contain
+  constructs that break Kiota or diverge from live-verified API behavior — e.g. the Help Center
+  `.json` path suffix). If Zendesk changes the underlying schema, the script fails loudly instead of
+  silently generating a wrong client.
+- **Never hand-edit** anything under `src/ES.FX.Zendesk/Generated/` — fixes belong in the pipeline
+  (spec patches) or in the curated rim.
+
 ## See also
 
 - [Zendesk Spark](../ignite/sparks/zendesk.md) — the Ignite integration: config binding, health check, tracing.
-- [Zendesk MCP server](./zendesk-mcp-server.md) — a deployable MCP host exposing this client as 168 agent tools.
+- [Zendesk MCP server](./zendesk-mcp-server.md) — a deployable MCP host exposing these clients as 172 agent tools.
 - [Framework libraries](./index.md)
 - [Ignite overview](../ignite/index.md)
+- [`src/ES.FX.Zendesk/OpenApi/README.md`](https://github.com/emberstack/ES.FX/blob/main/src/ES.FX.Zendesk/OpenApi/README.md) — the generation pipeline, spec patches, and generator hazards.
 - [Zendesk API reference](https://developer.zendesk.com/api-reference/)
 - [Zendesk OAuth client_credentials grant](https://developer.zendesk.com/documentation/ticketing/working-with-oauth/using-oauth-authentication-with-your-application/)

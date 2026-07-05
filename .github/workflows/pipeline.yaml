@@ -71,6 +71,7 @@ jobs:
               - '*.slnx'
               - '*.props'
               - 'src/**'
+              - '.config/dotnet-tools.json'
             build:
               - '*.sln'
               - '*.slnx'
@@ -78,6 +79,7 @@ jobs:
               - 'src/**'
               - 'tests/**'
               - 'playground/**'
+              - '.config/dotnet-tools.json'
 
       - name: evaluate - build
         id: evaluate_build
@@ -130,6 +132,12 @@ jobs:
 
       - name: dotnet - restore
         run: dotnet restore
+
+      - name: dotnet - tools - restore
+        # The ES.FX.Zendesk build regenerates its git-ignored Kiota clients via the pinned `kiota`
+        # local tool (see eng/zendesk/README.md); restore it before build. pwsh is preinstalled on
+        # ubuntu-latest runners.
+        run: dotnet tool restore
 
       - name: dotnet - build
         run: dotnet build --no-restore --configuration ${{ env.build_configuration }} /p:Version=${{ env.gitVersion_SemVer }} /p:AssemblyVersion=${{env.gitVersion_AssemblySemFileVer}} /p:NuGetVersion=${{env.gitVersion_SemVer}}

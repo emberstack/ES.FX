@@ -1,19 +1,28 @@
-using ES.FX.Zendesk.Abstractions;
+using System.Net;
+using ES.FX.Zendesk.Attachments;
 using ES.FX.Zendesk.Configuration;
+using ES.FX.Zendesk.HelpCenter;
+using ES.FX.Zendesk.Support;
 using ES.FX.Zendesk.Tests.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.Kiota.Abstractions;
 
 namespace ES.FX.Zendesk.Tests.DependencyInjection;
 
 public class ZendeskClientRegistrationTests
 {
-    [Fact]
-    public async Task Registers_Client_Acquires_Token_And_Calls_Api_With_Bearer()
+    private static ServiceCollection CreateServices(RoutingHandler routing)
     {
-        var routing = new RoutingHandler();
         var services = new ServiceCollection();
         services.ConfigureHttpClientDefaults(b => b.ConfigurePrimaryHttpMessageHandler(() => routing));
+        return services;
+    }
+
+    [Fact]
+    public async Task Default_Registration_Resolves_All_Services()
+    {
+        var services = CreateServices(new RoutingHandler());
         services.AddZendeskClient(options =>
         {
             options.Subdomain = "acme";
@@ -22,54 +31,134 @@ public class ZendeskClientRegistrationTests
         });
 
         await using var provider = services.BuildServiceProvider();
-        var client = provider.GetRequiredService<IZendeskClient>();
 
-        var user = await client.Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+        // A null service key registers the DEFAULT instances — plain GetRequiredService must resolve them all.
+        Assert.NotNull(provider.GetRequiredService<ZendeskSupportApiClient>());
+        Assert.NotNull(provider.GetRequiredService<ZendeskHelpCenterApiClient>());
+        Assert.NotNull(provider.GetRequiredService<ZendeskAttachmentContentFetcher>());
+        Assert.NotNull(provider.GetRequiredService<IRequestAdapter>());
+    }
 
-        Assert.Equal(1, user.Id);
-        Assert.True(routing.TokenCalls >= 1); // acquired an OAuth token
-        Assert.Equal("Bearer", routing.LastApiAuthScheme); // API call carried the bearer token
-        Assert.Contains("acme.zendesk.com", routing.ApiHosts);
+    [Fact]
+    public async Task Keyed_Registration_Resolves_All_Services()
+    {
+        var services = CreateServices(new RoutingHandler());
+        services.AddZendeskClient(options =>
+        {
+            options.Subdomain = "acme-staging";
+            options.OAuth.ClientId = "cid";
+            options.OAuth.ClientSecret = "secret";
+        }, "staging");
+
+        await using var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredKeyedService<ZendeskSupportApiClient>("staging"));
+        Assert.NotNull(provider.GetRequiredKeyedService<ZendeskHelpCenterApiClient>("staging"));
+        Assert.NotNull(provider.GetRequiredKeyedService<ZendeskAttachmentContentFetcher>("staging"));
+        Assert.NotNull(provider.GetRequiredKeyedService<IRequestAdapter>("staging"));
+    }
+
+    [Fact]
+    public async Task Adapter_BaseUrl_Targets_The_Service_Root_Derived_From_The_Subdomain()
+    {
+        var services = CreateServices(new RoutingHandler());
+        services.AddZendeskClient(options =>
+        {
+            options.Subdomain = "acme";
+            options.OAuth.ClientId = "cid";
+            options.OAuth.ClientSecret = "secret";
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        // The generated request templates carry the full /api/v2/… path, so the adapter must target the host
+        // root (NOT the /api/v2/ base address) or every request would hit /api/v2/api/v2/….
+        var adapter = provider.GetRequiredService<IRequestAdapter>();
+        Assert.Equal(new ZendeskClientOptions { Subdomain = "acme" }.GetServiceRootAddress().ToString().TrimEnd('/'),
+            adapter.BaseUrl);
+        Assert.Equal("https://acme.zendesk.com", adapter.BaseUrl);
+    }
+
+    [Fact]
+    public async Task Adapter_BaseUrl_Preserves_A_BaseUrl_Override_Path_Prefix()
+    {
+        var services = CreateServices(new RoutingHandler());
+        services.AddZendeskClient(options =>
+        {
+            options.BaseUrl = "https://sandbox.example.com/proxy/api/v2/";
+            options.OAuth.ClientId = "cid";
+            options.OAuth.ClientSecret = "secret";
+        }, "sandbox");
+
+        await using var provider = services.BuildServiceProvider();
+
+        var adapter = provider.GetRequiredKeyedService<IRequestAdapter>("sandbox");
+        Assert.Equal("https://sandbox.example.com/proxy", adapter.BaseUrl);
+    }
+
+    [Fact]
+    public async Task Api_Calls_Acquire_A_Token_And_Carry_The_Bearer_Through_The_Auth_Handler()
+    {
+        var routing = new RoutingHandler();
+        var services = CreateServices(routing);
+        services.AddZendeskClient(options =>
+        {
+            options.Subdomain = "acme";
+            options.OAuth.ClientId = "cid";
+            options.OAuth.ClientSecret = "secret";
+        });
+
+        await using var provider = services.BuildServiceProvider();
+        var support = provider.GetRequiredService<ZendeskSupportApiClient>();
+
+        var response = await support.Api.V2.Tickets[1]
+            .GetAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, response?.Ticket?.Id); // the canned envelope round-tripped through the generated model
+        Assert.True(routing.TokenCalls >= 1); // acquired an OAuth token first
+        Assert.Equal("Bearer", routing.LastApiAuthScheme); // the auth handler IS in the chain
+        var request = Assert.Single(routing.ApiRequests);
+        Assert.Equal("acme.zendesk.com", request.Host);
+        Assert.Equal("/api/v2/tickets/1", request.Path);
+        Assert.Equal("tok-cid", request.BearerToken); // the bearer minted from THESE credentials
         // Help Center endpoints return HTTP 415 without an explicit JSON Accept header — assert it is sent.
         Assert.Contains("application/json", routing.LastApiAccept!);
     }
 
     [Fact]
-    public async Task Supports_Multiple_Keyed_Instances_With_Isolated_Configuration()
+    public async Task Response_Guard_Handler_Is_In_The_Chain_And_Translates_A_NonSuccess_Status()
     {
-        var routing = new RoutingHandler();
-        var services = new ServiceCollection();
-        services.ConfigureHttpClientDefaults(b => b.ConfigurePrimaryHttpMessageHandler(() => routing));
+        var routing = new RoutingHandler
+        {
+            ApiStatusCode = HttpStatusCode.NotFound,
+            ApiResponseJson = """{"error":"RecordNotFound"}"""
+        };
+        var services = CreateServices(routing);
         services.AddZendeskClient(options =>
         {
-            options.Subdomain = "acme-a";
-            options.OAuth.ClientId = "a";
-            options.OAuth.ClientSecret = "s";
-        }, "a");
-        services.AddZendeskClient(options =>
-        {
-            options.Subdomain = "acme-b";
-            options.OAuth.ClientId = "b";
-            options.OAuth.ClientSecret = "s";
-        }, "b");
+            options.Subdomain = "acme";
+            options.OAuth.ClientId = "cid";
+            options.OAuth.ClientSecret = "secret";
+        });
 
         await using var provider = services.BuildServiceProvider();
+        var support = provider.GetRequiredService<ZendeskSupportApiClient>();
 
-        await provider.GetRequiredKeyedService<IZendeskClient>("a")
-            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
-        await provider.GetRequiredKeyedService<IZendeskClient>("b")
-            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+        // The guard handler sits inside the pipeline: a non-retryable status must surface as the rich typed
+        // exception (status + body), not as Kiota's body-less ApiException.
+        var exception = await Assert.ThrowsAsync<ZendeskApiException>(async () =>
+            await support.Api.V2.Tickets[404].GetAsync(cancellationToken: TestContext.Current.CancellationToken));
 
-        Assert.Contains("acme-a.zendesk.com", routing.ApiHosts);
-        Assert.Contains("acme-b.zendesk.com", routing.ApiHosts);
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Contains("RecordNotFound", exception.ResponseBody);
+        Assert.Equal("Bearer", routing.LastApiAuthScheme); // and the auth handler still ran before it
     }
 
     [Fact]
     public async Task Sends_Product_User_Agent_On_Api_And_Token_Requests()
     {
         var routing = new RoutingHandler();
-        var services = new ServiceCollection();
-        services.ConfigureHttpClientDefaults(b => b.ConfigurePrimaryHttpMessageHandler(() => routing));
+        var services = CreateServices(routing);
         services.AddZendeskClient(options =>
         {
             options.Subdomain = "acme";
@@ -78,21 +167,20 @@ public class ZendeskClientRegistrationTests
         });
 
         await using var provider = services.BuildServiceProvider();
-        await provider.GetRequiredService<IZendeskClient>()
-            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+        await provider.GetRequiredService<ZendeskSupportApiClient>().Api.V2.Tickets[1]
+            .GetAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.StartsWith("ES.FX.Zendesk/", routing.LastApiUserAgent);
         Assert.StartsWith("ES.FX.Zendesk/", routing.LastTokenUserAgent);
     }
 
     [Fact]
-    public async Task Keyed_Instances_Use_Their_Own_Credentials_And_Tokens()
+    public async Task Keyed_Instances_Are_Independent_And_Use_Their_Own_Credentials_And_Tokens()
     {
         // The stub token endpoint mints "tok-{client_id}" from the credentials it receives, so the bearer on an
         // API request proves WHICH client_id acquired it — the cross-tenant credential-leak guard.
         var routing = new RoutingHandler();
-        var services = new ServiceCollection();
-        services.ConfigureHttpClientDefaults(b => b.ConfigurePrimaryHttpMessageHandler(() => routing));
+        var services = CreateServices(routing);
         services.AddZendeskClient(options =>
         {
             options.Subdomain = "acme-alpha";
@@ -108,10 +196,12 @@ public class ZendeskClientRegistrationTests
 
         await using var provider = services.BuildServiceProvider();
 
-        await provider.GetRequiredKeyedService<IZendeskClient>("alpha")
-            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
-        await provider.GetRequiredKeyedService<IZendeskClient>("beta")
-            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+        var alpha = provider.GetRequiredKeyedService<ZendeskSupportApiClient>("alpha");
+        var beta = provider.GetRequiredKeyedService<ZendeskSupportApiClient>("beta");
+        Assert.NotSame(alpha, beta);
+
+        await alpha.Api.V2.Tickets[1].GetAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await beta.Api.V2.Tickets[1].GetAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Each instance's API request must go to ITS host with the bearer minted from ITS OWN client_id.
         Assert.Contains(routing.ApiRequests,
@@ -130,8 +220,7 @@ public class ZendeskClientRegistrationTests
     public async Task Default_And_Keyed_Instances_Coexist_With_Isolated_Options()
     {
         var routing = new RoutingHandler();
-        var services = new ServiceCollection();
-        services.ConfigureHttpClientDefaults(b => b.ConfigurePrimaryHttpMessageHandler(() => routing));
+        var services = CreateServices(routing);
         services.AddZendeskClient(options =>
         {
             options.Subdomain = "acme-default";
@@ -147,11 +236,10 @@ public class ZendeskClientRegistrationTests
 
         await using var provider = services.BuildServiceProvider();
 
-        // A null service key registers the DEFAULT instance — plain GetRequiredService must resolve it.
-        await provider.GetRequiredService<IZendeskClient>()
-            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
-        await provider.GetRequiredKeyedService<IZendeskClient>("staging")
-            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+        await provider.GetRequiredService<ZendeskSupportApiClient>().Api.V2.Tickets[1]
+            .GetAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await provider.GetRequiredKeyedService<ZendeskSupportApiClient>("staging").Api.V2.Tickets[1]
+            .GetAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Contains(routing.ApiRequests,
             r => r is { Host: "acme-default.zendesk.com", BearerToken: "tok-cid-default" });

@@ -22,7 +22,10 @@ public sealed record HermesAgentToolProgress
     [JsonPropertyName("label")]
     public string? Label { get; init; }
 
-    /// <summary>The tool-call identifier correlating the <c>running</c> and <c>completed</c> events (note the camelCase wire name <c>toolCallId</c>).</summary>
+    /// <summary>
+    ///     The tool-call identifier correlating the <c>running</c> and <c>completed</c> events (note the camelCase wire
+    ///     name <c>toolCallId</c>).
+    /// </summary>
     [JsonPropertyName("toolCallId")]
     public string? ToolCallId { get; init; }
 

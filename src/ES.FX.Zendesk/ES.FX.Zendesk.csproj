@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
@@ -8,10 +8,72 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Http" />
+		<PackageReference Include="Microsoft.Kiota.Bundle" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="ES.FX.Zendesk.Tests" />
 	</ItemGroup>
+
+	<!--
+		Generated Kiota clients (Generated/Support, Generated/HelpCenter) are produced at build time by the
+		OpenApi/ pipeline and are git-ignored (see OpenApi/README.md). They are removed from the default SDK
+		compile glob here and re-added — hidden from Solution Explorer (Visible="false") — by the targets
+		below, which also (re)generate them when the committed specs or the pinned generator change.
+	-->
+	<PropertyGroup>
+		<ZendeskOpenApiDirectory>$(MSBuildThisFileDirectory)OpenApi</ZendeskOpenApiDirectory>
+		<ZendeskGeneratedDirectory>$(MSBuildThisFileDirectory)Generated</ZendeskGeneratedDirectory>
+		<ZendeskGenerationStamp>$(ZendeskGeneratedDirectory)/.generated.stamp</ZendeskGenerationStamp>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- The targets below own these files; keep the default glob from compiling or showing them. -->
+		<Compile Remove="Generated/**/*.cs" />
+		<!-- Regeneration is triggered when any of these committed inputs is newer than the stamp. -->
+		<ZendeskGenerationInput Include="$(ZendeskOpenApiDirectory)/support-oas.yaml" />
+		<ZendeskGenerationInput Include="$(ZendeskOpenApiDirectory)/helpcenter-oas.yaml" />
+		<ZendeskGenerationInput Include="$(ZendeskOpenApiDirectory)/normalize.ps1" />
+		<ZendeskGenerationInput Include="$(ZendeskOpenApiDirectory)/generate.ps1" />
+		<ZendeskGenerationInput Include="$(MSBuildThisFileDirectory)../../.config/dotnet-tools.json" />
+	</ItemGroup>
+
+	<!--
+		Regenerate only when a spec/script/tool-pin input is newer than the stamp (incremental). The stamp lives
+		under the git-ignored Generated/ folder, so it survives `dotnet clean` and regeneration happens only on a
+		real input change or a fresh checkout — not on every build. Skipped during IDE design-time builds so
+		IntelliSense never shells out to the generator.
+	-->
+	<Target Name="GenerateZendeskClients"
+	        BeforeTargets="BeforeCompile;CoreCompile"
+	        Condition="'$(DesignTimeBuild)' != 'true'"
+	        Inputs="@(ZendeskGenerationInput)"
+	        Outputs="$(ZendeskGenerationStamp)">
+		<Message Importance="high"
+		         Text="ES.FX.Zendesk: regenerating Kiota clients (specs or generator changed)…" />
+		<!--
+			IgnoreStandardErrorWarningFormat: the generator's own console log is not MSBuild diagnostics;
+			don't tally it as build warnings/errors. Genuine failures still fail the build via a non-zero
+			exit code (generate.ps1 throws on any error).
+		-->
+		<Exec
+			Command="pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(ZendeskOpenApiDirectory)/generate.ps1&quot;"
+			WorkingDirectory="$(MSBuildThisFileDirectory)../.."
+			IgnoreStandardErrorWarningFormat="true" />
+		<Touch Files="$(ZendeskGenerationStamp)" AlwaysCreate="true" />
+	</Target>
+
+	<!--
+		Feed the generated sources to the compiler on every build (hidden from Solution Explorer). Runs after
+		GenerateZendeskClients so the files exist, and is itself un-conditioned/un-incremental so the generated
+		code is compiled even when generation was skipped as up-to-date.
+	-->
+	<Target Name="IncludeZendeskGeneratedClients"
+	        BeforeTargets="BeforeCompile;CoreCompile"
+	        DependsOnTargets="GenerateZendeskClients">
+		<ItemGroup>
+			<Compile Include="Generated/**/*.cs" Visible="false" />
+		</ItemGroup>
+	</Target>
 
 </Project>

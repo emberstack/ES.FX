@@ -34,13 +34,11 @@ internal sealed class McpOriginValidationMiddleware(
         await context.Response.WriteAsync("Origin not allowed.");
     }
 
-    private bool IsMcpRequest(HttpContext context)
-    {
+    private bool IsMcpRequest(HttpContext context) =>
         // The endpoint is the route pattern MapMcp is mapped at ("" = application root, which makes every
         // path an MCP path — the health endpoints tolerate the Origin check because non-browser monitors
         // never send an Origin header).
-        return _endpointPrefix == "/" || context.Request.Path.StartsWithSegments(_endpointPrefix);
-    }
+        _endpointPrefix == "/" || context.Request.Path.StartsWithSegments(_endpointPrefix);
 
     private static bool IsAllowedOrigin(HttpContext context, McpOptions options)
     {

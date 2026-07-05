@@ -29,7 +29,7 @@ public class HermesAgentClientInstrumentationTests
         var listener = new ActivityListener
         {
             ShouldListenTo = source => source.Name == HermesAgentClientInstrumentation.ActivitySourceName,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) =>
+            Sample = (ref _) =>
                 ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = stopped.Enqueue
         };

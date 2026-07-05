@@ -85,9 +85,9 @@ public class ZendeskToolProfileSnapshotTests
         var committedNames = committed.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         // Two focused assertions so a drift reports the exact additions/removals rather than a byte blob diff.
-        Assert.Empty(current.Except(committedNames));   // tools present now but missing from the snapshot
-        Assert.Empty(committedNames.Except(current));   // stale names in the snapshot no longer produced
-        Assert.Equal(content, committed);               // and the exact sorted, newline-terminated shape
+        Assert.Empty(current.Except(committedNames)); // tools present now but missing from the snapshot
+        Assert.Empty(committedNames.Except(current)); // stale names in the snapshot no longer produced
+        Assert.Equal(content, committed); // and the exact sorted, newline-terminated shape
     }
 
     /// <summary>

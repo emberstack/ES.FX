@@ -1,7 +1,6 @@
 using ES.FX.NousResearch.HermesAgent.Authentication;
 using ES.FX.NousResearch.HermesAgent.Configuration;
 using ES.FX.NousResearch.HermesAgent.Tests.Testing;
-using Microsoft.Extensions.Options;
 
 namespace ES.FX.NousResearch.HermesAgent.Tests.Authentication;
 

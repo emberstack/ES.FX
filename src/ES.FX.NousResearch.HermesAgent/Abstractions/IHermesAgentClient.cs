@@ -22,6 +22,9 @@ public interface IHermesAgentClient
     /// <summary>Operations against the <c>/api/sessions</c> (session management and session chat) endpoints.</summary>
     IHermesAgentSessionsApi Sessions { get; }
 
-    /// <summary>Operations against the discovery and health endpoints (<c>/v1/models</c>, <c>/v1/capabilities</c>, <c>/v1/skills</c>, <c>/v1/toolsets</c>, <c>/v1/health</c>, <c>/health/detailed</c>).</summary>
+    /// <summary>
+    ///     Operations against the discovery and health endpoints (<c>/v1/models</c>, <c>/v1/capabilities</c>,
+    ///     <c>/v1/skills</c>, <c>/v1/toolsets</c>, <c>/v1/health</c>, <c>/health/detailed</c>).
+    /// </summary>
     IHermesAgentServerApi Server { get; }
 }

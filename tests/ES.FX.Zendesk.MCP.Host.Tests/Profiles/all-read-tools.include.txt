@@ -17,6 +17,7 @@ groups_count
 groups_get
 groups_list
 groups_memberships_list
+groups_users_count
 groups_users_list
 job_statuses_get
 job_statuses_get_many
@@ -33,7 +34,9 @@ organizations_list
 organizations_memberships_list
 organizations_merges_get
 organizations_tags_list
+organizations_tickets_count
 organizations_tickets_list
+organizations_users_count
 organizations_users_list
 search_count
 suspended_tickets_get
@@ -42,6 +45,7 @@ tags_autocomplete
 tags_count
 tags_list
 ticket_fields_get
+ticket_fields_get_many
 ticket_fields_list
 ticket_fields_options_list
 tickets_audits_list

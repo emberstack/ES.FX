@@ -43,8 +43,8 @@ public class ProblemExtensionsTests
         ]);
 
         var problem = result.ToValidationProblem();
-        var errors = ValidationResultExtensions
-            .ToValidationErrors(result);
+        var errors = result
+            .ToValidationErrors();
 
         Assert.Equal(errors, problem.Errors);
     }

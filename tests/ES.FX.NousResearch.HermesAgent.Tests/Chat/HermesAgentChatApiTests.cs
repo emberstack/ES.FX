@@ -157,9 +157,9 @@ public class HermesAgentChatApiTests
         var api = CreateApi(stub);
 
         await Assert.ThrowsAsync<FormatException>(() => api.CompleteAsync(new HermesAgentChatCompletionRequest
-        {
-            Messages = [HermesAgentChatMessage.FromUser("Hi")]
-        }, new HermesAgentRequestHeaders { SessionKey = "abc\r\nX-Injected: pwned" },
+            {
+                Messages = [HermesAgentChatMessage.FromUser("Hi")]
+            }, new HermesAgentRequestHeaders { SessionKey = "abc\r\nX-Injected: pwned" },
             TestContext.Current.CancellationToken));
 
         Assert.Null(stub.LastRequest); // nothing reached the wire
@@ -200,9 +200,9 @@ public class HermesAgentChatApiTests
 
         var events = new List<HermesAgentChatStreamEvent>();
         await foreach (var streamEvent in api.StreamAsync(new HermesAgentChatCompletionRequest
-        {
-            Messages = [HermesAgentChatMessage.FromUser("Hello")]
-        }, cancellationToken: TestContext.Current.CancellationToken))
+                       {
+                           Messages = [HermesAgentChatMessage.FromUser("Hello")]
+                       }, cancellationToken: TestContext.Current.CancellationToken))
             events.Add(streamEvent);
 
         Assert.Equal(6, events.Count);
@@ -252,9 +252,9 @@ public class HermesAgentChatApiTests
 
         var events = new List<HermesAgentChatStreamEvent>();
         await foreach (var streamEvent in api.StreamAsync(new HermesAgentChatCompletionRequest
-        {
-            Messages = [HermesAgentChatMessage.FromUser("boom")]
-        }, cancellationToken: TestContext.Current.CancellationToken))
+                       {
+                           Messages = [HermesAgentChatMessage.FromUser("boom")]
+                       }, cancellationToken: TestContext.Current.CancellationToken))
             events.Add(streamEvent);
 
         var final = Assert.IsType<HermesAgentChatCompletionChunkEvent>(Assert.Single(events));
@@ -282,9 +282,9 @@ public class HermesAgentChatApiTests
 
         var events = new List<HermesAgentChatStreamEvent>();
         await foreach (var streamEvent in api.StreamAsync(new HermesAgentChatCompletionRequest
-        {
-            Messages = [HermesAgentChatMessage.FromUser("Hello")]
-        }, cancellationToken: TestContext.Current.CancellationToken))
+                       {
+                           Messages = [HermesAgentChatMessage.FromUser("Hello")]
+                       }, cancellationToken: TestContext.Current.CancellationToken))
             events.Add(streamEvent);
 
         Assert.Equal(2, events.Count);
@@ -309,9 +309,9 @@ public class HermesAgentChatApiTests
 
         var events = new List<HermesAgentChatStreamEvent>();
         await foreach (var streamEvent in api.StreamAsync(new HermesAgentChatCompletionRequest
-        {
-            Messages = [HermesAgentChatMessage.FromUser("Hi")]
-        }, cancellationToken: TestContext.Current.CancellationToken))
+                       {
+                           Messages = [HermesAgentChatMessage.FromUser("Hi")]
+                       }, cancellationToken: TestContext.Current.CancellationToken))
             events.Add(streamEvent);
 
         var unknown = Assert.IsType<HermesAgentChatStreamUnknownEvent>(Assert.Single(events));
@@ -328,14 +328,14 @@ public class HermesAgentChatApiTests
         var api = CreateApi(stub);
 
         await foreach (var _ in api.StreamAsync(new HermesAgentChatCompletionRequest
-        {
-            Messages = [HermesAgentChatMessage.FromUser("Hi")]
-        }, new HermesAgentRequestHeaders
-        {
-            SessionId = "api-abc123",
-            SessionKey = "channel-42",
-            IdempotencyKey = "idem-1"
-        }, TestContext.Current.CancellationToken))
+                       {
+                           Messages = [HermesAgentChatMessage.FromUser("Hi")]
+                       }, new HermesAgentRequestHeaders
+                       {
+                           SessionId = "api-abc123",
+                           SessionKey = "channel-42",
+                           IdempotencyKey = "idem-1"
+                       }, TestContext.Current.CancellationToken))
         {
         }
 
@@ -359,9 +359,9 @@ public class HermesAgentChatApiTests
         var exception = await Assert.ThrowsAsync<HermesAgentApiException>(async () =>
         {
             await foreach (var _ in api.StreamAsync(new HermesAgentChatCompletionRequest
-            {
-                Messages = [HermesAgentChatMessage.FromUser("Hi")]
-            }, cancellationToken: TestContext.Current.CancellationToken))
+                           {
+                               Messages = [HermesAgentChatMessage.FromUser("Hi")]
+                           }, cancellationToken: TestContext.Current.CancellationToken))
             {
             }
         });
@@ -380,7 +380,7 @@ public class HermesAgentChatApiTests
         // SSE pipeline would fail this test with a TimeoutException instead of hanging.
         const string firstEvent =
             "data: {\"id\":\"chatcmpl-abc\",\"object\":\"chat.completion.chunk\",\"created\":1751700000,\"model\":\"hermes-agent\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hi\"},\"finish_reason\":null}]}\n\n";
-        var stream = new SseTestStream(firstEvent, blockAfterPayload: true);
+        var stream = new SseTestStream(firstEvent, true);
         var api = CreateApi(new SseStreamStubHandler(stream));
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 
@@ -411,9 +411,9 @@ public class HermesAgentChatApiTests
         var api = CreateApi(new SseStreamStubHandler(stream));
 
         await foreach (var _ in api.StreamAsync(new HermesAgentChatCompletionRequest
-        {
-            Messages = [HermesAgentChatMessage.FromUser("Hi")]
-        }, cancellationToken: TestContext.Current.CancellationToken))
+                       {
+                           Messages = [HermesAgentChatMessage.FromUser("Hi")]
+                       }, cancellationToken: TestContext.Current.CancellationToken))
             break; // abandon after the first event
 
         Assert.True(stream.Disposed);

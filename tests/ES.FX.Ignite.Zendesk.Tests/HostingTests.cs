@@ -1,14 +1,19 @@
+using System.Diagnostics;
 using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Spark.Exceptions;
 using ES.FX.Ignite.Zendesk.Configuration;
 using ES.FX.Ignite.Zendesk.Hosting;
-using ES.FX.Zendesk.Abstractions;
+using ES.FX.Zendesk;
+using ES.FX.Zendesk.Attachments;
 using ES.FX.Zendesk.Configuration;
+using ES.FX.Zendesk.HelpCenter;
+using ES.FX.Zendesk.Support;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.Kiota.Abstractions;
 using OpenTelemetry.Trace;
 
 namespace ES.FX.Ignite.Zendesk.Tests;
@@ -46,14 +51,17 @@ public class HostingTests
     }
 
     [Fact]
-    public void Registers_ApiClient_And_Settings()
+    public void Registers_ApiClients_And_Settings()
     {
         var builder = CreateBuilder(ValidCredentials());
         builder.IgniteZendeskClient();
 
         var app = builder.Build();
 
-        Assert.NotNull(app.Services.GetRequiredService<IZendeskClient>());
+        Assert.NotNull(app.Services.GetRequiredService<ZendeskSupportApiClient>());
+        Assert.NotNull(app.Services.GetRequiredService<ZendeskHelpCenterApiClient>());
+        Assert.NotNull(app.Services.GetRequiredService<ZendeskAttachmentContentFetcher>());
+        Assert.NotNull(app.Services.GetRequiredService<IRequestAdapter>());
         Assert.NotNull(app.Services.GetRequiredService<ZendeskClientSparkSettings>());
     }
 
@@ -157,8 +165,11 @@ public class HostingTests
 
         var app = builder.Build();
 
-        Assert.NotNull(app.Services.GetRequiredService<IZendeskClient>());
-        Assert.NotNull(app.Services.GetRequiredKeyedService<IZendeskClient>("sandbox"));
+        Assert.NotNull(app.Services.GetRequiredService<ZendeskSupportApiClient>());
+        Assert.NotNull(app.Services.GetRequiredKeyedService<ZendeskSupportApiClient>("sandbox"));
+        Assert.NotNull(app.Services.GetRequiredKeyedService<ZendeskHelpCenterApiClient>("sandbox"));
+        Assert.NotNull(app.Services.GetRequiredKeyedService<ZendeskAttachmentContentFetcher>("sandbox"));
+        Assert.NotNull(app.Services.GetRequiredKeyedService<IRequestAdapter>("sandbox"));
         Assert.NotNull(app.Services.GetRequiredKeyedService<ZendeskClientSparkSettings>("sandbox"));
 
         var monitor = app.Services.GetRequiredService<IOptionsMonitor<ZendeskClientOptions>>();
@@ -179,8 +190,8 @@ public class HostingTests
 
         var app = builder.Build();
 
-        Assert.NotNull(app.Services.GetRequiredKeyedService<IZendeskClient>("a"));
-        Assert.NotNull(app.Services.GetRequiredKeyedService<IZendeskClient>("b"));
+        Assert.NotNull(app.Services.GetRequiredKeyedService<ZendeskSupportApiClient>("a"));
+        Assert.NotNull(app.Services.GetRequiredKeyedService<ZendeskSupportApiClient>("b"));
     }
 
     [Fact]
@@ -194,6 +205,28 @@ public class HostingTests
         // When tracing is enabled the Spark calls AddOpenTelemetry().WithTracing(...), which registers a
         // TracerProvider in the container. Resolving it confirms the tracing branch ran.
         Assert.NotNull(app.Services.GetService<TracerProvider>());
+    }
+
+    [Fact]
+    public void Tracing_Subscribes_To_Client_And_Kiota_ActivitySources()
+    {
+        var builder = CreateBuilder(ValidCredentials());
+        builder.IgniteZendeskClient();
+
+        var app = builder.Build();
+
+        // Resolving the TracerProvider materializes the listeners registered via AddSource(...).
+        Assert.NotNull(app.Services.GetService<TracerProvider>());
+
+        // The curated client emits spans on its own source; the Kiota request adapter emits request spans on
+        // Kiota's fixed source. Activities are only created when a listener is subscribed, so a non-null
+        // activity proves the Spark subscribed to each source.
+        using var clientSource = new ActivitySource(ZendeskClientInstrumentation.ActivitySourceName);
+        using var kiotaSource = new ActivitySource(ZendeskClientInstrumentation.KiotaActivitySourceName);
+        using var clientActivity = clientSource.StartActivity("probe");
+        using var kiotaActivity = kiotaSource.StartActivity("probe");
+        Assert.NotNull(clientActivity);
+        Assert.NotNull(kiotaActivity);
     }
 
     [Fact]

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using ES.FX.Ignite.Zendesk.HealthChecks;
-using ES.FX.Zendesk.Abstractions;
+using ES.FX.Zendesk.Support;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -54,7 +54,7 @@ public class ZendeskClientHealthCheckTests
     {
         var stub = new RoutingStubHandler();
         await using var provider = BuildProvider(stub);
-        var healthCheck = new ZendeskClientHealthCheck(provider.GetRequiredService<IZendeskClient>());
+        var healthCheck = new ZendeskClientHealthCheck(provider.GetRequiredService<ZendeskSupportApiClient>());
 
         var result = await healthCheck.CheckHealthAsync(CreateContext(healthCheck, HealthStatus.Degraded),
             TestContext.Current.CancellationToken);
@@ -64,7 +64,7 @@ public class ZendeskClientHealthCheckTests
         Assert.Equal("/oauth/tokens", stub.TokenRequest?.RequestUri?.AbsolutePath);
         // The dedicated token client has no auth handler attached, so the token request is unauthenticated.
         Assert.Null(stub.TokenRequest?.Headers.Authorization);
-        Assert.Equal("/api/v2/users/me.json", stub.UsersMeRequest?.RequestUri?.AbsolutePath);
+        Assert.Equal("/api/v2/users/me", stub.UsersMeRequest?.RequestUri?.AbsolutePath);
         Assert.Equal("Bearer", stub.UsersMeRequest?.Headers.Authorization?.Scheme);
         Assert.Equal(AccessToken, stub.UsersMeRequest?.Headers.Authorization?.Parameter);
 
@@ -82,7 +82,7 @@ public class ZendeskClientHealthCheckTests
     {
         var stub = new RoutingStubHandler { UsersMeStatusCode = HttpStatusCode.InternalServerError };
         await using var provider = BuildProvider(stub);
-        var healthCheck = new ZendeskClientHealthCheck(provider.GetRequiredService<IZendeskClient>());
+        var healthCheck = new ZendeskClientHealthCheck(provider.GetRequiredService<ZendeskSupportApiClient>());
 
         var result = await healthCheck.CheckHealthAsync(CreateContext(healthCheck, HealthStatus.Degraded),
             TestContext.Current.CancellationToken);
@@ -93,7 +93,7 @@ public class ZendeskClientHealthCheckTests
     }
 
     /// <summary>
-    ///     Serves the OAuth token endpoint and <c>users/me.json</c> with canned responses, records the requests
+    ///     Serves the OAuth token endpoint and <c>users/me</c> with canned responses, records the requests
     ///     for assertions, and fails the test on any other outbound request.
     /// </summary>
     private sealed class RoutingStubHandler : HttpMessageHandler
@@ -115,7 +115,7 @@ public class ZendeskClientHealthCheckTests
                 case "/oauth/tokens":
                     TokenRequest = request;
                     return Task.FromResult(Json(HttpStatusCode.OK, TokenJson));
-                case "/api/v2/users/me.json":
+                case "/api/v2/users/me":
                     UsersMeRequest = request;
                     return Task.FromResult(Json(UsersMeStatusCode,
                         UsersMeStatusCode == HttpStatusCode.OK

@@ -1,5 +1,3 @@
-using ES.FX.Zendesk.Abstractions;
-
 namespace ES.FX.Zendesk.Configuration;
 
 /// <summary>

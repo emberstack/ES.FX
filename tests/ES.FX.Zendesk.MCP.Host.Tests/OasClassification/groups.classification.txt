@@ -1,0 +1,9 @@
+created_at omitted
+default summary
+deleted summary
+description summary
+id summary
+is_public summary
+name summary
+updated_at omitted
+url omitted

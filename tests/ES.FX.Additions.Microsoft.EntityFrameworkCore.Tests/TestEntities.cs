@@ -30,7 +30,7 @@ public abstract class ConfigurableContextBase(DbContextOptions options) : DbCont
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        BuilderExtensions.ConfigureFromExtension(modelBuilder, _options);
+        modelBuilder.ConfigureFromExtension(_options);
     }
 }
 

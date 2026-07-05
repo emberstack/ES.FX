@@ -14,6 +14,13 @@ public static class ZendeskClientInstrumentation
     public const string ActivitySourceName = "ES.FX.Zendesk";
 
     /// <summary>
+    ///     The fixed name of the <see cref="System.Diagnostics.ActivitySource" /> the Kiota request adapter emits
+    ///     request spans on (not configurable in the Kiota HTTP library). Subscribe to both sources to see the
+    ///     full trace.
+    /// </summary>
+    public const string KiotaActivitySourceName = "Microsoft.Kiota.Http.HttpClientLibrary";
+
+    /// <summary>
     ///     The shared <see cref="System.Diagnostics.ActivitySource" /> used by the client.
     /// </summary>
     internal static readonly ActivitySource ActivitySource = new(ActivitySourceName);

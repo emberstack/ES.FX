@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using ES.FX.Zendesk.Abstractions;
 
 namespace ES.FX.Zendesk.Authentication;
 

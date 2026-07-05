@@ -1,0 +1,6 @@
+# Kiota-generated code (see eng/zendesk/README.md). Exempt from style analysis and from the
+# repo-wide XML-documentation requirement; the repo's warnings-as-errors still applies to
+# everything not explicitly relaxed here.
+[*.cs]
+generated_code = true
+dotnet_diagnostic.CS1591.severity = none

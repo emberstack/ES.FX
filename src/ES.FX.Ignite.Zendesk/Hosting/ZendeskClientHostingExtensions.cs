@@ -2,8 +2,10 @@ using ES.FX.Ignite.Spark.Configuration;
 using ES.FX.Ignite.Zendesk.Configuration;
 using ES.FX.Ignite.Zendesk.HealthChecks;
 using ES.FX.Zendesk;
-using ES.FX.Zendesk.Abstractions;
+using ES.FX.Zendesk.Attachments;
 using ES.FX.Zendesk.Configuration;
+using ES.FX.Zendesk.HelpCenter;
+using ES.FX.Zendesk.Support;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -13,14 +15,16 @@ using Microsoft.Extensions.Options;
 namespace ES.FX.Ignite.Zendesk.Hosting;
 
 /// <summary>
-///     Hosting extensions that wire the Zendesk API client into Ignite. Supports multiple named/keyed instances.
+///     Hosting extensions that wire the Zendesk API clients into Ignite. Supports multiple named/keyed instances.
 /// </summary>
 [PublicAPI]
 public static class ZendeskClientHostingExtensions
 {
     /// <summary>
-    ///     Registers <see cref="IZendeskClient" /> (a typed <see cref="HttpClient" />) with config binding,
-    ///     options validation, a live health check and OpenTelemetry tracing.
+    ///     Registers the generated <see cref="ZendeskSupportApiClient" /> and
+    ///     <see cref="ZendeskHelpCenterApiClient" /> (plus the curated
+    ///     <see cref="ZendeskAttachmentContentFetcher" />) with config binding, options validation, a live health
+    ///     check and OpenTelemetry tracing.
     /// </summary>
     /// <param name="builder">The <see cref="IHostApplicationBuilder" /> to read config from and add services to.</param>
     /// <param name="name">A name used to retrieve the settings and options from configuration (for multiple instances).</param>
@@ -70,7 +74,11 @@ public static class ZendeskClientHostingExtensions
     {
         if (settings.Tracing.Enabled)
             builder.Services.AddOpenTelemetry()
-                .WithTracing(tracing => tracing.AddSource(ZendeskClientInstrumentation.ActivitySourceName));
+                .WithTracing(tracing => tracing
+                    // Curated client spans (token acquisition, attachment downloads, ...).
+                    .AddSource(ZendeskClientInstrumentation.ActivitySourceName)
+                    // The Kiota request adapter emits request spans on its own fixed ActivitySource.
+                    .AddSource(ZendeskClientInstrumentation.KiotaActivitySourceName));
 
         if (settings.HealthChecks.Enabled)
         {
@@ -79,8 +87,8 @@ public static class ZendeskClientHostingExtensions
             builder.Services.AddHealthChecks().Add(new HealthCheckRegistration(
                 healthCheckName,
                 sp => new ZendeskClientHealthCheck(serviceKey is null
-                    ? sp.GetRequiredService<IZendeskClient>()
-                    : sp.GetRequiredKeyedService<IZendeskClient>(serviceKey)),
+                    ? sp.GetRequiredService<ZendeskSupportApiClient>()
+                    : sp.GetRequiredKeyedService<ZendeskSupportApiClient>(serviceKey)),
                 settings.HealthChecks.FailureStatus,
                 ["Zendesk", .. settings.HealthChecks.Tags],
                 settings.HealthChecks.Timeout));

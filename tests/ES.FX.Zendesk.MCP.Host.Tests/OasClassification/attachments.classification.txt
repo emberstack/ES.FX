@@ -1,0 +1,14 @@
+content_type summary
+content_url omitted
+deleted omitted
+file_name summary
+height omitted
+id summary
+inline summary
+malware_access_override omitted
+malware_scan_result summary
+mapped_content_url omitted
+size summary
+thumbnails omitted
+url omitted
+width omitted

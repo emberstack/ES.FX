@@ -17,6 +17,18 @@ namespace ES.FX.Zendesk.MCP.Host.Hosting;
 public static class McpServerHostingExtensions
 {
     /// <summary>
+    ///     The server-level MCP <c>instructions</c> sent to clients at initialize: the lean response contract.
+    ///     Per-tool descriptions still carry their own contract — this is reinforcement, not the sole carrier.
+    /// </summary>
+    internal const string ServerInstructions =
+        "Zendesk MCP server — lean response contract: list/search tools return summary rows by default; pass " +
+        "detail:'full' on the list tool, or call the record's *_get tool, for a complete record. An absent " +
+        "field means null/empty, not unknown. Prefer the *_count tools to answer how-many questions, and " +
+        "tickets_metrics_get for ticket timing metrics. A response's 'note' field carries dynamic conditions: " +
+        "continuation (with has_more and after_cursor/next_page), truncation, and omitted data with the exact " +
+        "re-call that retrieves it.";
+
+    /// <summary>
     ///     Registers the MCP server with the Streamable HTTP transport, execution-mode (read-only / dry-run)
     ///     support, and OpenTelemetry tracing/metrics.
     /// </summary>
@@ -24,7 +36,8 @@ public static class McpServerHostingExtensions
     /// <returns>The <see cref="IMcpServerBuilder" /> so tools can be registered by the caller.</returns>
     public static IMcpServerBuilder AddZendeskMcpServer(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddOptions<McpOptions>().BindConfiguration(McpOptions.SectionKey);
+        builder.Services.AddOptions<McpOptions>().BindConfiguration(McpOptions.SectionKey).ValidateOnStart();
+        builder.Services.AddSingleton<IValidateOptions<McpOptions>, McpOptionsValidator>();
 
         // Execution-mode (read-only / dry-run) support, resolvable per request.
         builder.Services.AddHttpContextAccessor();
@@ -39,7 +52,7 @@ public static class McpServerHostingExtensions
         var options = builder.GetMcpOptions();
 
         return builder.Services
-            .AddMcpServer()
+            .AddMcpServer(serverOptions => serverOptions.ServerInstructions = ServerInstructions)
             .WithHttpTransport(transport => transport.Stateless = options.Stateless);
     }
 
@@ -67,7 +80,7 @@ public static class McpServerHostingExtensions
     /// <returns>The builder, for chaining.</returns>
     public static IMcpServerBuilder WithToolsInArea<[DynamicallyAccessedMembers(
             DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)]
-    TTool>(this IMcpServerBuilder builder, ZendeskToolAreaGate gate)
+        TTool>(this IMcpServerBuilder builder, ZendeskToolAreaGate gate)
         => gate.Allows<TTool>() ? builder.WithTools<TTool>() : builder;
 
     /// <summary>

@@ -1,4 +1,6 @@
+using System.Globalization;
 using ES.FX.Zendesk.MCP.Host.Execution;
+using Microsoft.Kiota.Abstractions;
 using ModelContextProtocol;
 
 namespace ES.FX.Zendesk.MCP.Host.Tools;
@@ -30,6 +32,10 @@ internal static class ZendeskToolInvoker
         {
             throw new McpException(Describe(exception));
         }
+        catch (ApiException exception)
+        {
+            throw new McpException(Describe(exception));
+        }
     }
 
     /// <summary>
@@ -56,9 +62,29 @@ internal static class ZendeskToolInvoker
     }
 
     /// <summary>
+    ///     Variant of <see cref="InvokeWriteAsync{T}(IMcpExecutionModeAccessor, string, Func{Task{T}}, object)" />
+    ///     for write tools that build their own dry-run result — bulk (<c>*_many</c>) tools use it to emit the
+    ///     <see cref="ZendeskDryRunResult.ForBulk" /> digest instead of echoing up to 100 write models verbatim.
+    ///     The factory runs only in dry-run mode, so the digest costs nothing on real writes.
+    /// </summary>
+    /// <param name="executionMode">The per-request execution-mode accessor.</param>
+    /// <param name="action">The action in the infinitive, used in mode messages.</param>
+    /// <param name="operation">The client call performing the write.</param>
+    /// <param name="dryRun">Builds the <see cref="ZendeskDryRunResult" /> returned in dry-run mode.</param>
+    public static async Task<object> InvokeWriteAsync<T>(IMcpExecutionModeAccessor executionMode, string action,
+        Func<Task<T>> operation, Func<ZendeskDryRunResult> dryRun) where T : notnull
+    {
+        var mode = executionMode.EffectiveMode;
+        if (mode.IsReadOnly()) throw ReadOnlyRejection(action);
+        if (mode.IsDryRun()) return dryRun();
+        return await InvokeAsync(operation).ConfigureAwait(false);
+    }
+
+    /// <summary>
     ///     Invokes a write (mutating) Zendesk operation whose API response has no body (for example a delete or
     ///     restore returning <c>204</c>), honoring the effective execution mode like
-    ///     <see cref="InvokeWriteAsync{T}" /> and returning a <see cref="ZendeskWriteAcknowledgement" /> on success.
+    ///     <see cref="InvokeWriteAsync{T}(IMcpExecutionModeAccessor, string, Func{Task{T}}, object)" /> and
+    ///     returning a <see cref="ZendeskWriteAcknowledgement" /> on success.
     /// </summary>
     public static async Task<object> InvokeWriteAsync(IMcpExecutionModeAccessor executionMode, string action,
         Func<Task> operation, object? request = null)
@@ -93,5 +119,40 @@ internal static class ZendeskToolInvoker
         return string.IsNullOrWhiteSpace(exception.ResponseBody)
             ? message
             : $"{message} Zendesk response: {exception.ResponseBody}";
+    }
+
+    /// <summary>
+    ///     Describes a failure surfaced by the Kiota request adapter. Non-retryable 4xx errors are already
+    ///     translated to rich <see cref="ZendeskApiException" />s by the response-guard handler before Kiota sees
+    ///     them, so this path covers retry-exhausted statuses (408/429/5xx) — where the <c>Retry-After</c> hint in
+    ///     the response headers is the actionable detail.
+    /// </summary>
+    private static string Describe(ApiException exception)
+    {
+        var message = $"The Zendesk API request failed with status {exception.ResponseStatusCode}.";
+        if (ResolveRetryAfter(exception) is { } retryAfter)
+            message = $"{message} Retry after {(long)Math.Ceiling(retryAfter.TotalSeconds)} seconds.";
+        return message;
+    }
+
+    private static TimeSpan? ResolveRetryAfter(ApiException exception)
+    {
+        var values = exception.ResponseHeaders?
+            .FirstOrDefault(header => string.Equals(header.Key, "Retry-After", StringComparison.OrdinalIgnoreCase))
+            .Value;
+        var value = values?.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        if (long.TryParse(value, out var seconds))
+            return seconds >= 0 ? TimeSpan.FromSeconds(seconds) : TimeSpan.Zero;
+        // Invariant culture: RFC 1123 HTTP-dates must parse identically regardless of the host locale.
+        if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal, out var date))
+        {
+            var wait = date - DateTimeOffset.UtcNow;
+            return wait >= TimeSpan.Zero ? wait : TimeSpan.Zero;
+        }
+
+        return null;
     }
 }

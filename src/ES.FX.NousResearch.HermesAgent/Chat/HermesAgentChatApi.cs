@@ -85,19 +85,19 @@ internal sealed class HermesAgentChatApi(HttpClient httpClient, ILogger<HermesAg
         switch (sseEvent.EventType)
         {
             case DefaultEventType:
-                {
-                    var chunk = TryDeserialize<HermesAgentChatCompletionChunk>(sseEvent.Data);
-                    return chunk is null
-                        ? new HermesAgentChatStreamUnknownEvent(sseEvent.EventType, sseEvent.Data)
-                        : new HermesAgentChatCompletionChunkEvent(chunk);
-                }
+            {
+                var chunk = TryDeserialize<HermesAgentChatCompletionChunk>(sseEvent.Data);
+                return chunk is null
+                    ? new HermesAgentChatStreamUnknownEvent(sseEvent.EventType, sseEvent.Data)
+                    : new HermesAgentChatCompletionChunkEvent(chunk);
+            }
             case ToolProgressEventType:
-                {
-                    var progress = TryDeserialize<HermesAgentToolProgress>(sseEvent.Data);
-                    return progress is null
-                        ? new HermesAgentChatStreamUnknownEvent(sseEvent.EventType, sseEvent.Data)
-                        : new HermesAgentToolProgressEvent(progress);
-                }
+            {
+                var progress = TryDeserialize<HermesAgentToolProgress>(sseEvent.Data);
+                return progress is null
+                    ? new HermesAgentChatStreamUnknownEvent(sseEvent.EventType, sseEvent.Data)
+                    : new HermesAgentToolProgressEvent(progress);
+            }
             default:
                 return new HermesAgentChatStreamUnknownEvent(sseEvent.EventType, sseEvent.Data);
         }

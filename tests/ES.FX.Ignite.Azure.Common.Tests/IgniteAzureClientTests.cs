@@ -145,8 +145,7 @@ public class IgniteAzureClientTests
 
         services.IgniteAzureClient<TableServiceClient, TableClientOptions>(
             null,
-            BuildClientConfigurationSection(),
-            null);
+            BuildClientConfigurationSection());
 
         using var provider = services.BuildServiceProvider();
 

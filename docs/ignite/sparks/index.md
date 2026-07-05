@@ -95,7 +95,7 @@ Every Spark, grouped by function.
 | Spark | Purpose |
 | --- | --- |
 | [Hermes Agent](./hermes-agent.md) | Registers the [ES.FX.NousResearch.HermesAgent](../../libraries/hermes-agent-client.md) typed `IHermesAgentClient` (static bearer key) with a live health check and tracing. |
-| [Zendesk](./zendesk.md) | Registers the [ES.FX.Zendesk](../../libraries/zendesk-client.md) typed `IZendeskClient` (OAuth `client_credentials`) with a live health check and tracing. |
+| [Zendesk](./zendesk.md) | Registers the [ES.FX.Zendesk](../../libraries/zendesk-client.md) Kiota-generated `ZendeskSupportApiClient` and `ZendeskHelpCenterApiClient` (OAuth `client_credentials`) with a live health check and tracing. |
 
 ### API & documentation
 

@@ -1,0 +1,14 @@
+active summary
+agent_label summary
+created_at omitted
+default omitted
+description omitted
+end_user_description omitted
+end_user_label omitted
+id summary
+raw_agent_label omitted
+raw_description omitted
+raw_end_user_description omitted
+raw_end_user_label omitted
+status_category summary
+updated_at omitted

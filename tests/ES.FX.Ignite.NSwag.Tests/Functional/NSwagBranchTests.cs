@@ -101,7 +101,7 @@ public class NSwagBranchTests
     [Fact]
     public async Task UseSwaggerUiTrue_UiIsServed()
     {
-        await using var app = await BuildAppAsync(true);
+        await using var app = await BuildAppAsync();
         var client = CreateClient(app);
 
         var response = await client.GetAsync("/swagger/", TestContext.Current.CancellationToken);

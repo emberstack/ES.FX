@@ -1,0 +1,8 @@
+id summary
+job_type omitted
+message summary
+progress summary
+results summary
+status summary
+total summary
+url omitted

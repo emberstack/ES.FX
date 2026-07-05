@@ -46,7 +46,7 @@ public class SerilogHostingExtensionsBehaviorTests
         var sink = new CollectingSink();
         var builder = WebApplication.CreateBuilder([]);
 
-        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), true);
+        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink));
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();
@@ -105,7 +105,7 @@ public class SerilogHostingExtensionsBehaviorTests
         var sink = new CollectingSink();
         var builder = WebApplication.CreateBuilder([]);
 
-        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink), true);
+        builder.IgniteSerilog(cfg => cfg.WriteTo.Sink(sink));
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();
@@ -143,7 +143,7 @@ public class SerilogHostingExtensionsBehaviorTests
         {
             cfg.WriteTo.Sink(sink);
             cfg.MinimumLevel.Fatal();
-        }, true);
+        });
 
         var provider = builder.Build().Services;
         var logger = provider.GetRequiredService<ILogger>();

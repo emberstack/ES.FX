@@ -1,0 +1,11 @@
+active summary
+conditions omitted
+created_at omitted
+default summary
+description omitted
+execution omitted
+id summary
+position summary
+restriction omitted
+title summary
+updated_at omitted

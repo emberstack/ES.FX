@@ -1,6 +1,10 @@
 using System.ComponentModel;
-using ES.FX.Zendesk.Abstractions;
-using ES.FX.Zendesk.Abstractions.Models;
+using System.Text.Json;
+using ES.FX.Zendesk.MCP.Host.Configuration;
+using ES.FX.Zendesk.Support;
+using Microsoft.Extensions.Options;
+using Microsoft.Kiota.Abstractions;
+using ModelContextProtocol;
 using ModelContextProtocol.Server;
 
 namespace ES.FX.Zendesk.MCP.Host.Tools;
@@ -8,72 +12,125 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 /// <summary>
 ///     MCP read tools for Zendesk views (saved, shared ticket filters). Namespaced <c>views_*</c>.
 /// </summary>
+/// <remarks>
+///     Requests are built from the generated request builders but sent through
+///     <see cref="ZendeskKiotaRequests.SendForJsonAsync" /> (raw JSON passthrough) instead of the typed models:
+///     the generated view models mark the fields that matter here as read-only and drop them on re-serialization
+///     (<c>ViewObject</c> loses <c>id</c>/<c>created_at</c>/<c>updated_at</c>/<c>default</c>,
+///     <c>ViewCountObject</c> serializes nothing at all, and the list/tickets envelopes lose the offset-pagination
+///     fields <c>count</c>/<c>next_page</c>/<c>previous_page</c> their tool descriptions promise). The escape
+///     hatch also supplies the cursor-pagination and paging query parameters the published spec omits.
+///     List responses are then projected through <see cref="ZendeskLean" /> into the uniform lean envelope —
+///     summary rows by default, complete records via <c>detail:'full'</c> or the <c>*_get</c> tools.
+/// </remarks>
 [McpServerToolType]
-public sealed class ZendeskViewTools(IZendeskClient zendeskApiClient)
+public sealed class ZendeskViewTools(
+    ZendeskSupportApiClient zendesk,
+    IRequestAdapter requestAdapter,
+    IOptionsMonitor<McpOptions> mcpOptions)
 {
+    /// <summary>The uniform <c>detail</c> parameter description shared by the list tools.</summary>
+    private const string DetailDescription =
+        "Row detail: 'summary' (default, lean triage rows) | 'full' (complete records minus null fields and API " +
+        "links).";
+
     /// <summary>Lists Zendesk views.</summary>
-    [McpServerTool(Name = "views_list", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "views_list", ReadOnly = true, OpenWorld = false)]
     [Description(
-        "Lists Zendesk views (saved, shared ticket filters), optionally only active ones. Use " +
-        "views_tickets_list to see the tickets a view currently matches. Cursor pagination: pass " +
-        "pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. Read-only.")]
-    public Task<ZendeskViewsResult> List(
-        [Description("When true, only active views; when false, only inactive views; omit to return both (optional).")]
+        "Zendesk views (saved, shared ticket filters) as lean summary rows: id, title, active, default, " +
+        "position. Conditions/execution layout/restriction omitted — views_get (or detail:'full') for a view's " +
+        "filter rules. views_tickets_list for the tickets a view matches; views_count for just the number. " +
+        "Cursor pagination: pageSize default 25 (max 100); response has_more/after_cursor drive continuation.")]
+    public Task<JsonElement> List(
+        [Description("true=active only; false=inactive only; omit=both (optional).")]
         bool? active = null,
-        [Description("The cursor page size; the endpoint returns at most 100 records per page (optional).")]
-        int? pageSize = null,
-        [Description("The cursor from the previous page's meta.after_cursor (omit for the first page).")]
+        [Description("Results per page (default 25, endpoint max 100).")]
+        int? pageSize = 25,
+        [Description(
+            "Continuation cursor for the NEXT page — OMIT for first page. Must be the opaque token copied " +
+            "verbatim from previous response's after_cursor; not a page number, don't guess or pass empty " +
+            "(invalid cursor → 400).")]
         string? afterCursor = null,
-        CancellationToken cancellationToken = default)
-        => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Views.ListAsync(active: active, pageSize: pageSize, afterCursor: afterCursor,
-                cancellationToken: cancellationToken));
+        CancellationToken cancellationToken = default,
+        [Description(DetailDescription)] string detail = "summary")
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var parsedDetail = ZendeskLean.ParseDetail(detail);
+            var request = zendesk.Api.V2.Views
+                .ToGetRequestInformation(configuration => configuration.QueryParameters.Active = active)
+                .WithCursorPagination(pageSize, afterCursor);
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return ZendeskLean.BuildCursorListEnvelope(json, "views", parsedDetail,
+                MaxResponseChars("views_list"));
+        });
 
     /// <summary>Returns a Zendesk view by id.</summary>
-    [McpServerTool(Name = "views_get", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "views_get", ReadOnly = true, OpenWorld = false)]
     [Description(
-        "Returns a single Zendesk view by id, including its conditions (the all/any filter rules) and execution " +
-        "(columns, sorting/grouping). Read-only.")]
-    public Task<ZendeskView> Read(
-        [Description("The numeric Zendesk view id.")]
+        "Single Zendesk view by id, including conditions (all/any filter rules) and execution (columns, " +
+        "sorting/grouping) — the detail sink for views_list rows. Null fields and API self-links omitted; absent " +
+        "field means null/empty.")]
+    public Task<JsonElement> Read(
+        [Description("Numeric Zendesk view id.")]
         long id,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Views.GetByIdAsync(id, cancellationToken));
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var request = zendesk.Api.V2.Views[id].ToGetRequestInformation();
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return json.ValueKind == JsonValueKind.Object && json.TryGetProperty("view", out var view)
+                ? ZendeskLean.EnsureWithinBudget(ZendeskLean.ToFullView(view), "views_get",
+                    MaxResponseChars("views_get"),
+                    "View too large — inspect its conditions/columns in smaller pieces or via views_list summary.")
+                : throw new McpException($"Zendesk view '{id}' was not found.");
+        });
 
     /// <summary>Returns the tickets currently matching a view.</summary>
-    [McpServerTool(Name = "views_tickets_list", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "views_tickets_list", ReadOnly = true, OpenWorld = false)]
     [Description(
-        "Returns the tickets currently matching a view. Offset pagination: count/next_page indicate more pages. " +
-        "Sideload related records with include (users, groups, organizations) to resolve ids inline. Read-only.")]
-    public Task<ZendeskTicketsResult> Tickets(
-        [Description("The numeric Zendesk view id.")]
+        "Tickets currently matching a view as lean ticket summary rows: id, subject, 150-char description " +
+        "excerpt, status, priority, dates, people ids, tags. detail:'full' for complete records, or tickets_get " +
+        "for one. views_count for just the NUMBER of matching tickets. perPage default 25 (max 100); total in " +
+        "'count'; 'has_more'/'next_page' drive paging.")]
+    public Task<JsonElement> Tickets(
+        [Description("Numeric Zendesk view id.")]
         long viewId,
-        [Description("The 1-based page number (optional).")]
+        [Description("1-based page number (optional).")]
         int? page = null,
-        [Description(
-            "Offset pagination; results per page (optional, max 100). Read the total from 'count' and continue while " +
-            "'next_page' is non-null.")]
-        int? perPage = null,
-        [Description(
-            "Sideload names to resolve related record ids inline; supported values include users, groups, " +
-            "organizations (optional).")]
-        string[]? include = null,
-        CancellationToken cancellationToken = default)
-        => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Views.GetTicketsAsync(viewId, page: page, perPage: perPage, include: include,
-                cancellationToken: cancellationToken));
+        [Description("Results per page (default 25, max 100).")]
+        int? perPage = 25,
+        CancellationToken cancellationToken = default,
+        [Description(DetailDescription)] string detail = "summary")
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var parsedDetail = ZendeskLean.ParseDetail(detail);
+            // The offset paging pair is documented for this endpoint but never OAS-modeled (spec-anomaly ledger,
+            // src/ES.FX.Zendesk/OpenApi/README.md). No include parameter is offered: sideloads are neither
+            // OAS-modeled nor documented for this route, and remain unverified against a live tenant.
+            var request = zendesk.Api.V2.Views[viewId].Tickets.ToGetRequestInformation()
+                .WithQuery("page", page)
+                .WithQuery("per_page", perPage);
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return ZendeskLean.BuildOffsetListEnvelope(json, "tickets", page, parsedDetail,
+                MaxResponseChars("views_tickets_list"));
+        });
 
     /// <summary>Returns the (cached) ticket count of a view.</summary>
-    [McpServerTool(Name = "views_count", ReadOnly = true, OpenWorld = true)]
+    [McpServerTool(Name = "views_count", ReadOnly = true, OpenWorld = false)]
     [Description(
-        "Returns the (cached) ticket count of a view — cheaper than listing its tickets. Counts for large views " +
-        "are approximate and can be cached for 60-90 minutes; 'value' may be null while the data reloads, and " +
-        "'fresh' is false when the cached value is stale. Rate limited to 5 requests per minute, per view, per " +
-        "agent. Read-only.")]
-    public Task<ZendeskViewCount> Count(
-        [Description("The numeric Zendesk view id.")]
+        "Cached ticket count of a view — cheaper than listing its tickets. Large views: approximate, cached " +
+        "60-90 min; 'value' may be null while data reloads; 'fresh' is false when cached value is stale. Rate " +
+        "limited 5 requests/min per view per agent.")]
+    public Task<JsonElement> Count(
+        [Description("Numeric Zendesk view id.")]
         long viewId,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeAsync(() =>
-            zendeskApiClient.Views.GetTicketCountAsync(viewId, cancellationToken));
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var request = zendesk.Api.V2.Views[viewId].Count.ToGetRequestInformation();
+            return await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+        });
+
+    /// <summary>Resolves the response-size budget for a tool (see <see cref="McpToolsOptions.GetMaxResponseChars" />).</summary>
+    private int MaxResponseChars(string toolName) => mcpOptions.CurrentValue.Tools.GetMaxResponseChars(toolName);
 }

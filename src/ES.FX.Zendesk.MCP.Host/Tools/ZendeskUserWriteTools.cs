@@ -1,7 +1,15 @@
 using System.ComponentModel;
-using ES.FX.Zendesk.Abstractions;
-using ES.FX.Zendesk.Abstractions.Models;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using ES.FX.Zendesk.MCP.Host.Execution;
+using ES.FX.Zendesk.MCP.Host.Tools.Models;
+using ES.FX.Zendesk.Support;
+using ES.FX.Zendesk.Support.Api.V2.Users.Update_many;
+using ES.FX.Zendesk.Support.Models;
+using Microsoft.Kiota.Abstractions;
+using ModelContextProtocol;
 using ModelContextProtocol.Server;
 
 namespace ES.FX.Zendesk.MCP.Host.Tools;
@@ -9,324 +17,740 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 /// <summary>
 ///     MCP write tools for Zendesk users — create, update, merge, delete, and identity management. Namespaced
 ///     <c>users_*</c>. Every tool honors the server execution mode via
-///     <see cref="ZendeskToolInvoker.InvokeWriteAsync{T}" />.
+///     <see
+///         cref="ZendeskToolInvoker.InvokeWriteAsync{T}(Execution.IMcpExecutionModeAccessor, string, Func{Task{T}}, object)" />
+///     .
 /// </summary>
+/// <remarks>
+///     Requests are built through the generated request builders (with bodies attached where the published spec
+///     lost them), but sent as raw JSON (<see cref="ZendeskKiotaRequests.SendForJsonAsync" />) rather than
+///     round-tripped through the generated models, whose read-only markings (user <c>id</c>/<c>created_at</c>/
+///     <c>updated_at</c>, identity <c>id</c>/<c>verified</c>/<c>primary</c>, the whole <c>job_status</c>, ...)
+///     would silently drop the server-assigned fields. Responses are then projected to <b>lean confirmations</b>
+///     instead of echoing whole records: creates return the id plus a few identity fields and <c>created_at</c>;
+///     updates return <c>{id, updated_at}</c> plus the server-state values of exactly the fields sent
+///     (echo-of-change — a value differing from the request reveals a business-rule override without a follow-up
+///     get); bulk jobs collapse to <c>{id, status}</c>; deletes acknowledge with a structured id instead of
+///     returning the (personal) record. The upsert reads the HTTP status through
+///     <see cref="ZendeskKiotaRequests.SendForJsonWithStatusAsync" /> to report <c>created: true|false</c>
+///     (<c>201</c> created vs <c>200</c> updated).
+/// </remarks>
 [McpServerToolType]
-public sealed class ZendeskUserWriteTools(IZendeskClient zendeskApiClient, IMcpExecutionModeAccessor executionMode)
+public sealed class ZendeskUserWriteTools(
+    ZendeskSupportApiClient zendesk,
+    IRequestAdapter requestAdapter,
+    IMcpExecutionModeAccessor executionMode)
 {
+    /// <summary>
+    ///     Serializer for the identity write bodies the published spec lost (the generated identity create/update
+    ///     operations carry no request body) and for reading a write model's wire-named present-field set (the
+    ///     echo-of-change in update confirmations): the curated models' snake_case <see cref="JsonPropertyName" />
+    ///     mappings produce the documented wire shape, and unset (<c>null</c>) fields are omitted.
+    /// </summary>
+    private static readonly JsonSerializerOptions WriteJsonOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     /// <summary>Creates a Zendesk user.</summary>
     [McpServerTool(Name = "users_create", ReadOnly = false, Destructive = false, Idempotent = false,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
-        "Creates a Zendesk user. On create, 'email' becomes the primary e-mail identity; a duplicate e-mail fails " +
-        "with 422 — use users_create_or_update to upsert instead. Allowed roles are \"end-user\", \"agent\", or " +
-        "\"admin\"; omitting the role creates an end user. Set skip_verify_email to suppress the verification " +
-        "e-mail. Returns the created user. Write operation — honors the server execution mode: rejected in " +
-        "read-only mode, simulated (no changes made) in dry-run mode.")]
+        "Creates a Zendesk user. 'email' becomes the primary e-mail identity; duplicate e-mail fails 422 — use " +
+        "users_create_or_update to upsert. role: end-user|agent|admin (omit=end-user). skip_verify_email " +
+        "suppresses the verification e-mail. Returns {id, name, email, role, created_at}; users_get for full " +
+        "record. Write op honoring server execution mode: rejected read-only, simulated (no changes) dry-run.")]
     public Task<object> Create(
-        [Description("The user to create (name, email, role, phone, external_id, organization_id, tags, ...).")]
+        [Description("User to create (name, email, role, phone, external_id, organization_id, tags, ...).")]
         ZendeskUserWrite user,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"create user '{user.Name ?? user.Email ?? "(unnamed)"}'",
-            () => zendeskApiClient.Users.CreateAsync(user, cancellationToken: cancellationToken), user);
+            async () =>
+            {
+                var request = zendesk.Api.V2.Users.ToPostRequestInformation(
+                    new UserRequest { User = MapUser(user) });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return CreateConfirmation(UnwrapEntity(json, "user"));
+            },
+            user);
 
     /// <summary>Creates or updates a Zendesk user matched by e-mail or external id (upsert).</summary>
     [McpServerTool(Name = "users_create_or_update", ReadOnly = false, Destructive = false, Idempotent = true,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
-        "Creates a Zendesk user, or updates the existing one matched by e-mail or external id (upsert). Safe way " +
-        "to ensure a user exists without triggering the 422 duplicate-email failure of users_create. The " +
-        "external_id match is case-insensitive, but the stored external_id is updated to the case you supply. " +
-        "Returns 200 if the user already existed, 201 if created; a newly created user with no role becomes an end " +
-        "user. Returns the created or updated user. Write operation — honors the server execution mode: rejected " +
-        "in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "Upsert: create user, or update existing one matched by e-mail or external_id. Avoids the 422 " +
+        "duplicate-email failure of users_create. external_id match is case-insensitive but stored external_id is " +
+        "updated to the case you supply. Returns created:true {id, name, email, role, created_at} for a new user " +
+        "(no role => end-user), else created:false {id, updated_at} plus server-state values of the fields you " +
+        "sent. Write op honoring server execution mode: rejected read-only, simulated (no changes) dry-run.")]
     public Task<object> CreateOrUpdate(
-        [Description("The user to create or update — matched to an existing user by email or external_id.")]
+        [Description("User to create or update — matched to existing user by email or external_id.")]
         ZendeskUserWrite user,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"create or update user '{user.Name ?? user.Email ?? user.ExternalId ?? "(unspecified)"}'",
-            () => zendeskApiClient.Users.CreateOrUpdateAsync(user, cancellationToken: cancellationToken), user);
+            async () =>
+            {
+                var request = zendesk.Api.V2.Users.Create_or_update.ToPostRequestInformation(
+                    new UserRequest { User = MapUser(user) });
+                // The 200-vs-201 distinction is the created:false|true signal — captured via the status-aware
+                // send; the request on the wire is identical.
+                var (statusCode, json) = await requestAdapter
+                    .SendForJsonWithStatusAsync(request, cancellationToken).ConfigureAwait(false);
+                var created = statusCode is HttpStatusCode.Created;
+                var entity = UnwrapEntity(json, "user");
+                var confirmation = new JsonObject { ["created"] = created };
+                if (created)
+                {
+                    CopyFields(entity, confirmation, "id", "name", "email", "role", "created_at");
+                }
+                else
+                {
+                    CopyFields(entity, confirmation, "id", "updated_at");
+                    AppendEchoOfChange(entity, confirmation, user);
+                }
+
+                return JsonSerializer.SerializeToElement(confirmation);
+            },
+            user);
 
     /// <summary>Creates up to 100 Zendesk users as an async job.</summary>
     [McpServerTool(Name = "users_create_many", ReadOnly = false, Destructive = false, Idempotent = false,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
-        "Creates up to 100 Zendesk users in one call as an async job. NOTE: bulk user imports are off by default — " +
-        "Zendesk support must enable them for the account or the call returns 403. Returns a job_status — poll " +
-        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
-        "in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "Creates up to 100 Zendesk users as an async job. Bulk user imports are off by default — Zendesk support " +
+        "must enable them for the account or the call returns 403. Returns {id, status}; poll job_statuses_get by " +
+        "id until completed — per-user outcomes (incl. partial failures) are in the job's results. Write " +
+        "op honoring server execution mode: rejected read-only, simulated (no changes) dry-run.")]
     public Task<object> CreateMany(
-        [Description("The users to create (1-100 per call).")]
+        [Description("Users to create (1-100 per call).")]
         ZendeskUserWrite[] users,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"create {users.Length} users as an async job",
-            () => zendeskApiClient.Users.CreateManyAsync(users, cancellationToken: cancellationToken), users);
+            async () =>
+            {
+                ValidateBulkCount(users.Length, nameof(users));
+                var request = zendesk.Api.V2.Users.Create_many.ToPostRequestInformation(
+                    new UsersRequest { Users = users.Select(MapUser).ToList() });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return JobConfirmation(json);
+            },
+            () =>
+            {
+                // The dry run enforces the same contract the real call would.
+                ValidateBulkCount(users.Length, nameof(users));
+                return ZendeskDryRunResult.ForBulk($"create {users.Length} users as an async job",
+                    "create", "users", users);
+            });
 
     /// <summary>Creates or updates up to 100 Zendesk users as an async job.</summary>
     [McpServerTool(Name = "users_create_or_update_many", ReadOnly = false, Destructive = false,
-        Idempotent = false, OpenWorld = true)]
+        Idempotent = false, OpenWorld = false)]
     [Description(
-        "Creates or updates up to 100 Zendesk users in one call as an async job — each item is matched to an " +
-        "existing user by e-mail or external id (upsert). Same gating as users_create_many: bulk user " +
-        "imports must be enabled by Zendesk support or the call returns 403. Returns a job_status — poll " +
-        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
-        "in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "Upsert up to 100 Zendesk users as an async job — each item matched to existing user by e-mail or " +
+        "external_id. Same gating as users_create_many: bulk user imports must be enabled by Zendesk support or " +
+        "the call returns 403. Returns {id, status}; poll job_statuses_get by id until completed. Write " +
+        "op honoring server execution mode: rejected read-only, simulated (no changes) dry-run.")]
     public Task<object> CreateOrUpdateMany(
-        [Description("The users to create or update (1-100 per call), matched by email or external_id.")]
+        [Description("Users to create or update (1-100 per call), matched by email or external_id.")]
         ZendeskUserWrite[] users,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"create or update {users.Length} users as an async job",
-            () => zendeskApiClient.Users.CreateOrUpdateManyAsync(users, cancellationToken: cancellationToken),
-            users);
+            async () =>
+            {
+                ValidateBulkCount(users.Length, nameof(users));
+                var request = zendesk.Api.V2.Users.Create_or_update_many.ToPostRequestInformation(
+                    new UsersRequest { Users = users.Select(MapUser).ToList() });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return JobConfirmation(json);
+            },
+            () =>
+            {
+                ValidateBulkCount(users.Length, nameof(users));
+                return ZendeskDryRunResult.ForBulk($"create or update {users.Length} users as an async job",
+                    "create_or_update", "users", users);
+            });
 
     /// <summary>Updates a Zendesk user by id.</summary>
-    [McpServerTool(Name = "users_update", ReadOnly = false, Destructive = false, Idempotent = true,
-        OpenWorld = true)]
+    [McpServerTool(Name = "users_update", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
     [Description(
-        "Updates a Zendesk user by id; only the fields set in the request are changed. QUIRK: setting 'email' " +
-        "here ADDS it as a secondary identity instead of changing the primary — use " +
-        "users_identities_create + users_identities_make_primary to change the primary e-mail. " +
-        "Returns the updated user. Write operation — honors the server execution mode: rejected in read-only " +
-        "mode, simulated (no changes made) in dry-run mode.")]
+        "Updates a Zendesk user by id; only fields set in the request change. QUIRK: setting 'email' here ADDS a " +
+        "secondary identity instead of changing the primary — use users_identities_create + " +
+        "users_identities_make_primary to change the primary e-mail. Returns {id, updated_at} plus server-state " +
+        "values of exactly the fields you sent — a returned value differing from the request means a business rule " +
+        "overrode it; users_get for full record. Write op honoring server execution mode: rejected read-only, " +
+        "simulated (no changes) dry-run.")]
     public Task<object> Update(
-        [Description("The numeric Zendesk user id.")]
+        [Description("Numeric Zendesk user id.")]
         long id,
-        [Description("The fields to change; unset (null) fields are left untouched.")]
+        [Description("Fields to change; unset (null) fields left untouched.")]
         ZendeskUserWrite user,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"update user {id}",
-            () => zendeskApiClient.Users.UpdateAsync(id, user, cancellationToken: cancellationToken),
+            async () =>
+            {
+                var request = zendesk.Api.V2.Users[id].ToPutRequestInformation(
+                    new UserUpdateRequest { User = MapUserUpdate(user) });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return UpdateConfirmation(UnwrapEntity(json, "user"), user);
+            },
             new { id, user });
 
     /// <summary>Applies the same change to up to 100 Zendesk users as an async job.</summary>
     [McpServerTool(Name = "users_update_many", ReadOnly = false, Destructive = false, Idempotent = false,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
-        "Applies the SAME change to up to 100 Zendesk users as an async job — e.g. suspend a batch, retag, or " +
-        "move users to an organization. For per-user changes use users_update_many_batch. Returns a " +
-        "job_status — poll job_statuses_get until completed. Write operation — honors the server " +
-        "execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "Applies the SAME change to up to 100 Zendesk users as an async job — e.g. suspend a batch, retag, move " +
+        "users to an organization. For per-user changes use users_update_many_batch. Returns {id, status}; " +
+        "poll job_statuses_get by id until completed. Write op honoring server execution mode: rejected " +
+        "read-only, simulated (no changes) dry-run.")]
     public Task<object> UpdateMany(
-        [Description("The numeric Zendesk user ids to update (1-100 per call).")]
+        [Description("Numeric Zendesk user ids to update (1-100 per call).")]
         long[] ids,
-        [Description("The change applied to every listed user; unset (null) fields are left untouched.")]
+        [Description("Change applied to every listed user; unset (null) fields left untouched.")]
         ZendeskUserWrite change,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"update {ids.Length} users with the same change",
-            () => zendeskApiClient.Users.UpdateManyAsync(ids, change, cancellationToken: cancellationToken),
-            new { ids, change });
+            async () =>
+            {
+                ValidateBulkCount(ids.Length, nameof(ids));
+                var request = zendesk.Api.V2.Users.Update_many.ToPutRequestInformation(
+                    new Update_manyRequestBuilder.Update_manyPutRequestBody
+                    {
+                        UserUpdateRequest = new UserUpdateRequest { User = MapUserUpdate(change) }
+                    },
+                    cfg => cfg.QueryParameters.Ids = string.Join(',', ids));
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return JobConfirmation(json);
+            },
+            () =>
+            {
+                ValidateBulkCount(ids.Length, nameof(ids));
+                // The digest pairs every target id with the shared change so each row shows which record is
+                // addressed and which fields would change.
+                return ZendeskDryRunResult.ForBulk($"update {ids.Length} users with the same change",
+                    "update", "users", ids.Select(id => change with { Id = id }));
+            });
 
     /// <summary>Applies per-user changes to up to 100 Zendesk users as an async job.</summary>
     [McpServerTool(Name = "users_update_many_batch", ReadOnly = false, Destructive = false,
-        Idempotent = false, OpenWorld = true)]
+        Idempotent = false, OpenWorld = false)]
     [Description(
         "Applies PER-USER changes to up to 100 Zendesk users as an async job — every item must carry its 'id'. " +
-        "For applying one identical change to many users use users_update_many instead. Returns a " +
-        "job_status — poll job_statuses_get until completed. Write operation — honors the server " +
-        "execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "For one identical change to many users use users_update_many. Returns {id, status}; poll " +
+        "job_statuses_get by id until completed. Write op honoring server execution mode: rejected " +
+        "read-only, simulated (no changes) dry-run.")]
     public Task<object> UpdateManyBatch(
-        [Description("The per-user changes (1-100 per call); every item MUST include the 'id' of the user to update.")]
+        [Description("Per-user changes (1-100 per call); every item MUST include the 'id' of the user to update.")]
         ZendeskUserWrite[] users,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"update {users.Length} users with per-user changes",
-            () => zendeskApiClient.Users.UpdateManyAsync(users, cancellationToken: cancellationToken), users);
+            async () =>
+            {
+                ValidateBulkCount(users.Length, nameof(users));
+                ValidateBatchIds(users);
+                var request = zendesk.Api.V2.Users.Update_many.ToPutRequestInformation(
+                    new Update_manyRequestBuilder.Update_manyPutRequestBody
+                    {
+                        UsersRequest = new UsersRequest { Users = users.Select(MapUser).ToList() }
+                    });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return JobConfirmation(json);
+            },
+            () =>
+            {
+                ValidateBulkCount(users.Length, nameof(users));
+                ValidateBatchIds(users);
+                return ZendeskDryRunResult.ForBulk($"update {users.Length} users with per-user changes",
+                    "update", "users", users);
+            });
 
     /// <summary>Merges one end user into another; the loser is absorbed and the winner survives.</summary>
     [McpServerTool(Name = "users_merge", ReadOnly = false, Destructive = true, Idempotent = false,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
-        "Merges one Zendesk end user INTO another: the user identified by loserUserId is ABSORBED (their tickets " +
-        "and identities move to the winner and the loser ceases to exist as a separate user); the user identified " +
-        "by winnerUserId survives. End users only — agents/admins cannot be merged, nor can end users created by " +
-        "sharing agreements. The loser (the user being absorbed) must be a requester on 10,000 or fewer tickets or " +
-        "the merge is blocked. This cannot be undone. Returns the surviving (winner) user. Write operation — " +
-        "honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "Merges one Zendesk end user INTO another: loserUserId is ABSORBED (their tickets and identities move to " +
+        "the winner; loser ceases to exist as a separate user); winnerUserId survives. End users only — " +
+        "agents/admins cannot be merged, nor can end users created by sharing agreements. Loser must be a " +
+        "requester on 10,000 or fewer tickets or the merge is blocked. Cannot be undone. Returns {id, updated_at} " +
+        "of the surviving winner; users_get for full record. Write op honoring server execution mode: rejected " +
+        "read-only, simulated (no changes) dry-run.")]
     public Task<object> Merge(
-        [Description("The id of the user to be absorbed (the LOSER — this user is merged away).")]
+        [Description("Id of the user to be absorbed (the LOSER — merged away).")]
         long loserUserId,
-        [Description("The id of the user that survives the merge (the WINNER).")]
+        [Description("Id of the user that survives the merge (the WINNER).")]
         long winnerUserId,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"merge users: {loserUserId} (loser) into {winnerUserId} (winner)",
-            () => zendeskApiClient.Users.MergeAsync(loserUserId, winnerUserId,
-                cancellationToken: cancellationToken),
+            // DIRECTION: the path user (loser) is absorbed INTO the body user (winner); the winner is returned.
+            async () =>
+            {
+                var request = zendesk.Api.V2.Users[loserUserId].Merge.ToPutRequestInformation(
+                    new UserRequest { User = new UserInput { Id = winnerUserId } });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                var winner = UnwrapEntity(json, "user");
+                var confirmation = new JsonObject();
+                CopyFields(winner, confirmation, "id", "updated_at");
+                return JsonSerializer.SerializeToElement(confirmation);
+            },
             new { loserUserId, winnerUserId });
 
     /// <summary>Soft-deletes a Zendesk user.</summary>
     [McpServerTool(Name = "users_delete", ReadOnly = false, Destructive = true, Idempotent = true,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
         "Soft-deletes a Zendesk user. Documented by Zendesk as NOT recoverable; a GDPR purge additionally " +
-        "requires users_delete_permanently afterwards. Returns the deleted user record. Write operation — " +
-        "honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "requires users_delete_permanently afterwards. Returns an acknowledgement carrying the user id — the " +
+        "soft-deleted record is not echoed back. Write op honoring server execution mode: rejected read-only, " +
+        "simulated (no changes) dry-run.")]
     public Task<object> Delete(
-        [Description("The numeric Zendesk user id to delete.")]
+        [Description("Numeric Zendesk user id to delete.")]
         long id,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"delete user {id}",
-            () => zendeskApiClient.Users.DeleteAsync(id, cancellationToken: cancellationToken), new { id });
+    {
+        var action = $"delete user {id}";
+        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
+            async () =>
+            {
+                // Zendesk answers 200 with the soft-deleted user (active=false) — not 204. The record is
+                // deliberately NOT echoed back: the personal data adds nothing over the structured id.
+                await requestAdapter.SendForJsonAsync(
+                    zendesk.Api.V2.Users[id].ToDeleteRequestInformation(), cancellationToken).ConfigureAwait(false);
+                return Acknowledge(action, id);
+            },
+            new { id });
+    }
 
     /// <summary>Soft-deletes up to 100 Zendesk users as an async job.</summary>
     [McpServerTool(Name = "users_delete_many", ReadOnly = false, Destructive = true, Idempotent = false,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
-        "Soft-deletes up to 100 Zendesk users in one call as an async job (admin-only). Documented by Zendesk as " +
-        "NOT recoverable. Returns a job_status — poll job_statuses_get until completed. Write operation — " +
-        "honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "Soft-deletes up to 100 Zendesk users as an async job (admin-only). Documented by Zendesk as NOT " +
+        "recoverable. Returns {id, status}; poll job_statuses_get by id until completed. Write op " +
+        "honoring server execution mode: rejected read-only, simulated (no changes) dry-run.")]
     public Task<object> DeleteMany(
-        [Description("The numeric Zendesk user ids to delete (1-100 per call).")]
+        [Description("Numeric Zendesk user ids to delete (1-100 per call).")]
         long[] ids,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"delete {ids.Length} users",
-            () => zendeskApiClient.Users.DeleteManyAsync(ids, cancellationToken: cancellationToken), new { ids });
+            async () =>
+            {
+                ValidateBulkCount(ids.Length, nameof(ids));
+                var request =
+                    zendesk.Api.V2.Users.Destroy_many.ToDeleteRequestInformation(cfg =>
+                        cfg.QueryParameters.Ids = string.Join(',', ids));
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return JobConfirmation(json);
+            },
+            () =>
+            {
+                ValidateBulkCount(ids.Length, nameof(ids));
+                return ZendeskDryRunResult.ForBulk($"delete {ids.Length} users", "delete", "users",
+                    ids.Cast<object?>());
+            });
 
     /// <summary>Permanently deletes an already soft-deleted Zendesk user. Irreversible.</summary>
     [McpServerTool(Name = "users_delete_permanently", ReadOnly = false, Destructive = true, Idempotent = true,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
-        "PERMANENTLY deletes a Zendesk user that has ALREADY been soft-deleted (via users_delete or " +
-        "users_delete_many) — it does not work on active users. IRREVERSIBLE; used for GDPR purges. " +
-        "Zendesk enforces a dedicated rate limit of 700 permanent deletions per 10 minutes. Returns the deleted " +
-        "user record. Write operation — honors the server execution mode: rejected in read-only mode, simulated " +
-        "(no changes made) in dry-run mode.")]
+        "PERMANENTLY deletes a Zendesk user ALREADY soft-deleted (via users_delete or users_delete_many) — does " +
+        "not work on active users. IRREVERSIBLE; used for GDPR purges. Zendesk enforces a dedicated rate limit of " +
+        "700 permanent deletions per 10 minutes. Returns an acknowledgement carrying the user id; the purged " +
+        "user's personal data is deliberately not returned. Write op honoring server execution mode: rejected " +
+        "read-only, simulated (no changes) dry-run.")]
     public Task<object> DeletePermanently(
-        [Description("The numeric id of the ALREADY soft-deleted user to purge.")]
+        [Description("Numeric id of the ALREADY soft-deleted user to purge.")]
         long deletedUserId,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
-            $"permanently delete already-deleted user {deletedUserId}",
-            () => zendeskApiClient.Users.DeletePermanentlyAsync(deletedUserId,
-                cancellationToken: cancellationToken),
+    {
+        var action = $"permanently delete already-deleted user {deletedUserId}";
+        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
+            async () =>
+            {
+                // A GDPR purge whose confirmation re-surfaces the purged user's personal data would defeat the
+                // point — only the acknowledgement with the structured id is returned.
+                await requestAdapter.SendForJsonAsync(
+                        zendesk.Api.V2.Deleted_users[deletedUserId].ToDeleteRequestInformation(), cancellationToken)
+                    .ConfigureAwait(false);
+                return Acknowledge(action, deletedUserId);
+            },
             new { deletedUserId });
+    }
 
     /// <summary>Adds an identity (e-mail, phone, social handle) to a Zendesk user.</summary>
     [McpServerTool(Name = "users_identities_create", ReadOnly = false, Destructive = false,
-        Idempotent = false, OpenWorld = true)]
+        Idempotent = false, OpenWorld = false)]
     [Description(
         "Adds an identity (e-mail, phone number, social handle) to a Zendesk user. 'primary' is only writable at " +
-        "creation time — to promote an existing identity use users_identities_make_primary. Returns the " +
-        "created identity. Write operation — honors the server execution mode: rejected in read-only mode, " +
-        "simulated (no changes made) in dry-run mode.")]
+        "creation time — to promote an existing identity use users_identities_make_primary. Returns {id, user_id, " +
+        "type, value, created_at}; users_identities_list for the full row. Write op honoring server execution " +
+        "mode: rejected read-only, simulated (no changes) dry-run.")]
     public Task<object> IdentitiesCreate(
-        [Description("The numeric Zendesk user id.")]
+        [Description("Numeric Zendesk user id.")]
         long userId,
         [Description(
-            "The identity to add (type, value, verified, primary, skip_verify_email). Allowed type: " +
-            "email, phone_number, twitter, facebook, google, agent_forwarding (also any_channel, foreign, " +
-            "sdk, messaging, microsoft).")]
+            "Identity to add (type, value, verified, primary, skip_verify_email). type: email|phone_number|" +
+            "twitter|facebook|google|agent_forwarding (also any_channel|foreign|sdk|messaging).")]
         ZendeskUserIdentityWrite identity,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"add an identity to user {userId}",
-            () => zendeskApiClient.Users.CreateIdentityAsync(userId, identity,
-                cancellationToken: cancellationToken),
+            async () =>
+            {
+                // The published spec lost the request body of the identity create operation — attach the
+                // documented { "identity": { ... } } envelope manually
+                // (https://developer.zendesk.com/api-reference/ticketing/users/user_identities/; ledger row in
+                // src/ES.FX.Zendesk/OpenApi/README.md).
+                var request = zendesk.Api.V2.Users[userId].Identities.ToPostRequestInformation();
+                request.SetStreamContent(new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(
+                    new { identity }, WriteJsonOptions)), "application/json");
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                var created = UnwrapEntity(json, "identity");
+                var confirmation = new JsonObject();
+                CopyFields(created, confirmation, "id", "user_id", "type", "value", "created_at");
+                return JsonSerializer.SerializeToElement(confirmation);
+            },
             new { userId, identity });
 
     /// <summary>Updates a Zendesk user identity's value or verification state.</summary>
     [McpServerTool(Name = "users_identities_update", ReadOnly = false, Destructive = false,
-        Idempotent = true, OpenWorld = true)]
+        Idempotent = true, OpenWorld = false)]
     [Description(
         "Updates a Zendesk user identity's value and/or verification state. CANNOT change 'primary' — use " +
-        "users_identities_make_primary for that. Returns the updated identity. Write operation — honors " +
-        "the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "users_identities_make_primary. Returns {id, updated_at} plus server-state values of the fields you sent. " +
+        "Write op honoring server execution mode: rejected read-only, simulated (no changes) dry-run.")]
     public Task<object> IdentitiesUpdate(
-        [Description("The numeric Zendesk user id.")]
+        [Description("Numeric Zendesk user id.")]
         long userId,
-        [Description("The numeric identity id to update.")]
+        [Description("Numeric identity id to update.")]
         long identityId,
-        [Description("The identity fields to change (value, verified); 'primary' is ignored here.")]
+        [Description("Identity fields to change (value, verified); 'primary' is ignored here.")]
         ZendeskUserIdentityWrite identity,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"update identity {identityId} of user {userId}",
-            () => zendeskApiClient.Users.UpdateIdentityAsync(userId, identityId, identity,
-                cancellationToken: cancellationToken),
+            async () =>
+            {
+                // The published spec lost the request body of the identity update operation — attach the
+                // documented { "identity": { ... } } envelope manually
+                // (https://developer.zendesk.com/api-reference/ticketing/users/user_identities/; ledger row in
+                // src/ES.FX.Zendesk/OpenApi/README.md).
+                var request = zendesk.Api.V2.Users[userId].Identities[identityId].ToPutRequestInformation();
+                request.SetStreamContent(new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(
+                    new { identity }, WriteJsonOptions)), "application/json");
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return UpdateConfirmation(UnwrapEntity(json, "identity"), identity);
+            },
             new { userId, identityId, identity });
 
     /// <summary>Makes an identity the user's primary identity.</summary>
     [McpServerTool(Name = "users_identities_make_primary", ReadOnly = false, Destructive = false,
-        Idempotent = true, OpenWorld = true)]
+        Idempotent = true, OpenWorld = false)]
     [Description(
         "Makes an identity the Zendesk user's PRIMARY identity (the way to change a user's primary e-mail — " +
-        "users_update cannot do it). Returns the user's FULL identity list, reflecting the new primary. " +
-        "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes " +
-        "made) in dry-run mode.")]
+        "users_update cannot). Returns ONLY the affected identity row (at minimum {id, user_id, primary:true}); " +
+        "full list via users_identities_list. Write op honoring server execution mode: rejected read-only, " +
+        "simulated (no changes) dry-run.")]
     public Task<object> IdentitiesMakePrimary(
-        [Description("The numeric Zendesk user id.")]
+        [Description("Numeric Zendesk user id.")]
         long userId,
-        [Description("The numeric identity id to promote to primary.")]
+        [Description("Numeric identity id to promote to primary.")]
         long identityId,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"make identity {identityId} the primary identity of user {userId}",
-            () => zendeskApiClient.Users.MakeIdentityPrimaryAsync(userId, identityId,
-                cancellationToken: cancellationToken),
+            // Collection-level operation: the response is the user's FULL identity list — post-filtered here
+            // to the one row the agent asked about.
+            async () =>
+            {
+                var json = await requestAdapter.SendForJsonAsync(
+                    zendesk.Api.V2.Users[userId].Identities[identityId].Make_primary.ToPutRequestInformation(),
+                    cancellationToken).ConfigureAwait(false);
+                return AffectedIdentity(json, userId, identityId);
+            },
             new { userId, identityId });
 
     /// <summary>Marks a Zendesk user identity as verified.</summary>
     [McpServerTool(Name = "users_identities_verify", ReadOnly = false, Destructive = false,
-        Idempotent = true, OpenWorld = true)]
+        Idempotent = true, OpenWorld = false)]
     [Description(
         "Marks a Zendesk user identity as verified without sending the user a verification e-mail (to send one " +
-        "instead, use users_identities_request_verification). Returns the verified identity. Write " +
-        "operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) " +
-        "in dry-run mode.")]
+        "instead, use users_identities_request_verification). Returns {id, updated_at, verified}. Write op " +
+        "honoring server execution mode: rejected read-only, simulated (no changes) dry-run.")]
     public Task<object> IdentitiesVerify(
-        [Description("The numeric Zendesk user id.")]
+        [Description("Numeric Zendesk user id.")]
         long userId,
-        [Description("The numeric identity id to mark verified.")]
+        [Description("Numeric identity id to mark verified.")]
         long identityId,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
             $"mark identity {identityId} of user {userId} as verified",
-            () => zendeskApiClient.Users.VerifyIdentityAsync(userId, identityId,
-                cancellationToken: cancellationToken),
+            async () =>
+            {
+                var json = await requestAdapter.SendForJsonAsync(
+                    zendesk.Api.V2.Users[userId].Identities[identityId].Verify.ToPutRequestInformation(),
+                    cancellationToken).ConfigureAwait(false);
+                var verified = UnwrapEntity(json, "identity");
+                var confirmation = new JsonObject();
+                CopyFields(verified, confirmation, "id", "updated_at", "verified");
+                return JsonSerializer.SerializeToElement(confirmation);
+            },
             new { userId, identityId });
 
     /// <summary>Sends a verification e-mail for a Zendesk user identity.</summary>
     [McpServerTool(Name = "users_identities_request_verification", ReadOnly = false, Destructive = false,
-        Idempotent = false, OpenWorld = true)]
+        Idempotent = false, OpenWorld = false)]
     [Description(
         "Sends the user a verification e-mail for an identity (each call sends another e-mail). To mark an " +
-        "identity verified directly without e-mailing the user, use users_identities_verify. Returns a " +
-        "completion acknowledgement. Write operation — honors the server execution mode: rejected in read-only " +
-        "mode, simulated (no changes made) in dry-run mode.")]
+        "identity verified directly without e-mailing the user, use users_identities_verify. Returns an " +
+        "acknowledgement carrying the identity id. Write op honoring server execution mode: rejected read-only, " +
+        "simulated (no changes) dry-run.")]
     public Task<object> IdentitiesRequestVerification(
-        [Description("The numeric Zendesk user id.")]
+        [Description("Numeric Zendesk user id.")]
         long userId,
-        [Description("The numeric identity id to send the verification e-mail for.")]
+        [Description("Numeric identity id to send the verification e-mail for.")]
         long identityId,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
-            $"send a verification e-mail for identity {identityId} of user {userId}",
-            () => zendeskApiClient.Users.RequestIdentityVerificationAsync(userId, identityId,
-                cancellationToken: cancellationToken),
+    {
+        var action = $"send a verification e-mail for identity {identityId} of user {userId}";
+        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
+            async () =>
+            {
+                await zendesk.Api.V2.Users[userId].Identities[identityId].Request_verification
+                    .PutAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                return Acknowledge(action, identityId);
+            },
             new { userId, identityId });
+    }
 
     /// <summary>Deletes a Zendesk user identity.</summary>
     [McpServerTool(Name = "users_identities_delete", ReadOnly = false, Destructive = true, Idempotent = true,
-        OpenWorld = true)]
+        OpenWorld = false)]
     [Description(
         "Deletes an identity (e-mail, phone number, social handle) from a Zendesk user. The primary identity " +
         "cannot be deleted — promote another identity with users_identities_make_primary first. Deleting a " +
-        "messaging identity can break the messaging channel for the user. Returns a completion acknowledgement. " +
-        "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes " +
-        "made) in dry-run mode.")]
+        "messaging identity can break the messaging channel for the user. Returns an acknowledgement carrying the " +
+        "identity id. Write op honoring server execution mode: rejected read-only, simulated (no changes) " +
+        "dry-run.")]
     public Task<object> IdentitiesDelete(
-        [Description("The numeric Zendesk user id.")]
+        [Description("Numeric Zendesk user id.")]
         long userId,
-        [Description("The numeric identity id to delete.")]
+        [Description("Numeric identity id to delete.")]
         long identityId,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
-            $"delete identity {identityId} of user {userId}",
-            () => zendeskApiClient.Users.DeleteIdentityAsync(userId, identityId,
-                cancellationToken: cancellationToken),
+    {
+        var action = $"delete identity {identityId} of user {userId}";
+        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
+            async () =>
+            {
+                await zendesk.Api.V2.Users[userId].Identities[identityId]
+                    .DeleteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                return Acknowledge(action, identityId);
+            },
             new { userId, identityId });
+    }
+
+    /// <summary>Validates a bulk-operation item count (Zendesk accepts 1–100 items per bulk request).</summary>
+    private static void ValidateBulkCount(int count, string paramName)
+    {
+        if (count is 0 or > 100)
+            throw new ArgumentException("Zendesk bulk operations accept between 1 and 100 items.", paramName);
+    }
+
+    /// <summary>Validates that every batch-update item carries the id of the user it addresses.</summary>
+    private static void ValidateBatchIds(ZendeskUserWrite[] users)
+    {
+        if (users.Any(u => u.Id is null))
+            throw new ArgumentException("Every batch update item must carry Id.", nameof(users));
+    }
+
+    /// <summary>
+    ///     Unwraps the singular entity envelope of a write response (<c>{"user": {...}}</c> /
+    ///     <c>{"identity": {...}}</c> / <c>{"job_status": {...}}</c>) as a mutable node for confirmation building.
+    /// </summary>
+    private static JsonObject UnwrapEntity(JsonElement response, string propertyName)
+    {
+        if (response.ValueKind is JsonValueKind.Object && response.TryGetProperty(propertyName, out var entity) &&
+            entity.ValueKind is JsonValueKind.Object)
+            return (JsonObject)JsonNode.Parse(entity.GetRawText())!;
+        throw new McpException($"The Zendesk response carried no '{propertyName}' object where one was expected " +
+                               "— the write may still have been applied; verify with users_get.");
+    }
+
+    /// <summary>Copies the listed fields that are present and non-null, preserving the given order.</summary>
+    private static void CopyFields(JsonObject source, JsonObject target, params string[] fields)
+    {
+        foreach (var field in fields)
+            if (source[field] is { } value)
+                target[field] = value.DeepClone();
+    }
+
+    /// <summary>The lean create confirmation: the id, the identity fields, and <c>created_at</c>.</summary>
+    private static JsonElement CreateConfirmation(JsonObject user)
+    {
+        var confirmation = new JsonObject();
+        CopyFields(user, confirmation, "id", "name", "email", "role", "created_at");
+        return JsonSerializer.SerializeToElement(confirmation);
+    }
+
+    /// <summary>
+    ///     The lean update confirmation: <c>{id, updated_at}</c> plus the echo-of-change (see
+    ///     <see cref="AppendEchoOfChange" />).
+    /// </summary>
+    private static JsonElement UpdateConfirmation(JsonObject entity, object request)
+    {
+        var confirmation = new JsonObject();
+        CopyFields(entity, confirmation, "id", "updated_at");
+        AppendEchoOfChange(entity, confirmation, request);
+        return JsonSerializer.SerializeToElement(confirmation);
+    }
+
+    /// <summary>
+    ///     Appends the echo-of-change to an update confirmation: the SERVER-state values of exactly the fields
+    ///     present in the request (wire names via the omit-null serializer). Reading the values back from the
+    ///     response — rather than echoing the request — reveals trigger/business-rule overrides without a
+    ///     follow-up get. <c>user_fields</c> are post-filtered to the requested keys so a tenant's full
+    ///     custom-field set never rides along; a requested field absent from the response means null/empty.
+    /// </summary>
+    private static void AppendEchoOfChange(JsonObject entity, JsonObject confirmation, object request)
+    {
+        if (JsonSerializer.SerializeToNode(request, WriteJsonOptions) is not JsonObject requested) return;
+        foreach (var (field, requestedValue) in requested)
+        {
+            if (field is "id" || confirmation.ContainsKey(field)) continue;
+            if (field is "user_fields")
+            {
+                if (requestedValue is not JsonObject requestedFields ||
+                    entity["user_fields"] is not JsonObject serverFields) continue;
+                var echoed = new JsonObject();
+                foreach (var (key, _) in requestedFields)
+                    if (serverFields[key] is { } fieldValue)
+                        echoed[key] = fieldValue.DeepClone();
+                if (echoed.Count > 0) confirmation["user_fields"] = echoed;
+                continue;
+            }
+
+            if (entity[field] is { } value) confirmation[field] = value.DeepClone();
+        }
+    }
+
+    /// <summary>
+    ///     Projects an async-job response to the lean <c>{id, status}</c> confirmation: the job id is all an
+    ///     agent needs to poll <c>job_statuses_get</c> — progress and per-item results arrive there, not here.
+    /// </summary>
+    private static JsonElement JobConfirmation(JsonElement response)
+    {
+        var jobStatus = UnwrapEntity(response, "job_status");
+        var confirmation = new JsonObject();
+        if (jobStatus["id"] is { } id) confirmation["id"] = id.DeepClone();
+        if (jobStatus["status"] is { } status) confirmation["status"] = status.DeepClone();
+        return JsonSerializer.SerializeToElement(confirmation);
+    }
+
+    /// <summary>
+    ///     Filters the make-primary response (the user's FULL identity list) down to the one affected row,
+    ///     summary-projected. The endpoint returns a single offset page, so the promoted identity can fall off
+    ///     it — in that case the confirmation is synthesized from request facts: the ids are known, and a
+    ///     successful call means the identity IS primary now.
+    /// </summary>
+    private static JsonElement AffectedIdentity(JsonElement response, long userId, long identityId)
+    {
+        if (response.ValueKind is JsonValueKind.Object &&
+            JsonNode.Parse(response.GetRawText()) is JsonObject source &&
+            source["identities"] is JsonArray identities)
+            foreach (var identity in identities)
+                if (identity is JsonObject row && row["id"] is JsonValue idValue &&
+                    idValue.TryGetValue(out long id) && id == identityId)
+                    return JsonSerializer.SerializeToElement(ZendeskLean.SummarizeEntity("identities", row)!);
+
+        return JsonSerializer.SerializeToElement(new JsonObject
+        {
+            ["id"] = identityId,
+            ["user_id"] = userId,
+            ["primary"] = true
+        });
+    }
+
+    /// <summary>
+    ///     Builds the lean write acknowledgement for operations whose response body is deliberately not echoed
+    ///     back (the deletes) or absent (<c>204</c>): the structured id spares the agent parsing the description.
+    /// </summary>
+    private static ZendeskWriteAcknowledgement Acknowledge(string action, long id) => new()
+    {
+        Description = $"Zendesk accepted the request to {action}.",
+        Id = id
+    };
+
+    /// <summary>
+    ///     Maps the curated user write model onto the generated <see cref="UserInput" /> (used by create,
+    ///     create-or-update, the bulk jobs, and the batch update). Kiota omits unassigned properties on the wire,
+    ///     matching the omit-null serialization of the curated model.
+    /// </summary>
+    private static UserInput MapUser(ZendeskUserWrite user)
+    {
+        var input = new UserInput
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role,
+            Phone = user.Phone,
+            ExternalId = user.ExternalId,
+            OrganizationId = user.OrganizationId,
+            Verified = user.Verified,
+            Suspended = user.Suspended,
+            Notes = user.Notes,
+            Details = user.Details,
+            Tags = user.Tags?.ToList(),
+            SkipVerifyEmail = user.SkipVerifyEmail
+        };
+        if (user.UserFields is not null)
+        {
+            var fields = new UserInput_user_fields();
+            foreach (var (key, value) in user.UserFields) fields.AdditionalData[key] = value!;
+            input.UserFields = fields;
+        }
+
+        return input;
+    }
+
+    /// <summary>
+    ///     Maps the curated user write model onto the generated <see cref="UserUpdateInput" /> (used by the
+    ///     single update and the same-change bulk update). The generated update input has no <c>id</c> field, so a
+    ///     set <see cref="ZendeskUserWrite.Id" /> is carried via <c>AdditionalData</c> to keep the wire shape of
+    ///     the old omit-null serializer.
+    /// </summary>
+    private static UserUpdateInput MapUserUpdate(ZendeskUserWrite user)
+    {
+        var input = new UserUpdateInput
+        {
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role,
+            Phone = user.Phone,
+            ExternalId = user.ExternalId,
+            OrganizationId = user.OrganizationId,
+            Verified = user.Verified,
+            Suspended = user.Suspended,
+            Notes = user.Notes,
+            Details = user.Details,
+            Tags = user.Tags?.ToList(),
+            SkipVerifyEmail = user.SkipVerifyEmail
+        };
+        if (user.Id is not null) input.AdditionalData["id"] = user.Id.Value;
+        if (user.UserFields is not null)
+        {
+            var fields = new UserUpdateInput_user_fields();
+            foreach (var (key, value) in user.UserFields) fields.AdditionalData[key] = value!;
+            input.UserFields = fields;
+        }
+
+        return input;
+    }
 }

@@ -27,7 +27,10 @@ public sealed record HermesAgentJobSchedule
     [JsonPropertyName("minutes")]
     public int? Minutes { get; init; }
 
-    /// <summary>The raw cron expression for <c>cron</c> schedules (5-field numeric syntax; names like <c>MON</c> are rejected).</summary>
+    /// <summary>
+    ///     The raw cron expression for <c>cron</c> schedules (5-field numeric syntax; names like <c>MON</c> are
+    ///     rejected).
+    /// </summary>
     [JsonPropertyName("expr")]
     public string? Expr { get; init; }
 

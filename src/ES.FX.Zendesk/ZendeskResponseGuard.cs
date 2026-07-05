@@ -6,11 +6,22 @@ namespace ES.FX.Zendesk;
 /// <summary>
 ///     Turns non-success Zendesk responses into a <see cref="ZendeskApiException" /> that preserves the status
 ///     code, the <c>Retry-After</c> hint (rate limiting) and a bounded prefix of the response body for diagnostics.
+///     Public so callers that receive the raw <see cref="HttpResponseMessage" /> themselves (for example via a
+///     Kiota <c>NativeResponseHandler</c>, which bypasses the adapter's error mapping) can apply the exact same
+///     error semantics as the <see cref="ZendeskResponseGuardHandler" /> in the HTTP handler chain.
 /// </summary>
-internal static class ZendeskResponseGuard
+public static class ZendeskResponseGuard
 {
     private const int MaxBodyBytes = 2048;
 
+    /// <summary>
+    ///     Returns when <paramref name="response" /> is a success; otherwise throws a
+    ///     <see cref="ZendeskApiException" /> carrying the status code, at most 2 KiB of the response body and
+    ///     the <c>Retry-After</c> delay (when present).
+    /// </summary>
+    /// <param name="response">The Zendesk response to check.</param>
+    /// <param name="cancellationToken">A token to cancel reading the error body.</param>
+    /// <exception cref="ZendeskApiException">The response has a non-success status code.</exception>
     public static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode) return;

@@ -1,0 +1,11 @@
+created_at omitted
+description summary
+html_url summary
+id summary
+locale omitted
+name summary
+outdated omitted
+position summary
+source_locale omitted
+updated_at summary
+url omitted

@@ -30,7 +30,7 @@ internal sealed class HermesAgentResponsesApi(HttpClient httpClient, ILogger<Her
         ArgumentNullException.ThrowIfNull(request);
         // The effective (derived/rotated) session id exists ONLY on the X-Hermes-Session-Id response header,
         // so it is stamped onto the returned envelope here — the body never carries it.
-        return PostAsync<HermesAgentResponse>("v1/responses", CreatePayload(request, stream: false),
+        return PostAsync<HermesAgentResponse>("v1/responses", CreatePayload(request, false),
             "HermesAgent.Responses.Create", headers,
             static (response, responseHeaders) => response with
             {
@@ -71,7 +71,7 @@ internal sealed class HermesAgentResponsesApi(HttpClient httpClient, ILogger<Her
         // the callback) arrive on the FIRST MoveNextAsync, so the enumerator is primed once before deciding
         // whether to yield the synthetic stream-start event ahead of any mapped server event.
         string? effectiveSessionId = null;
-        await using var sseEvents = PostSseAsync("v1/responses", CreatePayload(request, stream: true),
+        await using var sseEvents = PostSseAsync("v1/responses", CreatePayload(request, true),
                 "HermesAgent.Responses.Stream", headers,
                 responseHeaders =>
                     effectiveSessionId = HermesAgentRequestHeaders.GetEffectiveSessionId(responseHeaders),

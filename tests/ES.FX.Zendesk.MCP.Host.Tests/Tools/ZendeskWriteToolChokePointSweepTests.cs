@@ -1,6 +1,8 @@
 using System.Reflection;
-using ES.FX.Zendesk.Abstractions;
+using ES.FX.Zendesk.HelpCenter;
 using ES.FX.Zendesk.MCP.Host.Execution;
+using ES.FX.Zendesk.Support;
+using Microsoft.Kiota.Abstractions;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Moq;
@@ -10,8 +12,9 @@ namespace ES.FX.Zendesk.MCP.Host.Tests.Tools;
 /// <summary>
 ///     Reflection sweep proving EVERY write tool method routes through the <c>ZendeskToolInvoker</c>
 ///     execution-mode choke point: invoked with a ReadOnly effective mode, each must surface the read-only
-///     rejection <see cref="McpException" /> without ever touching the Zendesk client (a strict mock, so any
-///     member access — even an area-API property getter — throws and is reported as a failure).
+///     rejection <see cref="McpException" /> without ever touching Zendesk (the request adapter behind the
+///     generated clients is a strict mock, so any send — or even request-serialization — attempt throws and is
+///     reported as a failure).
 /// </summary>
 public class ZendeskWriteToolChokePointSweepTests
 {
@@ -37,8 +40,18 @@ public class ZendeskWriteToolChokePointSweepTests
 
         foreach (var type in writeToolTypes)
         {
-            var zendeskClient = new Mock<IZendeskClient>(MockBehavior.Strict);
-            var tools = Activator.CreateInstance(type, zendeskClient.Object, executionMode.Object);
+            // Strict: any adapter member the tools touch beyond BaseUrl (which the generated client
+            // constructors read/initialize) throws and surfaces as a failure below.
+            var requestAdapter = new Mock<IRequestAdapter>(MockBehavior.Strict);
+            requestAdapter.SetupProperty(adapter => adapter.BaseUrl, "https://unit-test.zendesk.com");
+
+            var constructor = Assert.Single(type.GetConstructors());
+            var tools = constructor.Invoke([
+                .. constructor.GetParameters().Select(parameter =>
+                    CtorArgument(parameter, requestAdapter.Object, executionMode.Object))
+            ]);
+            // Constructing the generated clients touches BaseUrl; everything AFTER this point must be silent.
+            requestAdapter.Invocations.Clear();
 
             foreach (var method in type
                          .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static |
@@ -69,13 +82,29 @@ public class ZendeskWriteToolChokePointSweepTests
             }
 
             // Belt and braces: the rejection above already proves the gate ran first, but also assert the
-            // strict client mock recorded no calls at all.
-            zendeskClient.VerifyNoOtherCalls();
+            // strict adapter recorded no calls at all after construction.
+            requestAdapter.VerifyNoOtherCalls();
         }
 
         Assert.Equal(ExpectedWriteTools, checkedTools);
         Assert.True(failures.Count == 0,
             $"Write tools escaped the read-only choke point:{Environment.NewLine}{string.Join(Environment.NewLine, failures)}");
+    }
+
+    /// <summary>
+    ///     Resolves a write-tool constructor dependency: the generated clients are built over the strict
+    ///     adapter, so the whole object graph shares the same "any Zendesk traffic throws" guarantee.
+    /// </summary>
+    private static object CtorArgument(ParameterInfo parameter, IRequestAdapter requestAdapter,
+        IMcpExecutionModeAccessor executionMode)
+    {
+        var type = parameter.ParameterType;
+        if (type == typeof(ZendeskSupportApiClient)) return new ZendeskSupportApiClient(requestAdapter);
+        if (type == typeof(ZendeskHelpCenterApiClient)) return new ZendeskHelpCenterApiClient(requestAdapter);
+        if (type == typeof(IRequestAdapter)) return requestAdapter;
+        if (type == typeof(IMcpExecutionModeAccessor)) return executionMode;
+        throw new InvalidOperationException(
+            $"Unsupported write-tool constructor dependency '{type.Name}' — teach the sweep how to build it.");
     }
 
     /// <summary>

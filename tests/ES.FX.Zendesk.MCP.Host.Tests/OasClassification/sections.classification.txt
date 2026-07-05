@@ -1,0 +1,14 @@
+category_id summary
+created_at omitted
+description summary
+html_url summary
+id summary
+locale omitted
+name summary
+outdated omitted
+parent_section_id summary
+position summary
+source_locale omitted
+theme_template omitted
+updated_at summary
+url omitted

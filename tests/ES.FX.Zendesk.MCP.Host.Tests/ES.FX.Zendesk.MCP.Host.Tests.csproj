@@ -34,6 +34,13 @@
 		<None Include="Profiles\*.include.txt" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
+	<!-- Committed OAS classification snapshots (summary|omitted per schema property) asserted by
+	     ZendeskLeanOasClassificationSnapshotTests. Regeneration: REGENERATE_OAS_CLASSIFICATION=1 (see the
+	     test's remarks). -->
+	<ItemGroup>
+		<None Include="OasClassification\*.classification.txt" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<Using Include="Xunit" />
 	</ItemGroup>

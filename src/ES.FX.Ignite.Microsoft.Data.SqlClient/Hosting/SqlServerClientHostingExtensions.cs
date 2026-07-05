@@ -96,7 +96,7 @@ public static class SqlServerClientHostingExtensions
                     return new SimpleSqlServerHealthCheck(connectionString);
                 },
                 settings.HealthChecks.FailureStatus,
-                [SqlServerClientSpark.Name, ..settings.HealthChecks.Tags],
+                [SqlServerClientSpark.Name, .. settings.HealthChecks.Tags],
                 settings.HealthChecks.Timeout));
         }
     }

@@ -60,7 +60,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         // Guard runs only after the null short-circuit, so a non-null payload is required to reach it.
         Assert.Throws<ArgumentNullException>(() =>
-            "{}".TryJsonDeserialize(out var _, (JsonTypeInfo<SgPerson>)null!));
+            "{}".TryJsonDeserialize(out _, (JsonTypeInfo<SgPerson>)null!));
     }
 
     // ==================== TryJsonDeserialize<T>(Stream, JsonTypeInfo) ====================
@@ -97,7 +97,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         using var stream = StreamOf("{}");
         Assert.Throws<ArgumentNullException>(() =>
-            stream.TryJsonDeserialize(out var _, (JsonTypeInfo<SgPerson>)null!));
+            stream.TryJsonDeserialize(out _, (JsonTypeInfo<SgPerson>)null!));
     }
 
     // ==================== JsonDeserializeOrDefault<T>(string, JsonTypeInfo) ====================
@@ -270,7 +270,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         var source = new SgPerson { Name = "Ada" };
         Assert.Throws<ArgumentNullException>(() =>
-            source.TryConvertViaJson(out var _, null!, PersonInfo));
+            source.TryConvertViaJson(out _, null!, PersonInfo));
     }
 
     [Fact]
@@ -278,7 +278,7 @@ public class JsonSerializerExtensionsJsonTypeInfoTests
     {
         var source = new SgPerson { Name = "Ada" };
         Assert.Throws<ArgumentNullException>(() =>
-            source.TryConvertViaJson(out var _, PersonInfo, (JsonTypeInfo<SgPerson>)null!));
+            source.TryConvertViaJson(out _, PersonInfo, (JsonTypeInfo<SgPerson>)null!));
     }
 }
 

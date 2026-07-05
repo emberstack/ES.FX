@@ -1,15 +1,17 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 
 namespace ES.FX.Zendesk.Tests.Testing;
 
 /// <summary>
 ///     A stub handler that routes by path: the OAuth token endpoint mints a token correlated with the
-///     <c>client_id</c> presented in the request body (<c>tok-{client_id}</c>), everything else returns a canned
-///     user. Records the token-call count, the last API authorization scheme, the API hosts seen and every API
-///     request (host + bearer token) so per-instance credential isolation can be asserted.
+///     <c>client_id</c> presented in the request body (<c>tok-{client_id}</c>), everything else returns a
+///     configurable API response (a canned ticket envelope by default). Records the token-call count, the last
+///     API authorization scheme, the API hosts seen and every API request (host + path + bearer token) so
+///     per-instance credential isolation and handler-chain behavior can be asserted.
 /// </summary>
 internal sealed class RoutingHandler : HttpMessageHandler
 {
@@ -20,6 +22,13 @@ internal sealed class RoutingHandler : HttpMessageHandler
     public string? LastApiAccept { get; private set; }
     public string? LastApiUserAgent { get; private set; }
     public string? LastTokenUserAgent { get; private set; }
+
+    /// <summary>The status the API branch replies with — set to a non-success value for guard-handler tests.</summary>
+    public HttpStatusCode ApiStatusCode { get; set; } = HttpStatusCode.OK;
+
+    /// <summary>The JSON the API branch replies with.</summary>
+    public string ApiResponseJson { get; set; } = """{ "ticket": { "id": 1, "subject": "Canned" } }""";
+
     public ConcurrentBag<string> ApiHosts { get; } = [];
     public ConcurrentBag<RecordedApiRequest> ApiRequests { get; } = [];
 
@@ -52,13 +61,11 @@ internal sealed class RoutingHandler : HttpMessageHandler
         LastApiAccept = request.Headers.Accept.ToString();
         LastApiUserAgent = request.Headers.UserAgent.ToString();
         ApiHosts.Add(uri.Host);
-        ApiRequests.Add(new RecordedApiRequest(uri.Host, uri.AbsoluteUri, request.Headers.Authorization?.Parameter));
-        return new HttpResponseMessage(HttpStatusCode.OK)
+        ApiRequests.Add(new RecordedApiRequest(uri.Host, uri.AbsolutePath, uri.AbsoluteUri,
+            request.Headers.Authorization?.Parameter));
+        return new HttpResponseMessage(ApiStatusCode)
         {
-            Content = JsonContent.Create(new
-            {
-                user = new { id = 1, name = "Agent", email = "agent@acme.com", role = "admin" }
-            })
+            Content = new StringContent(ApiResponseJson, Encoding.UTF8, "application/json")
         };
     }
 
@@ -71,5 +78,5 @@ internal sealed class RoutingHandler : HttpMessageHandler
         return json.RootElement.TryGetProperty("client_id", out var clientId) ? clientId.GetString() : null;
     }
 
-    internal sealed record RecordedApiRequest(string Host, string AbsoluteUri, string? BearerToken);
+    internal sealed record RecordedApiRequest(string Host, string Path, string AbsoluteUri, string? BearerToken);
 }

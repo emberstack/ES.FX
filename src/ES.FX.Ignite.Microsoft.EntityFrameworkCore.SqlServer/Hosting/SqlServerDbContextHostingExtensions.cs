@@ -98,7 +98,7 @@ public static class SqlServerDbContextHostingExtensions
             builder.Services.AddHealthChecks().AddDbContextCheck<TContext>(
                 healthCheckName,
                 settings.HealthChecks.FailureStatus,
-                [DbContextSpark.Name, ..settings.HealthChecks.Tags]);
+                [DbContextSpark.Name, .. settings.HealthChecks.Tags]);
 
             if (settings.HealthChecks.Timeout is { } timeout)
                 builder.Services.Configure<HealthCheckServiceOptions>(options =>

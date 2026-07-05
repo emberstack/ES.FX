@@ -62,6 +62,11 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
+# Kiota-generated Zendesk API clients — produced at build time (see src/ES.FX.Zendesk/OpenApi/README.md), not committed.
+# The .editorconfig is kept: it silences analyzers for the generated code and is not itself generated.
+/src/ES.FX.Zendesk/Generated/*
+!/src/ES.FX.Zendesk/Generated/.editorconfig
+
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 

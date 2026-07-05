@@ -1,15 +1,21 @@
 ---
 title: Zendesk MCP server
-description: A deployable Model Context Protocol server exposing the full ES.FX.Zendesk client surface — 168 read and write tools — over Streamable HTTP, with execution-mode gating and Origin validation.
+description: A deployable Model Context Protocol server exposing Zendesk Support and Help Center — 172 read and write tools built on the Kiota-generated ES.FX.Zendesk clients — over Streamable HTTP, with lean-first responses, execution-mode gating, and Origin validation.
 ---
 
 ## Overview
 
 `ES.FX.Zendesk.MCP.Host` is a runnable [Model Context Protocol](https://modelcontextprotocol.io) (MCP)
-server that exposes Zendesk Support as MCP tools an AI agent can call. It wraps the
-[ES.FX.Zendesk typed client](./zendesk-client.md) and publishes **168 tools** — **81 read** and
-**87 write** (32 of the writes destructive) — that map one-to-one onto the client's operations across all
-seventeen resource areas.
+server that exposes Zendesk Support as MCP tools an AI agent can call. It is built on the
+[Kiota-generated ES.FX.Zendesk clients](./zendesk-client.md) and publishes **172 tools** — **85 read**
+and **87 write** (32 of the writes destructive) — spanning seventeen resource areas. Tool responses are
+**lean-first**: list/search tools return per-entity allowlist **summary rows** inside a uniform
+envelope, the per-record `*_get` tools return the **complete record** (minus API self-links and
+null-valued fields), and write tools return **minimal confirmations** — with every omission carrying an
+explicit, reachable escalation path (see [Lean responses](#lean-responses)). Requests are still built
+wire-true with the generated request builders, and the fields that *are* returned keep the names and
+values documented at [developer.zendesk.com](https://developer.zendesk.com/api-reference/) — the tools
+shape *how much* of a payload comes back, never what its fields mean.
 
 Unlike the rest of `ES.FX.*`, this is a **deployable application, not a NuGet package** (it sets
 `IsPackable=false` / `GeneratePackageOnBuild=false`). It is built on [Ignite](../ignite/index.md) and the
@@ -20,7 +26,7 @@ The Zendesk vertical spans three pieces; this page covers the third:
 
 | Piece | Package / app | Page |
 | --- | --- | --- |
-| Typed API client | `ES.FX.Zendesk` | [Zendesk API client](./zendesk-client.md) |
+| Generated API clients | `ES.FX.Zendesk` | [Zendesk API client](./zendesk-client.md) |
 | Ignite integration | `ES.FX.Ignite.Zendesk` | [Zendesk Spark](../ignite/sparks/zendesk.md) |
 | **MCP server** | `ES.FX.Zendesk.MCP.Host` (app) | **this page** |
 
@@ -43,11 +49,15 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
     builder.Logging.ClearProviders();
     builder.IgniteSerilog();
     builder.Ignite();                 // OpenTelemetry, health checks, resilient HttpClient
-    builder.IgniteZendeskClient();    // the Zendesk Spark: IZendeskClient + live health check + tracing
+    builder.IgniteZendeskClient();    // the Zendesk Spark: generated clients + live health check + tracing
+
+    var areaGate = ZendeskToolAreaGate.FromConfiguration(
+        builder.GetMcpOptions().Tools.Areas, typeof(Program).Assembly);
 
     builder.AddZendeskMcpServer()     // MCP server (Streamable HTTP) + execution-mode services
-        .WithTools<ZendeskUserTools>()
-        // … 16 read tool classes always; 12 write tool classes only when the baseline allows writes
+        .WithToolsInArea<ZendeskUserTools>(areaGate)
+        // … 16 read tool classes, each subject to the Mcp:Tools:Areas gate;
+        //    12 write tool classes only when the baseline execution mode allows writes
         ;
 
     var app = builder.Build();
@@ -59,9 +69,12 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
 ```
 
 Each tool is a method on a `[McpServerToolType]` class (one class per resource area, read and write split
-into separate classes). Every client call is routed through a single `ZendeskToolInvoker` so error handling
-and execution-mode gating are uniform (see [Error handling](#error-handling) and
-[Execution modes](#execution-modes)).
+into separate classes). Tools build their requests with the generated Kiota request builders and send
+them as raw JSON round-trips — the generated models drop spec-`readOnly` fields (ids, timestamps,
+counts, cursors) on re-serialization, so typed round-trips are deliberately avoided (see the
+[re-serialization hazard](./zendesk-client.md#wire-true-json-and-the-re-serialization-hazard)). Every
+client call is routed through a single `ZendeskToolInvoker` so error handling and execution-mode gating
+are uniform (see [Error handling](#error-handling) and [Execution modes](#execution-modes)).
 
 ## Transport and endpoint
 
@@ -82,7 +95,7 @@ into writing.
 | Mode | Read tools | Write tools |
 | --- | --- | --- |
 | `Default` | run | perform their changes |
-| `DryRun` | run | **not executed** — return an explicit `{ "status": "dry_run", "executed": false, … }` payload describing the change that *would* have been made, echoing the request |
+| `DryRun` | run | **not executed** — return an explicit `{ "status": "dry_run", "executed": false, … }` payload describing the change that *would* have been made: single-entity writes echo the request verbatim, bulk `*_many` writes return a compact digest (see [Lean responses](#lean-responses)) |
 | `ReadOnly` | run | **not registered** (as the baseline) / **rejected** with an error (when tightened per request) |
 
 - **Configuration:** `Mcp:Execution:Mode` (`Default` \| `DryRun` \| `ReadOnly`) sets the baseline.
@@ -121,7 +134,9 @@ server behavior lives under `Mcp`. All keys are environment-overridable (`__` ma
       "HeaderName": "X-Mcp-Execution-Mode"
     },
     "Tools": {
-      "Areas": []                       // [] = all areas; e.g. ["tickets","users"] registers only those. See Filtering.
+      "Areas": [],                      // [] = all areas; e.g. ["tickets","users"] registers only those. See Filtering.
+      "MaxResponseChars": 60000,        // response-size budget (serialized chars) per tool response; min 1000
+      "MaxResponseCharsByTool": {}      // per-tool overrides, keyed by tool name (case-insensitive)
     }
   }
 }
@@ -140,7 +155,7 @@ best done **server-side**, with a client include-list as the fallback when you c
 Three levers, in order of preference:
 
 1. **Read-only deployment** — set `Mcp:Execution:Mode = ReadOnly`. The write tool classes are never
-   registered, so the advertised surface is exactly the 81 read tools. No client config required.
+   registered, so the advertised surface is exactly the 85 read tools. No client config required.
 2. **Area gating** — set `Mcp:Tools:Areas` to the resource areas you want. Only tool classes in those areas
    are registered, and it composes with the execution mode via **AND**:
    - `Areas: ["tickets"]` → all ticket tools (reads **and** writes).
@@ -197,7 +212,7 @@ tickets_side_conversations_list
 ```
 
 <details>
-<summary><strong>All read tools</strong> (81) — equivalent to <code>Mode: ReadOnly</code></summary>
+<summary><strong>All read tools</strong> (85) — equivalent to <code>Mode: ReadOnly</code></summary>
 
 ```
 articles_categories_get
@@ -219,6 +234,7 @@ groups_count
 groups_get
 groups_list
 groups_memberships_list
+groups_users_count
 groups_users_list
 job_statuses_get
 job_statuses_get_many
@@ -235,7 +251,9 @@ organizations_list
 organizations_memberships_list
 organizations_merges_get
 organizations_tags_list
+organizations_tickets_count
 organizations_tickets_list
+organizations_users_count
 organizations_users_list
 search_count
 suspended_tickets_get
@@ -244,6 +262,7 @@ tags_autocomplete
 tags_count
 tags_list
 ticket_fields_get
+ticket_fields_get_many
 ticket_fields_list
 ticket_fields_options_list
 tickets_audits_list
@@ -284,6 +303,40 @@ views_tickets_list
 ```
 </details>
 
+### Context cost & client requirements
+
+Every tool advertised by the server ships its full name, description, and JSON input schema in the
+`tools/list` reply the client reads at connect time — and, on most clients, that entire block is injected
+into the model's context on **every turn**. At the full surface of **172 tools** that description text is a
+standing token tax the agent pays before it has read a single ticket, and it scales with the number of
+servers a client has connected. Two client behaviors bound the impact:
+
+- **Clients with deferred tool loading** (they advertise only tool *names* up front and fetch a tool's full
+  schema on first use) pay a small tax regardless of surface size — the 172 tools cost roughly 172 names.
+- **Clients without it** materialize all 172 descriptions on every turn; here the surface size is the tax,
+  and trimming it is the single biggest context lever you have.
+
+Because the tax is paid client-side but the surface is chosen server-side, **the primary context lever is
+server-side gating, not client filtering**:
+
+- Set `Mcp:Execution:Mode = ReadOnly` to drop the 87 write tools from `tools/list` entirely (down to the 85
+  reads), and/or scope `Mcp:Tools:Areas` to the resource areas the deployment actually needs (see
+  [Filtering the tool surface](#filtering-the-tool-surface)). A read-only, `Areas: ["tickets"]` server
+  advertises ~16 tools instead of 172 — an order-of-magnitude smaller `tools/list` for **every** connected
+  client, with no per-client configuration to keep in sync.
+- A [client include-list](#filtering-the-tool-surface) is the fallback when you cannot change the
+  deployment, but it only shrinks what the client *chooses to expose* — it never changes what the server
+  advertises, and it drifts per client.
+
+> [!NOTE]
+> Further collapsing the surface by **consolidating CRUD verbs** (one `tickets` tool taking an `action`
+> parameter instead of separate `tickets_create` / `tickets_update` / `tickets_delete`) is **deferred by
+> design, not adopted**. It would cut the tool count but at the cost of the risk-legible naming and
+> annotations this server relies on — a tool's read/write/destructive class is currently readable from its
+> name and enforced by [`ReadOnly`/`Destructive` annotations](#tools), which a single multiplexed tool
+> erases. The gating levers above already buy the context savings without that trade-off; revisit
+> consolidation only behind a measured pilot on a client that proves the annotations are not load-bearing.
+
 ## Security (deployment)
 
 > [!WARNING]
@@ -308,14 +361,151 @@ any public interface.
 ## Error handling
 
 Zendesk failures reach the agent with the real HTTP status and response body rather than the SDK's opaque
-generic error. `ZendeskToolInvoker` catches the client's
-[`ZendeskApiException`](./zendesk-client.md#error-handling) and rethrows it as an `McpException` whose message
-the SDK surfaces verbatim, so an agent can distinguish `404` from `403` from `422` and self-correct (and
-observe `Retry-After` on `429`).
+generic error. `ZendeskToolInvoker` catches both exception types of the
+[client's error model](./zendesk-client.md#error-handling) — the typed `ZendeskApiException` (non-retryable
+4xx, carrying Zendesk's error body) and Kiota's `ApiException` (retry-exhausted `408`/`429`/`5xx`, with
+`Retry-After` recovered from the response headers) — and rethrows each as an `McpException` whose message
+the SDK surfaces verbatim, so an agent can distinguish `404` from `403` from `422`, self-correct, and honor
+an explicit "Retry after N seconds" hint on `429`.
+
+## Lean responses
+
+Responses are **lean-first**: every tool returns the minimum an agent needs to triage or act, and every
+omission carries an explicit, reachable escalation path. Zendesk has no field-selection mechanism
+anywhere in the Support or Help Center APIs, so the projection happens server-side in the host (the
+`ZendeskLean` helper); requests stay wire-true. The contract is stated in each tool's description and
+reinforced by the server-level MCP `instructions` sent to clients at initialize:
+
+> Zendesk MCP server — lean response contract: list/search tools return summary rows by default; pass
+> detail:'full' on the list tool, or call the record's \*_get tool, for a complete record. An absent
+> field means null/empty, not unknown. Prefer the \*_count tools to answer how-many questions, and
+> tickets_metrics_get for ticket timing metrics. A response's 'note' field carries dynamic conditions:
+> continuation (with has_more and after_cursor/next_page), truncation, and omitted data with the exact
+> re-call that retrieves it.
+
+### Summary rows and the `detail` parameter
+
+List/search/sublist tools take a `detail` parameter (default `"summary"`):
+
+| Value | Rows |
+| --- | --- |
+| `summary` (alias `concise`) | Per-entity **allowlist** rows — only the fields needed to triage or pick a record. |
+| `full` (aliases `detailed`, `verbose`) | Complete Zendesk objects, minus null-valued fields and API self-links. |
+
+The value is **validated**, case-insensitively: anything other than the values and aliases above is
+rejected with an error naming the allowed values — never silently coerced (`articles_get`'s
+`bodyFormat` gets the same treatment). Summary shapes strip the token-heavy members and point at the
+sink that still carries them: macro **actions**, view **conditions**, ticket-form **condition trees**,
+brand **logos**, and a suspended ticket's **raw email content** are dropped; a ticket field's options
+collapse to a computed `options_count`; a ticket's `description` is a 150-character excerpt (the
+description *is* the first comment); audit Comment events collapse their triple body duplication to a
+single 200-character excerpt.
+
+### `*_get` tools are the detail sinks
+
+The per-record `*_get` tools take no `detail` parameter — they always return the **full view**: the
+complete Zendesk object minus `url` API self-links, null-valued fields, and absolute
+`next_page`/`previous_page`/`links` pagination URLs. `html_url` — the human permalink — is always kept.
+The absence convention holds everywhere: **an absent field means null/empty, not unknown**.
+
+### The list envelope
+
+Every list/search tool returns one uniform envelope — **metadata first, items last**, so an agent
+reading a truncated stream still sees the contract:
+
+```jsonc
+{
+  "detail": "summary",        // the detail level applied to the rows
+  "count": 123,               // only when Zendesk supplied a total
+  "has_more": true,
+  "after_cursor": "…",        // cursor tools — OR next_page (a page NUMBER) for offset tools, never both
+  "note": "…",                // dynamic conditions only: continuation, truncation, omitted data
+  "items": [ … ],             // the projected rows
+  "users": [ … ]              // requested sideloads, under their native Zendesk names, summary-projected
+}
+```
+
+A tool emits exactly one continuation kind: cursor-paginated tools carry `after_cursor`, offset tools
+carry `next_page` as a computed page *number* — Zendesk's absolute URL strings are never parsed or
+echoed. Sideloads without a registered summary shape fail **visibly**: the array is omitted and the
+`note` says `sideload X has no summary shape — use detail:'full'`.
+
+### Page-size defaults
+
+No list tool leaves the page size to Zendesk's server default of 100 — every default is explicit on the
+wire and stated in the tool's description:
+
+| Default | Tools |
+| --- | --- |
+| 25 | Entity lists — `tickets_list`, `tickets_search`, `users_list`, `organizations_list`, `groups_list`, `views_list`, `macros_list`, `articles_list`, and the other list/sublist tools not named below. |
+| 10 | `tickets_comments_list`, `tickets_audits_list`, `users_autocomplete`, `organizations_autocomplete`, `articles_search` — heavy rows or prefix lookups. |
+| 20 | `job_statuses_list` |
+| 30 | `articles_sections_list`, `articles_categories_list` |
+| 50 | `tags_list`, `ticket_fields_list` — small rows. |
+| 100 | `tickets_export_incremental`, `tickets_search_export`, `ticket_fields_options_list` — deep-export/decode paths. |
+
+`*_get_many` tools accept a **hard cap of 100 ids per call** (Zendesk's `show_many` contract); more ids
+are rejected with an actionable batching error rather than fanned out silently.
+
+### Truncation markers
+
+A capped long value ends with a self-describing marker naming the **exact re-call** that retrieves the
+untruncated content — for example a comment body capped by `tickets_comments_list`'s `maxBodyChars`
+(default 2,000) ends with:
+
+```
+…[truncated N chars — re-call with maxBodyChars:0 (0 = no limit), perPage:1, page:<n> for this comment]
+```
+
+Summary-row excerpts (ticket descriptions, audit comment excerpts) use a bare trailing `…` — the row's
+description already names the sink (`tickets_get`, `tickets_comments_list`).
+
+### Response-size guard
+
+A safety net behind the projection (rarely hit): `Mcp:Tools:MaxResponseChars` (default 60,000
+serialized characters, minimum 1,000) with per-tool overrides in `Mcp:Tools:MaxResponseCharsByTool`,
+keyed by tool name (case-insensitive) — e.g. `Mcp:Tools:MaxResponseCharsByTool:tickets_audits_list =
+90000`. A **list** response over the budget drops tail items, **suppresses the continuation token**
+(resuming from it would silently skip the dropped items), forces `has_more: true`, and puts the
+recovery recipe in the note (`items 19–25 of this page were dropped — re-call with perPage:18 or a
+narrower query`). A **non-list** response over the budget fails with an error naming that tool's actual
+narrowing parameters. Tools with their own explicit size caps (`attachments_get`'s `maxBytes`) are
+exempt by design.
+
+### Write confirmations
+
+Write tools return minimal confirmations instead of echoing the mutated record:
+
+- **create** → `{id, a few identity fields, created_at}` — e.g. `tickets_create` returns
+  `{id, subject, status, created_at, audit_id}`.
+- **update** → `{id, updated_at}` **plus the server-state values of exactly the fields sent** — the
+  echo-of-change: a returned value differing from what was sent reveals a trigger/business-rule
+  override without a follow-up `*_get`.
+- **create-or-update** (upserts) → additionally `created: true|false`, captured from the real HTTP
+  status code.
+- **delete / acknowledge** → an explicit acknowledgement carrying the affected id(s).
+- **bulk `*_many`** → the queued job's `{id, status}` — poll `job_statuses_get`, whose summary
+  collapses per-item results to a `results_summary` (`succeeded`/`failed` counts plus the first
+  failures).
+
+Under **dry-run**, single-entity writes echo the request verbatim (small, and the echo is the
+verification value); bulk `*_many` writes return a compact digest — `{action, target, count, items}`
+with per-item ids and changed field names, long values truncated — instead of up to 100 echoed models.
+
+### The cheap-path count and batch tools
+
+Four tools exist specifically to close expensive access patterns:
+
+| Tool | Replaces | Caveat |
+| --- | --- | --- |
+| `organizations_tickets_count` | Paging `organizations_tickets_list` to size a history. | Counts above 100,000 are cached: refreshed only every ~24 hours and capped at 100,000 until the refresh completes (`refreshed_at` reports the cache time and may be null in that window). For an exact filtered count use `search_count`. |
+| `organizations_users_count` | Paging `organizations_users_list` to size a membership. | Same approximation/staleness caveat as above. |
+| `groups_users_count` | Paging `groups_users_list` to size a team. | Same approximation/staleness caveat as above. |
+| `ticket_fields_get_many` | The 1+N loop of `ticket_fields_get` per `custom_fields[].id`. | Full-detail rows; ≤ 100 ids per call; options capped at 100 per field with an `options_truncated` marker pointing at `ticket_fields_options_list`. |
 
 ## Tools
 
-168 tools, named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` — snake_case, with **no
+172 tools, named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` — snake_case, with **no
 product prefix** (MCP clients already namespace tools by server, so a `zendesk_` prefix would only stutter as
 `mcp_zendesk_zendesk_…`). The **area** leads so related tools sort together, and every read tool ends in a
 controlled read verb (`get` / `list` / `search` / `count` / `export` / `autocomplete`) while any other verb
@@ -324,14 +514,15 @@ denotes a write — so a tool's risk class is legible from its name alone. This 
 destructive verbs (`delete` / `merge` / `redact` / `mark_spam`) carry `Destructive = true`. Conventions shared
 by all tools:
 
-- **Pagination** — offset-paginated tools take `page`/`perPage` and return `count` + `next_page`;
-  cursor-paginated tools take `pageSize`/`afterCursor` and return `meta.has_more` + `meta.after_cursor`.
+- **Pagination** — offset-paginated tools take `page`/`perPage`; cursor-paginated tools take
+  `pageSize`/`afterCursor`. Either way, the [list envelope](#the-list-envelope) reports `has_more` plus
+  exactly one continuation field: `next_page` (a page number) or `after_cursor`.
 - **Sideloads** — list/read tools accept an `include` parameter where the Zendesk endpoint supports it,
-  returning related records as sibling arrays to avoid per-id follow-up calls.
+  returning related records as summary-projected sibling arrays to avoid per-id follow-up calls.
 - **Bulk writes** — bulk operations (≤100 items unless noted) return a `job_status`; poll
   `job_statuses_get` until it reports `completed`/`failed`.
 
-### Read tools (81 total)
+### Read tools (85 total)
 
 Every read tool is annotated `ReadOnly = true` and is available in all execution modes.
 
@@ -361,6 +552,7 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | --- | --- |
 | `tickets_get` | Returns a Zendesk ticket by id. |
 | `tickets_search` | Searches Zendesk tickets. |
+| `tickets_search_export` | Exports ticket search results with cursor pagination (no 1,000-result cap). |
 | `tickets_comments_list` | Returns the conversation thread (comments) on a ticket. |
 | `tickets_audits_list` | Returns a ticket's change history (audits/events). |
 | `tickets_metrics_get` | Returns timing/lifecycle metrics for a ticket. |
@@ -381,12 +573,14 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | --- | --- |
 | `organizations_get` | Returns a Zendesk organization by id. |
 | `organizations_tickets_list` | Returns the tickets belonging to an organization. |
+| `organizations_tickets_count` | Returns an organization's ticket count (approximate/cached above 100,000). |
 | `organizations_list` | Lists Zendesk organizations. |
 | `organizations_count` | Returns the approximate organization count. |
 | `organizations_get_many` | Returns many Zendesk organizations by id. |
 | `organizations_get_by_name_or_external_id` | Looks up organizations by exact name or external id. |
 | `organizations_autocomplete` | Suggests organizations whose name starts with a prefix. |
 | `organizations_users_list` | Lists the users of an organization. |
+| `organizations_users_count` | Returns an organization's user count (approximate/cached above 100,000). |
 | `organizations_memberships_list` | Lists an organization's memberships. |
 | `organizations_merges_get` | Returns an organization merge job's status. |
 | `organizations_tags_list` | Lists an organization's tags. |
@@ -401,6 +595,7 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | `groups_assignable_list` | Lists the groups assignable to tickets for the current agent. |
 | `groups_count` | Returns the approximate group count. |
 | `groups_users_list` | Lists the users of a group. |
+| `groups_users_count` | Returns a group's user count (approximate/cached above 100,000). |
 
 #### Help Center (articles / sections / categories)
 
@@ -420,6 +615,7 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | --- | --- |
 | `ticket_fields_list` | Lists ticket field definitions. |
 | `ticket_fields_get` | Returns a single ticket field definition by id. |
+| `ticket_fields_get_many` | Returns many ticket field definitions by id in one call (decode a ticket's `custom_fields` without a per-field loop). |
 | `ticket_fields_options_list` | Lists the custom options of a drop-down ticket field. |
 
 #### Macros
@@ -451,7 +647,6 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | Tool | What it does |
 | --- | --- |
 | `search_count` | Returns the number of results a search query matches. |
-| `tickets_search_export` | Exports ticket search results with cursor pagination (no 1,000-result cap). |
 
 #### Brands
 
@@ -676,13 +871,14 @@ via environment variables or your orchestrator's secret store.
 
 ## Observability
 
-Logging is via Serilog; OpenTelemetry traces and metrics are wired by [Ignite](../ignite/index.md). The
-Zendesk client's `ActivitySource` (`ES.FX.Zendesk`) is registered by the Spark; the MCP SDK's
+Logging is via Serilog; OpenTelemetry traces and metrics are wired by [Ignite](../ignite/index.md). Both
+Zendesk tracing sources (`ES.FX.Zendesk` and the Kiota adapter's
+`Microsoft.Kiota.Http.HttpClientLibrary`) are registered by the Spark; the MCP SDK's
 `ActivitySource`/`Meter` (`Experimental.ModelContextProtocol`) is registered by `AddZendeskMcpServer()`.
 
 ## See also
 
-- [Zendesk API client](./zendesk-client.md) — the underlying typed client, OAuth model, and error handling.
+- [Zendesk API client](./zendesk-client.md) — the underlying generated clients, OAuth model, and error handling.
 - [Zendesk Spark](../ignite/sparks/zendesk.md) — the Ignite integration this host builds on.
 - [Application hosting](../development/hosting.md) — the `ProgramEntry` lifecycle wrapper used by the host.
 - [Framework libraries](./index.md)

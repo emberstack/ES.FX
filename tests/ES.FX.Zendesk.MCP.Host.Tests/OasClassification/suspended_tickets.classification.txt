@@ -1,0 +1,16 @@
+attachments omitted
+author summary
+brand_id summary
+cause summary
+cause_id omitted
+content omitted
+created_at summary
+error_messages omitted
+id summary
+message_id omitted
+recipient omitted
+subject summary
+ticket_id summary
+updated_at omitted
+url omitted
+via omitted

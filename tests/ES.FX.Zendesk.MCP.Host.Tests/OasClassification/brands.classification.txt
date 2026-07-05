@@ -1,0 +1,17 @@
+active summary
+brand_url omitted
+created_at omitted
+default summary
+has_help_center summary
+help_center_state omitted
+host_mapping omitted
+id summary
+is_deleted omitted
+logo omitted
+name summary
+signature_template omitted
+subdomain summary
+ticket_form_ids omitted
+updated_at omitted
+url omitted
+user_separation omitted

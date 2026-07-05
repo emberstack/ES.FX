@@ -42,7 +42,10 @@ public class ClientCredentialsAccessTokenProviderTests
         {
             Content = JsonContent.Create(new
             {
-                access_token = $"tok-{Guid.NewGuid():N}", token_type = "bearer", scope = "read", expires_in = expiresIn
+                access_token = $"tok-{Guid.NewGuid():N}",
+                token_type = "bearer",
+                scope = "read",
+                expires_in = expiresIn
             })
         };
 
@@ -191,7 +194,10 @@ public class ClientCredentialsAccessTokenProviderTests
             {
                 Content = JsonContent.Create(new
                 {
-                    access_token = $"tok-{n}", token_type = "bearer", scope = "read", expires_in = 1800
+                    access_token = $"tok-{n}",
+                    token_type = "bearer",
+                    scope = "read",
+                    expires_in = 1800
                 })
             };
         }

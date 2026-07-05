@@ -2,12 +2,12 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
-using ES.FX.Zendesk.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Kiota.Abstractions;
 using ModelContextProtocol.Server;
 using Moq;
 
@@ -153,7 +153,7 @@ public class McpHostIntegrationTests
         using var client = factory.CreateClient();
 
         var response = await client.SendAsync(McpRequest(
-            """{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"integration-tests","version":"1.0.0"}}}"""),
+                """{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"integration-tests","version":"1.0.0"}}}"""),
             TestContext.Current.CancellationToken);
 
         Assert.True(response.IsSuccessStatusCode);
@@ -178,8 +178,12 @@ public class McpHostIntegrationTests
     public async Task Execution_Mode_Header_Tightens_To_ReadOnly_Through_The_Pipeline()
     {
         // End-to-end: a write tool invoked with the tighten header must be rejected by the invoker guard —
-        // and never reach the Zendesk client (which would hit the network).
-        using var factory = CreateFactory();
+        // and never reach Zendesk. The strict adapter mock makes the failure path airtight: any send
+        // attempt throws instead of hitting the network.
+        var requestAdapter = new Mock<IRequestAdapter>(MockBehavior.Strict);
+        requestAdapter.SetupProperty(adapter => adapter.BaseUrl, "https://unit-test.zendesk.com");
+        using var factory = CreateFactory().WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services => services.AddSingleton(requestAdapter.Object)));
         using var client = factory.CreateClient();
 
         var request = McpRequest(
@@ -198,11 +202,14 @@ public class McpHostIntegrationTests
     public async Task Execution_Mode_Header_DryRun_Simulates_The_Write_Through_The_Pipeline()
     {
         // End-to-end: a write tool invoked with the dry-run tighten header must come back as an explicit
-        // dry_run result (executed:false) — and never touch the Zendesk client. The real client is replaced
-        // with a strict mock, so ANY member access on it would surface as an error result instead.
-        var zendeskClient = new Mock<IZendeskClient>(MockBehavior.Strict);
-        using var factory = CreateFactory().WithWebHostBuilder(builder => builder.ConfigureTestServices(
-            services => services.AddSingleton(zendeskClient.Object)));
+        // dry_run result (executed:false) — and never touch Zendesk. The request adapter behind the generated
+        // clients is replaced with a strict mock (only BaseUrl, which the generated client constructors read,
+        // is allowed), so ANY send attempt would throw and surface as an error result instead of the asserted
+        // dry_run payload.
+        var requestAdapter = new Mock<IRequestAdapter>(MockBehavior.Strict);
+        requestAdapter.SetupProperty(adapter => adapter.BaseUrl, "https://unit-test.zendesk.com");
+        using var factory = CreateFactory().WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services => services.AddSingleton(requestAdapter.Object)));
         using var client = factory.CreateClient();
 
         var request = McpRequest(
@@ -220,6 +227,8 @@ public class McpHostIntegrationTests
         // (as " or \") — normalize them before asserting on the executed flag.
         var normalized = body.Replace("\\u0022", "\"").Replace("\\\"", "\"");
         Assert.Contains("\"executed\":false", normalized);
-        zendeskClient.VerifyNoOtherCalls();
+        // Strict semantics carry the "never touched Zendesk" guarantee: any Send* on the adapter would have
+        // thrown, turning the asserted dry_run payload into an error result. BaseUrl (SetupProperty above) is
+        // the only member the generated client constructors touch.
     }
 }

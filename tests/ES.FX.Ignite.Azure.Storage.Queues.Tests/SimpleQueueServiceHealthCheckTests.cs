@@ -44,7 +44,7 @@ public class SimpleQueueServiceHealthCheckTests
     };
 
     private static QueueItem SampleQueue(string name) =>
-        QueuesModelFactory.QueueItem(name, null);
+        QueuesModelFactory.QueueItem(name);
 
     /// <summary>
     ///     Healthy branch: the page-list probe yields a page and the check breaks out after the first one.

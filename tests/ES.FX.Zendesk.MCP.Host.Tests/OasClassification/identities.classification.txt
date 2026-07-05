@@ -1,0 +1,14 @@
+brand_id omitted
+created_at omitted
+deliverable_state omitted
+id summary
+primary summary
+type summary
+undeliverable_count omitted
+updated_at omitted
+url omitted
+user_id summary
+value summary
+verification_method omitted
+verified summary
+verified_at omitted
