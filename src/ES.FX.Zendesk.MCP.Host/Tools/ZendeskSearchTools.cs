@@ -19,7 +19,13 @@ public sealed class ZendeskSearchTools(IZendeskClient zendeskApiClient)
         "Returns the number of results a Zendesk search query matches — a cheap way to size a query before paging " +
         "or exporting. Uses the same query syntax as tickets_search. Read-only.")]
     public Task<long> Count(
-        [Description("The Zendesk search query (e.g. \"type:ticket status:open tags:vip\").")]
+        [Description(
+            "The Zendesk search query. Filter the resource type with type: (allowed values: ticket, user, " +
+            "organization, group). Comparison operators: ':' (equals), '<', '>', '<=', '>='; prefix a term with " +
+            "'-' to exclude and use '*' as a wildcard. Dates use YYYY-MM-DD (ISO 8601 date-time also supported, " +
+            "e.g. created>2015-09-01T12:00:00-08:00) plus relative shortcuts like created>4hours (units: minutes, " +
+            "hours, days, weeks, months, years). Limited to 64 words. Example: \"type:ticket status:open " +
+            "tags:vip\".")]
         string query,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() =>

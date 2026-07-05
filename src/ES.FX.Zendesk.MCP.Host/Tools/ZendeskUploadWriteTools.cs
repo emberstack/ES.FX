@@ -17,20 +17,28 @@ public sealed class ZendeskUploadWriteTools(IZendeskClient zendeskApiClient, IMc
     [McpServerTool(Name = "uploads_create", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = true)]
     [Description(
-        "Uploads a file to Zendesk (50 MB limit) for attaching to a ticket comment. Returns an upload whose 'token' " +
-        "is passed to the ticket comment's uploads when creating/updating a ticket; to bundle multiple files onto " +
-        "one token, pass the returned token back into this tool for each subsequent file. Tokens are single-use and " +
-        "expire after 60 minutes; until consumed, the file is reachable by any authenticated user via its " +
-        "content_url. Discard an unwanted upload with uploads_delete. " +
+        "Uploads a file to Zendesk for attaching to a ticket comment. Does NOT attach the file — it returns an " +
+        "upload whose 'token' is passed to the ticket comment's uploads when creating/updating a ticket. To bundle " +
+        "multiple files onto one token, pass the returned token back into this tool for each subsequent file. Tokens " +
+        "are valid for 60 minutes. SECURITY: until the token is consumed, the file is visible to ANY authenticated " +
+        "user at its content_url even if private attachments are enabled; once associated with a ticket or post, " +
+        "visibility is restricted to users with access. Discard an unwanted upload with uploads_delete. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Create(
-        [Description("The file name; its extension must match the actual content.")]
+        [Description(
+            "The display name the file gets when attached (not the local source path). It may differ from the " +
+            "source name, but its extension MUST match the actual content's extension or the recipient's " +
+            "browser/file reader may error when opening the attachment.")]
         string fileName,
         [Description("The file content as base64-encoded bytes.")]
         string contentBase64,
-        [Description("The file's real MIME type (e.g. 'image/png'); a wrong type causes undesired behavior.")]
+        [Description(
+            "A recognized MIME type that correctly describes the file (e.g. 'image/png'); a wrong or unrecognized " +
+            "type may cause undesired behavior (e.g. browsers blocking in-browser playback of mistyped media).")]
         string contentType,
-        [Description("An existing upload token to append this file to, for multi-file bundles (optional).")]
+        [Description(
+            "An existing upload token to append this file to, for multi-file bundles (pass the token returned by " +
+            "the first upload); the token is valid for 60 minutes (optional).")]
         string? token = null,
         CancellationToken cancellationToken = default)
     {
@@ -57,11 +65,14 @@ public sealed class ZendeskUploadWriteTools(IZendeskClient zendeskApiClient, IMc
         OpenWorld = true)]
     [Description(
         "Deletes an unconsumed Zendesk upload by its token, discarding the uploaded file(s) before they are " +
-        "attached to a comment. Only works while the token is still valid (unconsumed, under 60 minutes old). " +
+        "attached to a comment. Only works while the token is still valid (unconsumed, within the 60-minute " +
+        "window); once the token has been consumed (attached to a comment) it can no longer be deleted this way. " +
         "Returns a completion acknowledgement. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Delete(
-        [Description("The upload token returned by uploads_create.")]
+        [Description(
+            "The upload token returned by uploads_create; deletion works only while it is still unconsumed and " +
+            "within the 60-minute window.")]
         string token,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"delete upload token '{token}'",

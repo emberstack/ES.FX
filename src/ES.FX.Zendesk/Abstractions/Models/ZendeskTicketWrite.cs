@@ -22,15 +22,22 @@ public sealed record ZendeskTicketWrite
     [JsonPropertyName("comment")]
     public ZendeskTicketCommentWrite? Comment { get; init; }
 
-    /// <summary>The status — see <see cref="ZendeskTicketStatuses" />.</summary>
+    /// <summary>
+    ///     The status — one of new, open, pending, hold, solved, closed (see
+    ///     <see cref="ZendeskTicketStatuses" />).
+    /// </summary>
     [JsonPropertyName("status")]
     public string? Status { get; init; }
 
-    /// <summary>The priority — see <see cref="ZendeskTicketPriorities" />.</summary>
+    /// <summary>
+    ///     The priority — one of low, normal, high, urgent (see <see cref="ZendeskTicketPriorities" />).
+    /// </summary>
     [JsonPropertyName("priority")]
     public string? Priority { get; init; }
 
-    /// <summary>The type — see <see cref="ZendeskTicketTypes" />.</summary>
+    /// <summary>
+    ///     The type — one of problem, incident, question, task (see <see cref="ZendeskTicketTypes" />).
+    /// </summary>
     [JsonPropertyName("type")]
     public string? Type { get; init; }
 

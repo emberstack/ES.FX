@@ -20,9 +20,14 @@ public sealed class ZendeskTicketFieldWriteTools(
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk ticket field definition (admin-only). This changes account-wide configuration, not a " +
-        "single ticket. 'type' and 'title' are required; 'type' (text, textarea, checkbox, date, integer, decimal, " +
-        "regexp, multiselect, tagger, lookup...) is immutable after creation. For 'tagger'/'multiselect' fields, " +
-        "custom_field_options are required at creation. Returns the created ticket field. Write operation — honors " +
+        "single ticket. 'type' and 'title' are required; 'type' (text [the default if omitted], textarea, " +
+        "checkbox, date, integer, decimal, regexp, partialcreditcard, multiselect, tagger [single-select " +
+        "dropdown], lookup [a relationship to another object]) is immutable after creation. For " +
+        "'tagger'/'multiselect' fields, custom_field_options are required at creation and each needs a 'name' " +
+        "(label) and 'value' (tag). For 'checkbox' fields, 'tag' is the tag added when checked; for 'regexp' " +
+        "fields, 'regexp_for_validation' is the pattern a value must match. For best performance keep accounts to " +
+        "at most 400 ticket fields (per account without ticket forms, or per ticket form when forms are enabled). " +
+        "Returns the created ticket field. Write operation — honors " +
         "the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Create(
         [Description("The ticket field to create. 'type' and 'title' are required; 'type' is immutable afterwards.")]
@@ -80,7 +85,8 @@ public sealed class ZendeskTicketFieldWriteTools(
     [Description(
         "Creates or updates a single custom field option on a drop-down (tagger/multiselect) ticket field " +
         "(admin-only, upsert semantics: include the option 'id' to update an existing option, omit it to create " +
-        "one; rate-limited to 100 calls/min). This changes account-wide configuration, not a single ticket. " +
+        "one; rate-limited to 100 calls/min). Each option needs a 'name' (label) and 'value' (tag). A ticket " +
+        "field can hold at most 2000 options. This changes account-wide configuration, not a single ticket. " +
         "Safer than replacing the whole option set via ticket_fields_update. Returns the created or " +
         "updated custom field option. Write operation — honors the server execution mode: rejected in read-only " +
         "mode, simulated (no changes made) in dry-run mode.")]

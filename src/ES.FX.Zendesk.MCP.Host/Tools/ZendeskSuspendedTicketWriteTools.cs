@@ -18,12 +18,15 @@ public sealed class ZendeskSuspendedTicketWriteTools(
     [McpServerTool(Name = "suspended_tickets_recover", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = true)]
     [Description(
-        "Recovers a suspended ticket into a real ticket by suspended-ticket id (NOT a ticket id). SIDE EFFECT: the " +
-        "recovered ticket's requester becomes the calling agent — use suspended_tickets_recover_many with a " +
-        "single id to preserve the original requester. Returns the recovery result with the recovered ticket. " +
+        "Recovers a suspended ticket into a real ticket by suspended-ticket id (NOT a ticket id). Synchronous (not " +
+        "an async job): 200 with a tickets array on success, 422 with a suspended_tickets array on failure. SIDE " +
+        "EFFECT: recovery sets the recovered ticket's requester to the calling agent (not the original requester) to " +
+        "prevent re-suspension — use suspended_tickets_recover_many with a single id to preserve the original " +
+        "requester. Returns the recovery result with the recovered ticket. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Recover(
-        [Description("The numeric suspended-ticket id (from suspended_tickets_list; not a ticket id).")]
+        [Description(
+            "The suspended-ticket's own auto-generated id (from suspended_tickets_list; not a real ticket id).")]
         long id,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"recover suspended ticket {id}",
@@ -39,7 +42,9 @@ public sealed class ZendeskSuspendedTicketWriteTools(
         "id when the requester matters. Returns the recovery result with the recovered tickets. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> RecoverMany(
-        [Description("The numeric suspended-ticket ids to recover (1-100; not ticket ids).")]
+        [Description(
+            "The suspended-ticket auto-generated ids to recover (min 1, max 100; not ticket ids). Suspended tickets " +
+            "that fail to recover are still included in the response.")]
         long[] ids,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"recover {ids.Length} suspended tickets",
@@ -54,7 +59,8 @@ public sealed class ZendeskSuspendedTicketWriteTools(
         "message. Returns a completion acknowledgement. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Delete(
-        [Description("The numeric suspended-ticket id (from suspended_tickets_list; not a ticket id).")]
+        [Description(
+            "The suspended-ticket's own auto-generated id (from suspended_tickets_list; not a real ticket id).")]
         long id,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"delete suspended ticket {id}",
@@ -69,7 +75,8 @@ public sealed class ZendeskSuspendedTicketWriteTools(
         "async job), permanently discarding the held messages. Returns a completion acknowledgement. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> DeleteMany(
-        [Description("The numeric suspended-ticket ids to delete (1-100; not ticket ids).")]
+        [Description(
+            "The suspended-ticket auto-generated ids to delete (min 1, max 100; not ticket ids).")]
         long[] ids,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"delete {ids.Length} suspended tickets",

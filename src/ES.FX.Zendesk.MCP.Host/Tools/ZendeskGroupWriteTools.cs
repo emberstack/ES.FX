@@ -74,7 +74,7 @@ public sealed class ZendeskGroupWriteTools(
         "directly to the agent assume this group. Returns the created membership. Write operation — honors the " +
         "server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsCreate(
-        [Description("The numeric Zendesk user id of the agent.")]
+        [Description("The numeric Zendesk user id of the agent (must be an agent, not an end user).")]
         long userId,
         [Description("The numeric Zendesk group id.")]
         long groupId,
@@ -97,7 +97,8 @@ public sealed class ZendeskGroupWriteTools(
         "Returns a job_status — poll job_statuses_get until completed. Write operation — honors the " +
         "server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsCreateMany(
-        [Description("The memberships to create (1-100). Each item needs 'user_id' and 'group_id'.")]
+        [Description(
+            "The memberships to create (1-100). Each item needs an agent 'user_id' and a 'group_id'.")]
         ZendeskGroupMembership[] memberships,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -115,7 +116,8 @@ public sealed class ZendeskGroupWriteTools(
         "tickets in that group. Returns a completion acknowledgement. Write operation — honors the server " +
         "execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsDelete(
-        [Description("The numeric group membership id.")]
+        [Description(
+            "The numeric group membership id (not a user or group id — get it from groups_memberships_list).")]
         long membershipId,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -128,11 +130,14 @@ public sealed class ZendeskGroupWriteTools(
     [McpServerTool(Name = "groups_memberships_delete_many", ReadOnly = false, Destructive = true,
         Idempotent = false, OpenWorld = true)]
     [Description(
-        "Removes up to 100 Zendesk group memberships by their MEMBERSHIP ids. Returns a job_status — poll " +
-        "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
-        "in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "Removes up to 100 Zendesk group memberships by their MEMBERSHIP ids. Side effect: Zendesk schedules a job " +
+        "un-assigning the agents' working tickets in those groups. Returns a job_status — poll job_statuses_get " +
+        "until completed. Write operation — honors the server execution mode: rejected in read-only mode, " +
+        "simulated (no changes made) in dry-run mode.")]
     public Task<object> MembershipsDeleteMany(
-        [Description("The numeric group membership ids to remove (1-100).")]
+        [Description(
+            "The numeric group membership ids to remove (1-100; not user or group ids — get them from " +
+            "groups_memberships_list).")]
         long[] membershipIds,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -151,7 +156,9 @@ public sealed class ZendeskGroupWriteTools(
     public Task<object> MembershipsMakeDefault(
         [Description("The numeric Zendesk user id owning the membership.")]
         long userId,
-        [Description("The numeric group membership id to make default.")]
+        [Description(
+            "The numeric group membership id to make default (not a user or group id; must belong to the given " +
+            "userId).")]
         long membershipId,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,

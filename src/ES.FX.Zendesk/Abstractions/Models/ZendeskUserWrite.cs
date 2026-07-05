@@ -21,14 +21,27 @@ public sealed record ZendeskUserWrite
     [JsonPropertyName("email")]
     public string? Email { get; init; }
 
-    /// <summary>The role — see <see cref="ZendeskUserRoles" />.</summary>
+    /// <summary>
+    ///     The role — see <see cref="ZendeskUserRoles" />. Allowed roles are <c>end-user</c>, <c>agent</c>, or
+    ///     <c>admin</c> (Enterprise plans may also assign a custom agent role via <c>custom_role_id</c>). Omitting
+    ///     the role creates an end user.
+    /// </summary>
     [JsonPropertyName("role")]
     public string? Role { get; init; }
 
     [JsonPropertyName("phone")] public string? Phone { get; init; }
-    [JsonPropertyName("external_id")] public string? ExternalId { get; init; }
 
-    /// <summary>Setting this removes the user's other organization memberships.</summary>
+    /// <summary>
+    ///     An arbitrary string linking the user to a record in an external system; used by create-or-update to match
+    ///     an existing user (the match is case-insensitive, but the stored external id is updated to the case you
+    ///     supply).
+    /// </summary>
+    [JsonPropertyName("external_id")]
+    public string? ExternalId { get; init; }
+
+    /// <summary>
+    ///     Assigns the user to that organization; setting this removes the user's other organization memberships.
+    /// </summary>
     [JsonPropertyName("organization_id")]
     public long? OrganizationId { get; init; }
 
@@ -50,17 +63,31 @@ public sealed record ZendeskUserWrite
 /// <summary>The writable fields of a user identity (create / update).</summary>
 public sealed record ZendeskUserIdentityWrite
 {
-    /// <summary>The identity type — see <see cref="ZendeskIdentityTypes" />.</summary>
+    /// <summary>
+    ///     The identity type — see <see cref="ZendeskIdentityTypes" />. Allowed values are <c>email</c>,
+    ///     <c>phone_number</c>, <c>twitter</c>, <c>facebook</c>, <c>google</c>, <c>agent_forwarding</c> (also
+    ///     <c>any_channel</c>, <c>foreign</c>, <c>sdk</c>, <c>messaging</c>).
+    /// </summary>
     [JsonPropertyName("type")]
     public string? Type { get; init; }
 
     [JsonPropertyName("value")] public string? Value { get; init; }
-    [JsonPropertyName("verified")] public bool? Verified { get; init; }
+
+    /// <summary>
+    ///     On update, set to <c>true</c> to mark the identity verified or <c>false</c> to unverify it. The primary
+    ///     attribute cannot be changed here — use the make-primary operation instead.
+    /// </summary>
+    [JsonPropertyName("verified")]
+    public bool? Verified { get; init; }
 
     /// <summary>Only writable at creation time; use the make-primary operation afterwards.</summary>
     [JsonPropertyName("primary")]
     public bool? Primary { get; init; }
 
+    /// <summary>
+    ///     Set to <c>true</c> to add the identity without sending a verification e-mail. Does NOT apply when updating
+    ///     your own agent profile — a welcome or verification e-mail is sent regardless.
+    /// </summary>
     [JsonPropertyName("skip_verify_email")]
     public bool? SkipVerifyEmail { get; init; }
 }

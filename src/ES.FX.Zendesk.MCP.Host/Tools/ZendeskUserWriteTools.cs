@@ -19,9 +19,10 @@ public sealed class ZendeskUserWriteTools(IZendeskClient zendeskApiClient, IMcpE
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk user. On create, 'email' becomes the primary e-mail identity; a duplicate e-mail fails " +
-        "with 422 — use users_create_or_update to upsert instead. Set skip_verify_email to suppress the " +
-        "verification e-mail. Returns the created user. Write operation — honors the server execution mode: " +
-        "rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
+        "with 422 — use users_create_or_update to upsert instead. Allowed roles are \"end-user\", \"agent\", or " +
+        "\"admin\"; omitting the role creates an end user. Set skip_verify_email to suppress the verification " +
+        "e-mail. Returns the created user. Write operation — honors the server execution mode: rejected in " +
+        "read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Create(
         [Description("The user to create (name, email, role, phone, external_id, organization_id, tags, ...).")]
         ZendeskUserWrite user,
@@ -35,9 +36,11 @@ public sealed class ZendeskUserWriteTools(IZendeskClient zendeskApiClient, IMcpE
         OpenWorld = true)]
     [Description(
         "Creates a Zendesk user, or updates the existing one matched by e-mail or external id (upsert). Safe way " +
-        "to ensure a user exists without triggering the 422 duplicate-email failure of users_create. " +
-        "Returns the created or updated user. Write operation — honors the server execution mode: rejected in " +
-        "read-only mode, simulated (no changes made) in dry-run mode.")]
+        "to ensure a user exists without triggering the 422 duplicate-email failure of users_create. The " +
+        "external_id match is case-insensitive, but the stored external_id is updated to the case you supply. " +
+        "Returns 200 if the user already existed, 201 if created; a newly created user with no role becomes an end " +
+        "user. Returns the created or updated user. Write operation — honors the server execution mode: rejected " +
+        "in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> CreateOrUpdate(
         [Description("The user to create or update — matched to an existing user by email or external_id.")]
         ZendeskUserWrite user,
@@ -140,9 +143,10 @@ public sealed class ZendeskUserWriteTools(IZendeskClient zendeskApiClient, IMcpE
     [Description(
         "Merges one Zendesk end user INTO another: the user identified by loserUserId is ABSORBED (their tickets " +
         "and identities move to the winner and the loser ceases to exist as a separate user); the user identified " +
-        "by winnerUserId survives. End users only — agents/admins cannot be merged. This cannot be undone. " +
-        "Returns the surviving (winner) user. Write operation — honors the server execution mode: rejected in " +
-        "read-only mode, simulated (no changes made) in dry-run mode.")]
+        "by winnerUserId survives. End users only — agents/admins cannot be merged, nor can end users created by " +
+        "sharing agreements. The loser (the user being absorbed) must be a requester on 10,000 or fewer tickets or " +
+        "the merge is blocked. This cannot be undone. Returns the surviving (winner) user. Write operation — " +
+        "honors the server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> Merge(
         [Description("The id of the user to be absorbed (the LOSER — this user is merged away).")]
         long loserUserId,
@@ -213,7 +217,10 @@ public sealed class ZendeskUserWriteTools(IZendeskClient zendeskApiClient, IMcpE
     public Task<object> IdentitiesCreate(
         [Description("The numeric Zendesk user id.")]
         long userId,
-        [Description("The identity to add (type, value, verified, primary, skip_verify_email).")]
+        [Description(
+            "The identity to add (type, value, verified, primary, skip_verify_email). Allowed type: " +
+            "email, phone_number, twitter, facebook, google, agent_forwarding (also any_channel, foreign, " +
+            "sdk, messaging, microsoft).")]
         ZendeskUserIdentityWrite identity,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"add an identity to user {userId}",
@@ -307,9 +314,10 @@ public sealed class ZendeskUserWriteTools(IZendeskClient zendeskApiClient, IMcpE
         OpenWorld = true)]
     [Description(
         "Deletes an identity (e-mail, phone number, social handle) from a Zendesk user. The primary identity " +
-        "cannot be deleted — promote another identity with users_identities_make_primary first. Returns a " +
-        "completion acknowledgement. Write operation — honors the server execution mode: rejected in read-only " +
-        "mode, simulated (no changes made) in dry-run mode.")]
+        "cannot be deleted — promote another identity with users_identities_make_primary first. Deleting a " +
+        "messaging identity can break the messaging channel for the user. Returns a completion acknowledgement. " +
+        "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes " +
+        "made) in dry-run mode.")]
     public Task<object> IdentitiesDelete(
         [Description("The numeric Zendesk user id.")]
         long userId,

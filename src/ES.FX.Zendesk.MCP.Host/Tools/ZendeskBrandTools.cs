@@ -14,11 +14,12 @@ public sealed class ZendeskBrandTools(IZendeskClient zendeskApiClient)
     /// <summary>Lists Zendesk brands.</summary>
     [McpServerTool(Name = "brands_list", ReadOnly = true, OpenWorld = true)]
     [Description(
-        "Lists Zendesk brands — decodes the brand_id carried on tickets in multibrand accounts. Cursor " +
-        "pagination: pass pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. " +
-        "Read-only.")]
+        "Lists Zendesk brands — decodes the brand_id carried on tickets in multibrand accounts. Requires admin, or " +
+        "an agent with the assign_tickets_to_any_brand permission, to list all brands; agents without it see only " +
+        "brands they are members of. Cursor pagination: pass pageSize/afterCursor; the result's " +
+        "meta.has_more/meta.after_cursor drive continuation. Read-only.")]
     public Task<ZendeskBrandsResult> List(
-        [Description("The cursor page size (optional, max 100).")]
+        [Description("The cursor page size (optional; Zendesk limits most endpoints to a max of 100, defaulting to 100).")]
         int? pageSize = null,
         [Description("The cursor from the previous page's meta.after_cursor (omit for the first page).")]
         string? afterCursor = null,

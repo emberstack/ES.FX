@@ -8,9 +8,10 @@ namespace ES.FX.Zendesk.Abstractions.Models;
 public sealed record ZendeskTicketFieldWrite
 {
     /// <summary>
-    ///     The field type (<c>text</c>, <c>textarea</c>, <c>checkbox</c>, <c>date</c>, <c>integer</c>,
-    ///     <c>decimal</c>, <c>regexp</c>, <c>multiselect</c>, <c>tagger</c>, <c>lookup</c>...). Required on
-    ///     create; immutable afterwards.
+    ///     The field type. Required on create and immutable afterwards. Allowed custom types: <c>text</c> (the
+    ///     default if omitted), <c>textarea</c>, <c>checkbox</c>, <c>date</c>, <c>integer</c>, <c>decimal</c>,
+    ///     <c>regexp</c>, <c>partialcreditcard</c>, <c>multiselect</c>, <c>tagger</c> (single-select dropdown), and
+    ///     <c>lookup</c> (a relationship to another object).
     /// </summary>
     [JsonPropertyName("type")]
     public string? Type { get; init; }
@@ -33,18 +34,24 @@ public sealed record ZendeskTicketFieldWrite
     [JsonPropertyName("required_in_portal")]
     public bool? RequiredInPortal { get; init; }
 
-    /// <summary>The tag applied by a <c>checkbox</c> field when checked.</summary>
+    /// <summary>
+    ///     For <c>checkbox</c> fields only — the tag added to a ticket when the box is checked. Tags cannot be
+    ///     reused across custom ticket fields (a tag used here can't also be a drop-down option value).
+    /// </summary>
     [JsonPropertyName("tag")]
     public string? Tag { get; init; }
 
-    /// <summary>Validation pattern for a <c>regexp</c> field.</summary>
+    /// <summary>
+    ///     For <c>regexp</c> fields only — the validation pattern a field value must match to be deemed valid.
+    /// </summary>
     [JsonPropertyName("regexp_for_validation")]
     public string? RegexpForValidation { get; init; }
 
     /// <summary>
-    ///     Drop-down/multiselect options. Required on create for <c>tagger</c>/<c>multiselect</c>. DESTRUCTIVE on
-    ///     update: the whole option set is replaced — omitted options are DELETED and their values removed from
-    ///     tickets, so include every option you want to keep.
+    ///     Drop-down/multiselect options. Required at creation for <c>tagger</c>/<c>multiselect</c> fields; each
+    ///     option needs a <c>name</c> (label) and a <c>value</c> (tag), and is not used by other field types.
+    ///     DESTRUCTIVE on update: the whole option set is replaced — omitted options are DELETED and their values
+    ///     removed from tickets and macros, so include every option you want to keep.
     /// </summary>
     [JsonPropertyName("custom_field_options")]
     public IReadOnlyList<ZendeskCustomFieldOptionWrite>? CustomFieldOptions { get; init; }
@@ -57,8 +64,18 @@ public sealed record ZendeskCustomFieldOptionWrite
     [JsonPropertyName("id")]
     public long? Id { get; init; }
 
-    [JsonPropertyName("name")] public string? Name { get; init; }
-    [JsonPropertyName("value")] public string? Value { get; init; }
+    /// <summary>The human-readable label for the option. Required together with <see cref="Value" />.</summary>
+    [JsonPropertyName("name")]
+    public string? Name { get; init; }
+
+    /// <summary>
+    ///     The tag stored on tickets that select this option. Required together with <see cref="Name" />. A value
+    ///     cannot collide with a tag used by a <c>checkbox</c> field, since tags aren't reusable across custom
+    ///     fields.
+    /// </summary>
+    [JsonPropertyName("value")]
+    public string? Value { get; init; }
+
     [JsonPropertyName("position")] public long? Position { get; init; }
 
     /// <summary>
@@ -90,7 +107,11 @@ public sealed record ZendeskTicketFormWrite
     [JsonPropertyName("end_user_visible")] public bool? EndUserVisible { get; init; }
     [JsonPropertyName("in_all_brands")] public bool? InAllBrands { get; init; }
 
-    /// <summary>The field ids on the form, in display order.</summary>
+    /// <summary>
+    ///     The field ids on the form, in display order. Supplying this replaces the form's field list wholesale in
+    ///     display order — read the current form with forms_get first and send the complete ordered list, or
+    ///     existing fields are dropped.
+    /// </summary>
     [JsonPropertyName("ticket_field_ids")]
     public IReadOnlyList<long>? TicketFieldIds { get; init; }
 }
@@ -103,7 +124,9 @@ public sealed record ZendeskMacroWrite
     public string? Title { get; init; }
 
     /// <summary>
-    ///     The macro actions (e.g. <c>{ "field": "status", "value": "solved" }</c>). Required on create.
+    ///     The macro actions. Required on create. Each action is a <c>{ field, value }</c> pair where
+    ///     <c>field</c> names a ticket field to modify (e.g. <c>"status"</c>) and <c>value</c> is its new value
+    ///     (e.g. <c>"solved"</c>); <c>value</c> is a string, or an array of strings for multi-value actions.
     ///     DESTRUCTIVE on update: the whole array is replaced — include ALL actions when changing any one.
     /// </summary>
     [JsonPropertyName("actions")]
@@ -131,14 +154,26 @@ public sealed record ZendeskBrandWrite
     [JsonPropertyName("name")]
     public string? Name { get; init; }
 
-    /// <summary>The brand subdomain. Required on create.</summary>
+    /// <summary>
+    ///     The brand subdomain — the {subdomain}.zendesk.com host segment, not a full URL. Required on create.
+    /// </summary>
     [JsonPropertyName("subdomain")]
     public string? Subdomain { get; init; }
 
     [JsonPropertyName("active")] public bool? Active { get; init; }
-    [JsonPropertyName("default")] public bool? Default { get; init; }
+
+    /// <summary>
+    ///     Marks this brand as the account default. Only one brand can be default; setting this true moves the
+    ///     default off the previous brand.
+    /// </summary>
+    [JsonPropertyName("default")]
+    public bool? Default { get; init; }
+
     [JsonPropertyName("brand_url")] public string? BrandUrl { get; init; }
-    [JsonPropertyName("host_mapping")] public string? HostMapping { get; init; }
+
+    /// <summary>The custom host (CNAME) mapped to this brand, if any. Only admins can view this property.</summary>
+    [JsonPropertyName("host_mapping")]
+    public string? HostMapping { get; init; }
 
     [JsonPropertyName("signature_template")]
     public string? SignatureTemplate { get; init; }
@@ -148,8 +183,8 @@ public sealed record ZendeskBrandWrite
 public sealed record ZendeskCustomStatusWrite
 {
     /// <summary>
-    ///     The built-in category — see <see cref="ZendeskStatusCategories" />. Required on create; NOT updatable
-    ///     afterwards.
+    ///     The built-in category — see <see cref="ZendeskStatusCategories" />. Allowed values: new, open, pending,
+    ///     hold, solved. Required on create; immutable afterwards (not accepted on update).
     /// </summary>
     [JsonPropertyName("status_category")]
     public string? StatusCategory { get; init; }
@@ -158,7 +193,9 @@ public sealed record ZendeskCustomStatusWrite
     [JsonPropertyName("agent_label")]
     public string? AgentLabel { get; init; }
 
-    [JsonPropertyName("end_user_label")] public string? EndUserLabel { get; init; }
+    /// <summary>The label end users see (max 48 chars).</summary>
+    [JsonPropertyName("end_user_label")]
+    public string? EndUserLabel { get; init; }
     [JsonPropertyName("description")] public string? Description { get; init; }
 
     [JsonPropertyName("end_user_description")]
@@ -182,18 +219,33 @@ public sealed record ZendeskViewWrite
     [JsonPropertyName("active")] public bool? Active { get; init; }
 
     /// <summary>
-    ///     Conditions that must ALL match. On create, at least one condition on <c>status</c>, <c>type</c>,
-    ///     <c>group_id</c>, <c>assignee_id</c>, or <c>requester_id</c> is required. DESTRUCTIVE on update:
-    ///     condition arrays are replaced wholesale — send the complete set.
+    ///     Conditions that must ALL match. Each condition is a <c>{ field, operator, value }</c> triple; see
+    ///     Zendesk's conditions reference for the field/operator vocabulary. On create, at least one condition on
+    ///     <c>status</c>, <c>type</c>, <c>group_id</c>, <c>assignee_id</c>, or <c>requester_id</c> is required.
+    ///     DESTRUCTIVE on update: a PUT replaces the entire array — send the complete set. Whenever <see cref="Any" />
+    ///     conditions are present, at least one <c>all</c> condition must remain.
     /// </summary>
     [JsonPropertyName("all")]
     public IReadOnlyList<ZendeskViewCondition>? All { get; init; }
 
-    /// <summary>Conditions of which ANY may match.</summary>
+    /// <summary>
+    ///     Conditions of which ANY may match. At least one <see cref="All" /> condition must also be defined when
+    ///     using <c>any</c> conditions. DESTRUCTIVE on update: a PUT replaces the entire array — send the complete set.
+    /// </summary>
     [JsonPropertyName("any")]
     public IReadOnlyList<ZendeskViewCondition>? Any { get; init; }
 
-    [JsonPropertyName("output")] public ZendeskViewOutput? Output { get; init; }
+    /// <summary>
+    ///     Output layout. <c>columns</c> takes up to 10 column values from the View columns vocabulary (e.g.
+    ///     <c>status</c>, <c>description</c>=Subject, <c>priority</c>, <c>requester</c>, <c>assignee</c>,
+    ///     <c>created</c>=Requested, <c>updated</c>, <c>group</c>, <c>organization</c>, <c>type</c>,
+    ///     <c>ticket_form</c>, <c>custom_status_id</c>; for a custom field use its numeric id). <c>group_by</c>/
+    ///     <c>sort_by</c> must reference a View column; <c>description</c>, <c>submitter</c>, and
+    ///     <c>custom_status_id</c> are NOT supported for grouping/sorting. <c>group_order</c>/<c>sort_order</c> are
+    ///     each "asc" or "desc".
+    /// </summary>
+    [JsonPropertyName("output")]
+    public ZendeskViewOutput? Output { get; init; }
 }
 
 /// <summary>A view condition (see Zendesk's conditions reference for the field/operator vocabulary).</summary>

@@ -33,7 +33,7 @@ public sealed class ZendeskOrganizationTools(IZendeskClient zendeskApiClient)
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages — advance 'page'.")]
+            "Results per page (default 25, max 100 — values above 100 are clamped). The total is in 'count'; a non-null 'next_page' means more pages — advance 'page'.")]
         int? perPage = 25,
         [Description(
             "Sideloads to resolve ids inline in one call: any of \"users\", \"groups\", \"organizations\". Returned as sibling arrays.")]
@@ -46,10 +46,11 @@ public sealed class ZendeskOrganizationTools(IZendeskClient zendeskApiClient)
     [McpServerTool(Name = "organizations_list", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Lists Zendesk organizations — browse the accounts/companies known to the instance. Cursor pagination: pass " +
-        "pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. For a lookup by " +
-        "exact name or external id use organizations_get_by_name_or_external_id instead. Read-only.")]
+        "pageSize/afterCursor and continue with meta.after_cursor while meta.has_more is true. For a lookup by " +
+        "exact name or external id use organizations_get_by_name_or_external_id instead. Restricted-scope custom " +
+        "agent roles (agents limited to their own organization) get a 403. Read-only.")]
     public Task<ZendeskOrganizationsResult> List(
-        [Description("Results per page (default 100, max 100).")]
+        [Description("Results per page (default 100, max 100 — larger values are capped at 100).")]
         int? pageSize = null,
         [Description("The cursor from the previous page's meta.after_cursor (optional; omit for the first page).")]
         string? afterCursor = null,
@@ -60,9 +61,9 @@ public sealed class ZendeskOrganizationTools(IZendeskClient zendeskApiClient)
     /// <summary>Returns the approximate organization count.</summary>
     [McpServerTool(Name = "organizations_count", ReadOnly = true, OpenWorld = true)]
     [Description(
-        "Returns the number of Zendesk organizations. The value is cached and approximate above 100,000 (refreshed " +
-        "roughly every 24 hours; 'refreshed_at' reports the cache time and may be null while Zendesk recomputes). " +
-        "Read-only.")]
+        "Returns the number of Zendesk organizations. When the count exceeds 100,000 it is refreshed only every 24 " +
+        "hours and 'value' is capped at 100,000 until the background update completes ('refreshed_at' reports the " +
+        "cache time and may be null during that window). Read-only.")]
     public Task<ZendeskCount> Count(CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Organizations.CountAsync(cancellationToken));
 
@@ -73,7 +74,9 @@ public sealed class ZendeskOrganizationTools(IZendeskClient zendeskApiClient)
         "for resolving the organization_ids collected from tickets or users. Lists larger than 100 ids are chunked " +
         "automatically and merged. Read-only.")]
     public Task<ZendeskOrganizationsResult> ReadMany(
-        [Description("The numeric Zendesk organization ids to fetch.")]
+        [Description(
+            "The numeric Zendesk organization ids to fetch. The underlying show_many endpoint accepts up to 100 ids " +
+            "per call; lists larger than 100 are chunked automatically.")]
         long[] ids,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Organizations.GetManyAsync(ids, cancellationToken));
@@ -100,12 +103,14 @@ public sealed class ZendeskOrganizationTools(IZendeskClient zendeskApiClient)
         "unknown (organizations_get_by_name_or_external_id requires an exact match). Offset pagination only: " +
         "'count'/'next_page' indicate more pages. Read-only.")]
     public Task<ZendeskOrganizationsResult> Autocomplete(
-        [Description("The name prefix to match (at least the first characters of the organization name).")]
+        [Description(
+            "The name prefix to match — returns organizations whose name STARTS WITH this value. Required.")]
         string name,
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page (default 100, max 100). Offset pagination only. The total is in 'count'; a non-null " +
+            "'next_page' means more pages.")]
         int? perPage = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -122,7 +127,8 @@ public sealed class ZendeskOrganizationTools(IZendeskClient zendeskApiClient)
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page (default 100, max 100 — larger values are capped at 100). The total is in 'count'; a " +
+            "non-null 'next_page' means more pages.")]
         int? perPage = null,
         [Description(
             "Sideloads to resolve ids inline in one call: any of \"organizations\", \"groups\", \"identities\". " +
@@ -146,7 +152,8 @@ public sealed class ZendeskOrganizationTools(IZendeskClient zendeskApiClient)
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page (default 100, max 100 — larger values are capped at 100). The total is in 'count'; a " +
+            "non-null 'next_page' means more pages.")]
         int? perPage = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -155,11 +162,14 @@ public sealed class ZendeskOrganizationTools(IZendeskClient zendeskApiClient)
     /// <summary>Returns an organization merge job's status.</summary>
     [McpServerTool(Name = "organizations_merges_get", ReadOnly = true, OpenWorld = true)]
     [Description(
-        "Returns the status of a Zendesk organization merge — poll after organizations_merge until 'status' " +
-        "is \"complete\" (or \"error\"). Note the id is the merge's own string id, not a job_status id — " +
+        "Returns the status of a Zendesk organization merge — poll after organizations_merge until 'status' is " +
+        "\"complete\". Status values are: new, in progress, error, complete; on \"error\" the merge can be retried " +
+        "by repeating organizations_merge. Note the id is the merge's own string id, not a job_status id — " +
         "job_statuses_get does not track organization merges. Read-only.")]
     public Task<ZendeskOrganizationMerge> MergeStatus(
-        [Description("The organization merge id (a string) returned by organizations_merge.")]
+        [Description(
+            "The organization merge id returned by organizations_merge — an opaque string (e.g. " +
+            "\"01HPZM6206BF4G63783E5349AD\"), not a numeric job_status id.")]
         string mergeId,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Organizations.GetMergeAsync(mergeId,

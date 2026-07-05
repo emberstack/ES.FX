@@ -67,7 +67,7 @@ public static class McpServerHostingExtensions
     /// <returns>The builder, for chaining.</returns>
     public static IMcpServerBuilder WithToolsInArea<[DynamicallyAccessedMembers(
             DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)]
-        TTool>(this IMcpServerBuilder builder, ZendeskToolAreaGate gate)
+    TTool>(this IMcpServerBuilder builder, ZendeskToolAreaGate gate)
         => gate.Allows<TTool>() ? builder.WithTools<TTool>() : builder;
 
     /// <summary>

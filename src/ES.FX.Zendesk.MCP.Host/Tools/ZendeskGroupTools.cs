@@ -23,8 +23,10 @@ public sealed class ZendeskGroupTools(IZendeskClient zendeskApiClient)
             "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 100,
         [Description(
-            "Sideloads to resolve inline as sibling arrays: \"users\" returns each group's members in the same " +
-            "roundtrip, avoiding per-group groups_memberships_list calls.")]
+            "Comma-separated sideloads to resolve inline as sibling arrays: \"users\" returns each group's members " +
+            "in the same roundtrip, avoiding per-group groups_memberships_list calls. Documented values are " +
+            "\"users\" and \"group_settings\"; there is no closed enum for group sideloads, so unknown values are " +
+            "silently ignored.")]
         string[]? include = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -56,7 +58,8 @@ public sealed class ZendeskGroupTools(IZendeskClient zendeskApiClient)
             "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 100,
         [Description(
-            "Sideloads to resolve ids inline in one call: any of \"users\", \"groups\". Returned as sibling arrays.")]
+            "Comma-separated sideloads to resolve ids inline in one call; valid values are \"users\" and " +
+            "\"groups\". Returned as sibling arrays.")]
         string[]? include = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -82,8 +85,9 @@ public sealed class ZendeskGroupTools(IZendeskClient zendeskApiClient)
     /// <summary>Returns the approximate group count.</summary>
     [McpServerTool(Name = "groups_count", ReadOnly = true, OpenWorld = true)]
     [Description(
-        "Returns the number of Zendesk groups. The value is cached and approximate above 100,000 (refreshed roughly " +
-        "every 24 hours; 'refreshed_at' reports the cache time and may be null while Zendesk recomputes). Read-only.")]
+        "Returns the number of Zendesk groups. The value is cached and approximate above 100,000: it is refreshed " +
+        "only every ~24 hours and 'value' is capped at 100,000 until that refresh completes ('refreshed_at' reports " +
+        "the cache time and may be null while Zendesk recomputes). Read-only.")]
     public Task<ZendeskCount> Count(CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Groups.CountAsync(cancellationToken));
 

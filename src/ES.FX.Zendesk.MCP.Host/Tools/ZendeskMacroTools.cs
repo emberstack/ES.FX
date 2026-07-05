@@ -21,7 +21,8 @@ public sealed class ZendeskMacroTools(IZendeskClient zendeskApiClient)
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page (default 25, max 100 — Zendesk clamps higher values to 100). The total is in 'count'; " +
+            "a non-null 'next_page' means more pages.")]
         int? perPage = 25,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() => zendeskApiClient.Macros.ListAsync(page, perPage, cancellationToken));
@@ -35,7 +36,8 @@ public sealed class ZendeskMacroTools(IZendeskClient zendeskApiClient)
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page (default 25, max 100 — Zendesk clamps higher values to 100). The total is in 'count'; " +
+            "a non-null 'next_page' means more pages.")]
         int? perPage = 25,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>

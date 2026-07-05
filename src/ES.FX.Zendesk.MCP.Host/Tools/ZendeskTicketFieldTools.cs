@@ -37,12 +37,15 @@ public sealed class ZendeskTicketFieldTools(IZendeskClient zendeskApiClient)
         "envelope) — use to see the allowed values before setting the field on a ticket or editing options with " +
         "ticket_fields_options_create_or_update. Read-only.")]
     public Task<ZendeskCustomFieldOptionsResult> Options(
-        [Description("The numeric ticket field id (must be a drop-down/tagger field).")]
+        [Description(
+            "The numeric ticket field id. Must be a drop-down field (type 'tagger' or 'multiselect'); other field " +
+            "types have no options to list.")]
         long ticketFieldId,
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page (default 100, max 100 — offset pagination caps at 100 per page; values above 100 are " +
+            "capped). The total is in 'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 100,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>

@@ -15,11 +15,18 @@ public sealed record ZendeskOrganizationWrite
     [JsonPropertyName("id")]
     public long? Id { get; init; }
 
-    /// <summary>The (unique) organization name. Required on create.</summary>
+    /// <summary>
+    ///     The organization name. Required on create and must be unique across the account. Leading/trailing
+    ///     whitespace is trimmed before validation, so names differing only by whitespace are treated as duplicates
+    ///     (e.g. "API Company" and "API Company ").
+    /// </summary>
     [JsonPropertyName("name")]
     public string? Name { get; init; }
 
-    /// <summary>Also a create-or-update matching key (case-insensitive).</summary>
+    /// <summary>
+    ///     A unique external record key. Case-insensitive — "company1" and "Company1" are treated as the same value.
+    ///     Also a create-or-update matching key.
+    /// </summary>
     [JsonPropertyName("external_id")]
     public string? ExternalId { get; init; }
 
@@ -33,7 +40,9 @@ public sealed record ZendeskOrganizationWrite
     [JsonPropertyName("shared_tickets")] public bool? SharedTickets { get; init; }
     [JsonPropertyName("shared_comments")] public bool? SharedComments { get; init; }
 
-    /// <summary>Custom organization field values keyed by field key.</summary>
+    /// <summary>
+    ///     Custom organization field values keyed by the field's key; each value is a string or a number.
+    /// </summary>
     [JsonPropertyName("organization_fields")]
     public IReadOnlyDictionary<string, object?>? OrganizationFields { get; init; }
 }

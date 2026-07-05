@@ -18,14 +18,18 @@ public sealed class ZendeskArticleTools(IZendeskClient zendeskApiClient)
         "primary way to find an existing answer to resolve or deflect a ticket. Returns relevance-ranked results " +
         "with snippets; call articles_get for the full article body. Read-only.")]
     public Task<ZendeskArticleSearchResults> Search(
-        [Description("The customer's question or keywords to search for.")]
+        [Description(
+            "The customer's question or keywords to search for; matches article title, body, and labels. " +
+            "Wrap a phrase in double quotes for an exact-phrase match (e.g. \"carrot potato\"). Required — " +
+            "this search cannot run on locale alone.")]
         string query,
-        [Description("Optional locale to scope results, e.g. \"en-us\".")]
+        [Description("Optional locale to scope results; a valid enabled locale (e.g. \"en-us\"), or \"*\" to search all locales.")]
         string? locale = null,
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 25, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page, an integer (min 1, max 100); default 25. Results are relevance-ranked by default. " +
+            "The total is in 'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 25,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -53,11 +57,13 @@ public sealed class ZendeskArticleTools(IZendeskClient zendeskApiClient)
         string? locale = null,
         [Description("When set, lists only the articles in this section (see articles_sections_list).")]
         long? sectionId = null,
-        [Description("The cursor page size (max 100).")]
+        [Description("The cursor page size; the Help Center API caps at 100 records per page (default 30).")]
         int? pageSize = null,
         [Description("The cursor from the previous page's meta.after_cursor (optional).")]
         string? afterCursor = null,
-        [Description("Sideloads resolved inline as sibling arrays: \"users\", \"sections\", \"categories\".")]
+        [Description(
+            "Sideloads resolved inline as sibling arrays. Allowed values: \"users\" (the author), \"sections\", " +
+            "\"categories\", and \"translations\" (embedded within the article). Only these four are valid.")]
         string[]? include = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -78,7 +84,8 @@ public sealed class ZendeskArticleTools(IZendeskClient zendeskApiClient)
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page; offset pagination caps at 100 records per page (default 100). The total is in " +
+            "'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 100,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -109,7 +116,8 @@ public sealed class ZendeskArticleTools(IZendeskClient zendeskApiClient)
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 100, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Results per page; offset pagination caps at 100 records per page (default 100). The total is in " +
+            "'count'; a non-null 'next_page' means more pages.")]
         int? perPage = 100,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>

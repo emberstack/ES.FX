@@ -26,7 +26,9 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
     public Task<object> Create(
         [Description(
             "The ticket to create. Unset (null) fields are omitted. 'comment' becomes the description; set " +
-            "comment.public=false only if the description should be an internal note.")]
+            "comment.public=false only if the description should be an internal note. Allowed status: new, open, " +
+            "pending, hold, solved, closed. Allowed priority: low, normal, high, urgent. Allowed type: problem, " +
+            "incident, question, task.")]
         ZendeskTicketWrite ticket,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -43,7 +45,10 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
         "notifications. Write operation — honors the server execution mode: rejected in read-only mode, simulated " +
         "(no changes made) in dry-run mode.")]
     public Task<object> CreateMany(
-        [Description("The tickets to create (1-100 per call). Same shape as tickets_create.")]
+        [Description(
+            "The tickets to create (1-100 per call). Same shape as tickets_create. Allowed status: new, open, " +
+            "pending, hold, solved, closed. Allowed priority: low, normal, high, urgent. Allowed type: problem, " +
+            "incident, question, task.")]
         ZendeskTicketWrite[] tickets,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -66,7 +71,9 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
         long id,
         [Description(
             "The changes to apply. Unset (null) fields are omitted. 'comment' appends a public reply " +
-            "(public=true) or internal note (public=false); set safe_update+updated_stamp for optimistic locking.")]
+            "(public=true) or internal note (public=false); set safe_update+updated_stamp for optimistic locking. " +
+            "Allowed status: new, open, pending, hold, solved, closed. Allowed priority: low, normal, high, urgent. " +
+            "Allowed type: problem, incident, question, task.")]
         ZendeskTicketWrite ticket,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -87,7 +94,8 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
         long[] ids,
         [Description(
             "The single change applied to every ticket. Use additional_tags/remove_tags for tag edits; leave 'id' " +
-            "unset.")]
+            "unset. Allowed status: new, open, pending, hold, solved, closed. Allowed priority: low, normal, high, " +
+            "urgent. Allowed type: problem, incident, question, task.")]
         ZendeskTicketWrite change,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -103,7 +111,10 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
         "job_statuses_get until completed. Write operation — honors the server execution mode: rejected " +
         "in read-only mode, simulated (no changes made) in dry-run mode.")]
     public Task<object> UpdateManyBatch(
-        [Description("The per-ticket changes (1-100 per call); every item must have 'id' set.")]
+        [Description(
+            "The per-ticket changes (1-100 per call); every item must have 'id' set. Allowed status: new, open, " +
+            "pending, hold, solved, closed. Allowed priority: low, normal, high, urgent. Allowed type: problem, " +
+            "incident, question, task.")]
         ZendeskTicketWrite[] tickets,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
@@ -115,7 +126,8 @@ public sealed class ZendeskTicketWriteTools(IZendeskClient zendeskApiClient, IMc
         OpenWorld = true)]
     [Description(
         "Soft-deletes a ticket. Recoverable for ~30 days via tickets_restore; after that Zendesk purges it. " +
-        "For irreversible removal see tickets_delete_permanently. Returns a completion acknowledgement. " +
+        "Rate-limited to 400 ticket deletions per minute. For irreversible removal see tickets_delete_permanently. " +
+        "Returns a completion acknowledgement. " +
         "Write operation — honors the server execution mode: rejected in read-only mode, simulated (no changes " +
         "made) in dry-run mode.")]
     public Task<object> Delete(

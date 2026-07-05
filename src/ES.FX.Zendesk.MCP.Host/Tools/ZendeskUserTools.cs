@@ -34,12 +34,19 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
         "Searches Zendesk users. The query matches name, email, phone, external id, and supports filters such as " +
         "\"role:agent\" or \"email:jane@example.com\". Returns a page of users plus the total count. Read-only.")]
     public Task<ZendeskUsersResult> Search(
-        [Description("The user search query, e.g. \"jane@example.com\" or \"role:admin\".")]
+        [Description(
+            "The user search query using Zendesk search syntax. A bare term does a partial/full match on name, " +
+            "email, notes, or phone (e.g. \"jdoe\"). Use property filters for precision: " +
+            "role:end-user|agent|admin (or a custom role name), email:jane@example.com, group:\"Level 2\", " +
+            "organization:mondocam, tags:premium, created<2011-05-01. Prefix a term with '-' to exclude, and use " +
+            "type:user to force a user search.")]
         string query,
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (default 25, max 100). Use 'page' to fetch more; the total match count is in 'count'.")]
+            "Results per page (default 25, max 100). Offset pagination only, and no more than 10,000 total records " +
+            "per query (paging past that returns an error) — narrow the query rather than paging deeper. The total " +
+            "match count is in 'count'.")]
         int? perPage = 25,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -52,7 +59,9 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
         "found on tickets, comments, and audits to names/emails without one call per id. Lists larger than 100 ids " +
         "are fetched in batches of 100 automatically. Read-only.")]
     public Task<ZendeskUsersResult> ReadMany(
-        [Description("The numeric Zendesk user ids to resolve.")]
+        [Description(
+            "The numeric Zendesk user ids to resolve. The underlying Zendesk endpoint accepts at most 100 ids per " +
+            "call; larger lists are fetched in batches of 100 automatically.")]
         long[] ids,
         [Description(
             "Sideloads to resolve inline as sibling arrays (merged and de-duplicated across batches): any of " +
@@ -89,7 +98,8 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
         "users_search or users_autocomplete when looking for a specific person. Cursor pagination: " +
         "pass pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. Read-only.")]
     public Task<ZendeskUsersResult> List(
-        [Description("Optional role filter: \"end-user\", \"agent\", or \"admin\".")]
+        [Description(
+            "Optional role filter. Allowed values are \"end-user\", \"agent\", \"admin\", or a custom role name.")]
         string? role = null,
         [Description("The cursor page size (max 100).")]
         int? pageSize = null,
@@ -106,24 +116,28 @@ public sealed class ZendeskUserTools(IZendeskClient zendeskApiClient)
     /// <summary>Returns the (cached, approximate) user count, optionally filtered by role.</summary>
     [McpServerTool(Name = "users_count", ReadOnly = true, OpenWorld = true)]
     [Description(
-        "Returns the user count, optionally filtered by role (\"end-user\", \"agent\", or \"admin\"). Counts over " +
-        "100,000 are approximate — cached and refreshed roughly every 24 hours (refreshed_at may be null while " +
-        "Zendesk recomputes). Read-only.")]
+        "Returns the user count, optionally filtered by role (\"end-user\", \"agent\", \"admin\", or a custom role " +
+        "name). The count is approximate: if it exceeds 100,000 it is recomputed roughly every 24 hours, its value " +
+        "is capped at 100,000 until the refresh completes, and refreshed_at may be null while Zendesk recomputes in " +
+        "the background. Read-only.")]
     public Task<ZendeskCount> Count(
-        [Description("Optional role filter: \"end-user\", \"agent\", or \"admin\".")]
+        [Description(
+            "Optional role filter. Allowed values are \"end-user\", \"agent\", \"admin\", or a custom role name.")]
         string? role = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
             zendeskApiClient.Users.CountAsync(role, cancellationToken: cancellationToken));
 
-    /// <summary>Suggests users whose name or e-mail starts with a prefix.</summary>
+    /// <summary>Suggests users whose name starts with a prefix.</summary>
     [McpServerTool(Name = "users_autocomplete", ReadOnly = true, OpenWorld = true)]
     [Description(
-        "Suggests Zendesk users whose name or e-mail starts with a prefix (minimum two characters) — a cheap " +
+        "Suggests Zendesk users whose name starts with a prefix — a cheap " +
         "type-ahead lookup when you have a partial name. Offset-paginated only: count/next_page indicate more pages. " +
         "Read-only.")]
     public Task<ZendeskUsersResult> Autocomplete(
-        [Description("The name or e-mail prefix to match (minimum two characters).")]
+        [Description(
+            "The name value to match. Matches users whose name STARTS WITH this value (a prefix match, not a " +
+            "substring). Only returns users with no foreign identities.")]
         string name,
         [Description("The 1-based page number (optional).")]
         int? page = null,

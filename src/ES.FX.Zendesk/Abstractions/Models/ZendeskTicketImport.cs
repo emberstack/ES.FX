@@ -13,7 +13,9 @@ public sealed record ZendeskTicketImport
     [JsonPropertyName("description")] public string? Description { get; init; }
     [JsonPropertyName("requester_id")] public long? RequesterId { get; init; }
     [JsonPropertyName("assignee_id")] public long? AssigneeId { get; init; }
-    [JsonPropertyName("status")] public string? Status { get; init; }
+    /// <summary>The status — one of new, open, pending, hold, solved, closed.</summary>
+    [JsonPropertyName("status")]
+    public string? Status { get; init; }
     [JsonPropertyName("tags")] public IReadOnlyList<string>? Tags { get; init; }
     [JsonPropertyName("brand_id")] public long? BrandId { get; init; }
     [JsonPropertyName("custom_fields")] public IReadOnlyList<ZendeskCustomFieldWrite>? CustomFields { get; init; }

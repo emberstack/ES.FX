@@ -18,9 +18,9 @@ public sealed class ZendeskViewTools(IZendeskClient zendeskApiClient)
         "views_tickets_list to see the tickets a view currently matches. Cursor pagination: pass " +
         "pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive continuation. Read-only.")]
     public Task<ZendeskViewsResult> List(
-        [Description("When true, only active views; when false, only inactive views (optional).")]
+        [Description("When true, only active views; when false, only inactive views; omit to return both (optional).")]
         bool? active = null,
-        [Description("The cursor page size (optional, max 100).")]
+        [Description("The cursor page size; the endpoint returns at most 100 records per page (optional).")]
         int? pageSize = null,
         [Description("The cursor from the previous page's meta.after_cursor (omit for the first page).")]
         string? afterCursor = null,
@@ -51,9 +51,12 @@ public sealed class ZendeskViewTools(IZendeskClient zendeskApiClient)
         [Description("The 1-based page number (optional).")]
         int? page = null,
         [Description(
-            "Results per page (optional, max 100). The total is in 'count'; a non-null 'next_page' means more pages.")]
+            "Offset pagination; results per page (optional, max 100). Read the total from 'count' and continue while " +
+            "'next_page' is non-null.")]
         int? perPage = null,
-        [Description("Sideloads resolving related records inline: users, groups, organizations (optional).")]
+        [Description(
+            "Sideload names to resolve related record ids inline; supported values include users, groups, " +
+            "organizations (optional).")]
         string[]? include = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -64,7 +67,9 @@ public sealed class ZendeskViewTools(IZendeskClient zendeskApiClient)
     [McpServerTool(Name = "views_count", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Returns the (cached) ticket count of a view — cheaper than listing its tickets. Counts for large views " +
-        "are approximate; 'fresh' indicates whether the cached value is current. Read-only.")]
+        "are approximate and can be cached for 60-90 minutes; 'value' may be null while the data reloads, and " +
+        "'fresh' is false when the cached value is stale. Rate limited to 5 requests per minute, per view, per " +
+        "agent. Read-only.")]
     public Task<ZendeskViewCount> Count(
         [Description("The numeric Zendesk view id.")]
         long viewId,

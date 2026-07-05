@@ -25,7 +25,9 @@ public sealed class ZendeskAttachmentTools(IZendeskClient zendeskApiClient)
         "('encoding':'base64'). 'truncated':true means the file exceeded the size cap and was cut short. Use to read " +
         "a customer's error log, CSV export, or config a screenshot won't convey. Read-only.")]
     public Task<ZendeskAttachmentContent> Read(
-        [Description("The numeric attachment id (from a comment's attachments[].id).")]
+        [Description(
+            "The numeric attachment id. It is not directly listable — obtain it from a ticket comment's " +
+            "attachments[].id (list the ticket's comments first).")]
         long id,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() =>

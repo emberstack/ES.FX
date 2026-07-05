@@ -20,9 +20,13 @@ public sealed class ZendeskSuspendedTicketTools(IZendeskClient zendeskApiClient)
         "Ids are suspended-ticket ids, not ticket ids. Cursor pagination: pass pageSize/afterCursor; the result's " +
         "meta.has_more/meta.after_cursor drive continuation. Read-only.")]
     public Task<ZendeskSuspendedTicketsResult> List(
-        [Description("The cursor page size (optional, max 100).")]
+        [Description(
+            "The cursor page size (per_page) — records per page (min 1, optional). Default and maximum vary by " +
+            "endpoint and no specific maximum is documented for this one.")]
         int? pageSize = null,
-        [Description("The cursor from the previous page's meta.after_cursor (omit for the first page).")]
+        [Description(
+            "The cursor from the previous page's meta.after_cursor; continue while meta.has_more is true. Omit for " +
+            "the first page.")]
         string? afterCursor = null,
         CancellationToken cancellationToken = default)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -36,7 +40,9 @@ public sealed class ZendeskSuspendedTicketTools(IZendeskClient zendeskApiClient)
         "not a ticket yet), including its 'cause' (why it was suspended), author, subject, and content. The id is " +
         "a suspended-ticket id, not a ticket id. Read-only.")]
     public Task<ZendeskSuspendedTicket> Read(
-        [Description("The numeric Zendesk suspended-ticket id (not a ticket id).")]
+        [Description(
+            "The suspended-ticket's own auto-generated id (not a real ticket id); obtain it from " +
+            "suspended_tickets_list.")]
         long id,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() =>

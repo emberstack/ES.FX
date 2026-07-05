@@ -164,7 +164,8 @@ public sealed class ZendeskOrganizationWriteTools(
         Idempotent = false, OpenWorld = true)]
     [Description(
         "Merges a Zendesk organization INTO another: the loser organization is DELETED and its users, tickets and " +
-        "domain names move to the winner. Irreversible; admin-only. The merge runs asynchronously but is NOT a " +
+        "domain names move to the winner. Other organization fields are NOT carried over to the winner. " +
+        "Irreversible; admin-only. The merge runs asynchronously but is NOT a " +
         "job_status — the returned organization_merge carries an opaque string id; poll " +
         "organizations_merges_get with it until status is 'complete'. Write operation — honors the " +
         "server execution mode: rejected in read-only mode, simulated (no changes made) in dry-run mode.")]

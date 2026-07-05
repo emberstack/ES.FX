@@ -28,20 +28,25 @@ public sealed class ZendeskTicketTools(IZendeskClient zendeskApiClient)
     [McpServerTool(Name = "tickets_search", ReadOnly = true, OpenWorld = true)]
     [Description(
         "Searches Zendesk tickets using the Zendesk search query syntax; the query is automatically scoped to " +
-        "tickets. Ordering is controlled ONLY by the sortBy/sortOrder parameters — Zendesk search has NO in-query " +
-        "sort operator, so never put 'order:' or 'sort:' in the query (they are parsed as free-text terms and " +
-        "silently shrink the result set). For the most recent N tickets: query \"created>2000-01-01\", sortBy " +
+        "tickets. Sort via the sortBy/sortOrder parameters of this tool rather than adding order_by:/sort: " +
+        "keywords inside the query. For the most recent N tickets: query \"created>2000-01-01\", sortBy " +
         "\"created_at\", sortOrder \"desc\", perPage N. Other examples: \"status:open priority:high\", " +
         "\"requester:jane@example.com\", \"tags:vip\". Returns a page of tickets plus the total match count in " +
-        "'count' (compare it against the page length to tell 'few matches' from 'more pages available'). Read-only.")]
+        "'count' (compare it against the page length to tell 'few matches' from 'more pages available'). Caps at " +
+        "1,000 total results (max 100 per page); requesting a page past that returns a 422 error — for larger " +
+        "result sets use tickets_search_export. Read-only.")]
     public Task<ZendeskTicketSearchResults> Search(
         [Description(
-            "The Zendesk search query in Zendesk search syntax (type:ticket is added automatically). Field " +
-            "selectors only — do NOT include sort/order operators; order with sortBy/sortOrder instead.")]
+            "The Zendesk search query in Zendesk search syntax (type:ticket is added automatically). field:value " +
+            "terms combine with implicit AND; repeat the same field to OR its values (e.g. tags:silver tags:bronze); " +
+            "prefix a term with - to exclude. Comparison operators: : (equals), < > <= >=. Dates take YYYY-MM-DD " +
+            "(e.g. created>2024-01-01), a relative amount like created>4hours (units: minutes, hours, days, weeks, " +
+            "months, years), or full ISO8601 (created>2015-09-01T12:00:00-08:00). Field selectors only — do NOT " +
+            "include sort/order operators; order with sortBy/sortOrder instead.")]
         string query,
         [Description("Sort field: created_at, updated_at, priority, status, or ticket_type (optional).")]
         string? sortBy = null,
-        [Description("Sort order: asc or desc (optional).")]
+        [Description("Sort order: asc or desc; defaults to desc (optional).")]
         string? sortOrder = null,
         [Description("The 1-based page number (optional).")]
         int? page = null,
@@ -157,10 +162,11 @@ public sealed class ZendeskTicketTools(IZendeskClient zendeskApiClient)
         "fulfill, ...) for ALL tickets with events at or after startTime (Unix epoch seconds). Zendesk has no " +
         "per-ticket variant, so filter the events by ticket_id to analyze one ticket. Unlike tickets_metrics_get " +
         "(aggregate durations), this shows WHEN an SLA target was applied or breached. Page by passing the response's " +
-        "'end_time' as the next startTime until 'end_of_stream' is true. Rate-limited by Zendesk's incremental export " +
-        "API — avoid tight polling. Read-only.")]
+        "'end_time' as the next startTime until 'end_of_stream' is true. Returns at most 100 records per page, in " +
+        "chronological order. Rate-limited by Zendesk's incremental export API — avoid tight polling. Read-only.")]
     public Task<ZendeskMetricEventsResult> MetricEvents(
-        [Description("Unix epoch seconds; metric events recorded at or after this time are returned.")]
+        [Description(
+            "Unix UTC epoch seconds; metric events recorded at or after this time are returned in chronological order.")]
         long startTime,
         CancellationToken cancellationToken)
         => ZendeskToolInvoker.InvokeAsync(() =>
@@ -262,7 +268,9 @@ public sealed class ZendeskTicketTools(IZendeskClient zendeskApiClient)
         "\"organizations\") resolve related records inline; \"last_audits\" is NOT supported here. Read-only.")]
     public Task<ZendeskIncrementalTicketsResult> Incremental(
         [Description(
-            "Unix epoch seconds for the FIRST call. Mutually exclusive with 'cursor' — pass exactly one of the two.")]
+            "Unix epoch seconds for the FIRST call. Mutually exclusive with 'cursor' — pass exactly one of the two. " +
+            "Zendesk compares this against each ticket's generated_timestamp (not updated_at), so returned tickets " +
+            "may have an updated_at earlier than startTime.")]
         long? startTime = null,
         [Description(
             "The 'after_cursor' from the previous page, for every call after the first. Mutually exclusive with 'startTime'.")]
@@ -283,9 +291,11 @@ public sealed class ZendeskTicketTools(IZendeskClient zendeskApiClient)
         "Cursor pagination: pass pageSize/afterCursor; the result's meta.has_more/meta.after_cursor drive " +
         "continuation. Cursors expire after one hour. Read-only.")]
     public Task<ZendeskTicketSearchExportResults> SearchExport(
-        [Description("The Zendesk search query (the ticket type filter is applied automatically).")]
+        [Description(
+            "The Zendesk search query (the ticket type filter is applied automatically). Do NOT include a type: " +
+            "selector — it errors here. Results are ordered only by created_at.")]
         string query,
-        [Description("The cursor page size (Zendesk recommends at most 100).")]
+        [Description("The cursor page size (max 1000; Zendesk recommends 100 — 1000/page can time out).")]
         int? pageSize = null,
         [Description("The cursor from the previous page's meta.after_cursor (omit for the first page).")]
         string? afterCursor = null,
