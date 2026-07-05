@@ -1,6 +1,8 @@
 using ES.FX.Zendesk.Abstractions;
+using ES.FX.Zendesk.Configuration;
 using ES.FX.Zendesk.Tests.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace ES.FX.Zendesk.Tests.DependencyInjection;
 
@@ -81,5 +83,102 @@ public class ZendeskClientRegistrationTests
 
         Assert.StartsWith("ES.FX.Zendesk/", routing.LastApiUserAgent);
         Assert.StartsWith("ES.FX.Zendesk/", routing.LastTokenUserAgent);
+    }
+
+    [Fact]
+    public async Task Keyed_Instances_Use_Their_Own_Credentials_And_Tokens()
+    {
+        // The stub token endpoint mints "tok-{client_id}" from the credentials it receives, so the bearer on an
+        // API request proves WHICH client_id acquired it — the cross-tenant credential-leak guard.
+        var routing = new RoutingHandler();
+        var services = new ServiceCollection();
+        services.ConfigureHttpClientDefaults(b => b.ConfigurePrimaryHttpMessageHandler(() => routing));
+        services.AddZendeskClient(options =>
+        {
+            options.Subdomain = "acme-alpha";
+            options.OAuth.ClientId = "alpha";
+            options.OAuth.ClientSecret = "secret-alpha";
+        }, "alpha");
+        services.AddZendeskClient(options =>
+        {
+            options.Subdomain = "acme-beta";
+            options.OAuth.ClientId = "beta";
+            options.OAuth.ClientSecret = "secret-beta";
+        }, "beta");
+
+        await using var provider = services.BuildServiceProvider();
+
+        await provider.GetRequiredKeyedService<IZendeskClient>("alpha")
+            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+        await provider.GetRequiredKeyedService<IZendeskClient>("beta")
+            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+
+        // Each instance's API request must go to ITS host with the bearer minted from ITS OWN client_id.
+        Assert.Contains(routing.ApiRequests,
+            r => r is { Host: "acme-alpha.zendesk.com", BearerToken: "tok-alpha" });
+        Assert.Contains(routing.ApiRequests,
+            r => r is { Host: "acme-beta.zendesk.com", BearerToken: "tok-beta" });
+
+        // The cross-tenant token must NEVER appear on the other tenant's requests.
+        Assert.DoesNotContain(routing.ApiRequests,
+            r => r.Host == "acme-alpha.zendesk.com" && r.BearerToken == "tok-beta");
+        Assert.DoesNotContain(routing.ApiRequests,
+            r => r.Host == "acme-beta.zendesk.com" && r.BearerToken == "tok-alpha");
+    }
+
+    [Fact]
+    public async Task Default_And_Keyed_Instances_Coexist_With_Isolated_Options()
+    {
+        var routing = new RoutingHandler();
+        var services = new ServiceCollection();
+        services.ConfigureHttpClientDefaults(b => b.ConfigurePrimaryHttpMessageHandler(() => routing));
+        services.AddZendeskClient(options =>
+        {
+            options.Subdomain = "acme-default";
+            options.OAuth.ClientId = "cid-default";
+            options.OAuth.ClientSecret = "secret";
+        });
+        services.AddZendeskClient(options =>
+        {
+            options.Subdomain = "acme-staging";
+            options.OAuth.ClientId = "cid-staging";
+            options.OAuth.ClientSecret = "secret";
+        }, "staging");
+
+        await using var provider = services.BuildServiceProvider();
+
+        // A null service key registers the DEFAULT instance — plain GetRequiredService must resolve it.
+        await provider.GetRequiredService<IZendeskClient>()
+            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+        await provider.GetRequiredKeyedService<IZendeskClient>("staging")
+            .Users.GetCurrentUserAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains(routing.ApiRequests,
+            r => r is { Host: "acme-default.zendesk.com", BearerToken: "tok-cid-default" });
+        Assert.Contains(routing.ApiRequests,
+            r => r is { Host: "acme-staging.zendesk.com", BearerToken: "tok-cid-staging" });
+
+        // Named options are keyed by the service key (default name for the unkeyed instance).
+        var monitor = provider.GetRequiredService<IOptionsMonitor<ZendeskClientOptions>>();
+        Assert.Equal("acme-default", monitor.Get(Options.DefaultName).Subdomain);
+        Assert.Equal("acme-staging", monitor.Get("staging").Subdomain);
+    }
+
+    [Fact]
+    public async Task Options_Validator_Is_Registered_And_Rejects_Misconfiguration()
+    {
+        var services = new ServiceCollection();
+        services.AddZendeskClient(); // options never configured → empty Subdomain, no OAuth credentials
+
+        await using var provider = services.BuildServiceProvider();
+
+        // Get(...) runs the registered IValidateOptions — this proves the TryAddEnumerable validator wiring,
+        // not just the validator class in isolation.
+        var exception = Assert.Throws<OptionsValidationException>(() =>
+            provider.GetRequiredService<IOptionsMonitor<ZendeskClientOptions>>().Get(Options.DefaultName));
+
+        Assert.Contains(exception.Failures, f => f.Contains("Subdomain"));
+        Assert.Contains(exception.Failures, f => f.Contains("ClientId"));
+        Assert.Contains(exception.Failures, f => f.Contains("ClientSecret"));
     }
 }

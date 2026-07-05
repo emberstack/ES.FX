@@ -13,7 +13,9 @@ namespace ES.FX.Zendesk.MCP.Host.Tools;
 ///     status code and the Zendesk error body carried by <see cref="ZendeskApiException" />. Routing tool calls
 ///     through here re-throws a <see cref="ZendeskApiException" /> as an <see cref="McpException" />, whose message
 ///     the SDK surfaces verbatim, so the agent can distinguish (for example) <c>404 Not Found</c> from
-///     <c>403 Forbidden</c> from <c>422</c> and self-correct. Only the typed <see cref="ZendeskApiException" /> is
+///     <c>403 Forbidden</c> from <c>422</c> and self-correct. When the exception carries a
+///     <see cref="ZendeskApiException.RetryAfter" /> delay (typically a <c>429</c>), the message includes an
+///     explicit <c>"Retry after N seconds."</c> hint. Only the typed <see cref="ZendeskApiException" /> is
 ///     translated; other exceptions keep their default (generic) SDK handling.
 /// </remarks>
 internal static class ZendeskToolInvoker
@@ -86,6 +88,8 @@ internal static class ZendeskToolInvoker
     {
         var message =
             $"The Zendesk API request failed with status {(int)exception.StatusCode} ({exception.StatusCode}).";
+        if (exception.RetryAfter is { } retryAfter)
+            message = $"{message} Retry after {(long)Math.Ceiling(retryAfter.TotalSeconds)} seconds.";
         return string.IsNullOrWhiteSpace(exception.ResponseBody)
             ? message
             : $"{message} Zendesk response: {exception.ResponseBody}";

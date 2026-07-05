@@ -315,8 +315,19 @@ public class ZendeskUsersApiTests
         var bulkStub = new StubHttpMessageHandler(job);
         await CreateApi(bulkStub).UpdateManyAsync([1, 2], new ZendeskUserWrite { OrganizationId = 9 },
             TestContext.Current.CancellationToken);
-        Assert.Contains("ids=1%2C2", bulkStub.LastRequest!.RequestUri!.Query);
+        Assert.Equal(HttpMethod.Put, bulkStub.LastRequest!.Method);
+        Assert.Equal("/api/v2/users/update_many.json", bulkStub.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Contains("ids=1%2C2", bulkStub.LastRequest.RequestUri.Query);
         Assert.Contains("\"user\":{\"organization_id\":9}", bulkStub.LastRequestBody);
+
+        var batchStub = new StubHttpMessageHandler(job);
+        var batch = await CreateApi(batchStub).UpdateManyAsync(
+            [new ZendeskUserWrite { Id = 7, Suspended = true }], TestContext.Current.CancellationToken);
+        Assert.Equal("queued", batch.Status);
+        Assert.Equal(HttpMethod.Put, batchStub.LastRequest!.Method);
+        Assert.Equal("/api/v2/users/update_many.json", batchStub.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("", batchStub.LastRequest.RequestUri.Query); // batch form has no ids query
+        Assert.Contains("\"users\":[{\"id\":7,\"suspended\":true}]", batchStub.LastRequestBody);
 
         await Assert.ThrowsAsync<ArgumentException>(() => CreateApi(new StubHttpMessageHandler(job))
             .UpdateManyAsync([new ZendeskUserWrite { Name = "no id" }], TestContext.Current.CancellationToken));
@@ -340,6 +351,7 @@ public class ZendeskUsersApiTests
         var deleteStub = new StubHttpMessageHandler("""{ "user": { "id": 7, "active": false } }""");
         var deleted = await CreateApi(deleteStub).DeleteAsync(7, TestContext.Current.CancellationToken);
         Assert.Equal(HttpMethod.Delete, deleteStub.LastRequest!.Method);
+        Assert.Equal("/api/v2/users/7.json", deleteStub.LastRequest.RequestUri!.AbsolutePath);
         Assert.Equal(7, deleted.Id);
 
         var purgeStub = new StubHttpMessageHandler("""{ "deleted_user": { "id": 7, "name": "Jane" } }""");
@@ -373,6 +385,9 @@ public class ZendeskUsersApiTests
         var verified = await CreateApi(verifyStub).VerifyIdentityAsync(42, 3,
             TestContext.Current.CancellationToken);
         Assert.True(verified.Verified);
+        Assert.Equal(HttpMethod.Put, verifyStub.LastRequest!.Method); // body-less PUT
+        Assert.Equal("/api/v2/users/42/identities/3/verify.json",
+            verifyStub.LastRequest.RequestUri!.AbsolutePath);
 
         var requestStub = new StubHttpMessageHandler("");
         await CreateApi(requestStub).RequestIdentityVerificationAsync(42, 3,

@@ -35,6 +35,31 @@ public class ZendeskToolInvokerTests
         Assert.Contains("{\"error\":\"nope\"}", exception.Message);
     }
 
+    [Fact]
+    public async Task InvokeAsync_Translates_ZendeskApiException_With_RetryAfter_Hint()
+    {
+        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(
+            () => throw new ZendeskApiException(HttpStatusCode.TooManyRequests,
+                "{\"error\":\"RateLimited\"}", "boom") { RetryAfter = TimeSpan.FromSeconds(90) }));
+
+        Assert.Contains("429", exception.Message);
+        Assert.Contains("TooManyRequests", exception.Message);
+        Assert.Contains("{\"error\":\"RateLimited\"}", exception.Message);
+        Assert.Contains("Retry after 90 seconds.", exception.Message);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_Translates_ZendeskApiException_Without_RetryAfter_Hint()
+    {
+        var exception = await Assert.ThrowsAsync<McpException>(() => ZendeskToolInvoker.InvokeAsync<int>(
+            () => throw new ZendeskApiException(HttpStatusCode.TooManyRequests,
+                "{\"error\":\"RateLimited\"}", "boom")));
+
+        Assert.Contains("429", exception.Message);
+        Assert.Contains("{\"error\":\"RateLimited\"}", exception.Message);
+        Assert.DoesNotContain("Retry after", exception.Message);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

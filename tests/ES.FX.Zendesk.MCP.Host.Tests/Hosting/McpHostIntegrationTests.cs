@@ -2,11 +2,14 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using ES.FX.Zendesk.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Server;
+using Moq;
 
 namespace ES.FX.Zendesk.MCP.Host.Tests.Hosting;
 
@@ -106,6 +109,43 @@ public class McpHostIntegrationTests
     }
 
     [Fact]
+    public void DryRun_Baseline_Still_Registers_All_Write_Tools()
+    {
+        // The registration gate in Program.cs is !IsReadOnly, NOT == Default: under a DryRun baseline every
+        // write tool stays listed (calls are simulated by the invoker instead of hidden from the agent). Same
+        // env-var seam and cleanup discipline as the ReadOnly baseline test above. The value must be the enum
+        // name ("DryRun") — the configuration binder does not understand the header-style "dry-run" spelling.
+        Environment.SetEnvironmentVariable("Mcp__Execution__Mode", "DryRun");
+        try
+        {
+            using var factory = CreateFactory();
+
+            var declared = DeclaredTools();
+            var registered = RegisteredTools(factory);
+
+            Assert.Empty(declared.Keys.Except(registered));
+            Assert.Empty(registered.Except(declared.Keys));
+
+            // Every one of the 12 *WriteTools classes contributes its full tool set.
+            var writeToolTypes = typeof(Program).Assembly.GetTypes()
+                .Where(type => type.GetCustomAttribute<McpServerToolTypeAttribute>() is not null &&
+                               type.Name.EndsWith("WriteTools", StringComparison.Ordinal))
+                .ToList();
+            Assert.Equal(12, writeToolTypes.Count);
+            Assert.All(writeToolTypes, type => Assert.All(type
+                    .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static |
+                                BindingFlags.DeclaredOnly)
+                    .Select(method => method.GetCustomAttribute<McpServerToolAttribute>()?.Name)
+                    .Where(name => name is not null),
+                name => Assert.Contains(name!, registered)));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("Mcp__Execution__Mode", null);
+        }
+    }
+
+    [Fact]
     public async Task Mcp_Endpoint_Accepts_Initialize()
     {
         using var factory = CreateFactory();
@@ -151,5 +191,34 @@ public class McpHostIntegrationTests
         Assert.True(response.IsSuccessStatusCode);
         Assert.Contains("read-only", body);
         Assert.Contains("NOT performed", body);
+    }
+
+    [Fact]
+    public async Task Execution_Mode_Header_DryRun_Simulates_The_Write_Through_The_Pipeline()
+    {
+        // End-to-end: a write tool invoked with the dry-run tighten header must come back as an explicit
+        // dry_run result (executed:false) — and never touch the Zendesk client. The real client is replaced
+        // with a strict mock, so ANY member access on it would surface as an error result instead.
+        var zendeskClient = new Mock<IZendeskClient>(MockBehavior.Strict);
+        using var factory = CreateFactory().WithWebHostBuilder(builder => builder.ConfigureTestServices(
+            services => services.AddSingleton(zendeskClient.Object)));
+        using var client = factory.CreateClient();
+
+        var request = McpRequest(
+            """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"zendesk_tickets_delete","arguments":{"id":1}}}""");
+        request.Headers.Add("X-Mcp-Execution-Mode", "dry-run");
+
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(response.IsSuccessStatusCode);
+        Assert.Contains("dry_run", body);
+        Assert.Contains("no changes were made", body);
+        Assert.Contains("soft-delete ticket 1", body);
+        // The dry-run payload is a JSON string inside a text content block, so its quotes arrive escaped
+        // (as " or \") — normalize them before asserting on the executed flag.
+        var normalized = body.Replace("\\u0022", "\"").Replace("\\\"", "\"");
+        Assert.Contains("\"executed\":false", normalized);
+        zendeskClient.VerifyNoOtherCalls();
     }
 }

@@ -98,4 +98,73 @@ public class ZendeskResponseGuardTests
 
         Assert.Null(exception.ResponseBody);
     }
+
+    [Fact]
+    public async Task Cancelled_Token_During_Error_Body_Read_Surfaces_OperationCanceledException()
+    {
+        // The error-body read is best-effort, but cancellation is caller-initiated and must NOT be
+        // swallowed into a ZendeskApiException with a null body — the guard rethrows it by design.
+        using var response = new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StreamContent(new MemoryStream("""{"error":"RecordInvalid"}"""u8.ToArray()))
+        };
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            ZendeskResponseGuard.EnsureSuccessAsync(response, cts.Token));
+    }
+
+    [Fact]
+    public async Task Body_Read_Failure_Still_Yields_The_Status_With_A_Null_Body()
+    {
+        // A body that dies mid-read (e.g. connection reset) must not mask the status-carrying exception.
+        using var response = new HttpResponseMessage(HttpStatusCode.BadGateway)
+        {
+            Content = new StreamContent(new MidReadThrowingStream())
+        };
+
+        var exception = await Assert.ThrowsAsync<ZendeskApiException>(() =>
+            ZendeskResponseGuard.EnsureSuccessAsync(response, TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.BadGateway, exception.StatusCode);
+        Assert.Null(exception.ResponseBody);
+    }
+
+    /// <summary>A read-only stream that yields one chunk and then fails, like a connection reset mid-body.</summary>
+    private sealed class MidReadThrowingStream : Stream
+    {
+        private bool _yieldedFirstChunk;
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            if (_yieldedFirstChunk) throw new IOException("Connection reset mid-body.");
+            _yieldedFirstChunk = true;
+            var chunk = """{"error":"""u8;
+            chunk.CopyTo(buffer.Span);
+            return ValueTask.FromResult(chunk.Length);
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
 }

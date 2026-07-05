@@ -12,6 +12,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<InternalsVisibleTo Include="ES.FX.Ignite.Zendesk.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\ES.FX.Ignite.Spark\ES.FX.Ignite.Spark.csproj" />
 		<ProjectReference Include="..\ES.FX.Zendesk\ES.FX.Zendesk.csproj" />
 	</ItemGroup>

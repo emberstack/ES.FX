@@ -39,6 +39,19 @@ public class ZendeskUploadWriteToolsTests
     }
 
     [Fact]
+    public async Task Create_Invalid_Base64_Throws_McpException_Without_Calling_Client()
+    {
+        var (tools, uploads) = Create();
+
+        var exception = await Assert.ThrowsAsync<McpException>(() =>
+            tools.Create("report.png", "%%%not-base64%%%", "image/png",
+                cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal("The 'contentBase64' parameter is not valid base64-encoded content.", exception.Message);
+        uploads.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task Delete_Returns_Acknowledgement()
     {
         var (tools, uploads) = Create();
