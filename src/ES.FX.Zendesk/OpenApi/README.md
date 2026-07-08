@@ -13,7 +13,7 @@ pipeline (spec patches) or in the curated (non-generated) part of `ES.FX.Zendesk
 | `support-oas.yaml` | Committed snapshot of the [Support API spec](https://developer.zendesk.com/zendesk/oas.yaml) |
 | `helpcenter-oas.yaml` | Committed snapshot of the [Help Center API spec](https://developer.zendesk.com/help_center/oas.yaml) |
 | `normalize.ps1` | Applies the recorded spec patches below → `*.normalized.yaml` (git-ignored) |
-| `generate.ps1` | `normalize.ps1` + `dotnet kiota generate` for both clients (git-ignored `Generated/**`) |
+| `generate.ps1` | `normalize.ps1` + `dotnet kiota generate` for both clients, then the post-generation factory repair (git-ignored `Generated/**`) |
 
 ## Build-time generation (how it works)
 
@@ -83,18 +83,23 @@ wrong client.
   for *reading* fields in code.
 - **Kiota 1.32.5 generation is nondeterministic** (measured 2026-07-05: 5 runs of the identical
   normalized Support spec produced 2–3 distinct outputs). Two failure modes were observed: (a) under
-  default parallelism, a run occasionally **drops a type** (e.g. `TicketCreateVoicemailTicketVoiceCommentInput`),
-  and historically a variant dropped the `CreateFromDiscriminatorValue` override on `CustomObjectField`
-  producing a **CS0407 compile error**; (b) even single-threaded, the base class of a derived model can
-  flip (e.g. `ItamAssetField : CustomFieldObject` ↔ `CustomObjectField`). `generate.ps1` forces
+  default parallelism, a run occasionally **drops a type** (e.g. `TicketCreateVoicemailTicketVoiceCommentInput`);
+  (b) the base class of a derived (`allOf`) model can flip (e.g. `ItamAssetField` / `CustomObjectField`
+  vs. their base `CustomFieldObject`), so a property/collection deserializer emits the **base** type's
+  `CreateFromDiscriminatorValue` while the generic argument is the **derived** type — a **CS0407**
+  ("wrong return type") compile error. Two guards make generation reliable: `generate.ps1` forces
   `KIOTA_GENERATION_MAXDEGREEOFPARALLELISM=1`, which eliminated the structural (dropped-type) variance
-  in testing — the mode most likely to break compilation — leaving only benign content variants.
-  **Consequence of git-ignoring the output:** a fresh-checkout or spec-change regeneration can land on a
-  bad variant. This is **not silent** — it fails the compile (red build) rather than shipping a wrong
-  binary. If a build fails with factory/return-type/missing-type errors under `Generated/`, just
-  **build again** (regeneration re-rolls). Re-evaluate committing the output — or dropping the
-  parallelism workaround — when bumping the pinned Kiota version, in case determinism is restored
-  upstream.
+  (a) in testing; and a **post-generation factory repair** (also in `generate.ps1`) rewrites every
+  `GetObjectValue<T>(F.CreateFromDiscriminatorValue)` / `GetCollectionOfObjectValues<T>(F.…)` to force
+  `F := T`, deterministically fixing the base-class flip (b) — correct Kiota output *always* has `F == T`
+  (genuine polymorphism uses the base for **both** the generic argument and the factory), so the rewrite
+  repairs the broken variant and is a **no-op** on the good one. **Consequence of git-ignoring the
+  output:** a fresh-checkout or spec-change regeneration can still land on the dropped-type variant (a);
+  that remains **not silent** — it fails the compile (red build) rather than shipping a wrong binary. If a
+  build fails with a **missing-type** error under `Generated/`, just **build again** (regeneration
+  re-rolls); the factory/return-type (CS0407) class no longer recurs, since the repair neutralizes it.
+  Re-evaluate committing the output — or dropping these workarounds — when bumping the pinned Kiota
+  version, in case determinism is restored upstream.
 - **Kiota collapses the OAS cursor-pagination `page` parameters to a plain scalar.** Both
   `components/parameters/CursorPaginationPage` (a `deepObject` `page` with `size`/`after`/`before`) and
   `DualPaginationPage` (a discriminator-less `oneOf [integer, cursor object]`) generate as a single

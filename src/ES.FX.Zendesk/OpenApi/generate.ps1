@@ -55,4 +55,31 @@ finally {
     Pop-Location
 }
 
+# ---------------------------------------------------------------------------------------------
+# Post-generation repair: force every discriminator factory to match its own generic type argument.
+#
+# Kiota 1.32.5 non-deterministically emits the *base* type's CreateFromDiscriminatorValue for a
+# property/collection whose declared element type is a derived (allOf) model - e.g.
+#   GetObjectValue<CustomObjectField>(CustomFieldObject.CreateFromDiscriminatorValue)
+# which fails to compile with CS0407 ("wrong return type"). Whether a given type lands on the broken
+# variant shifts with generation order (parallelism, and Windows vs. the Linux container build - see
+# the KIOTA_GENERATION_MAXDEGREEOFPARALLELISM note above), so it is not reliably reproducible.
+#
+# Correct Kiota output ALWAYS calls the factory of the generic argument itself - genuine polymorphism
+# uses the base type for BOTH the generic argument and the factory - so there is no valid case where
+# the two differ. Forcing factory := generic-argument therefore repairs the defective variant and is
+# a no-op on correct output, making generation deterministic. See README.md.
+$factoryPattern = '(?<call>GetObjectValue|GetCollectionOfObjectValues)<(?<t>[^>]+)>\(\s*[^()]+?\.CreateFromDiscriminatorValue\s*\)'
+$factoryReplacement = '${call}<${t}>(${t}.CreateFromDiscriminatorValue)'
+$repairedFiles = 0
+Get-ChildItem -Path (Join-Path $projectDirectory 'Generated') -Recurse -Filter *.cs | ForEach-Object {
+    $original = Get-Content -Raw -LiteralPath $_.FullName
+    $repaired = [regex]::Replace($original, $factoryPattern, $factoryReplacement)
+    if ($repaired -ne $original) {
+        Set-Content -LiteralPath $_.FullName -Value $repaired -NoNewline
+        $repairedFiles++
+    }
+}
+Write-Host "factory repair: matched CreateFromDiscriminatorValue to generic type in $repairedFiles file(s)"
+
 Write-Host 'Generation complete. Review the diff, then: dotnet build && dotnet test'
