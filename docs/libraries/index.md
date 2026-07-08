@@ -16,6 +16,7 @@ into Ignite when you want it to.
 | [**Migrations**](./migrations.md) | `ES.FX.Migrations` (+ `ES.FX.Ignite.Migrations`) | A DI-driven migration runner: implement `IMigrationsTask`, register it, and a hosted service applies every task at startup. |
 | [**Zendesk API client**](./zendesk-client.md) | `ES.FX.Zendesk` (+ `ES.FX.Ignite.Zendesk` Spark) | Kiota-generated clients covering the complete Zendesk Support and Help Center REST APIs — typed request builders, OAuth `client_credentials`, typed errors with `Retry-After`, and OpenTelemetry tracing. |
 | [**Hermes Agent API client**](./hermes-agent-client.md) | `ES.FX.NousResearch.HermesAgent` (+ `ES.FX.Ignite.NousResearch.HermesAgent` Spark) | A typed client for the Nous Research Hermes Agent API server — chat completions, Responses API, asynchronous runs, scheduled jobs, sessions and discovery, with `await foreach` streaming, typed errors, and OpenTelemetry tracing. |
+| [**OpenData**](./open-data.md) | `ES.FX.OpenData` (+ `.Countries`, `.Romania.AdministrativeUnits`) | Baked-in public reference data — ISO 3166-1 countries and the Romanian SIRUTA administrative register — served through a fluent hub with clean display names, alias resolution, and diacritic-insensitive search. |
 
 Each library is independently consumable and has its own page below with the full end-to-end walkthrough.
 
@@ -111,6 +112,7 @@ integration (config binding, startup validation, live health check, tracing).
 - [Zendesk MCP server](./zendesk-mcp-server.md)
 - [Hermes Agent API client](./hermes-agent-client.md)
 - [Hermes Agent Spark](../ignite/sparks/hermes-agent.md)
+- [OpenData](./open-data.md)
 - [Transactional Outbox — EF Core additions](../additions/entity-framework-core.md)
 - [MassTransit additions](../additions/masstransit.md)
 - [Entity Framework Core Spark](../ignite/sparks/entity-framework-core.md)

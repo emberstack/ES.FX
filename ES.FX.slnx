@@ -14,6 +14,11 @@
     <Project Path="src/ES.FX.TransactionalOutbox.MassTransit/ES.FX.TransactionalOutbox.MassTransit.csproj" Id="513497bb-2cd5-49e5-84a3-98bd5eea6f42" />
     <Project Path="src/ES.FX.TransactionalOutbox/ES.FX.TransactionalOutbox.csproj" Id="cbbc21f8-48f8-4d63-af6b-e64c33da8e4d" />
     <Project Path="src/ES.FX.NousResearch.HermesAgent/ES.FX.NousResearch.HermesAgent.csproj" />
+    <Project Path="src/ES.FX.OpenData/ES.FX.OpenData.csproj" />
+    <Project Path="src/ES.FX.OpenData.Countries/ES.FX.OpenData.Countries.csproj" />
+    <Project Path="src/ES.FX.OpenData.Romania.AdministrativeUnits/ES.FX.OpenData.Romania.AdministrativeUnits.csproj" />
+    <Project Path="src/ES.FX.OpenData.Romania.Fiscal.Anaf/ES.FX.OpenData.Romania.Fiscal.Anaf.csproj" />
+    <Project Path="src/ES.FX.OpenData.Vies/ES.FX.OpenData.Vies.csproj" />
     <Project Path="src/ES.FX.Zendesk/ES.FX.Zendesk.csproj" />
     <Project Path="src/ES.FX/ES.FX.csproj" />
   </Folder>
@@ -40,6 +45,7 @@
     <Project Path="src/ES.FX.Additions.StackExchange.Redis/ES.FX.Additions.StackExchange.Redis.csproj" />
     <Project Path="src/ES.FX.Additions.System.Text.Json/ES.FX.Additions.System.Text.Json.csproj" />
   </Folder>
+  <Folder Name="/.src/FX/OpenData/" />
   <Folder Name="/.src/Ignite/">
     <Project Path="src/ES.FX.Ignite.Spark/ES.FX.Ignite.Spark.csproj" />
     <Project Path="src/ES.FX.Ignite/ES.FX.Ignite.csproj" />
@@ -92,6 +98,11 @@
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/ES.FX.Migrations.Tests/ES.FX.Migrations.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Tests/ES.FX.OpenData.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Countries.Tests/ES.FX.OpenData.Countries.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Romania.AdministrativeUnits.Tests/ES.FX.OpenData.Romania.AdministrativeUnits.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Vies.Tests/ES.FX.OpenData.Vies.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Romania.Fiscal.Anaf.Tests/ES.FX.OpenData.Romania.Fiscal.Anaf.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.Tests/ES.FX.TransactionalOutbox.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.MassTransit.Tests/ES.FX.TransactionalOutbox.MassTransit.Tests.csproj" />
   </Folder>

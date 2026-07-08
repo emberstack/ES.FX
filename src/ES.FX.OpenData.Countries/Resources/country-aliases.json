@@ -1,0 +1,37 @@
+[
+  {
+    "code": "CYP",
+    "alpha2": "CY",
+    "alpha3": "CYP",
+    "name": "Northern Cyprus",
+    "nameRo": "Ciprul de Nord"
+  },
+  {
+    "code": "US-HI",
+    "alpha2": "US",
+    "alpha3": "USA",
+    "name": "Hawaii",
+    "nameRo": "Hawaii"
+  },
+  {
+    "code": "IC",
+    "alpha2": "ES",
+    "alpha3": "ESP",
+    "name": "Canary Islands",
+    "nameRo": "Insulele Canare"
+  },
+  {
+    "code": "AN",
+    "alpha2": "NL",
+    "alpha3": "NLD",
+    "name": "Netherlands Antilles",
+    "nameRo": "Antilele Olandeze"
+  },
+  {
+    "code": "XK",
+    "alpha2": "XK",
+    "alpha3": "XKX",
+    "name": "Kosovo",
+    "nameRo": "Kosovo"
+  }
+]
