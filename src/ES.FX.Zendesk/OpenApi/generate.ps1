@@ -12,7 +12,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Kiota 1.32.5 generation is not fully deterministic; forcing single-threaded generation eliminates the
+# Kiota 1.34.0 generation is not fully deterministic; forcing single-threaded generation eliminates the
 # structural variance (occasional dropped types) observed under the default parallelism, which is the
 # variant most likely to fail compilation. See README.md.
 $env:KIOTA_GENERATION_MAXDEGREEOFPARALLELISM = '1'
@@ -58,7 +58,7 @@ finally {
 # ---------------------------------------------------------------------------------------------
 # Post-generation repair: force every discriminator factory to match its own generic type argument.
 #
-# Kiota 1.32.5 non-deterministically emits the *base* type's CreateFromDiscriminatorValue for a
+# Kiota 1.34.0 non-deterministically emits the *base* type's CreateFromDiscriminatorValue for a
 # property/collection whose declared element type is a derived (allOf) model - e.g.
 #   GetObjectValue<CustomObjectField>(CustomFieldObject.CreateFromDiscriminatorValue)
 # which fails to compile with CS0407 ("wrong return type"). Whether a given type lands on the broken

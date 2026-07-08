@@ -81,7 +81,7 @@ wrong client.
   tools) must read the raw response body (send the builder-produced `RequestInformation` and parse the
   stream) instead of serializing the typed model back out. Typed models remain fine for *requests* and
   for *reading* fields in code.
-- **Kiota 1.32.5 generation is nondeterministic** (measured 2026-07-05: 5 runs of the identical
+- **Kiota generation is nondeterministic** (measured 2026-07-05 on 1.32.5, re-confirmed unfixed through the pinned **1.34.0**: 5 runs of the identical
   normalized Support spec produced 2–3 distinct outputs). Two failure modes were observed: (a) under
   default parallelism, a run occasionally **drops a type** (e.g. `TicketCreateVoicemailTicketVoiceCommentInput`);
   (b) the base class of a derived (`allOf`) model can flip (e.g. `ItamAssetField` / `CustomObjectField`
@@ -99,7 +99,8 @@ wrong client.
   build fails with a **missing-type** error under `Generated/`, just **build again** (regeneration
   re-rolls); the factory/return-type (CS0407) class no longer recurs, since the repair neutralizes it.
   Re-evaluate committing the output — or dropping these workarounds — when bumping the pinned Kiota
-  version, in case determinism is restored upstream.
+  version, in case determinism is restored upstream. (Checked 2026-07-09: 1.33.0 and 1.34.0 add no
+  C#-generation or determinism fixes — the workarounds remain required.)
 - **Kiota collapses the OAS cursor-pagination `page` parameters to a plain scalar.** Both
   `components/parameters/CursorPaginationPage` (a `deepObject` `page` with `size`/`after`/`before`) and
   `DualPaginationPage` (a discriminator-less `oneOf [integer, cursor object]`) generate as a single
