@@ -1,4 +1,5 @@
 using ES.FX.Primitives;
+using Microsoft.Extensions.Configuration;
 
 namespace ES.FX.Tests.Primitives;
 
@@ -34,6 +35,28 @@ public class ValueRangeTests
         var copy = new ValueRange<int>(original);
         Assert.Equal(2, copy.Min);
         Assert.Equal(8, copy.Max);
+    }
+
+    // ---- configuration binding ----
+    // Regression guard: Min/Max MUST stay settable (init) so IConfiguration can bind them. The binder
+    // populates a value type via the parameterless struct ctor then assigns members, so get-only bounds
+    // silently produce a default range. See ValueRange<T>.Min remarks.
+
+    [Fact]
+    public void Bind_FromConfiguration_PopulatesMinAndMax()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Range:Min"] = "3",
+                ["Range:Max"] = "7"
+            })
+            .Build();
+
+        var range = configuration.GetSection("Range").Get<ValueRange<int>>();
+
+        Assert.Equal(3, range.Min);
+        Assert.Equal(7, range.Max);
     }
 
     // ---- Contains ----

@@ -226,6 +226,28 @@ var disjoint = a.Intersect(new ValueRange<int>(50, 60)); // null
 Because `ValueRange<T>` is a `record struct`, two ranges with the same `Min` and `Max` are equal by
 value.
 
+### Binding from configuration
+
+`Min` and `Max` are `init` accessors on purpose: `IConfiguration` binding and most serializers construct a
+value type through its parameterless `struct` constructor and then **assign** the members, so a range binds
+straight out of config.
+
+```jsonc
+// appsettings.json
+{ "Retries": { "Min": 3, "Max": 7 } }
+```
+
+```csharp
+var retries = configuration.GetSection("Retries").Get<ValueRange<int>>(); // [3, 7]
+```
+
+> [!WARNING]
+> The `min <= max` check lives in the value constructors and is **not** re-run for object initializers,
+> `with` expressions, or bound configuration. Making the bounds get-only would enforce the invariant on
+> those paths but silently breaks binding (you get a `default` `[0, 0]` range) — a `struct` can always be
+> produced as `default` and skip every constructor anyway, so validate untrusted config at the edge if you
+> need it.
+
 ## Related string helpers
 
 `ES.FX.Primitives.Extensions.StringExtensions` also lives in the core package and provides `Truncate`,

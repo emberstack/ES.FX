@@ -46,19 +46,27 @@ public readonly record struct ValueRange<T> : IComparable<ValueRange<T>>, ICompa
     ///     The minimum value of the range
     /// </summary>
     /// <remarks>
-    ///     Get-only so the <see cref="Min" /> &lt;= <see cref="Max" /> invariant enforced by the constructor
-    ///     cannot be bypassed through an object initializer or a <c>with</c> expression.
+    ///     Declared <c>init</c> so configuration binders and serializers &#8212; which construct via the
+    ///     parameterless <c>struct</c> constructor and then assign members &#8212; can populate the range.
+    ///     The <see cref="Min" /> &lt;= <see cref="Max" /> invariant is enforced by the value constructors;
+    ///     it is <b>not</b> re-checked for object initializers, <c>with</c> expressions, or bound
+    ///     configuration, because a <c>struct</c> can always be produced as <c>default</c> and bypass any
+    ///     constructor regardless.
     /// </remarks>
-    public T Min { get; }
+    public T Min { get; init; }
 
     /// <summary>
     ///     The maximum value of the range
     /// </summary>
     /// <remarks>
-    ///     Get-only so the <see cref="Min" /> &lt;= <see cref="Max" /> invariant enforced by the constructor
-    ///     cannot be bypassed through an object initializer or a <c>with</c> expression.
+    ///     Declared <c>init</c> so configuration binders and serializers &#8212; which construct via the
+    ///     parameterless <c>struct</c> constructor and then assign members &#8212; can populate the range.
+    ///     The <see cref="Min" /> &lt;= <see cref="Max" /> invariant is enforced by the value constructors;
+    ///     it is <b>not</b> re-checked for object initializers, <c>with</c> expressions, or bound
+    ///     configuration, because a <c>struct</c> can always be produced as <c>default</c> and bypass any
+    ///     constructor regardless.
     /// </remarks>
-    public T Max { get; }
+    public T Max { get; init; }
 
     /// <inheritdoc />
     int IComparable.CompareTo(object? obj) => obj switch
