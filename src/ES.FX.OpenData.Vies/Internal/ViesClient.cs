@@ -17,52 +17,66 @@ internal sealed class ViesClient(IHttpClientFactory httpClientFactory, string ht
             "VIES ValidateVatNumber", ActivityKind.Client);
         activity?.SetTag("vies.country_code", countryCode.Trim().ToUpperInvariant());
 
-        var http = httpClientFactory.CreateClient(httpClientName);
-        var requestJson = JsonSerializer.Serialize(
-            new ViesCheckRequest { CountryCode = countryCode.Trim().ToUpperInvariant(), VatNumber = vatNumber.Trim() },
-            ViesJsonContext.Default.ViesCheckRequest);
-
-        using var content = new StringContent(requestJson, Encoding.UTF8, "application/json");
-        using var response = await http.PostAsync("check-vat-number", content, cancellationToken).ConfigureAwait(false);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-
-        if (!response.IsSuccessStatusCode)
-            throw new ViesApiException(response.StatusCode, OpenDataHttp.Truncate(body),
-                    $"VIES request failed with status code {(int)response.StatusCode}.")
-                { RetryAfter = OpenDataHttp.GetRetryAfter(response) };
-
-        ViesCheckResponse? dto;
         try
         {
-            dto = JsonSerializer.Deserialize(body, ViesJsonContext.Default.ViesCheckResponse);
+            var http = httpClientFactory.CreateClient(httpClientName);
+            var requestJson = JsonSerializer.Serialize(
+                new ViesCheckRequest
+                    { CountryCode = countryCode.Trim().ToUpperInvariant(), VatNumber = vatNumber.Trim() },
+                ViesJsonContext.Default.ViesCheckRequest);
+
+            using var content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            using var response =
+                await http.PostAsync("check-vat-number", content, cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+                throw new ViesApiException(response.StatusCode, ViesHttp.Truncate(body),
+                        $"VIES request failed with status code {(int)response.StatusCode}.")
+                    { RetryAfter = ViesHttp.GetRetryAfter(response) };
+
+            ViesCheckResponse? dto;
+            try
+            {
+                dto = JsonSerializer.Deserialize(body, ViesJsonContext.Default.ViesCheckResponse);
+            }
+            catch (JsonException exception)
+            {
+                throw new ViesApiException(response.StatusCode, ViesHttp.Truncate(body),
+                    "VIES returned a response body that could not be parsed.", exception);
+            }
+
+            if (dto is null)
+                throw new ViesApiException(response.StatusCode, ViesHttp.Truncate(body),
+                    "VIES returned an empty response body.");
+
+            var fault = dto.UserError ?? dto.ErrorWrappers?.FirstOrDefault()?.Error;
+            if (!string.IsNullOrWhiteSpace(fault) && !IsOutcomeCode(fault))
+            {
+                if (fault.Equals("MS_UNAVAILABLE", StringComparison.OrdinalIgnoreCase))
+                {
+                    activity?.SetTag("vies.status", ViesValidationStatus.MemberStateUnavailable.ToString());
+                    return Build(dto, ViesValidationStatus.MemberStateUnavailable, countryCode, vatNumber);
+                }
+
+                if (fault.Equals("INVALID_INPUT", StringComparison.OrdinalIgnoreCase))
+                    throw new ArgumentException(
+                        $"VIES rejected the input (country '{countryCode}', VAT number '{vatNumber}').");
+
+                throw new ViesApiException(response.StatusCode, ViesHttp.Truncate(body),
+                        $"VIES service fault: {fault}.")
+                    { FaultCode = fault, RetryAfter = ViesHttp.GetRetryAfter(response) };
+            }
+
+            var status = dto.Valid == true ? ViesValidationStatus.Valid : ViesValidationStatus.Invalid;
+            activity?.SetTag("vies.status", status.ToString());
+            return Build(dto, status, countryCode, vatNumber);
         }
-        catch (JsonException exception)
+        catch (Exception exception)
         {
-            throw new ViesApiException(response.StatusCode, OpenDataHttp.Truncate(body),
-                "VIES returned a response body that could not be parsed.", exception);
+            activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
+            throw;
         }
-
-        if (dto is null)
-            throw new ViesApiException(response.StatusCode, OpenDataHttp.Truncate(body),
-                "VIES returned an empty response body.");
-
-        var fault = dto.UserError ?? dto.ErrorWrappers?.FirstOrDefault()?.Error;
-        if (!string.IsNullOrWhiteSpace(fault) && !IsOutcomeCode(fault))
-        {
-            if (fault.Equals("MS_UNAVAILABLE", StringComparison.OrdinalIgnoreCase))
-                return Build(dto, ViesValidationStatus.MemberStateUnavailable, countryCode, vatNumber);
-
-            if (fault.Equals("INVALID_INPUT", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException(
-                    $"VIES rejected the input (country '{countryCode}', VAT number '{vatNumber}').");
-
-            throw new ViesApiException(response.StatusCode, OpenDataHttp.Truncate(body), $"VIES service fault: {fault}.")
-                { FaultCode = fault, RetryAfter = OpenDataHttp.GetRetryAfter(response) };
-        }
-
-        var status = dto.Valid == true ? ViesValidationStatus.Valid : ViesValidationStatus.Invalid;
-        activity?.SetTag("vies.status", status.ToString());
-        return Build(dto, status, countryCode, vatNumber);
     }
 
     private static ViesVatValidation Build(ViesCheckResponse dto, ViesValidationStatus status,

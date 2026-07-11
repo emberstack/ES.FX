@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
-using ES.FX.OpenData;
-using ES.FX.OpenData.Vies;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ES.FX.OpenData.Vies.Tests;
@@ -16,7 +15,7 @@ public class ViesClientTests
     {
         var handler = new StubHttpMessageHandler(responder);
         var services = new ServiceCollection();
-        services.AddOpenData().AddVies(
+        services.AddVies(
             configureHttpClient: b => b.ConfigurePrimaryHttpMessageHandler(() => handler));
         var provider = services.BuildServiceProvider();
         return (provider.GetRequiredService<IViesClient>(), handler);
@@ -73,8 +72,7 @@ public class ViesClientTests
         var (client, _) = Build(_ => Json(
             """{"actionSucceed":false,"errorWrappers":[{"error":"SERVICE_UNAVAILABLE","message":"try later"}]}"""));
 
-        var exception = await Assert.ThrowsAsync<ViesApiException>(
-            () => client.ValidateAsync("RO", "12345678", Ct));
+        var exception = await Assert.ThrowsAsync<ViesApiException>(() => client.ValidateAsync("RO", "12345678", Ct));
         Assert.Equal("SERVICE_UNAVAILABLE", exception.FaultCode);
     }
 
@@ -89,8 +87,7 @@ public class ViesClientTests
     public async Task Non_success_status_throws_with_status_code()
     {
         var (client, _) = Build(_ => Json("upstream boom", HttpStatusCode.InternalServerError));
-        var exception = await Assert.ThrowsAsync<ViesApiException>(
-            () => client.ValidateAsync("RO", "12345678", Ct));
+        var exception = await Assert.ThrowsAsync<ViesApiException>(() => client.ValidateAsync("RO", "12345678", Ct));
         Assert.Equal(HttpStatusCode.InternalServerError, exception.StatusCode);
     }
 
@@ -101,7 +98,7 @@ public class ViesClientTests
         using var listener = new ActivityListener
         {
             ShouldListenTo = source => source.Name == "ES.FX.OpenData.Vies",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            Sample = (ref _) => ActivitySamplingResult.AllData,
             ActivityStopped = activities.Add
         };
         ActivitySource.AddActivityListener(listener);
@@ -110,5 +107,74 @@ public class ViesClientTests
         await client.ValidateAsync("RO", "12345678", Ct);
 
         Assert.Contains(activities, a => a.DisplayName == "VIES ValidateVatNumber");
+    }
+
+    [Fact]
+    public async Task Malformed_json_body_throws_typed_parse_exception()
+    {
+        var (client, _) = Build(_ => Json("this is not json {"));
+        var exception = await Assert.ThrowsAsync<ViesApiException>(() => client.ValidateAsync("RO", "12345678", Ct));
+        Assert.Contains("could not be parsed", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Empty_body_throws_typed_exception()
+    {
+        // A literal JSON null deserializes to a null DTO — the "empty response body" branch.
+        var (client, _) = Build(_ => Json("null"));
+        var exception = await Assert.ThrowsAsync<ViesApiException>(() => client.ValidateAsync("RO", "12345678", Ct));
+        Assert.Contains("empty", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("", "12345678")]
+    [InlineData("   ", "12345678")]
+    [InlineData("RO", "")]
+    [InlineData("RO", "   ")]
+    public async Task Blank_arguments_throw_argument_exception(string countryCode, string vatNumber)
+    {
+        // Rejected before any HTTP call, so the responder is never invoked.
+        var (client, _) = Build(_ => Json("{}"));
+        await Assert.ThrowsAsync<ArgumentException>(() => client.ValidateAsync(countryCode, vatNumber, Ct));
+    }
+
+    [Fact]
+    public async Task Retry_after_header_is_surfaced_on_the_exception()
+    {
+        var (client, _) = Build(_ =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            {
+                Content = new StringContent("busy", Encoding.UTF8, "text/plain")
+            };
+            response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(30));
+            return response;
+        });
+
+        var exception = await Assert.ThrowsAsync<ViesApiException>(() => client.ValidateAsync("RO", "12345678", Ct));
+        Assert.Equal(TimeSpan.FromSeconds(30), exception.RetryAfter);
+    }
+
+    [Fact]
+    public async Task Oversized_error_body_is_truncated_on_the_exception()
+    {
+        // The client caps captured bodies at ViesHttp.MaxResponseBodyLength (2048) chars.
+        var (client, _) = Build(_ => Json(new string('x', 3000), HttpStatusCode.InternalServerError));
+        var exception = await Assert.ThrowsAsync<ViesApiException>(() => client.ValidateAsync("RO", "12345678", Ct));
+        Assert.Equal(2048, exception.ResponseBody!.Length);
+    }
+
+    [Fact]
+    public void AddVies_is_idempotent()
+    {
+        var services = new ServiceCollection();
+        services.AddVies();
+        services.AddVies();
+
+        var provider = services.BuildServiceProvider();
+        var httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient("ES.FX.OpenData.Vies");
+
+        // A second AddVies must not stack the client configuration (e.g. duplicate Accept headers).
+        Assert.Single(httpClient.DefaultRequestHeaders.Accept);
     }
 }

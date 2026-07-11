@@ -404,3 +404,7 @@ FodyWeavers.xsd
 
 #coveragereport
 coveragereport
+
+# Raw MFP geographic-nomenclature XML/PDF export — the source for the committed ANAF→SIRUTA crosswalk
+# (src/datasets/opendata/romania/anaf/anaf-siruta.*.json). Kept locally only; not committed.
+ANAF_EXPORT/

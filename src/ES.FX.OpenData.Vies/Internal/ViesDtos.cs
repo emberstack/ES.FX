@@ -26,7 +26,8 @@ internal sealed class ViesErrorWrapper
     public string? Message { get; set; }
 }
 
-[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true)]
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true)]
 [JsonSerializable(typeof(ViesCheckRequest))]
 [JsonSerializable(typeof(ViesCheckResponse))]
 internal partial class ViesJsonContext : JsonSerializerContext;

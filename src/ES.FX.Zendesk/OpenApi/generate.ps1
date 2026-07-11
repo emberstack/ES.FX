@@ -82,4 +82,29 @@ Get-ChildItem -Path (Join-Path $projectDirectory 'Generated') -Recurse -Filter *
 }
 Write-Host "factory repair: matched CreateFromDiscriminatorValue to generic type in $repairedFiles file(s)"
 
+# Kiota also non-deterministically omits CustomObjectField's OWN CreateFromDiscriminatorValue factory - a derived
+# allOf model that shares a word set with its parent CustomFieldObject. When omitted, the factory-repair above
+# rewrites the response models to CustomObjectField.CreateFromDiscriminatorValue, which then binds to the
+# inherited base factory (returns CustomFieldObject) and fails to compile with CS0407; the general repair cannot
+# help because there is no derived factory to point at. So guarantee one exists: inject it iff Kiota omitted it
+# (a no-op on the generation orders / platforms where Kiota did emit it). This keeps the client compiling
+# deterministically. Remove once a Kiota release reliably emits the factory for this model.
+$customObjectFieldPath = Join-Path $projectDirectory 'Generated/Support/Models/CustomObjectField.cs'
+if (Test-Path $customObjectFieldPath) {
+    $customObjectField = Get-Content -Raw -LiteralPath $customObjectFieldPath
+    if ($customObjectField -notmatch '\bCustomObjectField CreateFromDiscriminatorValue\b') {
+        $injectedFactory = @'
+        /// <summary>Injected by generate.ps1: Kiota non-deterministically omits this derived model's factory.</summary>
+        public static new global::ES.FX.Zendesk.Support.Models.CustomObjectField CreateFromDiscriminatorValue(IParseNode parseNode)
+        {
+            if(ReferenceEquals(parseNode, null)) throw new ArgumentNullException(nameof(parseNode));
+            return new global::ES.FX.Zendesk.Support.Models.CustomObjectField();
+        }
+'@
+        $customObjectField = [regex]::Replace($customObjectField, '(?s)(public partial class CustomObjectField\b.*?\{\r?\n)', "`$1$injectedFactory`n", 1)
+        Set-Content -LiteralPath $customObjectFieldPath -Value $customObjectField -NoNewline
+        Write-Host 'factory repair: injected CustomObjectField.CreateFromDiscriminatorValue (Kiota omitted it)'
+    }
+}
+
 Write-Host 'Generation complete. Review the diff, then: dotnet build && dotnet test'

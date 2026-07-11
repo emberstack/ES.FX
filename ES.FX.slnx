@@ -7,18 +7,13 @@
   <Folder Name="/.src/FX/">
     <Project Path="src/ES.FX.Hosting/ES.FX.Hosting.csproj" />
     <Project Path="src/ES.FX.Migrations/ES.FX.Migrations.csproj" />
-    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
-    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.csproj" />
+    <Project Path="src/ES.FX.NousResearch.HermesAgent/ES.FX.NousResearch.HermesAgent.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.csproj" />
+    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.csproj" />
+    <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.EntityFrameworkCore/ES.FX.TransactionalOutbox.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.TransactionalOutbox.MassTransit/ES.FX.TransactionalOutbox.MassTransit.csproj" Id="513497bb-2cd5-49e5-84a3-98bd5eea6f42" />
     <Project Path="src/ES.FX.TransactionalOutbox/ES.FX.TransactionalOutbox.csproj" Id="cbbc21f8-48f8-4d63-af6b-e64c33da8e4d" />
-    <Project Path="src/ES.FX.NousResearch.HermesAgent/ES.FX.NousResearch.HermesAgent.csproj" />
-    <Project Path="src/ES.FX.OpenData/ES.FX.OpenData.csproj" />
-    <Project Path="src/ES.FX.OpenData.Countries/ES.FX.OpenData.Countries.csproj" />
-    <Project Path="src/ES.FX.OpenData.Romania.AdministrativeUnits/ES.FX.OpenData.Romania.AdministrativeUnits.csproj" />
-    <Project Path="src/ES.FX.OpenData.Romania.Fiscal.Anaf/ES.FX.OpenData.Romania.Fiscal.Anaf.csproj" />
-    <Project Path="src/ES.FX.OpenData.Vies/ES.FX.OpenData.Vies.csproj" />
     <Project Path="src/ES.FX.Zendesk/ES.FX.Zendesk.csproj" />
     <Project Path="src/ES.FX/ES.FX.csproj" />
   </Folder>
@@ -33,8 +28,8 @@
     <Project Path="src/ES.FX.Additions.MediatR/ES.FX.Additions.MediatR.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.AspNetCore/ES.FX.Additions.Microsoft.AspNetCore.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.Data.SqlClient/ES.FX.Additions.Microsoft.Data.SqlClient.csproj" />
-    <Project Path="src/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.csproj" />
+    <Project Path="src/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.EntityFrameworkCore/ES.FX.Additions.Microsoft.EntityFrameworkCore.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks/ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.csproj" />
     <Project Path="src/ES.FX.Additions.Microsoft.Extensions.Identity.Core/ES.FX.Additions.Microsoft.Extensions.Identity.Core.csproj" />
@@ -45,7 +40,13 @@
     <Project Path="src/ES.FX.Additions.StackExchange.Redis/ES.FX.Additions.StackExchange.Redis.csproj" />
     <Project Path="src/ES.FX.Additions.System.Text.Json/ES.FX.Additions.System.Text.Json.csproj" />
   </Folder>
-  <Folder Name="/.src/FX/OpenData/" />
+  <Folder Name="/.src/FX/OpenData/">
+    <Project Path="src/ES.FX.OpenData.Countries/ES.FX.OpenData.Countries.csproj" />
+    <Project Path="src/ES.FX.OpenData.Currencies/ES.FX.OpenData.Currencies.csproj" />
+    <Project Path="src/ES.FX.OpenData.Romania.TerritorialUnits/ES.FX.OpenData.Romania.TerritorialUnits.csproj" />
+    <Project Path="src/ES.FX.OpenData.Romania.Anaf/ES.FX.OpenData.Romania.Anaf.csproj" />
+    <Project Path="src/ES.FX.OpenData.Vies/ES.FX.OpenData.Vies.csproj" />
+  </Folder>
   <Folder Name="/.src/Ignite/">
     <Project Path="src/ES.FX.Ignite.Spark/ES.FX.Ignite.Spark.csproj" />
     <Project Path="src/ES.FX.Ignite/ES.FX.Ignite.csproj" />
@@ -92,50 +93,53 @@
   </Folder>
   <Folder Name="/tests/FX/">
     <Project Path="tests/ES.FX.Hosting.Tests/ES.FX.Hosting.Tests.csproj" />
-    <Project Path="tests/ES.FX.Tests/ES.FX.Tests.csproj" />
-    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests.csproj" />
-    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests.csproj" />
-    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests.csproj" />
-    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/ES.FX.Migrations.Tests/ES.FX.Migrations.Tests.csproj" />
-    <Project Path="tests/ES.FX.OpenData.Tests/ES.FX.OpenData.Tests.csproj" />
     <Project Path="tests/ES.FX.OpenData.Countries.Tests/ES.FX.OpenData.Countries.Tests.csproj" />
-    <Project Path="tests/ES.FX.OpenData.Romania.AdministrativeUnits.Tests/ES.FX.OpenData.Romania.AdministrativeUnits.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Currencies.Tests/ES.FX.OpenData.Currencies.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Romania.TerritorialUnits.Tests/ES.FX.OpenData.Romania.TerritorialUnits.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Romania.Anaf.Tests/ES.FX.OpenData.Romania.Anaf.Tests.csproj" />
+    <Project Path="tests/ES.FX.OpenData.Tests/ES.FX.OpenData.Tests.csproj" />
     <Project Path="tests/ES.FX.OpenData.Vies.Tests/ES.FX.OpenData.Vies.Tests.csproj" />
-    <Project Path="tests/ES.FX.OpenData.Romania.Fiscal.Anaf.Tests/ES.FX.OpenData.Romania.Fiscal.Anaf.Tests.csproj" />
-    <Project Path="tests/ES.FX.TransactionalOutbox.Tests/ES.FX.TransactionalOutbox.Tests.csproj" />
+    <Project Path="tests/ES.FX.Tests/ES.FX.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.MySql.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.PostgreSql.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests/ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/ES.FX.TransactionalOutbox.MassTransit.Tests/ES.FX.TransactionalOutbox.MassTransit.Tests.csproj" />
+    <Project Path="tests/ES.FX.TransactionalOutbox.Tests/ES.FX.TransactionalOutbox.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/FX/Additions/">
-    <Project Path="tests/ES.FX.Additions.StackExchange.Redis.Tests/ES.FX.Additions.StackExchange.Redis.Tests.csproj" Id="5d90b03e-cda4-475a-8cf9-a744edefb9f2" />
     <Project Path="tests/ES.FX.Additions.Asp.Versioning.Tests/ES.FX.Additions.Asp.Versioning.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.FluentValidation.Tests/ES.FX.Additions.FluentValidation.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.KubernetesClient.Tests/ES.FX.Additions.KubernetesClient.Tests.csproj" />
-    <Project Path="tests/ES.FX.Additions.MassTransit.Tests/ES.FX.Additions.MassTransit.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.MassTransit.MediatR.Tests/ES.FX.Additions.MassTransit.MediatR.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.MassTransit.RabbitMQ.Tests/ES.FX.Additions.MassTransit.RabbitMQ.Tests.csproj" />
-    <Project Path="tests/ES.FX.Additions.MediatR.Tests/ES.FX.Additions.MediatR.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.MassTransit.Tests/ES.FX.Additions.MassTransit.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.MediatR.Contracts.Tests/ES.FX.Additions.MediatR.Contracts.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.MediatR.Tests/ES.FX.Additions.MediatR.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.Microsoft.AspNetCore.Tests/ES.FX.Additions.Microsoft.AspNetCore.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.Microsoft.Data.SqlClient.Tests/ES.FX.Additions.Microsoft.Data.SqlClient.Tests.csproj" />
-    <Project Path="tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.Tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests/ES.FX.Additions.Microsoft.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.Tests/ES.FX.Additions.Microsoft.Extensions.Diagnostics.HealthChecks.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.Microsoft.Extensions.Identity.Core.Tests/ES.FX.Additions.Microsoft.Extensions.Identity.Core.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.Newtonsoft.Json.Tests/ES.FX.Additions.Newtonsoft.Json.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.NSwag.AspNetCore.Tests/ES.FX.Additions.NSwag.AspNetCore.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.OneOf.Tests/ES.FX.Additions.OneOf.Tests.csproj" />
     <Project Path="tests/ES.FX.Additions.Serilog.Tests/ES.FX.Additions.Serilog.Tests.csproj" />
+    <Project Path="tests/ES.FX.Additions.StackExchange.Redis.Tests/ES.FX.Additions.StackExchange.Redis.Tests.csproj" Id="5d90b03e-cda4-475a-8cf9-a744edefb9f2" />
     <Project Path="tests/ES.FX.Additions.System.Text.Json.Tests/ES.FX.Additions.System.Text.Json.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Ignite/">
     <Project Path="tests/ES.FX.Ignite.Asp.Versioning.Tests/ES.FX.Ignite.Asp.Versioning.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.Azure.Common.Tests/ES.FX.Ignite.Azure.Common.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Azure.Data.Tables.Tests/ES.FX.Ignite.Azure.Data.Tables.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests/ES.FX.Ignite.Azure.Security.KeyVault.Secrets.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Azure.Storage.Blobs.Tests/ES.FX.Ignite.Azure.Storage.Blobs.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Azure.Storage.Queues.Tests/ES.FX.Ignite.Azure.Storage.Queues.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.FluentValidation.Tests.SUT/ES.FX.Ignite.FluentValidation.Tests.SUT.csproj" />
     <Project Path="tests/ES.FX.Ignite.FluentValidation.Tests/ES.FX.Ignite.FluentValidation.Tests.csproj" />
+    <Project Path="tests/ES.FX.Ignite.KubernetesClient.Tests/ES.FX.Ignite.KubernetesClient.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Microsoft.Data.SqlClient.Tests/ES.FX.Ignite.Microsoft.Data.SqlClient.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests/ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests/ES.FX.Ignite.Microsoft.EntityFrameworkCore.Tests.csproj" />
@@ -150,18 +154,16 @@
     <Project Path="tests/ES.FX.Ignite.Swashbuckle.Tests.SUT/ES.FX.Ignite.Swashbuckle.Tests.SUT.csproj" />
     <Project Path="tests/ES.FX.Ignite.Swashbuckle.Tests/ES.FX.Ignite.Swashbuckle.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Tests/ES.FX.Ignite.Tests.csproj" />
-    <Project Path="tests/ES.FX.Ignite.KubernetesClient.Tests/ES.FX.Ignite.KubernetesClient.Tests.csproj" />
-    <Project Path="tests/ES.FX.Ignite.Azure.Common.Tests/ES.FX.Ignite.Azure.Common.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/MCP/">
     <Project Path="tests/ES.FX.Zendesk.MCP.Host.Tests/ES.FX.Zendesk.MCP.Host.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/NousResearch/">
-    <Project Path="tests/ES.FX.NousResearch.HermesAgent.Tests/ES.FX.NousResearch.HermesAgent.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.NousResearch.HermesAgent.Tests/ES.FX.Ignite.NousResearch.HermesAgent.Tests.csproj" />
+    <Project Path="tests/ES.FX.NousResearch.HermesAgent.Tests/ES.FX.NousResearch.HermesAgent.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Zendesk/">
-    <Project Path="tests/ES.FX.Zendesk.Tests/ES.FX.Zendesk.Tests.csproj" />
     <Project Path="tests/ES.FX.Ignite.Zendesk.Tests/ES.FX.Ignite.Zendesk.Tests.csproj" />
+    <Project Path="tests/ES.FX.Zendesk.Tests/ES.FX.Zendesk.Tests.csproj" />
   </Folder>
 </Solution>

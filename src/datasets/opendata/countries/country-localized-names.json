@@ -1,0 +1,749 @@
+{
+"AD": {
+"ro": "Andorra"
+},
+"AE": {
+"ro": "Emiratele Arabe Unite"
+},
+"AF": {
+"ro": "Afganistan"
+},
+"AG": {
+"ro": "Antigua și Barbuda"
+},
+"AI": {
+"ro": "Anguilla"
+},
+"AL": {
+"ro": "Albania"
+},
+"AM": {
+"ro": "Armenia"
+},
+"AO": {
+"ro": "Angola"
+},
+"AQ": {
+"ro": "Antarctica"
+},
+"AR": {
+"ro": "Argentina"
+},
+"AS": {
+"ro": "Samoa Americană"
+},
+"AT": {
+"ro": "Austria"
+},
+"AU": {
+"ro": "Australia"
+},
+"AW": {
+"ro": "Aruba"
+},
+"AX": {
+"ro": "Insulele Åland"
+},
+"AZ": {
+"ro": "Azerbaidjan"
+},
+"BA": {
+"ro": "Bosnia și Herțegovina"
+},
+"BB": {
+"ro": "Barbados"
+},
+"BD": {
+"ro": "Bangladesh"
+},
+"BE": {
+"ro": "Belgia"
+},
+"BF": {
+"ro": "Burkina Faso"
+},
+"BG": {
+"ro": "Bulgaria"
+},
+"BH": {
+"ro": "Bahrain"
+},
+"BI": {
+"ro": "Burundi"
+},
+"BJ": {
+"ro": "Benin"
+},
+"BL": {
+"ro": "Saint-Barthélemy"
+},
+"BM": {
+"ro": "Bermuda"
+},
+"BN": {
+"ro": "Brunei"
+},
+"BO": {
+"ro": "Bolivia"
+},
+"BQ": {
+"ro": "Bonaire, Sint Eustatius și Saba"
+},
+"BR": {
+"ro": "Brazilia"
+},
+"BS": {
+"ro": "Bahamas"
+},
+"BT": {
+"ro": "Bhutan"
+},
+"BV": {
+"ro": "Insula Bouvet"
+},
+"BW": {
+"ro": "Botswana"
+},
+"BY": {
+"ro": "Belarus"
+},
+"BZ": {
+"ro": "Belize"
+},
+"CA": {
+"ro": "Canada"
+},
+"CC": {
+"ro": "Insulele Cocos (Keeling)"
+},
+"CD": {
+"ro": "Republica Democrată Congo"
+},
+"CF": {
+"ro": "Republica Centrafricană"
+},
+"CG": {
+"ro": "Congo"
+},
+"CH": {
+"ro": "Elveția"
+},
+"CI": {
+"ro": "Côte d'Ivoire"
+},
+"CK": {
+"ro": "Insulele Cook"
+},
+"CL": {
+"ro": "Chile"
+},
+"CM": {
+"ro": "Camerun"
+},
+"CN": {
+"ro": "China"
+},
+"CO": {
+"ro": "Columbia"
+},
+"CR": {
+"ro": "Costa Rica"
+},
+"CU": {
+"ro": "Cuba"
+},
+"CV": {
+"ro": "Capul Verde"
+},
+"CW": {
+"ro": "Curaçao"
+},
+"CX": {
+"ro": "Insula Christmas"
+},
+"CY": {
+"ro": "Cipru"
+},
+"CZ": {
+"ro": "Cehia"
+},
+"DE": {
+"ro": "Germania"
+},
+"DJ": {
+"ro": "Djibouti"
+},
+"DK": {
+"ro": "Danemarca"
+},
+"DM": {
+"ro": "Dominica"
+},
+"DO": {
+"ro": "Republica Dominicană"
+},
+"DZ": {
+"ro": "Algeria"
+},
+"EC": {
+"ro": "Ecuador"
+},
+"EE": {
+"ro": "Estonia"
+},
+"EG": {
+"ro": "Egipt"
+},
+"EH": {
+"ro": "Sahara Occidentală"
+},
+"ER": {
+"ro": "Eritreea"
+},
+"ES": {
+"ro": "Spania"
+},
+"ET": {
+"ro": "Etiopia"
+},
+"FI": {
+"ro": "Finlanda"
+},
+"FJ": {
+"ro": "Fiji"
+},
+"FK": {
+"ro": "Insulele Falkland (Insulele Malvine)"
+},
+"FM": {
+"ro": "Micronezia"
+},
+"FO": {
+"ro": "Insulele Feroe"
+},
+"FR": {
+"ro": "Franța"
+},
+"GA": {
+"ro": "Gabon"
+},
+"GB": {
+"ro": "Regatul Unit"
+},
+"GD": {
+"ro": "Grenada"
+},
+"GE": {
+"ro": "Georgia"
+},
+"GF": {
+"ro": "Guyana Franceză"
+},
+"GG": {
+"ro": "Guernsey"
+},
+"GH": {
+"ro": "Ghana"
+},
+"GI": {
+"ro": "Gibraltar"
+},
+"GL": {
+"ro": "Groenlanda"
+},
+"GM": {
+"ro": "Gambia"
+},
+"GN": {
+"ro": "Guineea"
+},
+"GP": {
+"ro": "Guadelupa"
+},
+"GQ": {
+"ro": "Guineea Ecuatorială"
+},
+"GR": {
+"ro": "Grecia"
+},
+"GS": {
+"ro": "Georgia de Sud și Insulele Sandwich de Sud"
+},
+"GT": {
+"ro": "Guatemala"
+},
+"GU": {
+"ro": "Guam"
+},
+"GW": {
+"ro": "Guineea-Bissau"
+},
+"GY": {
+"ro": "Guyana"
+},
+"HK": {
+"ro": "Hong Kong"
+},
+"HM": {
+"ro": "Insula Heard și Insulele McDonald"
+},
+"HN": {
+"ro": "Honduras"
+},
+"HR": {
+"ro": "Croația"
+},
+"HT": {
+"ro": "Haiti"
+},
+"HU": {
+"ro": "Ungaria"
+},
+"ID": {
+"ro": "Indonezia"
+},
+"IE": {
+"ro": "Irlanda"
+},
+"IL": {
+"ro": "Israel"
+},
+"IM": {
+"ro": "Insula Man"
+},
+"IN": {
+"ro": "India"
+},
+"IO": {
+"ro": "Teritoriul Britanic din Oceanul Indian"
+},
+"IQ": {
+"ro": "Irak"
+},
+"IR": {
+"ro": "Iran"
+},
+"IS": {
+"ro": "Islanda"
+},
+"IT": {
+"ro": "Italia"
+},
+"JE": {
+"ro": "Jersey"
+},
+"JM": {
+"ro": "Jamaica"
+},
+"JO": {
+"ro": "Iordania"
+},
+"JP": {
+"ro": "Japonia"
+},
+"KE": {
+"ro": "Kenya"
+},
+"KG": {
+"ro": "Kârgâzstan"
+},
+"KH": {
+"ro": "Cambodgia"
+},
+"KI": {
+"ro": "Kiribati"
+},
+"KM": {
+"ro": "Comore"
+},
+"KN": {
+"ro": "Saint Kitts și Nevis"
+},
+"KP": {
+"ro": "Coreea de Nord"
+},
+"KR": {
+"ro": "Coreea de Sud"
+},
+"KW": {
+"ro": "Kuweit"
+},
+"KY": {
+"ro": "Insulele Cayman"
+},
+"KZ": {
+"ro": "Kazahstan"
+},
+"LA": {
+"ro": "Laos"
+},
+"LB": {
+"ro": "Liban"
+},
+"LC": {
+"ro": "Sfânta Lucia"
+},
+"LI": {
+"ro": "Liechtenstein"
+},
+"LK": {
+"ro": "Sri Lanka"
+},
+"LR": {
+"ro": "Liberia"
+},
+"LS": {
+"ro": "Lesotho"
+},
+"LT": {
+"ro": "Lituania"
+},
+"LU": {
+"ro": "Luxemburg"
+},
+"LV": {
+"ro": "Letonia"
+},
+"LY": {
+"ro": "Libia"
+},
+"MA": {
+"ro": "Maroc"
+},
+"MC": {
+"ro": "Monaco"
+},
+"MD": {
+"ro": "Republica Moldova"
+},
+"ME": {
+"ro": "Muntenegru"
+},
+"MF": {
+"ro": "Saint-Martin (partea franceză)"
+},
+"MG": {
+"ro": "Madagascar"
+},
+"MH": {
+"ro": "Insulele Marshall"
+},
+"MK": {
+"ro": "Macedonia de Nord"
+},
+"ML": {
+"ro": "Mali"
+},
+"MM": {
+"ro": "Myanmar"
+},
+"MN": {
+"ro": "Mongolia"
+},
+"MO": {
+"ro": "Macao"
+},
+"MP": {
+"ro": "Insulele Mariane de Nord"
+},
+"MQ": {
+"ro": "Martinica"
+},
+"MR": {
+"ro": "Mauritania"
+},
+"MS": {
+"ro": "Montserrat"
+},
+"MT": {
+"ro": "Malta"
+},
+"MU": {
+"ro": "Mauritius"
+},
+"MV": {
+"ro": "Maldive"
+},
+"MW": {
+"ro": "Malawi"
+},
+"MX": {
+"ro": "Mexic"
+},
+"MY": {
+"ro": "Malaezia"
+},
+"MZ": {
+"ro": "Mozambic"
+},
+"NA": {
+"ro": "Namibia"
+},
+"NC": {
+"ro": "Noua Caledonie"
+},
+"NE": {
+"ro": "Niger"
+},
+"NF": {
+"ro": "Insula Norfolk"
+},
+"NG": {
+"ro": "Nigeria"
+},
+"NI": {
+"ro": "Nicaragua"
+},
+"NL": {
+"ro": "Țările de Jos"
+},
+"NO": {
+"ro": "Norvegia"
+},
+"NP": {
+"ro": "Nepal"
+},
+"NR": {
+"ro": "Nauru"
+},
+"NU": {
+"ro": "Niue"
+},
+"NZ": {
+"ro": "Noua Zeelandă"
+},
+"OM": {
+"ro": "Oman"
+},
+"PA": {
+"ro": "Panama"
+},
+"PE": {
+"ro": "Peru"
+},
+"PF": {
+"ro": "Polinezia Franceză"
+},
+"PG": {
+"ro": "Papua-Noua Guinee"
+},
+"PH": {
+"ro": "Filipine"
+},
+"PK": {
+"ro": "Pakistan"
+},
+"PL": {
+"ro": "Polonia"
+},
+"PM": {
+"ro": "Saint-Pierre și Miquelon"
+},
+"PN": {
+"ro": "Insulele Pitcairn"
+},
+"PR": {
+"ro": "Puerto Rico"
+},
+"PS": {
+"ro": "Palestina"
+},
+"PT": {
+"ro": "Portugalia"
+},
+"PW": {
+"ro": "Palau"
+},
+"PY": {
+"ro": "Paraguay"
+},
+"QA": {
+"ro": "Qatar"
+},
+"RE": {
+"ro": "Réunion"
+},
+"RO": {
+"ro": "România"
+},
+"RS": {
+"ro": "Serbia"
+},
+"RU": {
+"ro": "Rusia"
+},
+"RW": {
+"ro": "Rwanda"
+},
+"SA": {
+"ro": "Arabia Saudită"
+},
+"SB": {
+"ro": "Insulele Solomon"
+},
+"SC": {
+"ro": "Seychelles"
+},
+"SD": {
+"ro": "Sudan"
+},
+"SE": {
+"ro": "Suedia"
+},
+"SG": {
+"ro": "Singapore"
+},
+"SH": {
+"ro": "Sfânta Elena, Ascension și Tristan da Cunha"
+},
+"SI": {
+"ro": "Slovenia"
+},
+"SJ": {
+"ro": "Svalbard și Jan Mayen"
+},
+"SK": {
+"ro": "Slovacia"
+},
+"SL": {
+"ro": "Sierra Leone"
+},
+"SM": {
+"ro": "San Marino"
+},
+"SN": {
+"ro": "Senegal"
+},
+"SO": {
+"ro": "Somalia"
+},
+"SR": {
+"ro": "Suriname"
+},
+"SS": {
+"ro": "Sudanul de Sud"
+},
+"ST": {
+"ro": "São Tomé și Príncipe"
+},
+"SV": {
+"ro": "El Salvador"
+},
+"SX": {
+"ro": "Sint Maarten (partea olandeză)"
+},
+"SY": {
+"ro": "Siria"
+},
+"SZ": {
+"ro": "Eswatini"
+},
+"TC": {
+"ro": "Insulele Turks și Caicos"
+},
+"TD": {
+"ro": "Ciad"
+},
+"TF": {
+"ro": "Teritoriile Australe și Antarctice Franceze"
+},
+"TG": {
+"ro": "Togo"
+},
+"TH": {
+"ro": "Thailanda"
+},
+"TJ": {
+"ro": "Tadjikistan"
+},
+"TK": {
+"ro": "Tokelau"
+},
+"TL": {
+"ro": "Timor-Leste"
+},
+"TM": {
+"ro": "Turkmenistan"
+},
+"TN": {
+"ro": "Tunisia"
+},
+"TO": {
+"ro": "Tonga"
+},
+"TR": {
+"ro": "Turcia"
+},
+"TT": {
+"ro": "Trinidad și Tobago"
+},
+"TV": {
+"ro": "Tuvalu"
+},
+"TW": {
+"ro": "Taiwan"
+},
+"TZ": {
+"ro": "Tanzania"
+},
+"UA": {
+"ro": "Ucraina"
+},
+"UG": {
+"ro": "Uganda"
+},
+"UM": {
+"ro": "Insulele Minore Îndepărtate ale Statelor Unite"
+},
+"US": {
+"ro": "Statele Unite"
+},
+"UY": {
+"ro": "Uruguay"
+},
+"UZ": {
+"ro": "Uzbekistan"
+},
+"VA": {
+"ro": "Vatican"
+},
+"VC": {
+"ro": "Saint Vincent și Grenadinele"
+},
+"VE": {
+"ro": "Venezuela"
+},
+"VG": {
+"ro": "Insulele Virgine Britanice"
+},
+"VI": {
+"ro": "Insulele Virgine Americane"
+},
+"VN": {
+"ro": "Vietnam"
+},
+"VU": {
+"ro": "Vanuatu"
+},
+"WF": {
+"ro": "Wallis și Futuna"
+},
+"WS": {
+"ro": "Samoa"
+},
+"YE": {
+"ro": "Yemen"
+},
+"YT": {
+"ro": "Mayotte"
+},
+"ZA": {
+"ro": "Africa de Sud"
+},
+"ZM": {
+"ro": "Zambia"
+},
+"ZW": {
+"ro": "Zimbabwe"
+}
+}

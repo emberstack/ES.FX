@@ -1,6 +1,6 @@
-using ES.FX.OpenData;
 using ES.FX.OpenData.Countries;
-using ES.FX.OpenData.Romania.AdministrativeUnits;
+using ES.FX.OpenData.Countries.ISO3166;
+using ES.FX.OpenData.Romania.TerritorialUnits;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -8,11 +8,11 @@ namespace ES.FX.OpenData.Tests;
 
 public class OpenDataCoreTests
 {
-    private static ServiceProvider BuildFull(Action<OpenDataOptions>? configure = null)
+    private static ServiceProvider BuildFull()
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddOpenData(configure).AddCountries().AddRomaniaAdministrativeUnits();
+        services.AddCountries().AddRomaniaTerritorialUnits();
         return services.BuildServiceProvider();
     }
 
@@ -21,55 +21,60 @@ public class OpenDataCoreTests
     {
         using var provider = BuildFull();
         Assert.NotNull(provider.GetRequiredService<ICountriesDataset>());
-        Assert.NotNull(provider.GetRequiredService<IRomanianAdministrativeUnitsDataset>());
+        Assert.NotNull(provider.GetRequiredService<IRomanianTerritorialUnitsDataset>());
     }
 
     [Fact]
-    public void Datasets_diagnostics_lists_every_registered_dataset()
+    public void AddCountries_registers_every_dataset_in_the_library()
     {
-        // Guards against the TryAddEnumerable-of-instances de-dup hazard: each package must contribute a
-        // distinct registration implementation type so all of them survive.
-        using var provider = BuildFull();
-        var openData = provider.GetRequiredService<IOpenData>();
+        // AddCountries() is the library umbrella: curated countries + subdivisions AND the raw ISO 3166 datasets.
+        var services = new ServiceCollection();
+        services.AddCountries();
+        using var provider = services.BuildServiceProvider();
 
-        Assert.Equal(2, openData.Datasets.Count);
-        Assert.Contains(openData.Datasets, d => d.Name == "Countries");
-        Assert.Contains(openData.Datasets, d => d.Name == "SIRUTA");
+        Assert.NotNull(provider.GetRequiredService<ICountriesDataset>());
+        Assert.NotNull(provider.GetRequiredService<ICountrySubdivisionsDataset>());
+        Assert.NotNull(provider.GetRequiredService<IIso3166Countries>());
+        Assert.NotNull(provider.GetRequiredService<IIso3166CountrySubdivisions>());
+        Assert.NotNull(provider.GetRequiredService<IIso3166FormerCountries>());
+        Assert.NotNull(provider.GetRequiredService<IIso3166>());
     }
 
     [Fact]
-    public void Hub_extension_properties_resolve_the_same_singletons()
+    public void Registration_is_idempotent_and_never_double_registers()
     {
-        using var provider = BuildFull();
-        var openData = provider.GetRequiredService<IOpenData>();
+        // TryAdd's idempotency is replaced by an explicit guard; adding a dataset twice must still yield exactly
+        // one instance (and, critically, must not double-parse the heavy SIRUTA resource).
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddCountries().AddCountries().AddRomaniaTerritorialUnits().AddRomaniaTerritorialUnits();
+        using var provider = services.BuildServiceProvider();
 
-        Assert.Same(provider.GetRequiredService<ICountriesDataset>(), openData.Countries);
-        Assert.Same(provider.GetRequiredService<IRomanianAdministrativeUnitsDataset>(),
-            openData.RomaniaAdministrativeUnits);
+        Assert.Single(provider.GetServices<ICountriesDataset>());
+        Assert.Single(provider.GetServices<IRomanianTerritorialUnitsDataset>());
     }
 
     [Fact]
-    public void Hub_throws_actionable_error_for_unregistered_dataset()
+    public async Task Warmup_opt_in_loads_the_dataset_without_faulting()
     {
         var services = new ServiceCollection();
-        services.AddOpenData(); // no datasets added
+        services.AddLogging();
+        services.AddRomaniaTerritorialUnits(true);
         using var provider = services.BuildServiceProvider();
-        var openData = provider.GetRequiredService<IOpenData>();
 
-        var exception = Assert.Throws<InvalidOperationException>(() => openData.GetDataset<ICountriesDataset>());
-        Assert.Contains("AddCountries", exception.Message, StringComparison.Ordinal);
+        foreach (var hostedService in provider.GetServices<IHostedService>())
+            await hostedService.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(provider.GetRequiredService<IRomanianTerritorialUnitsDataset>().Find(1026));
     }
 
     [Fact]
-    public async Task Blocking_warmup_loads_every_dataset_without_faulting()
+    public void Without_the_warmup_opt_in_no_hosted_service_is_registered()
     {
-        using var provider = BuildFull(o => o.WarmupMode = OpenDataWarmupMode.Blocking);
+        var services = new ServiceCollection();
+        services.AddRomaniaTerritorialUnits(); // warmup defaults to false
+        using var provider = services.BuildServiceProvider();
 
-        foreach (var hostedService in provider.GetServices<IHostedService>())
-            await hostedService.StartAsync(CancellationToken.None);
-
-        // Datasets are usable after warmup.
-        Assert.Equal("Romania", provider.GetRequiredService<ICountriesDataset>()["RO"].Name);
-        Assert.NotNull(provider.GetRequiredService<IRomanianAdministrativeUnitsDataset>().Find(1026));
+        Assert.Empty(provider.GetServices<IHostedService>());
     }
 }

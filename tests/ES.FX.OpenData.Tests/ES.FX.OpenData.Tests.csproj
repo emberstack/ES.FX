@@ -9,9 +9,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ES.FX.OpenData\ES.FX.OpenData.csproj" />
     <ProjectReference Include="..\..\src\ES.FX.OpenData.Countries\ES.FX.OpenData.Countries.csproj" />
-    <ProjectReference Include="..\..\src\ES.FX.OpenData.Romania.AdministrativeUnits\ES.FX.OpenData.Romania.AdministrativeUnits.csproj" />
+    <ProjectReference Include="..\..\src\ES.FX.OpenData.Romania.TerritorialUnits\ES.FX.OpenData.Romania.TerritorialUnits.csproj" />
   </ItemGroup>
   <ItemGroup><Using Include="Xunit" /></ItemGroup>
 </Project>
