@@ -1,0 +1,15 @@
+allows_attachments omitted
+allows_photos omitted
+created_at summary
+created_by_user_id omitted
+description summary
+include_in_list_view omitted
+key summary
+raw_description omitted
+raw_title omitted
+raw_title_pluralized omitted
+title summary
+title_pluralized summary
+updated_at summary
+updated_by_user_id omitted
+url omitted

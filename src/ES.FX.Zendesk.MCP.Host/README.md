@@ -1,7 +1,7 @@
 # ES.FX.Zendesk.MCP.Host
 
 A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that exposes Zendesk Support as
-namespaced MCP tools — a **curated read and write surface** (**172 tools** across 17 resource areas)
+namespaced MCP tools — a **curated read and write surface** (**215 tools** across 20 resource areas)
 built on the Kiota-generated `ES.FX.Zendesk` clients. Built on
 **ES.FX.Ignite** and the official
 [`ModelContextProtocol.AspNetCore`](https://www.nuget.org/packages/ModelContextProtocol.AspNetCore) SDK, served
@@ -18,8 +18,8 @@ over the Streamable HTTP transport.
 
 ## Tools
 
-**172 tools** named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` (snake_case, no product
-prefix — MCP clients namespace by server): **85 read tools** (`ReadOnly = true`) and **87 write tools**
+**215 tools** named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` (snake_case, no product
+prefix — MCP clients namespace by server): **100 read tools** (`ReadOnly = true`) and **115 write tools**
 (`ReadOnly = false`, with truthful `Destructive`/`Idempotent` annotations). Every read tool ends in a
 controlled read verb (`get`/`list`/`search`/`count`/`export`/`autocomplete`); any other verb denotes a write,
 so a tool's risk class is legible from its name (and enforced by a test). Write tools are gated by the
@@ -45,19 +45,19 @@ Conventions shared by all tools:
 - **Bulk writes** — bulk operations (≤100 items unless noted) return a `job_status`; poll
   `job_statuses_get` until `completed`/`failed`.
 
-### Read tools (85)
+### Read tools (100)
 
 | Area | Tools |
 | --- | --- |
 | Users (15) | `users_me_get`, `users_get`, `users_get_many`, `users_search`, `users_tickets_requested_list`, `users_list`, `users_count`, `users_autocomplete`, `users_related_get`, `users_identities_list`, `users_groups_list`, `users_organizations_list`, `users_tickets_assigned_list`, `users_tickets_ccd_list`, `users_tags_list` |
-| Tickets (16) | `tickets_get`, `tickets_search`, `tickets_comments_list`, `tickets_audits_list`, `tickets_metrics_get`, `tickets_metric_events_export`, `tickets_incidents_list`, `tickets_side_conversations_list`, `tickets_list`, `tickets_get_many`, `tickets_count`, `tickets_get_by_external_id`, `tickets_collaborators_list`, `tickets_comments_count`, `tickets_export_incremental`, `tickets_search_export` (cursor-only deep export, no 1k cap) |
+| Tickets (17) | `tickets_get`, `tickets_search`, `tickets_comments_list`, `tickets_audits_list`, `tickets_metrics_get`, `tickets_metric_events_export`, `tickets_incidents_list`, `tickets_side_conversations_list`, `tickets_list`, `tickets_get_many`, `tickets_count`, `tickets_get_by_external_id`, `tickets_collaborators_list`, `tickets_comments_count`, `tickets_export_incremental`, `tickets_search_export` (cursor-only deep export, no 1k cap), `tickets_deleted_list` (id source for restore/purge) |
 | Organizations (13) | `organizations_get`, `organizations_tickets_list`, `organizations_tickets_count`, `organizations_list`, `organizations_count`, `organizations_get_many`, `organizations_get_by_name_or_external_id`, `organizations_autocomplete`, `organizations_users_list`, `organizations_users_count`, `organizations_memberships_list`, `organizations_merges_get`, `organizations_tags_list` |
 | Groups (7) | `groups_list`, `groups_get`, `groups_memberships_list`, `groups_assignable_list`, `groups_count`, `groups_users_list`, `groups_users_count` |
-| Help Center (7) | `articles_search`, `articles_get`, `articles_list`, `articles_sections_list`, `articles_sections_get`, `articles_categories_list`, `articles_categories_get` |
+| Help Center (8) | `articles_search`, `articles_deflection_search` (Guide's suggested articles for a question), `articles_get`, `articles_list`, `articles_sections_list`, `articles_sections_get`, `articles_categories_list`, `articles_categories_get` |
 | Ticket fields (4) | `ticket_fields_list`, `ticket_fields_get`, `ticket_fields_get_many`, `ticket_fields_options_list` |
-| Macros (3) | `macros_list`, `macros_get`, `macros_list_active` |
+| Macros (6) | `macros_list`, `macros_get`, `macros_list_active`, `macros_search`, `macros_changes_get` (preview a macro's changes), `macros_ticket_preview_get` (preview a ticket after a macro) |
 | Forms (2) | `forms_list`, `forms_get` |
-| Views (4) | `views_list`, `views_get`, `views_tickets_list`, `views_count` |
+| Views (6) | `views_list`, `views_get`, `views_tickets_list`, `views_rows_list` (run a view as a work queue), `views_count`, `views_count_many` (bulk queue sizes) |
 | Search (1) | `search_count` |
 | Brands (2) | `brands_list`, `brands_get` |
 | Custom statuses (2) | `custom_statuses_list`, `custom_statuses_get` |
@@ -65,14 +65,17 @@ Conventions shared by all tools:
 | Tags (3) | `tags_list`, `tags_count`, `tags_autocomplete` |
 | Suspended tickets (2) | `suspended_tickets_list`, `suspended_tickets_get` |
 | Attachments (1) | `attachments_get` (authenticated content download; text or size-capped base64) |
+| Satisfaction ratings (3) | `satisfaction_ratings_list`, `satisfaction_ratings_get`, `satisfaction_ratings_count` (CSAT reads) |
+| Community (1) | `community_posts_search` (Gather peer discussions) |
+| Custom objects (4) | `custom_objects_list`, `custom_objects_records_list`, `custom_objects_records_search`, `custom_objects_records_get` (tenant business data) |
 
-### Write tools (87)
+### Write tools (115)
 
 | Area | Tools |
 | --- | --- |
-| Tickets (21) | `tickets_create`, `tickets_create_many`, `tickets_update` (public reply / internal note via `comment.public`; 409 optimistic locking via `SafeUpdate`/`UpdatedStamp`), `tickets_update_many`, `tickets_update_many_batch`, `tickets_delete`, `tickets_delete_many`, `tickets_merge`, `tickets_mark_spam`, `tickets_mark_spam_many`, `tickets_restore`, `tickets_restore_many`, `tickets_delete_permanently`, `tickets_delete_permanently_many`, `tickets_tags_set`, `tickets_tags_add`, `tickets_tags_remove`, `tickets_comments_make_private`, `tickets_comments_attachment_redact`, `tickets_import`, `tickets_import_many` |
-| Users (17) | `users_create`, `users_create_or_update`, `users_create_many`, `users_create_or_update_many`, `users_update`, `users_update_many`, `users_update_many_batch`, `users_merge`, `users_delete`, `users_delete_many`, `users_delete_permanently`, `users_identities_create`, `users_identities_update`, `users_identities_make_primary`, `users_identities_verify`, `users_identities_request_verification`, `users_identities_delete` |
-| Organizations (14) | `organizations_create`, `organizations_create_many`, `organizations_create_or_update`, `organizations_update`, `organizations_update_many`, `organizations_update_many_batch`, `organizations_delete`, `organizations_delete_many`, `organizations_merge` (poll `organizations_merges_get`), `organizations_memberships_create`, `organizations_memberships_create_many`, `organizations_memberships_delete`, `organizations_memberships_delete_many`, `organizations_memberships_make_default` |
+| Tickets (40) | Single-action setters (decomposed for per-action gating): `tickets_reply_public` (public reply), `tickets_note_add` (internal note), `tickets_status_set`, `tickets_priority_set`, `tickets_type_set`, `tickets_assignee_set`, `tickets_group_set`, `tickets_requester_set`, `tickets_organization_set`, `tickets_form_set`, `tickets_custom_fields_set`, `tickets_collaborators_set`, `tickets_due_at_set`, `tickets_subject_set`; bulk (async job): `tickets_status_set_many`, `tickets_assignee_set_many`, `tickets_group_set_many`, `tickets_tags_add_many`, `tickets_tags_remove_many`, `tickets_note_add_many`, `tickets_reply_public_many`, `tickets_custom_fields_set_many`; plus `tickets_create`, `tickets_create_many`, `tickets_delete`, `tickets_delete_many`, `tickets_merge`, `tickets_mark_spam`, `tickets_mark_spam_many`, `tickets_restore`, `tickets_restore_many`, `tickets_delete_permanently`, `tickets_delete_permanently_many`, `tickets_tags_set`, `tickets_tags_add`, `tickets_tags_remove`, `tickets_comments_make_private`, `tickets_comments_attachment_redact`, `tickets_import`, `tickets_import_many` |
+| Users (23) | Single-action setters: `users_role_set` (privilege), `users_suspended_set` (access), `users_ticket_restriction_set` (privilege), `users_name_set`, `users_phone_set`, `users_organization_set`, `users_notes_set`, `users_tags_set`, `users_fields_set`; plus `users_create`, `users_create_or_update`, `users_create_many`, `users_create_or_update_many`, `users_merge`, `users_delete`, `users_delete_many`, `users_delete_permanently`, `users_identities_create`, `users_identities_update`, `users_identities_make_primary`, `users_identities_verify`, `users_identities_request_verification`, `users_identities_delete` |
+| Organizations (17) | Single-action setters: `organizations_name_set`, `organizations_domains_set`, `organizations_notes_set`, `organizations_tags_set`, `organizations_fields_set`, `organizations_sharing_set`; plus `organizations_create`, `organizations_create_many`, `organizations_create_or_update`, `organizations_delete`, `organizations_delete_many`, `organizations_merge` (poll `organizations_merges_get`), `organizations_memberships_create`, `organizations_memberships_create_many`, `organizations_memberships_delete`, `organizations_memberships_delete_many`, `organizations_memberships_make_default` |
 | Groups (8) | `groups_create`, `groups_update`, `groups_delete`, `groups_memberships_create`, `groups_memberships_create_many`, `groups_memberships_delete`, `groups_memberships_delete_many`, `groups_memberships_make_default` |
 | Forms (4) | `forms_create`, `forms_update`, `forms_delete`, `forms_clone` |
 | Ticket fields (5) | `ticket_fields_create`, `ticket_fields_update`, `ticket_fields_delete`, `ticket_fields_options_create_or_update`, `ticket_fields_options_delete` |

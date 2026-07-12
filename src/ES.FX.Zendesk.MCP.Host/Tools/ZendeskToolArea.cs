@@ -24,7 +24,10 @@ public static class ZendeskToolArea
     ///     <c>ticket</c>. Ordered longest-first is unnecessary because no entry is a prefix of another.
     /// </summary>
     private static readonly string[] MultiWordAreas =
-        ["ticket_fields", "custom_statuses", "job_statuses", "suspended_tickets"];
+    [
+        "ticket_fields", "custom_statuses", "job_statuses", "suspended_tickets", "satisfaction_ratings",
+        "custom_objects"
+    ];
 
     /// <summary>
     ///     Returns the area of a single tool name (e.g. <c>tickets</c> for <c>tickets_search_export</c>).

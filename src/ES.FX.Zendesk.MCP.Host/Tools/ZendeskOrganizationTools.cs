@@ -356,7 +356,7 @@ public sealed class ZendeskOrganizationTools(
     [McpServerTool(Name = "organizations_tags_list", ReadOnly = true, OpenWorld = false)]
     [Description(
         "Tags set on an organization (requires organization tagging enabled in Support). Tags are changed via " +
-        "organizations_update by sending the full replacement list.")]
+        "organizations_tags_set by sending the full replacement list.")]
     public Task<JsonElement> Tags(
         [Description("Numeric Zendesk organization id.")]
         long organizationId,

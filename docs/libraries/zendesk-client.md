@@ -453,7 +453,7 @@ reference. In short:
 ## See also
 
 - [Zendesk Spark](../ignite/sparks/zendesk.md) — the Ignite integration: config binding, health check, tracing.
-- [Zendesk MCP server](./zendesk-mcp-server.md) — a deployable MCP host exposing these clients as 172 agent tools.
+- [Zendesk MCP server](./zendesk-mcp-server.md) — a deployable MCP host exposing these clients as 215 agent tools.
 - [Framework libraries](./index.md)
 - [Ignite overview](../ignite/index.md)
 - [`src/ES.FX.Zendesk/OpenApi/README.md`](https://github.com/emberstack/ES.FX/blob/main/src/ES.FX.Zendesk/OpenApi/README.md) — the generation pipeline, spec patches, and generator hazards.

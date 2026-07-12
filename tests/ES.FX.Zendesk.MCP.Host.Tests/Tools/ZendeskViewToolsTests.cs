@@ -250,4 +250,115 @@ public class ZendeskViewToolsTests
         Assert.True(count.GetProperty("fresh").GetBoolean());
         Assert.Equal("~700", count.GetProperty("pretty").GetString());
     }
+
+    [Fact]
+    public async Task Execute_Returns_Columns_And_Rows_With_Summarized_Tickets()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson(
+            """
+            {"columns":[{"id":"subject","title":"Subject"},{"id":5,"title":"Account"}],
+             "groups":[],
+             "rows":[{"subject":"Broken","priority":"high",
+               "ticket":{"id":42,"subject":"Broken","status":"open","description":"long body here",
+                 "custom_fields":[{"id":1,"value":"secret"}],
+                 "url":"https://unit-test.zendesk.com/api/v2/tickets/42.json"}}],
+             "count":1,"next_page":null,
+             "view":{"id":25,"title":"Unassigned"}}
+            """);
+        var tools = CreateTools(harness);
+
+        var result = await tools.Execute(25, cancellationToken: TestContext.Current.CancellationToken);
+
+        var request = harness.Request;
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.Equal("/api/v2/views/25/execute", request.Path);
+        Assert.Equal("summary", result.GetProperty("detail").GetString());
+        // Column layout metadata is preserved (the point of execute vs views_tickets_list).
+        Assert.Equal("Subject", result.GetProperty("columns")[0].GetProperty("title").GetString());
+        var row = result.GetProperty("items")[0];
+        // Scalar column values stay...
+        Assert.Equal("high", row.GetProperty("priority").GetString());
+        // ...but the embedded ticket is summarized: heavy fields (custom_fields/description) and self-links dropped.
+        var ticket = row.GetProperty("ticket");
+        Assert.Equal(42, ticket.GetProperty("id").GetInt64());
+        Assert.Equal("open", ticket.GetProperty("status").GetString());
+        Assert.False(ticket.TryGetProperty("custom_fields", out _));
+        Assert.False(ticket.TryGetProperty("url", out _));
+    }
+
+    [Fact]
+    public async Task Execute_Passes_Sort_And_Page_And_Computes_Next_Page_Number()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson(
+            """
+            {"columns":[],"rows":[{"ticket":{"id":1}}],"count":60,
+             "next_page":"https://unit-test.zendesk.com/api/v2/views/25/execute.json?page=3"}
+            """);
+        var tools = CreateTools(harness);
+
+        var result = await tools.Execute(25, "priority", "desc", 2, TestContext.Current.CancellationToken);
+
+        var query = harness.Request.Query;
+        Assert.Contains("sort_by=priority", query);
+        Assert.Contains("sort_order=desc", query);
+        Assert.Contains("page=2", query);
+        Assert.True(result.GetProperty("has_more").GetBoolean());
+        // The next_page URL is never echoed — a computed page NUMBER instead.
+        Assert.Equal(3, result.GetProperty("next_page").GetInt32());
+    }
+
+    [Fact]
+    public async Task CountMany_Requests_Ids_And_Strips_Self_Links()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson(
+            """
+            {"view_counts":[
+              {"view_id":25,"value":42,"pretty":"42","fresh":true,
+               "url":"https://unit-test.zendesk.com/api/v2/views/25/count.json"},
+              {"view_id":26,"value":7,"pretty":"7","fresh":false,"url":"https://x/26"}]}
+            """);
+        var tools = CreateTools(harness);
+
+        var result = await tools.CountMany([25, 26], TestContext.Current.CancellationToken);
+
+        Assert.Equal("/api/v2/views/count_many", harness.Request.Path);
+        Assert.Contains("ids=25", harness.Request.Query);
+        Assert.Contains("26", harness.Request.Query);
+        var counts = result.GetProperty("view_counts");
+        Assert.Equal(25, counts[0].GetProperty("view_id").GetInt64());
+        Assert.Equal(42, counts[0].GetProperty("value").GetInt32());
+        // API self-links dropped by the full-view projection.
+        Assert.False(counts[0].TryGetProperty("url", out _));
+    }
+
+    [Fact]
+    public async Task CountMany_Rejects_An_Empty_Id_List_Without_Calling_Zendesk()
+    {
+        var harness = new ZendeskToolHarness();
+        var tools = CreateTools(harness);
+
+        await Assert.ThrowsAsync<McpException>(() =>
+            tools.CountMany([], TestContext.Current.CancellationToken));
+
+        Assert.Empty(harness.Requests);
+    }
+
+    [Fact]
+    public async Task CountMany_Rejects_More_Than_20_Ids_Without_Calling_Zendesk()
+    {
+        // The endpoint accepts at most 20 view ids per request (OAS GetViewCounts) — rejected client-side with a
+        // clear message instead of an opaque server 400.
+        var harness = new ZendeskToolHarness();
+        var tools = CreateTools(harness);
+        var ids = Enumerable.Range(1, 21).Select(i => (long)i).ToArray();
+
+        var exception = await Assert.ThrowsAsync<McpException>(() =>
+            tools.CountMany(ids, TestContext.Current.CancellationToken));
+
+        Assert.Contains("at most 20", exception.Message);
+        Assert.Empty(harness.Requests);
+    }
 }

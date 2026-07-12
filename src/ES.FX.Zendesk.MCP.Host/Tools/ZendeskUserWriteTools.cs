@@ -6,7 +6,6 @@ using System.Text.Json.Serialization;
 using ES.FX.Zendesk.MCP.Host.Execution;
 using ES.FX.Zendesk.MCP.Host.Tools.Models;
 using ES.FX.Zendesk.Support;
-using ES.FX.Zendesk.Support.Api.V2.Users.Update_many;
 using ES.FX.Zendesk.Support.Models;
 using Microsoft.Kiota.Abstractions;
 using ModelContextProtocol;
@@ -174,101 +173,164 @@ public sealed class ZendeskUserWriteTools(
                     "create_or_update", "users", users);
             });
 
-    /// <summary>Updates a Zendesk user by id.</summary>
-    [McpServerTool(Name = "users_update", ReadOnly = false, Destructive = false, Idempotent = false,
+    // ── Single-action user writes (decomposed from the former composite users_update) ─────────────────────────
+    // Each sets ONE aspect of a user so a consuming agent can be granted individual actions via its include-list
+    // (e.g. profile edits without users_role_set / users_suspended_set — the privilege/access-sensitive ones).
+    // All route through ApplyUserUpdate → the same PUT /users/{id} + execution-mode gate + echo-of-change.
+
+    /// <summary>Sets a user's role (privilege level).</summary>
+    [McpServerTool(Name = "users_role_set", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = false)]
     [Description(
-        "Updates a Zendesk user by id; only fields set in the request change. QUIRK: setting 'email' here ADDS a " +
-        "secondary identity instead of changing the primary — use users_identities_create + " +
-        "users_identities_make_primary to change the primary e-mail. Returns {id, updated_at} plus server-state " +
-        "values of exactly the fields you sent — a returned value differing from the request means a business rule " +
-        "overrode it; users_get for full record. Write op honoring server execution mode: rejected read-only, " +
-        "simulated (no changes) dry-run.")]
-    public Task<object> Update(
+        "Set a user's ROLE — a privilege change: end-user|agent|admin (agent/admin grant Zendesk access). Returns " +
+        "{id, updated_at, role} (server value reveals any override). Write op honoring server execution mode: " +
+        "rejected read-only, simulated (no changes) dry-run.")]
+    public Task<object> RoleSet(
         [Description("Numeric Zendesk user id.")]
         long id,
-        [Description("Fields to change; unset (null) fields left untouched.")]
-        ZendeskUserWrite user,
+        [Description("end-user|agent|admin.")] string role,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeWriteAsync(executionMode, $"update user {id}",
-            async () =>
-            {
-                var request = zendesk.Api.V2.Users[id].ToPutRequestInformation(
-                    new UserUpdateRequest { User = MapUserUpdate(user) });
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return UpdateConfirmation(UnwrapEntity(json, "user"), user);
-            },
-            new { id, user });
+        => ApplyUserUpdate(id, new ZendeskUserWrite { Role = role }, $"set user {id} role to '{role}'",
+            cancellationToken);
 
-    /// <summary>Applies the same change to up to 100 Zendesk users as an async job.</summary>
-    [McpServerTool(Name = "users_update_many", ReadOnly = false, Destructive = false, Idempotent = false,
+    /// <summary>Suspends or unsuspends a user.</summary>
+    [McpServerTool(Name = "users_suspended_set", ReadOnly = false, Destructive = false, Idempotent = true,
         OpenWorld = false)]
     [Description(
-        "Applies the SAME change to up to 100 Zendesk users as an async job — e.g. suspend a batch, retag, move " +
-        "users to an organization. For per-user changes use users_update_many_batch. Returns {id, status}; " +
-        "poll job_statuses_get by id until completed. Write op honoring server execution mode: rejected " +
-        "read-only, simulated (no changes) dry-run.")]
-    public Task<object> UpdateMany(
-        [Description("Numeric Zendesk user ids to update (1-100 per call).")]
-        long[] ids,
-        [Description("Change applied to every listed user; unset (null) fields left untouched.")]
-        ZendeskUserWrite change,
+        "Suspend (true) or unsuspend (false) a user — a suspended user cannot sign in or submit tickets. Returns " +
+        "{id, updated_at, suspended}. Write op honoring server execution mode: rejected read-only, simulated (no " +
+        "changes) dry-run.")]
+    public Task<object> SuspendedSet(
+        [Description("Numeric Zendesk user id.")]
+        long id,
+        [Description("true = suspend; false = unsuspend.")]
+        bool suspended,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
-            $"update {ids.Length} users with the same change",
-            async () =>
-            {
-                ValidateBulkCount(ids.Length, nameof(ids));
-                var request = zendesk.Api.V2.Users.Update_many.ToPutRequestInformation(
-                    new Update_manyRequestBuilder.Update_manyPutRequestBody
-                    {
-                        UserUpdateRequest = new UserUpdateRequest { User = MapUserUpdate(change) }
-                    },
-                    cfg => cfg.QueryParameters.Ids = string.Join(',', ids));
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return JobConfirmation(json);
-            },
+        => ApplyUserUpdate(id, new ZendeskUserWrite { Suspended = suspended },
+            $"{(suspended ? "suspend" : "unsuspend")} user {id}", cancellationToken);
+
+    /// <summary>Sets which tickets a user may access.</summary>
+    [McpServerTool(Name = "users_ticket_restriction_set", ReadOnly = false, Destructive = false,
+        Idempotent = true, OpenWorld = false)]
+    [Description(
+        "Set which tickets a user may access (a permission change): organization|groups|assigned|requested. " +
+        "Returns {id, updated_at, ticket_restriction}. Write op honoring server execution mode: rejected " +
+        "read-only, simulated (no changes) dry-run.")]
+    public Task<object> TicketRestrictionSet(
+        [Description("Numeric Zendesk user id.")]
+        long id,
+        [Description("organization|groups|assigned|requested.")]
+        string ticketRestriction,
+        CancellationToken cancellationToken)
+        => ApplyUserUpdate(id, new ZendeskUserWrite { TicketRestriction = ticketRestriction },
+            $"set the ticket access restriction of user {id} to '{ticketRestriction}'", cancellationToken);
+
+    /// <summary>Sets a user's name.</summary>
+    [McpServerTool(Name = "users_name_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a user's display name. Returns {id, updated_at, name}. Write op honoring server execution mode: " +
+        "rejected read-only, simulated (no changes) dry-run.")]
+    public Task<object> NameSet(
+        [Description("Numeric Zendesk user id.")]
+        long id,
+        [Description("New display name.")] string name,
+        CancellationToken cancellationToken)
+        => ApplyUserUpdate(id, new ZendeskUserWrite { Name = name }, $"set the name of user {id}", cancellationToken);
+
+    /// <summary>Sets a user's phone number.</summary>
+    [McpServerTool(Name = "users_phone_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a user's phone number. To manage e-mail/social identities use the users_identities_* tools. Returns " +
+        "{id, updated_at, phone}. Write op honoring server execution mode: rejected read-only, simulated (no " +
+        "changes) dry-run.")]
+    public Task<object> PhoneSet(
+        [Description("Numeric Zendesk user id.")]
+        long id,
+        [Description("New phone number.")] string phone,
+        CancellationToken cancellationToken)
+        => ApplyUserUpdate(id, new ZendeskUserWrite { Phone = phone }, $"set the phone number of user {id}",
+            cancellationToken);
+
+    /// <summary>Sets a user's default organization.</summary>
+    [McpServerTool(Name = "users_organization_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a user's default organization by id — WARNING: this REMOVES the user's other organization " +
+        "memberships. To add a membership without removing others use organizations_memberships_create. Returns " +
+        "{id, updated_at, organization_id}. Write op honoring server execution mode: rejected read-only, simulated " +
+        "(no changes) dry-run.")]
+    public Task<object> OrganizationSet(
+        [Description("Numeric Zendesk user id.")]
+        long id,
+        [Description("Numeric organization id.")]
+        long organizationId,
+        CancellationToken cancellationToken)
+        => ApplyUserUpdate(id, new ZendeskUserWrite { OrganizationId = organizationId },
+            $"set the default organization of user {id} to {organizationId}", cancellationToken);
+
+    /// <summary>Sets a user's notes and/or details.</summary>
+    [McpServerTool(Name = "users_notes_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a user's agent-only notes and/or details fields (free text; provide at least one). Returns {id, " +
+        "updated_at} plus the fields you set. Write op honoring server execution mode: rejected read-only, " +
+        "simulated (no changes) dry-run.")]
+    public Task<object> NotesSet(
+        [Description("Numeric Zendesk user id.")]
+        long id,
+        [Description("Agent-only notes (free text). Provide notes and/or details.")]
+        string? notes = null,
+        [Description("Agent-only details (free text). Provide notes and/or details.")]
+        string? details = null,
+        CancellationToken cancellationToken = default)
+        => ApplyUserUpdate(id, new ZendeskUserWrite { Notes = notes, Details = details },
+            $"set notes/details on user {id}", cancellationToken,
             () =>
             {
-                ValidateBulkCount(ids.Length, nameof(ids));
-                // The digest pairs every target id with the shared change so each row shows which record is
-                // addressed and which fields would change.
-                return ZendeskDryRunResult.ForBulk($"update {ids.Length} users with the same change",
-                    "update", "users", ids.Select(id => change with { Id = id }));
+                if (notes is null && details is null)
+                    throw new ArgumentException("Provide notes and/or details.", nameof(notes));
             });
 
-    /// <summary>Applies per-user changes to up to 100 Zendesk users as an async job.</summary>
-    [McpServerTool(Name = "users_update_many_batch", ReadOnly = false, Destructive = false,
-        Idempotent = false, OpenWorld = false)]
+    /// <summary>Replaces a user's whole tag set.</summary>
+    [McpServerTool(Name = "users_tags_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
     [Description(
-        "Applies PER-USER changes to up to 100 Zendesk users as an async job — every item must carry its 'id'. " +
-        "For one identical change to many users use users_update_many. Returns {id, status}; poll " +
-        "job_statuses_get by id until completed. Write op honoring server execution mode: rejected " +
-        "read-only, simulated (no changes) dry-run.")]
-    public Task<object> UpdateManyBatch(
-        [Description("Per-user changes (1-100 per call); every item MUST include the 'id' of the user to update.")]
-        ZendeskUserWrite[] users,
+        "REPLACE a user's whole tag set with the given tags (pass an empty list to clear). Returns {id, " +
+        "updated_at, tags}. Write op honoring server execution mode: rejected read-only, simulated (no changes) " +
+        "dry-run.")]
+    public Task<object> TagsSet(
+        [Description("Numeric Zendesk user id.")]
+        long id,
+        [Description("Complete new tag set; existing tags not listed here are removed.")]
+        string[] tags,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
-            $"update {users.Length} users with per-user changes",
-            async () =>
-            {
-                ValidateBulkCount(users.Length, nameof(users));
-                ValidateBatchIds(users);
-                var request = zendesk.Api.V2.Users.Update_many.ToPutRequestInformation(
-                    new Update_manyRequestBuilder.Update_manyPutRequestBody
-                    {
-                        UsersRequest = new UsersRequest { Users = users.Select(MapUser).ToList() }
-                    });
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return JobConfirmation(json);
-            },
+        => ApplyUserUpdate(id, new ZendeskUserWrite { Tags = tags }, $"replace the tag set of user {id}",
+            cancellationToken);
+
+    /// <summary>Sets a user's custom field values.</summary>
+    [McpServerTool(Name = "users_fields_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set custom user-field values — a JSON object keyed by each field's KEY (not a numeric id): " +
+        "{\"<field_key>\": <value>}. Value type follows the field type (dropdown/multiselect=option tag value, " +
+        "checkbox=boolean, date=\"YYYY-MM-DD\", number). Only the listed fields change. Get field keys from your " +
+        "Zendesk admin or from user_fields on an existing record (users_get). Returns {id, updated_at} plus the " +
+        "fields you set. Write op honoring server execution mode: rejected read-only, simulated (no changes) " +
+        "dry-run.")]
+    public Task<object> FieldsSet(
+        [Description("Numeric Zendesk user id.")]
+        long id,
+        [Description("Custom user-field values, keyed by field key: {\"<field_key>\": <value>}.")]
+        Dictionary<string, object?> userFields,
+        CancellationToken cancellationToken)
+        => ApplyUserUpdate(id, new ZendeskUserWrite { UserFields = userFields },
+            $"set {userFields.Count} custom field(s) on user {id}", cancellationToken,
             () =>
             {
-                ValidateBulkCount(users.Length, nameof(users));
-                ValidateBatchIds(users);
-                return ZendeskDryRunResult.ForBulk($"update {users.Length} users with per-user changes",
-                    "update", "users", users);
+                if (userFields.Count == 0)
+                    throw new ArgumentException("Provide at least one custom field value.", nameof(userFields));
             });
 
     /// <summary>Merges one end user into another; the loser is absorbed and the winner survives.</summary>
@@ -453,8 +515,8 @@ public sealed class ZendeskUserWriteTools(
     [McpServerTool(Name = "users_identities_make_primary", ReadOnly = false, Destructive = false,
         Idempotent = true, OpenWorld = false)]
     [Description(
-        "Makes an identity the Zendesk user's PRIMARY identity (the way to change a user's primary e-mail — " +
-        "users_update cannot). Returns ONLY the affected identity row (at minimum {id, user_id, primary:true}); " +
+        "Makes an identity the Zendesk user's PRIMARY identity (the way to change a user's primary e-mail — a " +
+        "profile-field update cannot). Returns ONLY the affected identity row (at minimum {id, user_id, primary:true}); " +
         "full list via users_identities_list. Write op honoring server execution mode: rejected read-only, " +
         "simulated (no changes) dry-run.")]
     public Task<object> IdentitiesMakePrimary(
@@ -563,12 +625,36 @@ public sealed class ZendeskUserWriteTools(
             throw new ArgumentException("Zendesk bulk operations accept between 1 and 100 items.", paramName);
     }
 
-    /// <summary>Validates that every batch-update item carries the id of the user it addresses.</summary>
-    private static void ValidateBatchIds(ZendeskUserWrite[] users)
-    {
-        if (users.Any(u => u.Id is null))
-            throw new ArgumentException("Every batch update item must carry Id.", nameof(users));
-    }
+    /// <summary>
+    ///     The shared partial-update path for the single-action user setters: sends the narrow write model as a
+    ///     <c>PUT /users/{id}</c> and returns the lean update confirmation with echo-of-change. The optional
+    ///     <paramref name="validate" /> hook runs INSIDE the execution-mode gate (so read-only rejects first). The
+    ///     dry-run echoes exactly the fields the setter set (nulls omitted).
+    /// </summary>
+    private Task<object> ApplyUserUpdate(long id, ZendeskUserWrite change, string action,
+        CancellationToken cancellationToken, Action? validate = null)
+        => ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
+            async () =>
+            {
+                validate?.Invoke();
+                var request = zendesk.Api.V2.Users[id].ToPutRequestInformation(
+                    new UserUpdateRequest { User = MapUserUpdate(change) });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return UpdateConfirmation(UnwrapEntity(json, "user"), change);
+            },
+            () =>
+            {
+                validate?.Invoke();
+                var echo = new JsonObject { ["id"] = id };
+                foreach (var (name, value) in JsonSerializer.SerializeToNode(change, WriteJsonOptions)!.AsObject())
+                    if (name != "id")
+                        echo[name] = value?.DeepClone();
+                return new ZendeskDryRunResult
+                {
+                    Description = $"Dry run — no changes were made. This call would {action}.",
+                    Request = echo
+                };
+            });
 
     /// <summary>
     ///     Unwraps the singular entity envelope of a write response (<c>{"user": {...}}</c> /
@@ -708,6 +794,7 @@ public sealed class ZendeskUserWriteTools(
             Notes = user.Notes,
             Details = user.Details,
             Tags = user.Tags?.ToList(),
+            TicketRestriction = user.TicketRestriction,
             SkipVerifyEmail = user.SkipVerifyEmail
         };
         if (user.UserFields is not null)
@@ -741,6 +828,7 @@ public sealed class ZendeskUserWriteTools(
             Notes = user.Notes,
             Details = user.Details,
             Tags = user.Tags?.ToList(),
+            TicketRestriction = user.TicketRestriction,
             SkipVerifyEmail = user.SkipVerifyEmail
         };
         if (user.Id is not null) input.AdditionalData["id"] = user.Id.Value;

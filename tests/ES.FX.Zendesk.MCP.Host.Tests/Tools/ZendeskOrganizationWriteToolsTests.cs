@@ -177,38 +177,84 @@ public class ZendeskOrganizationWriteToolsTests
         Assert.Equal("2026-02-01T00:00:00Z", json.GetProperty("updated_at").GetString());
     }
 
+    // ── Single-action organization setters (decomposed from the former organizations_update) ──────────────────
+
     [Fact]
-    public async Task Update_Puts_Organization_Envelope()
+    public async Task NameSet_Puts_Name_And_Echoes_Server_State()
     {
         var (tools, harness) = Create();
         harness.EnqueueJson(
-            """
-            {"organization":{"id":42,"name":"Acme","notes":"vip","domain_names":["acme.com","acme.io"],
-             "details":"untouched","updated_at":"2026-03-01T00:00:00Z"}}
-            """);
-        var write = new ZendeskOrganizationWrite { Notes = "vip", DomainNames = ["acme.com", "acme.io"] };
+            """{"organization":{"id":42,"name":"Acme Inc","updated_at":"2026-03-01T00:00:00Z"}}""");
 
-        var result = await tools.Update(42, write, TestContext.Current.CancellationToken);
+        var result = await tools.NameSet(42, "Acme", TestContext.Current.CancellationToken);
 
         var request = harness.Request;
         Assert.Equal(HttpMethod.Put, request.Method);
         Assert.Equal("/api/v2/organizations/42", request.Path);
-        var organization = ParseBody(request).GetProperty("organization");
-        Assert.Equal("vip", organization.GetProperty("notes").GetString());
-        Assert.Equal(2, organization.GetProperty("domain_names").GetArrayLength());
-        // The update confirmation: {id, updated_at} plus the server-state values of EXACTLY the sent fields...
+        Assert.Equal("Acme", ParseBody(request).GetProperty("organization").GetProperty("name").GetString());
         var json = Assert.IsType<JsonElement>(result);
         Assert.Equal(42, json.GetProperty("id").GetInt64());
         Assert.Equal("2026-03-01T00:00:00Z", json.GetProperty("updated_at").GetString());
-        Assert.Equal("vip", json.GetProperty("notes").GetString());
-        Assert.Equal(2, json.GetProperty("domain_names").GetArrayLength());
-        // ...and nothing else — untouched fields don't ride along.
-        Assert.False(json.TryGetProperty("name", out _));
-        Assert.False(json.TryGetProperty("details", out _));
+        // Echo-of-change: the server's stored name (a rule appended " Inc").
+        Assert.Equal("Acme Inc", json.GetProperty("name").GetString());
     }
 
     [Fact]
-    public async Task Update_Echoes_The_Server_State_Of_Requested_Custom_Fields_Only()
+    public async Task DomainsSet_Overwrites_The_Domain_List()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson(
+            """
+            {"organization":{"id":42,"domain_names":["acme.com","acme.io"],"updated_at":"2026-03-01T00:00:00Z"}}
+            """);
+
+        var result = await tools.DomainsSet(42, ["acme.com", "acme.io"], TestContext.Current.CancellationToken);
+
+        var organization = ParseBody(harness.Request).GetProperty("organization");
+        Assert.Equal(2, organization.GetProperty("domain_names").GetArrayLength());
+        var json = Assert.IsType<JsonElement>(result);
+        Assert.Equal(2, json.GetProperty("domain_names").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task NotesSet_Puts_Notes_And_Details()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson("""{"organization":{"id":42,"updated_at":"2026-03-01T00:00:00Z"}}""");
+
+        await tools.NotesSet(42, "vip", "since 2020", TestContext.Current.CancellationToken);
+
+        var organization = ParseBody(harness.Request).GetProperty("organization");
+        Assert.Equal("vip", organization.GetProperty("notes").GetString());
+        Assert.Equal("since 2020", organization.GetProperty("details").GetString());
+    }
+
+    [Fact]
+    public async Task NotesSet_Rejects_Empty_Without_Calling_Zendesk()
+    {
+        var (tools, harness) = Create();
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            tools.NotesSet(42, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Contains("Provide notes and/or details", exception.Message);
+        Assert.Empty(harness.Requests);
+    }
+
+    [Fact]
+    public async Task TagsSet_Replaces_The_Tag_Set()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson("""{"organization":{"id":42,"tags":["vip"],"updated_at":"2026-03-01T00:00:00Z"}}""");
+
+        await tools.TagsSet(42, ["vip"], TestContext.Current.CancellationToken);
+
+        Assert.Equal("vip",
+            ParseBody(harness.Request).GetProperty("organization").GetProperty("tags")[0].GetString());
+    }
+
+    [Fact]
+    public async Task FieldsSet_Echoes_Only_The_Requested_Key()
     {
         var (tools, harness) = Create();
         harness.EnqueueJson(
@@ -216,72 +262,30 @@ public class ZendeskOrganizationWriteToolsTests
             {"organization":{"id":42,"updated_at":"2026-03-01T00:00:00Z",
              "organization_fields":{"plan":"silver","region":"eu"}}}
             """);
-        var write = new ZendeskOrganizationWrite
-        {
-            OrganizationFields = new Dictionary<string, object?> { ["plan"] = "gold" }
-        };
 
-        var result = await tools.Update(42, write, TestContext.Current.CancellationToken);
+        var result = await tools.FieldsSet(42,
+            new Dictionary<string, object?> { ["plan"] = "gold" }, TestContext.Current.CancellationToken);
 
+        Assert.Equal("gold", ParseBody(harness.Request).GetProperty("organization")
+            .GetProperty("organization_fields").GetProperty("plan").GetString());
         var json = Assert.IsType<JsonElement>(result);
-        // The echo carries the SERVER's value of the requested key (a business rule overrode gold → silver)...
+        // The echo carries the SERVER value of the requested key only (a business rule overrode gold → silver).
         Assert.Equal("silver", json.GetProperty("organization_fields").GetProperty("plan").GetString());
-        // ...and only the requested keys — the rest of the custom-field object stays out.
         Assert.False(json.GetProperty("organization_fields").TryGetProperty("region", out _));
     }
 
     [Fact]
-    public async Task UpdateMany_Puts_Same_Change_With_Ids_Query()
+    public async Task SharingSet_Puts_The_Flags()
     {
         var (tools, harness) = Create();
-        harness.EnqueueJson("""{"job_status":{"id":"job-2","status":"queued"}}""");
-        var change = new ZendeskOrganizationWrite { Tags = ["vip"] };
+        harness.EnqueueJson(
+            """{"organization":{"id":42,"shared_tickets":true,"updated_at":"2026-03-01T00:00:00Z"}}""");
 
-        var result = await tools.UpdateMany([1, 2, 3], change, TestContext.Current.CancellationToken);
+        await tools.SharingSet(42, true, false, TestContext.Current.CancellationToken);
 
-        var request = harness.Request;
-        Assert.Equal(HttpMethod.Put, request.Method);
-        Assert.Equal("/api/v2/organizations/update_many", request.Path);
-        Assert.Contains("ids=1%2C2%2C3", request.Query);
-        var organization = ParseBody(request).GetProperty("organization");
-        Assert.Equal("vip", organization.GetProperty("tags")[0].GetString());
-        var json = Assert.IsType<JsonElement>(result);
-        Assert.Equal("job-2", json.GetProperty("id").GetString());
-        Assert.Equal("queued", json.GetProperty("status").GetString());
-    }
-
-    [Fact]
-    public async Task UpdateManyBatch_Puts_Batch_Envelope()
-    {
-        var (tools, harness) = Create();
-        harness.EnqueueJson("""{"job_status":{"id":"job-3","status":"queued"}}""");
-        var writes = new[] { new ZendeskOrganizationWrite { Id = 1, Notes = "a" } };
-
-        var result = await tools.UpdateManyBatch(writes, TestContext.Current.CancellationToken);
-
-        var request = harness.Request;
-        Assert.Equal(HttpMethod.Put, request.Method);
-        Assert.Equal("/api/v2/organizations/update_many", request.Path);
-        Assert.DoesNotContain("ids=", request.Query);
-        var organizations = ParseBody(request).GetProperty("organizations");
-        Assert.Equal(1, organizations[0].GetProperty("id").GetInt64());
-        Assert.Equal("a", organizations[0].GetProperty("notes").GetString());
-        var json = Assert.IsType<JsonElement>(result);
-        Assert.Equal("job-3", json.GetProperty("id").GetString());
-        Assert.Equal("queued", json.GetProperty("status").GetString());
-    }
-
-    [Fact]
-    public async Task UpdateManyBatch_Rejects_Items_Without_Id()
-    {
-        var (tools, harness) = Create();
-        var writes = new[] { new ZendeskOrganizationWrite { Notes = "a" } };
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-            tools.UpdateManyBatch(writes, TestContext.Current.CancellationToken));
-
-        Assert.StartsWith("Every batch update item must carry Id.", exception.Message);
-        Assert.Empty(harness.Requests);
+        var organization = ParseBody(harness.Request).GetProperty("organization");
+        Assert.True(organization.GetProperty("shared_tickets").GetBoolean());
+        Assert.False(organization.GetProperty("shared_comments").GetBoolean());
     }
 
     [Fact]
@@ -548,40 +552,18 @@ public class ZendeskOrganizationWriteToolsTests
     }
 
     [Fact]
-    public async Task DryRun_UpdateMany_Digest_Carries_The_Target_Ids_And_Changed_Field_Names()
+    public async Task DryRun_Setter_Echoes_The_Field_And_Sends_Nothing()
     {
         var (tools, harness) = Create(McpExecutionMode.DryRun);
-        var change = new ZendeskOrganizationWrite { Tags = ["vip"], Notes = "check" };
 
-        var result = await tools.UpdateMany([1, 2], change, TestContext.Current.CancellationToken);
+        var result = await tools.TagsSet(42, ["vip"], TestContext.Current.CancellationToken);
 
         var dryRun = Assert.IsType<ZendeskDryRunResult>(result);
-        Assert.Empty(harness.Requests);
-        var digest = JsonSerializer.SerializeToElement(dryRun.Request);
-        Assert.Equal("update", digest.GetProperty("action").GetString());
-        Assert.Equal("organizations", digest.GetProperty("target").GetString());
-        Assert.Equal(2, digest.GetProperty("count").GetInt32());
-        // The shared change is merged per target: {index, id, fields:[changed field names]}.
-        var first = digest.GetProperty("items")[0];
-        Assert.Equal(0, first.GetProperty("index").GetInt32());
-        Assert.Equal(1, first.GetProperty("id").GetInt64());
-        var fields = first.GetProperty("fields").EnumerateArray().Select(field => field.GetString()).ToArray();
-        Assert.Contains("tags", fields);
-        Assert.Contains("notes", fields);
-        Assert.DoesNotContain("name", fields);
-        Assert.Equal(2, digest.GetProperty("items")[1].GetProperty("id").GetInt64());
-    }
-
-    [Fact]
-    public async Task DryRun_UpdateManyBatch_Still_Rejects_Items_Without_Id()
-    {
-        var (tools, harness) = Create(McpExecutionMode.DryRun);
-        var writes = new[] { new ZendeskOrganizationWrite { Notes = "a" } };
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-            tools.UpdateManyBatch(writes, TestContext.Current.CancellationToken));
-
-        Assert.StartsWith("Every batch update item must carry Id.", exception.Message);
+        Assert.False(dryRun.Executed);
+        Assert.Contains("replace the tag set of organization 42", dryRun.Description);
+        var echo = JsonSerializer.SerializeToElement(dryRun.Request);
+        Assert.Equal(42, echo.GetProperty("id").GetInt64());
+        Assert.Equal("vip", echo.GetProperty("tags")[0].GetString());
         Assert.Empty(harness.Requests);
     }
 

@@ -138,73 +138,6 @@ public class ZendeskTicketWriteToolsTests
     }
 
     [Fact]
-    public async Task Update_Puts_Ticket_Envelope_And_Returns_The_Echo_Of_Change()
-    {
-        var harness = new ZendeskToolHarness();
-        harness.EnqueueJson(
-            """
-            {"ticket":{"id":42,"subject":"Printer","status":"open","priority":"high",
-             "updated_at":"2026-07-01T10:00:05Z","tags":["vip"]},
-             "audit":{"id":1001,"events":[{"id":1,"type":"Change","field_name":"status"}]}}
-            """);
-        var tools = CreateTools(harness);
-        var stamp = new DateTimeOffset(2026, 7, 1, 10, 0, 0, TimeSpan.Zero);
-        var write = new ZendeskTicketWrite
-        {
-            Status = "solved",
-            Comment = new ZendeskTicketCommentWrite { Body = "Fixed.", Public = true },
-            SafeUpdate = true,
-            UpdatedStamp = stamp
-        };
-
-        var result = await tools.Update(42, write, TestContext.Current.CancellationToken);
-
-        var request = harness.Request;
-        Assert.Equal(HttpMethod.Put, request.Method);
-        Assert.Equal("/api/v2/tickets/42", request.Path);
-        using var body = JsonDocument.Parse(request.Body!);
-        var ticket = body.RootElement.GetProperty("ticket");
-        Assert.Equal("solved", ticket.GetProperty("status").GetString());
-        Assert.True(ticket.GetProperty("comment").GetProperty("public").GetBoolean());
-        Assert.True(ticket.GetProperty("safe_update").GetBoolean());
-        Assert.Equal(stamp, ticket.GetProperty("updated_stamp").GetDateTimeOffset());
-        Assert.False(ticket.TryGetProperty("id", out _)); // unset fields are omitted on the wire
-        var json = Assert.IsType<JsonElement>(result);
-        Assert.Equal(42, json.GetProperty("id").GetInt64());
-        Assert.Equal("2026-07-01T10:00:05Z", json.GetProperty("updated_at").GetString());
-        Assert.Equal(1001, json.GetProperty("audit_id").GetInt64());
-        // Echo-of-change: the SERVER-state value of the one ticket field the request set — a trigger kept the
-        // ticket 'open' despite the requested 'solved', and the echo reveals it without a follow-up tickets_get.
-        Assert.Equal("open", json.GetProperty("status").GetString());
-        // Fields the request did not touch are not echoed; request-only controls have no state counterpart;
-        // the echoed audit member is stripped (audit_id above survives).
-        Assert.False(json.TryGetProperty("subject", out _));
-        Assert.False(json.TryGetProperty("priority", out _));
-        Assert.False(json.TryGetProperty("tags", out _));
-        Assert.False(json.TryGetProperty("comment", out _));
-        Assert.False(json.TryGetProperty("safe_update", out _));
-        Assert.False(json.TryGetProperty("audit", out _));
-        Assert.False(json.TryGetProperty("ticket", out _));
-    }
-
-    [Fact]
-    public async Task Update_Rejects_Tag_Deltas_Without_Calling_Zendesk()
-    {
-        // The OAS models additional_tags/remove_tags only on the update_many bulk schema — the single update
-        // takes a plain ticket object, where Zendesk silently ignores them. Rejected loudly instead.
-        var harness = new ZendeskToolHarness();
-        var tools = CreateTools(harness);
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-            tools.Update(42, new ZendeskTicketWrite { AdditionalTags = ["escalated"] },
-                TestContext.Current.CancellationToken));
-
-        Assert.Contains("tickets_tags_add", exception.Message);
-        Assert.Contains("tickets_update_many", exception.Message);
-        Assert.Empty(harness.Requests);
-    }
-
-    [Fact]
     public async Task Create_Rejects_Tag_Deltas_Without_Calling_Zendesk()
     {
         var harness = new ZendeskToolHarness();
@@ -215,6 +148,8 @@ public class ZendeskTicketWriteToolsTests
                 TestContext.Current.CancellationToken));
 
         Assert.Contains("additional_tags/remove_tags are not supported", exception.Message);
+        // The redirect points at the surviving bulk tag-delta tools.
+        Assert.Contains("tickets_tags_add_many", exception.Message);
         Assert.Empty(harness.Requests);
     }
 
@@ -236,55 +171,165 @@ public class ZendeskTicketWriteToolsTests
         Assert.Empty(harness.Requests);
     }
 
+    // ── Single-action ticket setters (decomposed from the former tickets_update) ──────────────────────────────
+
     [Fact]
-    public async Task Update_Rejects_Tag_Deltas_In_Dry_Run_Mode_Too()
+    public async Task StatusSet_Puts_Status_And_Returns_The_Echo_Of_Change()
     {
-        // The dry-run branch validates the same contract, so the simulation teaches the agent the redirect.
         var harness = new ZendeskToolHarness();
-        var tools = CreateTools(harness, McpExecutionMode.DryRun);
+        harness.EnqueueJson(
+            """{"ticket":{"id":42,"status":"open","updated_at":"2026-07-01T10:00:05Z"},"audit":{"id":1001}}""");
+        var tools = CreateTools(harness);
 
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-            tools.Update(42, new ZendeskTicketWrite { RemoveTags = ["vip"] },
-                TestContext.Current.CancellationToken));
+        var result = await tools.StatusSet(42, "solved", cancellationToken: TestContext.Current.CancellationToken);
 
-        Assert.Contains("tickets_tags_remove", exception.Message);
-        Assert.Empty(harness.Requests);
+        var request = harness.Request;
+        Assert.Equal(HttpMethod.Put, request.Method);
+        Assert.Equal("/api/v2/tickets/42", request.Path);
+        using var body = JsonDocument.Parse(request.Body!);
+        Assert.Equal("solved", body.RootElement.GetProperty("ticket").GetProperty("status").GetString());
+        var json = Assert.IsType<JsonElement>(result);
+        Assert.Equal(42, json.GetProperty("id").GetInt64());
+        Assert.Equal("2026-07-01T10:00:05Z", json.GetProperty("updated_at").GetString());
+        Assert.Equal(1001, json.GetProperty("audit_id").GetInt64());
+        // Echo-of-change: the SERVER value of the one field set — a trigger kept it 'open' despite 'solved'.
+        Assert.Equal("open", json.GetProperty("status").GetString());
     }
 
     [Fact]
-    public async Task Update_Passes_Unknown_Status_Through_Verbatim()
+    public async Task StatusSet_Applies_The_Optimistic_Lock_Stamp()
     {
-        // The tool maps known status/priority/type strings onto the generated enums; anything else is sent
-        // as-is so Zendesk stays the validator (parity with the old client).
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"ticket":{"id":42,"status":"solved"}}""");
+        var tools = CreateTools(harness);
+        var stamp = new DateTimeOffset(2026, 7, 1, 10, 0, 0, TimeSpan.Zero);
+
+        await tools.StatusSet(42, "solved", updatedStamp: stamp,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        var ticket = body.RootElement.GetProperty("ticket");
+        Assert.True(ticket.GetProperty("safe_update").GetBoolean());
+        Assert.Equal(stamp, ticket.GetProperty("updated_stamp").GetDateTimeOffset());
+    }
+
+    [Fact]
+    public async Task StatusSet_Passes_Unknown_Status_Through_Verbatim()
+    {
+        // Known status/priority/type strings map onto the generated enums; anything else is sent as-is so
+        // Zendesk stays the validator (parity with the composite it replaced).
         var harness = new ZendeskToolHarness();
         harness.EnqueueJson("""{"ticket":{"id":42}}""");
         var tools = CreateTools(harness);
 
-        await tools.Update(42, new ZendeskTicketWrite { Status = "reopened" },
-            TestContext.Current.CancellationToken);
+        await tools.StatusSet(42, "reopened", cancellationToken: TestContext.Current.CancellationToken);
 
         using var body = JsonDocument.Parse(harness.Request.Body!);
         Assert.Equal("reopened", body.RootElement.GetProperty("ticket").GetProperty("status").GetString());
     }
 
     [Fact]
-    public async Task UpdateMany_Puts_Shared_Change_With_Ids_Query()
+    public async Task ReplyPublic_Puts_A_Public_Comment()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"ticket":{"id":42,"updated_at":"2026-07-01T10:00:05Z"},"audit":{"id":1002}}""");
+        var tools = CreateTools(harness);
+
+        var result = await tools.ReplyPublic(42, "Thanks, fixed!", uploads: ["tok1"],
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var request = harness.Request;
+        Assert.Equal(HttpMethod.Put, request.Method);
+        Assert.Equal("/api/v2/tickets/42", request.Path);
+        using var body = JsonDocument.Parse(request.Body!);
+        var comment = body.RootElement.GetProperty("ticket").GetProperty("comment");
+        Assert.Equal("Thanks, fixed!", comment.GetProperty("body").GetString());
+        Assert.True(comment.GetProperty("public").GetBoolean());
+        Assert.Equal("tok1", comment.GetProperty("uploads")[0].GetString());
+        var json = Assert.IsType<JsonElement>(result);
+        Assert.Equal(1002, json.GetProperty("audit_id").GetInt64());
+    }
+
+    [Fact]
+    public async Task NoteAdd_Puts_An_Internal_Comment()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"ticket":{"id":42}}""");
+        var tools = CreateTools(harness);
+
+        await tools.NoteAdd(42, "Internal only.", cancellationToken: TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        var comment = body.RootElement.GetProperty("ticket").GetProperty("comment");
+        Assert.Equal("Internal only.", comment.GetProperty("body").GetString());
+        // The whole reason for the split: a note is NEVER public.
+        Assert.False(comment.GetProperty("public").GetBoolean());
+    }
+
+    [Fact]
+    public async Task ReplyPublic_Rejects_Missing_Body_Without_Calling_Zendesk()
+    {
+        var harness = new ZendeskToolHarness();
+        var tools = CreateTools(harness);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            tools.ReplyPublic(42, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Contains("exactly one of body or htmlBody", exception.Message);
+        Assert.Empty(harness.Requests);
+    }
+
+    [Fact]
+    public async Task AssigneeSet_Puts_Assignee_And_Optional_Group()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"ticket":{"id":42,"assignee_id":7}}""");
+        var tools = CreateTools(harness);
+
+        await tools.AssigneeSet(42, 7, 3, cancellationToken: TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        var ticket = body.RootElement.GetProperty("ticket");
+        Assert.Equal(7, ticket.GetProperty("assignee_id").GetInt64());
+        Assert.Equal(3, ticket.GetProperty("group_id").GetInt64());
+    }
+
+    [Fact]
+    public async Task CustomFieldsSet_Echoes_Only_The_Requested_Field()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson(
+            """{"ticket":{"id":42,"custom_fields":[{"id":100,"value":"gold"},{"id":200,"value":"secret"}]}}""");
+        var tools = CreateTools(harness);
+
+        var result = await tools.CustomFieldsSet(42,
+            [new ZendeskCustomFieldWrite { Id = 100, Value = "gold" }],
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var json = Assert.IsType<JsonElement>(result);
+        var echoed = json.GetProperty("custom_fields");
+        // Only the field the request set is echoed — the unrelated custom field (200) is not leaked.
+        Assert.Equal(1, echoed.GetArrayLength());
+        Assert.Equal(100, echoed[0].GetProperty("id").GetInt64());
+    }
+
+    // ── Bulk single-action ticket setters ─────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task StatusSetMany_Puts_Shared_Status_With_Ids_Query()
     {
         var harness = new ZendeskToolHarness();
         harness.EnqueueJson("""{"job_status":{"id":"job-2","status":"queued"}}""");
         var tools = CreateTools(harness);
-        var change = new ZendeskTicketWrite { Priority = "high", AdditionalTags = ["escalated"] };
 
-        var result = await tools.UpdateMany([1, 2, 3], change, TestContext.Current.CancellationToken);
+        var result = await tools.StatusSetMany([1, 2, 3], "solved", TestContext.Current.CancellationToken);
 
         var request = harness.Request;
         Assert.Equal(HttpMethod.Put, request.Method);
         Assert.Equal("/api/v2/tickets/update_many", request.Path);
         Assert.Contains("ids=1%2C2%2C3", request.Query);
         using var body = JsonDocument.Parse(request.Body!);
-        var ticket = body.RootElement.GetProperty("ticket");
-        Assert.Equal("high", ticket.GetProperty("priority").GetString());
-        Assert.Equal("escalated", ticket.GetProperty("additional_tags")[0].GetString());
+        Assert.Equal("solved", body.RootElement.GetProperty("ticket").GetProperty("status").GetString());
         Assert.False(body.RootElement.TryGetProperty("tickets", out _));
         var json = Assert.IsType<JsonElement>(result);
         Assert.Equal("job-2", json.GetProperty("id").GetString());
@@ -292,67 +337,63 @@ public class ZendeskTicketWriteToolsTests
     }
 
     [Fact]
-    public async Task UpdateMany_Rejects_More_Than_100_Ids()
+    public async Task TagsAddMany_Puts_Additional_Tags()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"job_status":{"id":"job-3","status":"queued"}}""");
+        var tools = CreateTools(harness);
+
+        await tools.TagsAddMany([1, 2], ["escalated"], TestContext.Current.CancellationToken);
+
+        var request = harness.Request;
+        Assert.Equal("/api/v2/tickets/update_many", request.Path);
+        Assert.Contains("ids=1%2C2", request.Query);
+        using var body = JsonDocument.Parse(request.Body!);
+        Assert.Equal("escalated",
+            body.RootElement.GetProperty("ticket").GetProperty("additional_tags")[0].GetString());
+    }
+
+    [Fact]
+    public async Task ReplyPublicMany_Puts_A_Public_Comment_To_Many()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"job_status":{"id":"job-4","status":"queued"}}""");
+        var tools = CreateTools(harness);
+
+        await tools.ReplyPublicMany([1, 2], "Bulk reply.",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        var comment = body.RootElement.GetProperty("ticket").GetProperty("comment");
+        Assert.Equal("Bulk reply.", comment.GetProperty("body").GetString());
+        Assert.True(comment.GetProperty("public").GetBoolean());
+    }
+
+    [Fact]
+    public async Task NoteAddMany_Rejects_Missing_Body_Without_Calling_Zendesk()
+    {
+        var harness = new ZendeskToolHarness();
+        var tools = CreateTools(harness);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            tools.NoteAddMany([1, 2], cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Contains("exactly one of body or htmlBody", exception.Message);
+        Assert.Empty(harness.Requests);
+    }
+
+    [Fact]
+    public async Task StatusSetMany_Rejects_More_Than_100_Ids()
     {
         var harness = new ZendeskToolHarness();
         var tools = CreateTools(harness);
         var ids = Enumerable.Range(1, 101).Select(i => (long)i).ToArray();
 
         var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-            tools.UpdateMany(ids, new ZendeskTicketWrite { Priority = "high" },
-                TestContext.Current.CancellationToken));
+            tools.StatusSetMany(ids, "open", TestContext.Current.CancellationToken));
 
         Assert.StartsWith("Zendesk bulk operations accept 1–100 items per call", exception.Message);
         Assert.Equal("ids", exception.ParamName);
-        Assert.Empty(harness.Requests);
-    }
-
-    [Fact]
-    public async Task UpdateManyBatch_Puts_Tickets_With_Ids()
-    {
-        var harness = new ZendeskToolHarness();
-        harness.EnqueueJson("""{"job_status":{"id":"job-3","status":"queued"}}""");
-        var tools = CreateTools(harness);
-        var writes = new[]
-        {
-            new ZendeskTicketWrite { Id = 1, Status = "open", AdditionalTags = ["a"], RemoveTags = ["b"] },
-            new ZendeskTicketWrite { Id = 2, Status = "pending" }
-        };
-
-        var result = await tools.UpdateManyBatch(writes, TestContext.Current.CancellationToken);
-
-        var request = harness.Request;
-        Assert.Equal(HttpMethod.Put, request.Method);
-        Assert.Equal("/api/v2/tickets/update_many", request.Path);
-        Assert.DoesNotContain("ids=", request.Query);
-        using var body = JsonDocument.Parse(request.Body!);
-        var tickets = body.RootElement.GetProperty("tickets");
-        Assert.Equal(1, tickets[0].GetProperty("id").GetInt64());
-        Assert.Equal("open", tickets[0].GetProperty("status").GetString());
-        Assert.Equal("a", tickets[0].GetProperty("additional_tags")[0].GetString());
-        Assert.Equal("b", tickets[0].GetProperty("remove_tags")[0].GetString());
-        Assert.Equal(2, tickets[1].GetProperty("id").GetInt64());
-        var json = Assert.IsType<JsonElement>(result);
-        Assert.Equal("job-3", json.GetProperty("id").GetString());
-        Assert.Equal("queued", json.GetProperty("status").GetString());
-    }
-
-    [Fact]
-    public async Task UpdateManyBatch_Rejects_Item_Missing_Id()
-    {
-        var harness = new ZendeskToolHarness();
-        var tools = CreateTools(harness);
-        var writes = new[]
-        {
-            new ZendeskTicketWrite { Id = 1, Status = "open" },
-            new ZendeskTicketWrite { Status = "pending" }
-        };
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-            tools.UpdateManyBatch(writes, TestContext.Current.CancellationToken));
-
-        Assert.StartsWith("Every batch update item must carry Id.", exception.Message);
-        Assert.Equal("tickets", exception.ParamName);
         Assert.Empty(harness.Requests);
     }
 
@@ -819,34 +860,34 @@ public class ZendeskTicketWriteToolsTests
     }
 
     [Fact]
-    public async Task DryRun_Returns_DryRunResult_And_Sends_Nothing()
+    public async Task DryRun_Single_Setter_Returns_DryRunResult_And_Sends_Nothing()
     {
         var harness = new ZendeskToolHarness();
         var tools = CreateTools(harness, McpExecutionMode.DryRun);
-        var write = new ZendeskTicketWrite { Status = "solved" };
 
-        var result = await tools.Update(42, write, TestContext.Current.CancellationToken);
+        var result = await tools.StatusSet(42, "solved", cancellationToken: TestContext.Current.CancellationToken);
 
-        // Single-entity dry-runs keep the VERBATIM request echo — that echo is the verification value.
+        // Single-setter dry-runs echo exactly the fields the setter would send — that echo is the verification value.
         var dryRun = Assert.IsType<ZendeskDryRunResult>(result);
         Assert.False(dryRun.Executed);
-        Assert.Contains("update ticket 42", dryRun.Description);
-        Assert.NotNull(dryRun.Request);
+        Assert.Contains("set ticket 42 status to 'solved'", dryRun.Description);
+        var echo = Assert.IsType<JsonObject>(dryRun.Request);
+        Assert.Equal(42L, (long?)echo["id"]);
+        Assert.Equal("solved", (string?)echo["status"]);
         Assert.Empty(harness.Requests);
     }
 
     [Fact]
-    public async Task DryRun_UpdateMany_Returns_A_Per_Id_Digest_And_Sends_Nothing()
+    public async Task DryRun_Bulk_Setter_Returns_A_Per_Id_Digest_And_Sends_Nothing()
     {
         var harness = new ZendeskToolHarness();
         var tools = CreateTools(harness, McpExecutionMode.DryRun);
-        var change = new ZendeskTicketWrite { Priority = "high", AdditionalTags = ["escalated"] };
 
-        var result = await tools.UpdateMany([1, 2], change, TestContext.Current.CancellationToken);
+        var result = await tools.StatusSetMany([1, 2], "solved", TestContext.Current.CancellationToken);
 
         var dryRun = Assert.IsType<ZendeskDryRunResult>(result);
         Assert.False(dryRun.Executed);
-        Assert.Contains("update 2 tickets", dryRun.Description);
+        Assert.Contains("set 2 tickets to status 'solved'", dryRun.Description);
         var digest = Assert.IsType<JsonObject>(dryRun.Request);
         Assert.Equal("update", (string?)digest["action"]);
         Assert.Equal("tickets", (string?)digest["target"]);
@@ -855,9 +896,7 @@ public class ZendeskTicketWriteToolsTests
         var items = Assert.IsType<JsonArray>(digest["items"]);
         Assert.Equal(1L, (long?)items[0]!["id"]);
         Assert.Equal(2L, (long?)items[1]!["id"]);
-        var fields = items[0]!["fields"]!.AsArray().Select(field => (string?)field).ToArray();
-        Assert.Contains("priority", fields);
-        Assert.Contains("additional_tags", fields);
+        Assert.Contains("status", items[0]!["fields"]!.AsArray().Select(field => (string?)field));
         Assert.Empty(harness.Requests);
     }
 

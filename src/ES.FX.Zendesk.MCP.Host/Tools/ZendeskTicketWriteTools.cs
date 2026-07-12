@@ -127,121 +127,392 @@ public sealed class ZendeskTicketWriteTools(
             });
     }
 
-    /// <summary>Updates a Zendesk ticket by id.</summary>
-    [McpServerTool(Name = "tickets_update", ReadOnly = false, Destructive = false, Idempotent = false,
-        OpenWorld = false)]
-    [Description(
-        "Update a ticket by id — only fields set on the write model are sent; the rest untouched. Reply to " +
-        "requester: comment.body + comment.public=true; internal agent note: comment.public=false (Zendesk " +
-        "defaults to public — always set the flag explicitly when commenting). additional_tags/remove_tags NOT " +
-        "supported here — use tickets_tags_add/tickets_tags_remove for tag deltas on one ticket, or " +
-        "tickets_update_many for bulk. Concurrent updates fail 409 Conflict; for optimistic locking set " +
-        "safe_update=true + updated_stamp (ticket's latest updated_at from tickets_get). Returns {id, updated_at, " +
-        "audit_id} plus server-state values of exactly the fields you sent — a value differing from what you sent " +
-        "reveals a trigger/business-rule override; full record via tickets_get. Write op — read-only: rejected; " +
-        "dry-run: simulated (no changes).")]
-    public Task<object> Update(
-        [Description("Numeric ticket id.")] long id,
-        [Description(
-            "Changes to apply; unset (null) fields omitted. 'comment' appends a public reply (public=true) or " +
-            "internal note (public=false); set safe_update+updated_stamp for optimistic locking. status: new|open|" +
-            "pending|hold|solved|closed. priority: low|normal|high|urgent. type: problem|incident|question|task. " +
-            "additional_tags/remove_tags rejected — use tickets_tags_add/tickets_tags_remove.")]
-        ZendeskTicketWrite ticket,
-        CancellationToken cancellationToken)
-    {
-        var action = $"update ticket {id}";
-        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
-            async () =>
-            {
-                ValidateNoTagDeltas(ticket, nameof(ticket));
-                var request = zendesk.Api.V2.Tickets[id].ToPutRequestInformation(
-                    new TicketUpdateRequest { Ticket = MapTicket(ticket) });
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return BuildUpdateConfirmation(json, id, ticket);
-            },
-            () =>
-            {
-                // Validated in dry-run too, so the simulation teaches the agent the same contract.
-                ValidateNoTagDeltas(ticket, nameof(ticket));
-                return new ZendeskDryRunResult
-                {
-                    Description = $"Dry run — no changes were made. This call would {action}.",
-                    Request = new { id, ticket }
-                };
-            });
-    }
+    // ── Single-action ticket writes (decomposed from the former composite tickets_update) ─────────────────────
+    // Each sets exactly ONE aspect of a ticket, so a consuming agent can be granted individual actions via its
+    // tool include-list (e.g. tickets_note_add without tickets_reply_public). All route through SetTicketFields →
+    // the same PUT /tickets/{id} + execution-mode gate + echo-of-change confirmation.
 
-    /// <summary>Applies the same change to up to 100 tickets as an async job.</summary>
-    [McpServerTool(Name = "tickets_update_many", ReadOnly = false, Destructive = false, Idempotent = false,
+    /// <summary>Adds a public reply (visible to the requester) to a ticket.</summary>
+    [McpServerTool(Name = "tickets_reply_public", ReadOnly = false, Destructive = false, Idempotent = false,
         OpenWorld = false)]
     [Description(
-        "Apply the SAME change to up to 100 tickets as an async job. Tag edits: use the change's additional_tags/" +
-        "remove_tags (not 'tags') — also the only way to change tags on closed tickets. Different changes per " +
-        "ticket: use tickets_update_many_batch. Returns queued job {id, status} — poll job_statuses_get by id " +
-        "until completed. Write op — read-only: rejected; dry-run: simulated (no changes).")]
-    public Task<object> UpdateMany(
+        "Add a PUBLIC reply to a ticket — visible to the requester (customer-facing). For an agents-only comment " +
+        "use tickets_note_add instead. Provide exactly one of body or htmlBody; attach files via uploads " +
+        "(uploads_create tokens). Returns {id, updated_at, audit_id}. Write op — read-only: rejected; dry-run: " +
+        "simulated (no changes).")]
+    public Task<object> ReplyPublic(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Plain-text reply. Provide exactly one of body or htmlBody.")]
+        string? body = null,
+        [Description("HTML reply. Provide exactly one of body or htmlBody.")]
+        string? htmlBody = null,
+        [Description("Optional upload tokens from uploads_create, to attach files.")]
+        string[]? uploads = null,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, CommentChange(body, htmlBody, uploads, true), updatedStamp,
+            $"reply publicly to ticket {id}", cancellationToken, () => ValidateExactlyOneBody(body, htmlBody));
+
+    /// <summary>Adds an internal note (agents only) to a ticket.</summary>
+    [McpServerTool(Name = "tickets_note_add", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
+    [Description(
+        "Add an INTERNAL note to a ticket — visible to agents only, NEVER to the requester. For a customer-facing " +
+        "reply use tickets_reply_public instead. Provide exactly one of body or htmlBody; attach files via uploads " +
+        "(uploads_create tokens). Returns {id, updated_at, audit_id}. Write op — read-only: rejected; dry-run: " +
+        "simulated (no changes).")]
+    public Task<object> NoteAdd(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Plain-text note. Provide exactly one of body or htmlBody.")]
+        string? body = null,
+        [Description("HTML note. Provide exactly one of body or htmlBody.")]
+        string? htmlBody = null,
+        [Description("Optional upload tokens from uploads_create, to attach files.")]
+        string[]? uploads = null,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, CommentChange(body, htmlBody, uploads, false), updatedStamp,
+            $"add an internal note to ticket {id}", cancellationToken, () => ValidateExactlyOneBody(body, htmlBody));
+
+    /// <summary>Sets a ticket's status.</summary>
+    [McpServerTool(Name = "tickets_status_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a ticket's status. status: new|open|pending|hold|solved|closed (closed is terminal — cannot reopen). " +
+        "When the account uses custom statuses, pass customStatusId for the exact status ('status' sets only the " +
+        "category). Returns {id, updated_at, status}. Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> StatusSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("new|open|pending|hold|solved|closed.")]
+        string status,
+        [Description("Optional exact custom status id (from custom_statuses_list); 'status' sets only the category.")]
+        long? customStatusId = null,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { Status = status, CustomStatusId = customStatusId },
+            updatedStamp, $"set ticket {id} status to '{status}'", cancellationToken);
+
+    /// <summary>Sets a ticket's priority.</summary>
+    [McpServerTool(Name = "tickets_priority_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a ticket's priority: low|normal|high|urgent. Returns {id, updated_at, priority}. Write op — " +
+        "read-only: rejected; dry-run: simulated.")]
+    public Task<object> PrioritySet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("low|normal|high|urgent.")]
+        string priority,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { Priority = priority }, updatedStamp,
+            $"set ticket {id} priority to '{priority}'", cancellationToken);
+
+    /// <summary>Sets a ticket's type.</summary>
+    [McpServerTool(Name = "tickets_type_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a ticket's type: problem|incident|question|task. Returns {id, updated_at, type}. Write op — " +
+        "read-only: rejected; dry-run: simulated.")]
+    public Task<object> TypeSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("problem|incident|question|task.")]
+        string type,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { Type = type }, updatedStamp,
+            $"set ticket {id} type to '{type}'", cancellationToken);
+
+    /// <summary>Assigns a ticket to an agent (optionally also its group).</summary>
+    [McpServerTool(Name = "tickets_assignee_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Assign a ticket to an agent by user id (optionally also set its group). To route to a group without " +
+        "picking an agent use tickets_group_set. Returns {id, updated_at, assignee_id}. Write op — read-only: " +
+        "rejected; dry-run: simulated.")]
+    public Task<object> AssigneeSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Numeric user id of the agent to assign.")]
+        long assigneeId,
+        [Description("Optional group id to set alongside the assignee.")]
+        long? groupId = null,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { AssigneeId = assigneeId, GroupId = groupId },
+            updatedStamp, $"assign ticket {id} to agent {assigneeId}", cancellationToken);
+
+    /// <summary>Routes a ticket to a group.</summary>
+    [McpServerTool(Name = "tickets_group_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Route a ticket to a group by group id (without assigning a specific agent). Returns {id, updated_at, " +
+        "group_id}. Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> GroupSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Numeric group id.")] long groupId,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { GroupId = groupId }, updatedStamp,
+            $"route ticket {id} to group {groupId}", cancellationToken);
+
+    /// <summary>Sets a ticket's requester.</summary>
+    [McpServerTool(Name = "tickets_requester_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Change a ticket's requester (the customer the ticket is on behalf of) by user id. Returns {id, " +
+        "updated_at, requester_id}. Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> RequesterSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Numeric user id of the new requester.")]
+        long requesterId,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { RequesterId = requesterId }, updatedStamp,
+            $"set the requester of ticket {id} to user {requesterId}", cancellationToken);
+
+    /// <summary>Sets a ticket's organization.</summary>
+    [McpServerTool(Name = "tickets_organization_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a ticket's organization by organization id. Returns {id, updated_at, organization_id}. Write op — " +
+        "read-only: rejected; dry-run: simulated.")]
+    public Task<object> OrganizationSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Numeric organization id.")]
+        long organizationId,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { OrganizationId = organizationId }, updatedStamp,
+            $"set the organization of ticket {id} to {organizationId}", cancellationToken);
+
+    /// <summary>Sets a ticket's form.</summary>
+    [McpServerTool(Name = "tickets_form_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a ticket's form by ticket form id (see forms_list). Returns {id, updated_at, ticket_form_id}. Write " +
+        "op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> FormSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Numeric ticket form id (from forms_list).")]
+        long ticketFormId,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { TicketFormId = ticketFormId }, updatedStamp,
+            $"set the form of ticket {id} to {ticketFormId}", cancellationToken);
+
+    /// <summary>Sets a ticket's custom field values.</summary>
+    [McpServerTool(Name = "tickets_custom_fields_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set custom ticket-field values — an array of {id, value}; the value shape depends on the field type " +
+        "(text=string, checkbox=bool, date=\"YYYY-MM-DD\", tagger=option tag value, multiselect=array of tag " +
+        "values, integer/decimal=number, lookup=related record id). Get ids/types from ticket_fields_list. Only " +
+        "the listed fields change. Returns {id, updated_at, custom_fields} (only the fields you set). Write op — " +
+        "read-only: rejected; dry-run: simulated.")]
+    public Task<object> CustomFieldsSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Custom field values to set: array of {id: <field id>, value: <type-dependent>}.")]
+        ZendeskCustomFieldWrite[] fields,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { CustomFields = fields }, updatedStamp,
+            $"set {fields.Length} custom field(s) on ticket {id}", cancellationToken);
+
+    /// <summary>Sets a ticket's collaborators (CCs).</summary>
+    [McpServerTool(Name = "tickets_collaborators_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a ticket's collaborators (CCs) — REPLACES the whole collaborator list with the given user ids (pass " +
+        "an empty list to clear). Returns {id, updated_at, collaborator_ids}. Write op — read-only: rejected; " +
+        "dry-run: simulated.")]
+    public Task<object> CollaboratorsSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("User ids to set as collaborators/CCs (replaces the whole list; empty clears it).")]
+        long[] collaboratorIds,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { CollaboratorIds = collaboratorIds }, updatedStamp,
+            $"set the collaborators of ticket {id}", cancellationToken);
+
+    /// <summary>Sets a ticket's due date (task tickets only).</summary>
+    [McpServerTool(Name = "tickets_due_at_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a ticket's due date (ISO8601). Only honored when the ticket type is 'task' (set via tickets_type_set). " +
+        "Returns {id, updated_at, due_at}. Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> DueAtSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("Due timestamp (ISO8601). Honored only for type=task.")]
+        DateTimeOffset dueAt,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { DueAt = dueAt }, updatedStamp,
+            $"set the due date of ticket {id}", cancellationToken);
+
+    /// <summary>Sets a ticket's subject.</summary>
+    [McpServerTool(Name = "tickets_subject_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set a ticket's subject line. Returns {id, updated_at, subject}. Write op — read-only: rejected; dry-run: " +
+        "simulated.")]
+    public Task<object> SubjectSet(
+        [Description("Numeric ticket id.")] long id,
+        [Description("New subject line.")] string subject,
+        [Description("Optional; ticket's latest updated_at for optimistic-concurrency (409 on mismatch).")]
+        DateTimeOffset? updatedStamp = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFields(id, new ZendeskTicketWrite { Subject = subject }, updatedStamp,
+            $"set the subject of ticket {id}", cancellationToken);
+
+    // ── Bulk single-action ticket writes (each applies ONE change to up to 100 tickets as an async job) ───────
+    // The bulk counterparts of the sensitive/common single-action tools, kept as separate gateable names so a
+    // bulk public reply cannot ride in through a catch-all bulk-update tool.
+
+    /// <summary>Sets the status of up to 100 tickets as an async job.</summary>
+    [McpServerTool(Name = "tickets_status_set_many", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
+    [Description(
+        "Set the SAME status on up to 100 tickets as an async job. status: new|open|pending|hold|solved|closed. " +
+        "Returns queued job {id, status} — poll job_statuses_get by id. Write op — read-only: rejected; dry-run: " +
+        "simulated.")]
+    public Task<object> StatusSetMany(
         [Description("Numeric ids of tickets to update (1-100 per call).")]
         long[] ids,
-        [Description(
-            "Single change applied to every ticket. Use additional_tags/remove_tags for tag edits; leave 'id' " +
-            "unset. status: new|open|pending|hold|solved|closed. priority: low|normal|high|urgent. type: problem|" +
-            "incident|question|task.")]
-        ZendeskTicketWrite change,
+        [Description("new|open|pending|hold|solved|closed.")]
+        string status,
         CancellationToken cancellationToken)
-    {
-        var action = $"update {ids.Length} tickets with the same change";
-        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
-            async () =>
-            {
-                ValidateBulkCount(ids.Length, nameof(ids));
-                // Bulk shape: the shared change rides in a singular "ticket" envelope; the targets in ?ids=.
-                var request = zendesk.Api.V2.Tickets.Update_many.ToPutRequestInformation(
-                    new TicketsUpdateRequest { Ticket = MapTicket(change) },
-                    cfg => cfg.QueryParameters.Ids = string.Join(',', ids));
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return LeanJobConfirmation(json);
-            },
-            () =>
-            {
-                ValidateBulkCount(ids.Length, nameof(ids));
-                return ZendeskDryRunResult.ForBulk(action, "update", "tickets", SharedChangeItems(ids, change));
-            });
-    }
+        => SetTicketFieldsMany(ids, new ZendeskTicketWrite { Status = status },
+            $"set {ids.Length} tickets to status '{status}'", cancellationToken);
 
-    /// <summary>Applies per-ticket changes to up to 100 tickets as an async job.</summary>
-    [McpServerTool(Name = "tickets_update_many_batch", ReadOnly = false, Destructive = false,
+    /// <summary>Assigns up to 100 tickets to an agent as an async job.</summary>
+    [McpServerTool(Name = "tickets_assignee_set_many", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
+    [Description(
+        "Assign up to 100 tickets to the SAME agent as an async job (optionally also set their group). Returns " +
+        "queued job {id, status} — poll job_statuses_get. Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> AssigneeSetMany(
+        [Description("Numeric ids of tickets to update (1-100 per call).")]
+        long[] ids,
+        [Description("Numeric user id of the agent to assign.")]
+        long assigneeId,
+        [Description("Optional group id to set alongside the assignee.")]
+        long? groupId = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFieldsMany(ids, new ZendeskTicketWrite { AssigneeId = assigneeId, GroupId = groupId },
+            $"assign {ids.Length} tickets to agent {assigneeId}", cancellationToken);
+
+    /// <summary>Routes up to 100 tickets to a group as an async job.</summary>
+    [McpServerTool(Name = "tickets_group_set_many", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
+    [Description(
+        "Route up to 100 tickets to the SAME group as an async job. Returns queued job {id, status} — poll " +
+        "job_statuses_get. Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> GroupSetMany(
+        [Description("Numeric ids of tickets to update (1-100 per call).")]
+        long[] ids,
+        [Description("Numeric group id.")] long groupId,
+        CancellationToken cancellationToken)
+        => SetTicketFieldsMany(ids, new ZendeskTicketWrite { GroupId = groupId },
+            $"route {ids.Length} tickets to group {groupId}", cancellationToken);
+
+    /// <summary>Adds tags to up to 100 tickets as an async job.</summary>
+    [McpServerTool(Name = "tickets_tags_add_many", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
+    [Description(
+        "Add the given tags to up to 100 tickets as an async job WITHOUT disturbing their existing tags — the " +
+        "bulk tag-append path (also the way to edit tags on closed tickets). Returns queued job {id, status} — " +
+        "poll job_statuses_get. Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> TagsAddMany(
+        [Description("Numeric ids of tickets to update (1-100 per call).")]
+        long[] ids,
+        [Description("Tags to add to every listed ticket.")]
+        string[] tags,
+        CancellationToken cancellationToken)
+        => SetTicketFieldsMany(ids, new ZendeskTicketWrite { AdditionalTags = tags },
+            $"add tags [{string.Join(", ", tags)}] to {ids.Length} tickets", cancellationToken);
+
+    /// <summary>Removes tags from up to 100 tickets as an async job.</summary>
+    [McpServerTool(Name = "tickets_tags_remove_many", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
+    [Description(
+        "Remove the given tags from up to 100 tickets as an async job WITHOUT disturbing their other tags (also " +
+        "the way to edit tags on closed tickets). Returns queued job {id, status} — poll job_statuses_get. Write " +
+        "op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> TagsRemoveMany(
+        [Description("Numeric ids of tickets to update (1-100 per call).")]
+        long[] ids,
+        [Description("Tags to remove from every listed ticket.")]
+        string[] tags,
+        CancellationToken cancellationToken)
+        => SetTicketFieldsMany(ids, new ZendeskTicketWrite { RemoveTags = tags },
+            $"remove tags [{string.Join(", ", tags)}] from {ids.Length} tickets", cancellationToken);
+
+    /// <summary>Adds an internal note to up to 100 tickets as an async job.</summary>
+    [McpServerTool(Name = "tickets_note_add_many", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
+    [Description(
+        "Add the SAME internal note (agents only) to up to 100 tickets as an async job. For customer-facing bulk " +
+        "replies use tickets_reply_public_many. Provide exactly one of body or htmlBody. Returns queued job {id, " +
+        "status} — poll job_statuses_get. Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> NoteAddMany(
+        [Description("Numeric ids of tickets to update (1-100 per call).")]
+        long[] ids,
+        [Description("Plain-text note. Provide exactly one of body or htmlBody.")]
+        string? body = null,
+        [Description("HTML note. Provide exactly one of body or htmlBody.")]
+        string? htmlBody = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFieldsMany(ids, CommentChange(body, htmlBody, null, false),
+            $"add an internal note to {ids.Length} tickets", cancellationToken,
+            () => ValidateExactlyOneBody(body, htmlBody));
+
+    /// <summary>Adds a public reply to up to 100 tickets as an async job.</summary>
+    [McpServerTool(Name = "tickets_reply_public_many", ReadOnly = false, Destructive = false, Idempotent = false,
+        OpenWorld = false)]
+    [Description(
+        "Add the SAME PUBLIC reply (visible to requesters) to up to 100 tickets as an async job — customer-facing, " +
+        "gate carefully. For internal bulk notes use tickets_note_add_many. Provide exactly one of body or " +
+        "htmlBody. Returns queued job {id, status} — poll job_statuses_get. Write op — read-only: rejected; " +
+        "dry-run: simulated.")]
+    public Task<object> ReplyPublicMany(
+        [Description("Numeric ids of tickets to update (1-100 per call).")]
+        long[] ids,
+        [Description("Plain-text reply. Provide exactly one of body or htmlBody.")]
+        string? body = null,
+        [Description("HTML reply. Provide exactly one of body or htmlBody.")]
+        string? htmlBody = null,
+        CancellationToken cancellationToken = default)
+        => SetTicketFieldsMany(ids, CommentChange(body, htmlBody, null, true),
+            $"reply publicly to {ids.Length} tickets", cancellationToken,
+            () => ValidateExactlyOneBody(body, htmlBody));
+
+    /// <summary>Sets custom field values on up to 100 tickets as an async job.</summary>
+    [McpServerTool(Name = "tickets_custom_fields_set_many", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = false)]
     [Description(
-        "Apply PER-TICKET changes to up to 100 tickets as an async job — every item MUST carry its 'id'. Same " +
-        "change across many tickets: prefer tickets_update_many. Per-item tag deltas: set additional_tags/" +
-        "remove_tags on individual items (the only way to change tags on closed tickets). Returns queued job {id, " +
-        "status} — poll job_statuses_get by id until completed. Write op — read-only: rejected; dry-run: simulated " +
-        "(no changes).")]
-    public Task<object> UpdateManyBatch(
-        [Description(
-            "Per-ticket changes (1-100 per call); every item must set 'id'. status: new|open|pending|hold|solved|" +
-            "closed. priority: low|normal|high|urgent. type: problem|incident|question|task.")]
-        ZendeskTicketWrite[] tickets,
+        "Set the SAME custom field values on up to 100 tickets as an async job — array of {id, value} (see " +
+        "tickets_custom_fields_set for the value shapes). Returns queued job {id, status} — poll job_statuses_get. " +
+        "Write op — read-only: rejected; dry-run: simulated.")]
+    public Task<object> CustomFieldsSetMany(
+        [Description("Numeric ids of tickets to update (1-100 per call).")]
+        long[] ids,
+        [Description("Custom field values to set on every listed ticket: array of {id, value}.")]
+        ZendeskCustomFieldWrite[] fields,
         CancellationToken cancellationToken)
-    {
-        var action = $"update {tickets.Length} tickets with per-ticket changes";
-        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
-            async () =>
-            {
-                ValidateBatchItems(tickets);
-                // Batch shape: a plural "tickets" array where every item carries its own id; no ?ids= query.
-                var request = zendesk.Api.V2.Tickets.Update_many.ToPutRequestInformation(
-                    new TicketsUpdateRequest { Tickets = tickets.Select(MapBatchTicket).ToList() });
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return LeanJobConfirmation(json);
-            },
-            () =>
-            {
-                ValidateBatchItems(tickets);
-                return ZendeskDryRunResult.ForBulk(action, "update", "tickets", tickets, WriteJsonOptions);
-            });
-    }
+        => SetTicketFieldsMany(ids, new ZendeskTicketWrite { CustomFields = fields },
+            $"set {fields.Length} custom field(s) on {ids.Length} tickets", cancellationToken);
 
     /// <summary>Soft-deletes a Zendesk ticket.</summary>
     [McpServerTool(Name = "tickets_delete", ReadOnly = false, Destructive = true, Idempotent = true,
@@ -512,7 +783,7 @@ public sealed class ZendeskTicketWriteTools(
     [Description(
         "REPLACE a ticket's whole tag set with the given tags — any tag not in the list is removed. Add/remove " +
         "specific tags without touching the rest: tickets_tags_add/tickets_tags_remove. Does not work on closed " +
-        "tickets (use additional_tags/remove_tags via tickets_update_many for those). Returns the resulting tag " +
+        "tickets (use tickets_tags_add_many/tickets_tags_remove_many for those). Returns the resulting tag " +
         "list. Write op — read-only: rejected; dry-run: simulated (no changes).")]
     public Task<object> TagsSet(
         [Description("Numeric ticket id.")] long ticketId,
@@ -723,6 +994,82 @@ public sealed class ZendeskTicketWriteTools(
         return await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    ///     The shared partial-update path for the single-action ticket setters: applies the optional
+    ///     optimistic-lock stamp, sends the narrow write model as a <c>PUT /tickets/{id}</c>, and returns the lean
+    ///     update confirmation (with echo-of-change). The <paramref name="validate" /> hook (when supplied) runs
+    ///     INSIDE the execution-mode gate — so read-only mode still rejects first — mirroring the composite's
+    ///     in-lambda validation. The dry-run echoes exactly the fields the setter set (nulls omitted).
+    /// </summary>
+    private Task<object> SetTicketFields(long id, ZendeskTicketWrite change, DateTimeOffset? updatedStamp,
+        string action, CancellationToken cancellationToken, Action? validate = null)
+    {
+        var payload = updatedStamp is null ? change : change with { SafeUpdate = true, UpdatedStamp = updatedStamp };
+        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
+            async () =>
+            {
+                validate?.Invoke();
+                var request = zendesk.Api.V2.Tickets[id].ToPutRequestInformation(
+                    new TicketUpdateRequest { Ticket = MapTicket(payload) });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return BuildUpdateConfirmation(json, id, payload);
+            },
+            () =>
+            {
+                validate?.Invoke();
+                var echo = new JsonObject { ["id"] = id };
+                foreach (var (name, value) in JsonSerializer.SerializeToNode(payload, WriteJsonOptions)!.AsObject())
+                    echo[name] = value?.DeepClone();
+                return new ZendeskDryRunResult
+                {
+                    Description = $"Dry run — no changes were made. This call would {action}.",
+                    Request = echo
+                };
+            });
+    }
+
+    /// <summary>
+    ///     The shared bulk path for the single-action <c>*_set_many</c> ticket setters: applies ONE shared change
+    ///     to up to 100 tickets via the <c>update_many</c> endpoint (targets in <c>?ids=</c>) and returns the async
+    ///     job confirmation. Same in-lambda validation discipline as <see cref="SetTicketFields" />.
+    /// </summary>
+    private Task<object> SetTicketFieldsMany(long[] ids, ZendeskTicketWrite change, string action,
+        CancellationToken cancellationToken, Action? validate = null)
+        => ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
+            async () =>
+            {
+                ValidateBulkCount(ids.Length, nameof(ids));
+                validate?.Invoke();
+                var request = zendesk.Api.V2.Tickets.Update_many.ToPutRequestInformation(
+                    new TicketsUpdateRequest { Ticket = MapTicket(change) },
+                    cfg => cfg.QueryParameters.Ids = string.Join(',', ids));
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return LeanJobConfirmation(json);
+            },
+            () =>
+            {
+                ValidateBulkCount(ids.Length, nameof(ids));
+                validate?.Invoke();
+                return ZendeskDryRunResult.ForBulk(action, "update", "tickets", SharedChangeItems(ids, change));
+            });
+
+    /// <summary>Builds a comment-only ticket change (public reply vs internal note via <paramref name="isPublic" />).</summary>
+    private static ZendeskTicketWrite CommentChange(string? body, string? htmlBody, string[]? uploads, bool isPublic) =>
+        new()
+        {
+            Comment = new ZendeskTicketCommentWrite
+            {
+                Body = body, HtmlBody = htmlBody, Public = isPublic, Uploads = uploads
+            }
+        };
+
+    /// <summary>Requires exactly one of <paramref name="body" /> / <paramref name="htmlBody" /> to be non-empty.</summary>
+    private static void ValidateExactlyOneBody(string? body, string? htmlBody)
+    {
+        if (string.IsNullOrEmpty(body) == string.IsNullOrEmpty(htmlBody))
+            throw new ArgumentException("Provide exactly one of body or htmlBody.", nameof(body));
+    }
+
     /// <summary>Validates a bulk-operation item count (Zendesk accepts 1–100 items per bulk request).</summary>
     private static void ValidateBulkCount(int count, string paramName)
     {
@@ -745,15 +1092,7 @@ public sealed class ZendeskTicketWriteTools(
             throw new ArgumentException(
                 "additional_tags/remove_tags are not supported on this operation (Zendesk ignores them outside " +
                 "the update_many bulk schema). Use tickets_tags_add / tickets_tags_remove for a single ticket, " +
-                "or tickets_update_many / tickets_update_many_batch for bulk tag deltas.", paramName);
-    }
-
-    /// <summary>Validates the per-ticket batch items of <c>update_many_batch</c> (1–100, each carrying its id).</summary>
-    private static void ValidateBatchItems(ZendeskTicketWrite[] tickets)
-    {
-        ValidateBulkCount(tickets.Length, nameof(tickets));
-        if (tickets.Any(t => t.Id is null))
-            throw new ArgumentException("Every batch update item must carry Id.", nameof(tickets));
+                "or tickets_tags_add_many / tickets_tags_remove_many for bulk tag deltas.", paramName);
     }
 
     /// <summary>
@@ -913,22 +1252,6 @@ public sealed class ZendeskTicketWriteTools(
     private static TicketUpdateInput MapTicket(ZendeskTicketWrite ticket)
     {
         var input = new TicketUpdateInput
-        {
-            AdditionalTags = ticket.AdditionalTags?.ToList(),
-            RemoveTags = ticket.RemoveTags?.ToList()
-        };
-        PopulateTicket(input, ticket);
-        return input;
-    }
-
-    /// <summary>
-    ///     Maps the curated ticket write model onto the generated <see cref="TicketBatchUpdateInput" /> — the
-    ///     named batch-update input of the normalized spec (per-ticket items of <c>update_many</c>, each carrying
-    ///     its own <c>id</c>).
-    /// </summary>
-    private static TicketBatchUpdateInput MapBatchTicket(ZendeskTicketWrite ticket)
-    {
-        var input = new TicketBatchUpdateInput
         {
             AdditionalTags = ticket.AdditionalTags?.ToList(),
             RemoveTags = ticket.RemoveTags?.ToList()

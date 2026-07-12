@@ -109,6 +109,108 @@ public sealed class ZendeskMacroTools(
                 : throw new McpException($"Zendesk macro '{id}' was not found.");
         });
 
+    /// <summary>Finds macros by title/keyword and filters.</summary>
+    [McpServerTool(Name = "macros_search", ReadOnly = true, OpenWorld = false)]
+    [Description(
+        "Find macros by title keyword and/or filters (access/active/category/group) — offset-paginated. Cheaper " +
+        "than paging macros_list when you know roughly what you want. Rows are lean summaries (id, title, active, " +
+        "description, usage stats); actions omitted — call macros_get for reply text/side effects or pass " +
+        "detail:'full'. Then preview a match with macros_ticket_preview_get before committing via the tickets_*_set / tickets_reply_public tools. " +
+        "perPage default 25 (max 100); total in 'count'; 'has_more'/'next_page' drive paging.")]
+    public Task<JsonElement> Search(
+        [Description("Title keywords (matches macro titles). Optional when a filter below is supplied.")]
+        string? query = null,
+        [Description(
+            "Filter by access: personal|agents|shared|account ('agents' = all agents' personal macros, admin-only).")]
+        string? access = null,
+        [Description("true=active only; false=inactive only; omit=both.")]
+        bool? active = null,
+        [Description("Restrict to a macro category id.")]
+        int? category = null,
+        [Description("Restrict to macros usable by this group id.")]
+        long? groupId = null,
+        [Description("true = only macros applicable to tickets; false (default) = all the current user can manage.")]
+        bool? onlyViewable = null,
+        [Description("Sort field: alphabetical|created_at|updated_at|position (default alphabetical).")]
+        string? sortBy = null,
+        [Description("asc|desc (defaults: asc for alphabetical/position, desc otherwise).")]
+        string? sortOrder = null,
+        [Description("1-based page number (optional).")]
+        int? page = null,
+        [Description("Results per page (default 25, max 100). Total in 'count'; 'has_more'/'next_page' drive paging.")]
+        int? perPage = 25,
+        CancellationToken cancellationToken = default,
+        [Description(DetailDescription)] string detail = "summary")
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var parsedDetail = ZendeskLean.ParseDetail(detail);
+            var request = zendesk.Api.V2.Macros.Search.ToGetRequestInformation(configuration =>
+                {
+                    if (!string.IsNullOrWhiteSpace(query)) configuration.QueryParameters.Query = query;
+                    if (!string.IsNullOrWhiteSpace(access)) configuration.QueryParameters.Access = access;
+                    configuration.QueryParameters.Active = active;
+                    configuration.QueryParameters.Category = category;
+                    configuration.QueryParameters.GroupId = groupId;
+                    configuration.QueryParameters.OnlyViewable = onlyViewable;
+                    if (!string.IsNullOrWhiteSpace(sortBy)) configuration.QueryParameters.SortBy = sortBy;
+                    if (!string.IsNullOrWhiteSpace(sortOrder)) configuration.QueryParameters.SortOrder = sortOrder;
+                })
+                // Offset paging is documented for macros/search ("Offset pagination only") but the generated
+                // builder exposes no page/per_page — add them via the escape hatch (spec-anomaly ledger,
+                // src/ES.FX.Zendesk/OpenApi/README.md).
+                .WithQuery("page", page)
+                .WithQuery("per_page", perPage);
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return ZendeskLean.BuildOffsetListEnvelope(json, "macros", page, parsedDetail,
+                MaxResponseChars("macros_search"));
+        });
+
+    /// <summary>Previews the changes a macro would make, without applying it.</summary>
+    [McpServerTool(Name = "macros_changes_get", ReadOnly = true, OpenWorld = false)]
+    [Description(
+        "Preview the changes a macro would make WITHOUT applying it — returns ONLY the ticket fields/comment the " +
+        "macro would set (generic, not tied to a ticket). Inspect a macro's effect, then commit the same changes " +
+        "via the tickets_*_set / tickets_reply_public tools. For the resolved result on a SPECIFIC ticket, use macros_ticket_preview_get. Null " +
+        "fields and API self-links omitted.")]
+    public Task<JsonElement> Changes(
+        [Description("Numeric macro id.")] long macroId,
+        CancellationToken cancellationToken)
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var request = zendesk.Api.V2.Macros[macroId].Apply.ToGetRequestInformation();
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return json.ValueKind == JsonValueKind.Object && json.TryGetProperty("result", out var result)
+                ? ZendeskLean.EnsureWithinBudget(ZendeskLean.ToFullView(result), "macros_changes_get",
+                    MaxResponseChars("macros_changes_get"),
+                    "Macro changes exceed the budget — there is no leaner form; inspect the macro via macros_get.")
+                : throw new McpException($"Zendesk macro '{macroId}' was not found.");
+        });
+
+    /// <summary>Previews a specific ticket as it would look after applying a macro, without changing it.</summary>
+    [McpServerTool(Name = "macros_ticket_preview_get", ReadOnly = true, OpenWorld = false)]
+    [Description(
+        "Preview a SPECIFIC ticket as it would look after applying a macro, WITHOUT changing it — returns the full " +
+        "ticket-after-changes. Confirm the exact resolved result before committing via the tickets_*_set / tickets_reply_public tools. For just " +
+        "the macro's field changes (not tied to a ticket), use macros_changes_get. Null fields and API self-links " +
+        "omitted.")]
+    public Task<JsonElement> TicketPreview(
+        [Description("Numeric id of the ticket to preview against.")]
+        long ticketId,
+        [Description("Numeric id of the macro to preview.")]
+        long macroId,
+        CancellationToken cancellationToken)
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var request = zendesk.Api.V2.Tickets[ticketId].Macros[macroId].Apply.ToGetRequestInformation();
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return json.ValueKind == JsonValueKind.Object && json.TryGetProperty("result", out var result)
+                ? ZendeskLean.EnsureWithinBudget(ZendeskLean.ToFullView(result), "macros_ticket_preview_get",
+                    MaxResponseChars("macros_ticket_preview_get"),
+                    "Ticket preview exceeds the budget — read the current ticket via tickets_get, then " +
+                    "macros_changes_get for the macro's delta.")
+                : throw new McpException($"Zendesk ticket '{ticketId}' or macro '{macroId}' was not found.");
+        });
+
     /// <summary>Resolves the response-size budget for a tool (see <see cref="McpToolsOptions.GetMaxResponseChars" />).</summary>
     private int MaxResponseChars(string toolName) => mcpOptions.CurrentValue.Tools.GetMaxResponseChars(toolName);
 }

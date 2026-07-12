@@ -19,7 +19,7 @@ namespace ES.FX.Zendesk.MCP.Host.Tests.Tools;
 public class ZendeskWriteToolChokePointSweepTests
 {
     private const int ExpectedWriteToolClasses = 12;
-    private const int ExpectedWriteTools = 87;
+    private const int ExpectedWriteTools = 115;
 
     [Fact]
     public async Task Every_Write_Tool_Rejects_In_ReadOnly_Mode_Without_Touching_The_Client()

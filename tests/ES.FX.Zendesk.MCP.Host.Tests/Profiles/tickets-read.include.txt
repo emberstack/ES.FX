@@ -3,6 +3,7 @@ tickets_collaborators_list
 tickets_comments_count
 tickets_comments_list
 tickets_count
+tickets_deleted_list
 tickets_export_incremental
 tickets_get
 tickets_get_by_external_id

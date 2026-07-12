@@ -76,7 +76,7 @@ observability. The [Zendesk Spark](../ignite/sparks/zendesk.md) page covers the 
 
 For exposing Zendesk to an AI agent, the [Zendesk MCP server](./zendesk-mcp-server.md) is a deployable
 [Model Context Protocol](https://modelcontextprotocol.io) host — built on the generated clients and
-Ignite — that publishes 172 read and write MCP tools with lean-first responses (summary rows by
+Ignite — that publishes 215 read and write MCP tools with lean-first responses (summary rows by
 default, full records on request), execution-mode gating, and Origin validation. It is an application,
 not a package.
 

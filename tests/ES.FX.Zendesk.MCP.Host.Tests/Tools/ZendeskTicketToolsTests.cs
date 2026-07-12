@@ -1015,4 +1015,46 @@ public class ZendeskTicketToolsTests
 
         Assert.Empty(harness.Requests);
     }
+
+    [Fact]
+    public async Task DeletedList_Requests_Deleted_Tickets_And_Returns_Lean_Rows()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson(
+            """
+            {"deleted_tickets":[{"id":501,"subject":"Old ticket",
+             "actor":{"id":7,"name":"Agent Smith"},"deleted_at":"2026-07-01T00:00:00Z","previous_state":"open",
+             "url":"https://unit-test.zendesk.com/api/v2/deleted_tickets/501.json"}],
+             "count":1,"next_page":null}
+            """);
+        var tools = CreateTools(harness);
+
+        var result = await tools.DeletedList(cancellationToken: TestContext.Current.CancellationToken);
+
+        var request = harness.Request;
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.Equal("/api/v2/deleted_tickets", request.Path);
+        Assert.Equal("?per_page=25", request.Query);
+        Assert.Equal("summary", result.GetProperty("detail").GetString());
+        var deleted = result.GetProperty("items")[0];
+        Assert.Equal(501, deleted.GetProperty("id").GetInt64());
+        Assert.Equal("Old ticket", deleted.GetProperty("subject").GetString());
+        Assert.Equal("open", deleted.GetProperty("previous_state").GetString());
+        // actor is copied verbatim (small); the API self-link is dropped.
+        Assert.Equal(7, deleted.GetProperty("actor").GetProperty("id").GetInt64());
+        Assert.False(deleted.TryGetProperty("url", out _));
+    }
+
+    [Fact]
+    public async Task DeletedList_Passes_Page_And_PerPage_Through()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"deleted_tickets":[],"count":0}""");
+        var tools = CreateTools(harness);
+
+        await tools.DeletedList(2, 50, TestContext.Current.CancellationToken);
+
+        Assert.Contains("page=2", harness.Request.Query);
+        Assert.Contains("per_page=50", harness.Request.Query);
+    }
 }

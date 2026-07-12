@@ -221,4 +221,122 @@ public class ZendeskMacroToolsTests
         Assert.Contains("'1'", exception.Message);
         Assert.Contains("not found", exception.Message);
     }
+
+    [Fact]
+    public async Task Search_Requests_Macros_Search_And_Returns_Summary_Rows_Without_Actions()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson(
+            """
+            {"macros":[{"id":7,"title":"Refund","active":true,"description":"Issue a refund","usage_30d":40,
+             "url":"https://unit-test.zendesk.com/api/v2/macros/7.json",
+             "actions":[{"field":"comment_value","value":["channel","A long canned refund reply..."]}]}],
+             "count":1,"next_page":null}
+            """);
+
+        var result = await tools.Search("refund", cancellationToken: TestContext.Current.CancellationToken);
+
+        var request = harness.Request;
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.Equal("/api/v2/macros/search", request.Path);
+        Assert.Contains("query=refund", request.Query);
+        Assert.Contains("per_page=25", request.Query);
+        Assert.Equal("summary", result.GetProperty("detail").GetString());
+        var macro = result.GetProperty("items")[0];
+        Assert.Equal(7, macro.GetProperty("id").GetInt64());
+        Assert.Equal("Refund", macro.GetProperty("title").GetString());
+        // Same lean shape as macros_list — actions and API self-links stripped.
+        Assert.False(macro.TryGetProperty("actions", out _));
+        Assert.False(macro.TryGetProperty("url", out _));
+    }
+
+    [Fact]
+    public async Task Search_Passes_Filters_Through_To_The_Wire()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson("""{"macros":[],"count":0}""");
+
+        await tools.Search("reset", "shared", true, 5, 12,
+            true, "updated_at", "desc", 2, 50,
+            TestContext.Current.CancellationToken);
+
+        var query = harness.Request.Query;
+        Assert.Contains("query=reset", query);
+        Assert.Contains("access=shared", query);
+        Assert.Contains("active=true", query);
+        Assert.Contains("category=5", query);
+        Assert.Contains("group_id=12", query);
+        Assert.Contains("only_viewable=true", query);
+        Assert.Contains("sort_by=updated_at", query);
+        Assert.Contains("sort_order=desc", query);
+        Assert.Contains("page=2", query);
+        Assert.Contains("per_page=50", query);
+    }
+
+    [Fact]
+    public async Task Changes_Requests_Macro_Apply_And_Unwraps_The_Result()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson(
+            """
+            {"result":{"ticket":{"comment":{"body":"Thanks!","public":true},
+             "fields":[{"id":9,"value":"resolved"}],"status":"solved",
+             "url":"https://unit-test.zendesk.com/api/v2/tickets/0.json"}}}
+            """);
+
+        var result = await tools.Changes(7, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpMethod.Get, harness.Request.Method);
+        Assert.Equal("/api/v2/macros/7/apply", harness.Request.Path);
+        // The 'result' wrapper is unwrapped and full-viewed: the would-be ticket changes, minus API self-links.
+        var ticket = result.GetProperty("ticket");
+        Assert.Equal("solved", ticket.GetProperty("status").GetString());
+        Assert.Equal("Thanks!", ticket.GetProperty("comment").GetProperty("body").GetString());
+        Assert.False(ticket.TryGetProperty("url", out _));
+    }
+
+    [Fact]
+    public async Task Changes_Throws_When_The_Macro_Is_Missing()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson("{}");
+
+        var exception = await Assert.ThrowsAsync<McpException>(() =>
+            tools.Changes(7, TestContext.Current.CancellationToken));
+
+        Assert.Contains("'7'", exception.Message);
+        Assert.Contains("not found", exception.Message);
+    }
+
+    [Fact]
+    public async Task TicketPreview_Requests_Ticket_Macro_Apply_And_Unwraps_The_Result()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson(
+            """
+            {"result":{"ticket":{"id":42,"subject":"Broken widget","status":"solved",
+             "url":"https://unit-test.zendesk.com/api/v2/tickets/42.json"}}}
+            """);
+
+        var result = await tools.TicketPreview(42, 7, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpMethod.Get, harness.Request.Method);
+        Assert.Equal("/api/v2/tickets/42/macros/7/apply", harness.Request.Path);
+        var ticket = result.GetProperty("ticket");
+        Assert.Equal(42, ticket.GetProperty("id").GetInt64());
+        Assert.Equal("solved", ticket.GetProperty("status").GetString());
+        Assert.False(ticket.TryGetProperty("url", out _));
+    }
+
+    [Fact]
+    public async Task TicketPreview_Throws_When_Missing()
+    {
+        var (tools, harness) = Create();
+        harness.EnqueueJson("{}");
+
+        var exception = await Assert.ThrowsAsync<McpException>(() =>
+            tools.TicketPreview(42, 7, TestContext.Current.CancellationToken));
+
+        Assert.Contains("not found", exception.Message);
+    }
 }

@@ -582,4 +582,42 @@ public class ZendeskArticleToolsTests
         Assert.Equal("/api/v2/help_center/categories/31.json", harness.Request.Path);
         Assert.Equal("Zendesk Help Center category '31' was not found.", exception.Message);
     }
+
+    [Fact]
+    public async Task DeflectionSearch_Requests_Suggestions_And_Returns_Title_And_Link_Rows()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson(
+            """
+            {"results":[
+              {"name":"Reset your password","html_url":"https://acme.zendesk.com/hc/en-us/articles/1"},
+              {"name":"Two-factor setup","html_url":"https://acme.zendesk.com/hc/en-us/articles/2"}]}
+            """);
+        var tools = CreateTools(harness);
+
+        var result = await tools.DeflectionSearch("how do I reset my password",
+            TestContext.Current.CancellationToken);
+
+        var request = harness.Request;
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.Equal("/api/v2/help_center/deflection/suggestions.json", request.Path);
+        Assert.Contains("query=how", request.Query);
+        Assert.Equal("summary", result.GetProperty("detail").GetString());
+        var suggestion = result.GetProperty("items")[0];
+        Assert.Equal("Reset your password", suggestion.GetProperty("name").GetString());
+        Assert.Equal("https://acme.zendesk.com/hc/en-us/articles/1",
+            suggestion.GetProperty("html_url").GetString());
+    }
+
+    [Fact]
+    public async Task DeflectionSearch_Rejects_A_Blank_Query_Without_Calling_Zendesk()
+    {
+        var harness = new ZendeskToolHarness();
+        var tools = CreateTools(harness);
+
+        await Assert.ThrowsAsync<McpException>(() =>
+            tools.DeflectionSearch("  ", TestContext.Current.CancellationToken));
+
+        Assert.Empty(harness.Requests);
+    }
 }

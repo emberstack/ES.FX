@@ -1,5 +1,6 @@
 articles_categories_get
 articles_categories_list
+articles_deflection_search
 articles_get
 articles_list
 articles_search
@@ -8,6 +9,11 @@ articles_sections_list
 attachments_get
 brands_get
 brands_list
+community_posts_search
+custom_objects_list
+custom_objects_records_get
+custom_objects_records_list
+custom_objects_records_search
 custom_statuses_get
 custom_statuses_list
 forms_get
@@ -22,9 +28,12 @@ groups_users_list
 job_statuses_get
 job_statuses_get_many
 job_statuses_list
+macros_changes_get
 macros_get
 macros_list
 macros_list_active
+macros_search
+macros_ticket_preview_get
 organizations_autocomplete
 organizations_count
 organizations_get
@@ -38,6 +47,9 @@ organizations_tickets_count
 organizations_tickets_list
 organizations_users_count
 organizations_users_list
+satisfaction_ratings_count
+satisfaction_ratings_get
+satisfaction_ratings_list
 search_count
 suspended_tickets_get
 suspended_tickets_list
@@ -53,6 +65,7 @@ tickets_collaborators_list
 tickets_comments_count
 tickets_comments_list
 tickets_count
+tickets_deleted_list
 tickets_export_incremental
 tickets_get
 tickets_get_by_external_id
@@ -80,6 +93,8 @@ users_tickets_assigned_list
 users_tickets_ccd_list
 users_tickets_requested_list
 views_count
+views_count_many
 views_get
 views_list
+views_rows_list
 views_tickets_list

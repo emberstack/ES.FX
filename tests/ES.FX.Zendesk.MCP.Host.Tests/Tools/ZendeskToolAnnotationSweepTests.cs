@@ -52,9 +52,9 @@ internal static class ZendeskToolNaming
 /// </summary>
 public class ZendeskToolAnnotationSweepTests
 {
-    private const int ExpectedTotalTools = 172;
-    private const int ExpectedReadTools = 85;
-    private const int ExpectedWriteTools = 87;
+    private const int ExpectedTotalTools = 215;
+    private const int ExpectedReadTools = 100;
+    private const int ExpectedWriteTools = 115;
 
     private static List<(Type Type, MethodInfo Method, McpServerToolAttribute Attribute)> DeclaredTools()
     {

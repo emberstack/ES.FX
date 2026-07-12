@@ -104,6 +104,28 @@ public sealed class ZendeskArticleTools(
                 MaxResponseChars("articles_search"), itemShapeName: "articles");
         });
 
+    /// <summary>Returns Guide's suggested (deflection) articles for a query.</summary>
+    [McpServerTool(Name = "articles_deflection_search", ReadOnly = true, OpenWorld = true)]
+    [Description(
+        "Guide's SUGGESTED articles for a question — the purpose-built 'which KB articles answer this?' endpoint " +
+        "(what Guide surfaces to deflect a ticket), relevance-ranked. Prefer this over articles_search when the " +
+        "goal is answering/deflecting a customer question. Rows carry only title (name) + html_url permalink — no " +
+        "id or body (the endpoint returns none); to read the body, open the html_url or articles_search the title. " +
+        "query required (max 200 chars). No pagination. Read-only.")]
+    public Task<JsonElement> DeflectionSearch(
+        [Description("The customer's question / ticket text to find relevant articles for. Max 200 characters.")]
+        string query,
+        CancellationToken cancellationToken)
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(query)) throw new McpException("Provide a non-blank query.");
+            var request =
+                helpCenter.Api.V2.Help_center.Deflection.SuggestionsJson.ToGetRequestInformation(configuration =>
+                    configuration.QueryParameters.Query = query);
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return ZendeskLean.BuildDeflectionEnvelope(json, MaxResponseChars("articles_deflection_search"));
+        });
+
     /// <summary>Returns a single Help Center article including its body.</summary>
     [McpServerTool(Name = "articles_get", ReadOnly = true, OpenWorld = true)]
     [Description(

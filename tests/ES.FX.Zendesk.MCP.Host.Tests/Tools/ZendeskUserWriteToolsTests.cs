@@ -227,189 +227,161 @@ public class ZendeskUserWriteToolsTests
         Assert.Equal("queued", json.GetProperty("status").GetString());
     }
 
+    // ── Single-action user setters (decomposed from the former users_update) ──────────────────────────────────
+
     [Fact]
-    public async Task Update_Puts_User_Envelope()
+    public async Task RoleSet_Puts_Role_And_Echoes_Server_State()
     {
         var harness = new ZendeskToolHarness();
-        harness.EnqueueJson("""{"user":{"id":42,"name":"Jane","notes":"VIP","updated_at":"2024-06-06T00:00:00Z"}}""");
+        harness.EnqueueJson("""{"user":{"id":42,"role":"end-user","updated_at":"2024-06-06T00:00:00Z"}}""");
         var tools = CreateTools(harness);
 
-        var result = await tools.Update(42, new ZendeskUserWrite { Notes = "VIP" },
-            TestContext.Current.CancellationToken);
+        var result = await tools.RoleSet(42, "agent", TestContext.Current.CancellationToken);
 
         var request = harness.Request;
         Assert.Equal(HttpMethod.Put, request.Method);
         Assert.Equal("/api/v2/users/42", request.Path);
         using var body = JsonDocument.Parse(request.Body!);
-        var user = body.RootElement.GetProperty("user");
-        Assert.Equal("VIP", user.GetProperty("notes").GetString());
-        Assert.False(user.TryGetProperty("id", out _)); // unset fields are omitted on the wire
+        Assert.Equal("agent", body.RootElement.GetProperty("user").GetProperty("role").GetString());
         var json = Assert.IsType<JsonElement>(result);
-        // The lean update confirmation: {id, updated_at} plus the server state of the fields sent.
         Assert.Equal(42, json.GetProperty("id").GetInt64());
         Assert.Equal("2024-06-06T00:00:00Z", json.GetProperty("updated_at").GetString());
-        Assert.Equal("VIP", json.GetProperty("notes").GetString());
-        Assert.False(json.TryGetProperty("name", out _)); // not in the request — not echoed
-        Assert.False(json.TryGetProperty("user", out _)); // no envelope wrapper
+        // Echo-of-change: the server value of the field set — a business rule kept it 'end-user'.
+        Assert.Equal("end-user", json.GetProperty("role").GetString());
+        Assert.False(json.TryGetProperty("user", out _));
     }
 
     [Fact]
-    public async Task Update_Echoes_The_Server_State_Of_The_Requested_Fields()
+    public async Task SuspendedSet_Puts_The_Flag()
     {
-        // The echo-of-change reads the values back from the SERVER response, so a trigger/business-rule
-        // override (here: suspended flipped back, a tag added, a custom field rewritten) is visible without a
-        // follow-up users_get. user_fields are post-filtered to the requested keys.
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"user":{"id":42,"suspended":true}}""");
+        var tools = CreateTools(harness);
+
+        await tools.SuspendedSet(42, true, TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        Assert.True(body.RootElement.GetProperty("user").GetProperty("suspended").GetBoolean());
+    }
+
+    [Fact]
+    public async Task TicketRestrictionSet_Puts_The_Restriction()
+    {
+        // ticket_restriction reaches the wire (the composite it replaced never mapped this field).
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"user":{"id":42,"ticket_restriction":"assigned"}}""");
+        var tools = CreateTools(harness);
+
+        await tools.TicketRestrictionSet(42, "assigned", TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        Assert.Equal("assigned",
+            body.RootElement.GetProperty("user").GetProperty("ticket_restriction").GetString());
+    }
+
+    [Fact]
+    public async Task NotesSet_Puts_Notes_And_Details()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"user":{"id":42}}""");
+        var tools = CreateTools(harness);
+
+        await tools.NotesSet(42, "VIP", "since 2020", TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        var user = body.RootElement.GetProperty("user");
+        Assert.Equal("VIP", user.GetProperty("notes").GetString());
+        Assert.Equal("since 2020", user.GetProperty("details").GetString());
+    }
+
+    [Fact]
+    public async Task NotesSet_Rejects_Empty_Without_Calling_Zendesk()
+    {
+        var harness = new ZendeskToolHarness();
+        var tools = CreateTools(harness);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            tools.NotesSet(42, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Contains("Provide notes and/or details", exception.Message);
+        Assert.Empty(harness.Requests);
+    }
+
+    [Fact]
+    public async Task TagsSet_Replaces_The_Tag_Set()
+    {
+        var harness = new ZendeskToolHarness();
+        harness.EnqueueJson("""{"user":{"id":42,"tags":["vip"]}}""");
+        var tools = CreateTools(harness);
+
+        await tools.TagsSet(42, ["vip"], TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        Assert.Equal("vip", body.RootElement.GetProperty("user").GetProperty("tags")[0].GetString());
+    }
+
+    [Fact]
+    public async Task FieldsSet_Puts_User_Fields_And_Echoes_Only_The_Requested_Key()
+    {
         var harness = new ZendeskToolHarness();
         harness.EnqueueJson("""
-                            {"user":{"id":42,"name":"Jane","suspended":false,"tags":["vip","auto"],
-                             "user_fields":{"tier":"silver","other":"x"},"updated_at":"2024-06-07T00:00:00Z"}}
+                            {"user":{"id":42,"user_fields":{"tier":"silver","other":"x"},
+                             "updated_at":"2024-06-07T00:00:00Z"}}
                             """);
         var tools = CreateTools(harness);
-        var write = new ZendeskUserWrite
-        {
-            Suspended = true,
-            Tags = ["vip"],
-            UserFields = new Dictionary<string, object?> { ["tier"] = "gold" }
-        };
 
-        var result = await tools.Update(42, write, TestContext.Current.CancellationToken);
+        var result = await tools.FieldsSet(42,
+            new Dictionary<string, object?> { ["tier"] = "gold" }, TestContext.Current.CancellationToken);
 
+        using var body = JsonDocument.Parse(harness.Request.Body!);
+        Assert.Equal("gold", body.RootElement.GetProperty("user").GetProperty("user_fields")
+            .GetProperty("tier").GetString());
         var json = Assert.IsType<JsonElement>(result);
-        Assert.Equal(42, json.GetProperty("id").GetInt64());
-        Assert.False(json.GetProperty("suspended").GetBoolean()); // server overrode the requested true
-        Assert.Equal(2, json.GetProperty("tags").GetArrayLength());
-        Assert.Equal("auto", json.GetProperty("tags")[1].GetString());
+        // Only the requested key is echoed; the tenant's other custom field is not leaked.
         Assert.Equal("silver", json.GetProperty("user_fields").GetProperty("tier").GetString());
-        Assert.False(json.GetProperty("user_fields").TryGetProperty("other", out _)); // not requested
-        Assert.False(json.TryGetProperty("name", out _));
+        Assert.False(json.GetProperty("user_fields").TryGetProperty("other", out _));
     }
 
     [Fact]
-    public async Task Update_Throws_When_The_Response_Carries_No_User()
+    public async Task FieldsSet_Rejects_Empty_Without_Calling_Zendesk()
+    {
+        var harness = new ZendeskToolHarness();
+        var tools = CreateTools(harness);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            tools.FieldsSet(42, new Dictionary<string, object?>(), TestContext.Current.CancellationToken));
+
+        Assert.Contains("at least one custom field", exception.Message);
+        Assert.Empty(harness.Requests);
+    }
+
+    [Fact]
+    public async Task Setter_Throws_When_The_Response_Carries_No_User()
     {
         var harness = new ZendeskToolHarness();
         harness.EnqueueJson("{}");
         var tools = CreateTools(harness);
 
         var exception = await Assert.ThrowsAsync<McpException>(() =>
-            tools.Update(42, new ZendeskUserWrite { Notes = "VIP" }, TestContext.Current.CancellationToken));
+            tools.NameSet(42, "Jane", TestContext.Current.CancellationToken));
 
         Assert.Contains("'user'", exception.Message);
     }
 
     [Fact]
-    public async Task Update_Includes_Id_When_Set()
-    {
-        // The generated update input has no id field — the tool carries a set Id via AdditionalData so the
-        // wire shape matches the old omit-null serializer.
-        var harness = new ZendeskToolHarness();
-        harness.EnqueueJson("""{"user":{"id":42}}""");
-        var tools = CreateTools(harness);
-
-        await tools.Update(42, new ZendeskUserWrite { Id = 42, Notes = "VIP" },
-            TestContext.Current.CancellationToken);
-
-        using var body = JsonDocument.Parse(harness.Request.Body!);
-        Assert.Equal(42, body.RootElement.GetProperty("user").GetProperty("id").GetInt64());
-    }
-
-    [Fact]
-    public async Task UpdateMany_Puts_Shared_Change_With_Ids_Query()
-    {
-        var harness = new ZendeskToolHarness();
-        harness.EnqueueJson("""{"job_status":{"id":"job-3","status":"queued"}}""");
-        var tools = CreateTools(harness);
-
-        var result = await tools.UpdateMany([1, 2, 3], new ZendeskUserWrite { Suspended = true },
-            TestContext.Current.CancellationToken);
-
-        var request = harness.Request;
-        Assert.Equal(HttpMethod.Put, request.Method);
-        Assert.Equal("/api/v2/users/update_many", request.Path);
-        Assert.Contains("ids=1%2C2%2C3", request.Query);
-        using var body = JsonDocument.Parse(request.Body!);
-        Assert.True(body.RootElement.GetProperty("user").GetProperty("suspended").GetBoolean());
-        Assert.False(body.RootElement.TryGetProperty("users", out _));
-        var json = Assert.IsType<JsonElement>(result);
-        Assert.Equal("job-3", json.GetProperty("id").GetString());
-        Assert.Equal("queued", json.GetProperty("status").GetString());
-    }
-
-    [Fact]
-    public async Task UpdateMany_Rejects_More_Than_100_Ids()
-    {
-        var harness = new ZendeskToolHarness();
-        var tools = CreateTools(harness);
-        var ids = Enumerable.Range(1, 101).Select(i => (long)i).ToArray();
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-            tools.UpdateMany(ids, new ZendeskUserWrite { Suspended = true },
-                TestContext.Current.CancellationToken));
-
-        Assert.StartsWith("Zendesk bulk operations accept between 1 and 100 items.", exception.Message);
-        Assert.Equal("ids", exception.ParamName);
-        Assert.Empty(harness.Requests);
-    }
-
-    [Fact]
-    public async Task UpdateMany_DryRun_Digests_Each_Target_With_The_Changed_Fields()
+    public async Task DryRun_User_Setter_Echoes_The_Field_And_Sends_Nothing()
     {
         var harness = new ZendeskToolHarness();
         var tools = CreateTools(harness, McpExecutionMode.DryRun);
 
-        var result = await tools.UpdateMany([1, 2], new ZendeskUserWrite { Suspended = true },
-            TestContext.Current.CancellationToken);
+        var result = await tools.SuspendedSet(42, true, TestContext.Current.CancellationToken);
 
-        // The same-change digest pairs every target id with the shared change's field names.
         var dryRun = Assert.IsType<ZendeskDryRunResult>(result);
-        var digest = Assert.IsType<JsonObject>(dryRun.Request);
-        Assert.Equal("update", digest["action"]!.GetValue<string>());
-        Assert.Equal(2, digest["count"]!.GetValue<int>());
-        var items = digest["items"]!.AsArray();
-        Assert.Equal(1, items[0]!["id"]!.GetValue<long>());
-        Assert.Equal(2, items[1]!["id"]!.GetValue<long>());
-        Assert.Equal("suspended", Assert.Single(items[0]!["fields"]!.AsArray())!.GetValue<string>());
-        Assert.Empty(harness.Requests);
-    }
-
-    [Fact]
-    public async Task UpdateManyBatch_Puts_Users_With_Ids()
-    {
-        var harness = new ZendeskToolHarness();
-        harness.EnqueueJson("""{"job_status":{"id":"job-4","status":"queued"}}""");
-        var tools = CreateTools(harness);
-        var writes = new[]
-        {
-            new ZendeskUserWrite { Id = 1, Notes = "first" },
-            new ZendeskUserWrite { Id = 2, Notes = "second" }
-        };
-
-        var result = await tools.UpdateManyBatch(writes, TestContext.Current.CancellationToken);
-
-        var request = harness.Request;
-        Assert.Equal(HttpMethod.Put, request.Method);
-        Assert.Equal("/api/v2/users/update_many", request.Path);
-        Assert.DoesNotContain("ids=", request.Query);
-        using var body = JsonDocument.Parse(request.Body!);
-        var users = body.RootElement.GetProperty("users");
-        Assert.Equal(1, users[0].GetProperty("id").GetInt64());
-        Assert.Equal("first", users[0].GetProperty("notes").GetString());
-        Assert.Equal(2, users[1].GetProperty("id").GetInt64());
-        var json = Assert.IsType<JsonElement>(result);
-        Assert.Equal("job-4", json.GetProperty("id").GetString());
-    }
-
-    [Fact]
-    public async Task UpdateManyBatch_Rejects_Item_Missing_Id()
-    {
-        var harness = new ZendeskToolHarness();
-        var tools = CreateTools(harness);
-        var writes = new[] { new ZendeskUserWrite { Id = 1 }, new ZendeskUserWrite { Notes = "no id" } };
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-            tools.UpdateManyBatch(writes, TestContext.Current.CancellationToken));
-
-        Assert.StartsWith("Every batch update item must carry Id.", exception.Message);
+        Assert.False(dryRun.Executed);
+        Assert.Contains("suspend user 42", dryRun.Description);
+        var echo = Assert.IsType<JsonObject>(dryRun.Request);
+        Assert.Equal(42L, (long?)echo["id"]);
+        Assert.True((bool?)echo["suspended"]);
         Assert.Empty(harness.Requests);
     }
 

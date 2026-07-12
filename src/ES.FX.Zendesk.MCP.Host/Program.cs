@@ -46,7 +46,10 @@ return await ProgramEntry.CreateBuilder(args).UseSerilog().Build().RunAsync(asyn
         .WithToolsInArea<ZendeskCustomStatusTools>(areaGate)
         .WithToolsInArea<ZendeskJobStatusTools>(areaGate)
         .WithToolsInArea<ZendeskTagTools>(areaGate)
-        .WithToolsInArea<ZendeskSuspendedTicketTools>(areaGate);
+        .WithToolsInArea<ZendeskSuspendedTicketTools>(areaGate)
+        .WithToolsInArea<ZendeskSatisfactionRatingTools>(areaGate)
+        .WithToolsInArea<ZendeskCommunityTools>(areaGate)
+        .WithToolsInArea<ZendeskCustomObjectTools>(areaGate);
 
     // Write tools are registered only when the configured baseline allows them: with a ReadOnly baseline the
     // per-request header can only tighten, so write tools could never execute — omitting them keeps the

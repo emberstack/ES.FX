@@ -41,7 +41,11 @@ public class ZendeskLeanOasExistenceTests
             ["job_statuses"] = (ZendeskOasDocument.Support, "JobStatusObject"),
             ["audits"] = (ZendeskOasDocument.Support, "TicketAuditObject"),
             ["sections"] = (ZendeskOasDocument.HelpCenter, "SectionObject"),
-            ["categories"] = (ZendeskOasDocument.HelpCenter, "CategoryObject")
+            ["categories"] = (ZendeskOasDocument.HelpCenter, "CategoryObject"),
+            ["satisfaction_ratings"] = (ZendeskOasDocument.Support, "SatisfactionRatingObject"),
+            ["community_posts"] = (ZendeskOasDocument.HelpCenter, "PostObject"),
+            ["custom_objects"] = (ZendeskOasDocument.Support, "CustomObject"),
+            ["custom_object_records"] = (ZendeskOasDocument.Support, "CustomObjectRecord")
         };
 
     /// <summary>
@@ -81,8 +85,10 @@ public class ZendeskLeanOasExistenceTests
     [Fact]
     public void Every_Summary_Entity_Is_Schema_Mapped_Or_Exempt()
     {
-        // side_conversations is the single, deliberate exemption (endpoint absent from the published spec).
-        var expected = ZendeskLean.SummarySourceFields.Keys.Where(entity => entity != "side_conversations")
+        // Two deliberate exemptions: side_conversations (endpoint absent from the published spec) and
+        // deleted_tickets (its rows are an inline schema in ListDeletedTicketsResponse, no named component).
+        var exempt = new HashSet<string>(StringComparer.Ordinal) { "side_conversations", "deleted_tickets" };
+        var expected = ZendeskLean.SummarySourceFields.Keys.Where(entity => !exempt.Contains(entity))
             .Order(StringComparer.Ordinal);
         Assert.Equal(expected, EntitySchemas.Keys.Order(StringComparer.Ordinal));
     }

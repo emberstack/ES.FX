@@ -531,6 +531,35 @@ public sealed partial class ZendeskTicketTools(
                 MaxResponseChars("tickets_export_incremental"));
         });
 
+    /// <summary>Lists soft-deleted (not-yet-archived) tickets.</summary>
+    [McpServerTool(Name = "tickets_deleted_list", ReadOnly = true, OpenWorld = false)]
+    [Description(
+        "Lists soft-deleted tickets (deleted but not yet archived/scrubbed — the last 30 days) as lean rows: id, " +
+        "subject, actor (who deleted it), deleted_at, previous_state. This is the way to get the id that " +
+        "tickets_restore / tickets_delete_permanently need. Ordered oldest→newest by ticket CREATED date (NOT by " +
+        "deletion time), and archiving can shift the first row — so a just-deleted old ticket is NOT necessarily " +
+        "on the last page. perPage default 25 (max 100); total in 'count'; 'has_more'/'next_page' drive paging. " +
+        "Tighter rate limit than most reads (~10 req/min).")]
+    public Task<JsonElement> DeletedList(
+        [Description("1-based page number (optional).")]
+        int? page = null,
+        [Description("Results per page (default 25, max 100). Total in 'count'; 'has_more'/'next_page' drive paging.")]
+        int? perPage = 25,
+        CancellationToken cancellationToken = default,
+        [Description(DetailDescription)] string detail = "summary")
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var parsedDetail = ZendeskLean.ParseDetail(detail);
+            var request = zendesk.Api.V2.Deleted_tickets.ToGetRequestInformation(configuration =>
+            {
+                configuration.QueryParameters.Page = page;
+                configuration.QueryParameters.PerPage = perPage;
+            });
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return ZendeskLean.BuildOffsetListEnvelope(json, "deleted_tickets", page, parsedDetail,
+                MaxResponseChars("tickets_deleted_list"));
+        });
+
     /// <summary>Resolves the response-size budget for a tool (see <see cref="McpToolsOptions.GetMaxResponseChars" />).</summary>
     private int MaxResponseChars(string toolName) => mcpOptions.CurrentValue.Tools.GetMaxResponseChars(toolName);
 

@@ -1,14 +1,14 @@
 ---
 title: Zendesk MCP server
-description: A deployable Model Context Protocol server exposing Zendesk Support and Help Center — 172 read and write tools built on the Kiota-generated ES.FX.Zendesk clients — over Streamable HTTP, with lean-first responses, execution-mode gating, and Origin validation.
+description: A deployable Model Context Protocol server exposing Zendesk Support and Help Center — 215 read and write tools built on the Kiota-generated ES.FX.Zendesk clients — over Streamable HTTP, with lean-first responses, execution-mode gating, and Origin validation.
 ---
 
 ## Overview
 
 `ES.FX.Zendesk.MCP.Host` is a runnable [Model Context Protocol](https://modelcontextprotocol.io) (MCP)
 server that exposes Zendesk Support as MCP tools an AI agent can call. It is built on the
-[Kiota-generated ES.FX.Zendesk clients](./zendesk-client.md) and publishes **172 tools** — **85 read**
-and **87 write** (32 of the writes destructive) — spanning seventeen resource areas. Tool responses are
+[Kiota-generated ES.FX.Zendesk clients](./zendesk-client.md) and publishes **215 tools** — **100 read**
+and **115 write** (32 of the writes destructive) — spanning twenty resource areas. Tool responses are
 **lean-first**: list/search tools return per-entity allowlist **summary rows** inside a uniform
 envelope, the per-record `*_get` tools return the **complete record** (minus API self-links and
 null-valued fields), and write tools return **minimal confirmations** — with every omission carrying an
@@ -155,7 +155,7 @@ best done **server-side**, with a client include-list as the fallback when you c
 Three levers, in order of preference:
 
 1. **Read-only deployment** — set `Mcp:Execution:Mode = ReadOnly`. The write tool classes are never
-   registered, so the advertised surface is exactly the 85 read tools. No client config required.
+   registered, so the advertised surface is exactly the 100 read tools. No client config required.
 2. **Area gating** — set `Mcp:Tools:Areas` to the resource areas you want. Only tool classes in those areas
    are registered, and it composes with the execution mode via **AND**:
    - `Areas: ["tickets"]` → all ticket tools (reads **and** writes).
@@ -165,7 +165,7 @@ Three levers, in order of preference:
    (fail-closed) with the list of valid areas, rather than silently exposing nothing. Valid areas:
    `tickets`, `ticket_fields`, `users`, `organizations`, `groups`, `articles`, `macros`, `forms`, `views`,
    `brands`, `custom_statuses`, `job_statuses`, `tags`, `suspended_tickets`, `attachments`, `uploads`,
-   `search`.
+   `search`, `satisfaction_ratings`, `community`, `custom_objects`.
 3. **Client include-list** — when you cannot change the deployment, list exact tool names in the client
    config. The ready-made profiles below are snapshot-tested in the host test project
    (`ZendeskToolProfileSnapshotTests`), so they never drift from the real tool surface.
@@ -183,7 +183,9 @@ mcp_servers:
   zendesk:
     url: "http://localhost:8080"
     tools:
-      include: [tickets_get, tickets_search, tickets_comments_list, tickets_create, tickets_update]
+      # Allow reading tickets and adding internal notes / setting status, but NOT replying to the customer
+      # (tickets_reply_public is omitted) — the single-action write tools make per-action gating possible.
+      include: [tickets_get, tickets_search, tickets_comments_list, tickets_note_add, tickets_status_set]
 ```
 
 ### Include-list profiles
@@ -212,11 +214,12 @@ tickets_side_conversations_list
 ```
 
 <details>
-<summary><strong>All read tools</strong> (85) — equivalent to <code>Mode: ReadOnly</code></summary>
+<summary><strong>All read tools</strong> (100) — equivalent to <code>Mode: ReadOnly</code></summary>
 
 ```
 articles_categories_get
 articles_categories_list
+articles_deflection_search
 articles_get
 articles_list
 articles_search
@@ -225,6 +228,11 @@ articles_sections_list
 attachments_get
 brands_get
 brands_list
+community_posts_search
+custom_objects_list
+custom_objects_records_get
+custom_objects_records_list
+custom_objects_records_search
 custom_statuses_get
 custom_statuses_list
 forms_get
@@ -239,9 +247,12 @@ groups_users_list
 job_statuses_get
 job_statuses_get_many
 job_statuses_list
+macros_changes_get
 macros_get
 macros_list
 macros_list_active
+macros_search
+macros_ticket_preview_get
 organizations_autocomplete
 organizations_count
 organizations_get
@@ -255,6 +266,9 @@ organizations_tickets_count
 organizations_tickets_list
 organizations_users_count
 organizations_users_list
+satisfaction_ratings_count
+satisfaction_ratings_get
+satisfaction_ratings_list
 search_count
 suspended_tickets_get
 suspended_tickets_list
@@ -270,6 +284,7 @@ tickets_collaborators_list
 tickets_comments_count
 tickets_comments_list
 tickets_count
+tickets_deleted_list
 tickets_export_incremental
 tickets_get
 tickets_get_by_external_id
@@ -297,8 +312,10 @@ users_tickets_assigned_list
 users_tickets_ccd_list
 users_tickets_requested_list
 views_count
+views_count_many
 views_get
 views_list
+views_rows_list
 views_tickets_list
 ```
 </details>
@@ -307,31 +324,34 @@ views_tickets_list
 
 Every tool advertised by the server ships its full name, description, and JSON input schema in the
 `tools/list` reply the client reads at connect time — and, on most clients, that entire block is injected
-into the model's context on **every turn**. At the full surface of **172 tools** that description text is a
+into the model's context on **every turn**. At the full surface of **215 tools** that description text is a
 standing token tax the agent pays before it has read a single ticket, and it scales with the number of
 servers a client has connected. Two client behaviors bound the impact:
 
 - **Clients with deferred tool loading** (they advertise only tool *names* up front and fetch a tool's full
-  schema on first use) pay a small tax regardless of surface size — the 172 tools cost roughly 172 names.
-- **Clients without it** materialize all 172 descriptions on every turn; here the surface size is the tax,
+  schema on first use) pay a small tax regardless of surface size — the 215 tools cost roughly 215 names.
+- **Clients without it** materialize all 215 descriptions on every turn; here the surface size is the tax,
   and trimming it is the single biggest context lever you have.
 
 Because the tax is paid client-side but the surface is chosen server-side, **the primary context lever is
 server-side gating, not client filtering**:
 
-- Set `Mcp:Execution:Mode = ReadOnly` to drop the 87 write tools from `tools/list` entirely (down to the 85
+- Set `Mcp:Execution:Mode = ReadOnly` to drop the 115 write tools from `tools/list` entirely (down to the 100
   reads), and/or scope `Mcp:Tools:Areas` to the resource areas the deployment actually needs (see
   [Filtering the tool surface](#filtering-the-tool-surface)). A read-only, `Areas: ["tickets"]` server
-  advertises ~16 tools instead of 172 — an order-of-magnitude smaller `tools/list` for **every** connected
+  advertises ~16 tools instead of 215 — an order-of-magnitude smaller `tools/list` for **every** connected
   client, with no per-client configuration to keep in sync.
 - A [client include-list](#filtering-the-tool-surface) is the fallback when you cannot change the
   deployment, but it only shrinks what the client *chooses to expose* — it never changes what the server
   advertises, and it drifts per client.
 
 > [!NOTE]
-> Further collapsing the surface by **consolidating CRUD verbs** (one `tickets` tool taking an `action`
-> parameter instead of separate `tickets_create` / `tickets_update` / `tickets_delete`) is **deferred by
-> design, not adopted**. It would cut the tool count but at the cost of the risk-legible naming and
+> The write surface deliberately goes the **opposite** way from consolidation: the former composite
+> `tickets_update` / `users_update` / `organizations_update` tools were **decomposed** into single-action
+> setters (e.g. `tickets_reply_public` vs `tickets_note_add`, `users_role_set`) so a deployment can grant or
+> deny individual actions via the client include-list. Collapsing the surface the other way by
+> **consolidating CRUD verbs** (one `tickets` tool taking an `action` parameter) is **deferred by design, not
+> adopted**. It would cut the tool count but at the cost of the risk-legible naming and
 > annotations this server relies on — a tool's read/write/destructive class is currently readable from its
 > name and enforced by [`ReadOnly`/`Destructive` annotations](#tools), which a single multiplexed tool
 > erases. The gating levers above already buy the context savings without that trade-off; revisit
@@ -505,7 +525,7 @@ Four tools exist specifically to close expensive access patterns:
 
 ## Tools
 
-172 tools, named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` — snake_case, with **no
+215 tools, named resource-first as `{area}[_{subresource}]_{verb}[_{qualifier}]` — snake_case, with **no
 product prefix** (MCP clients already namespace tools by server, so a `zendesk_` prefix would only stutter as
 `mcp_zendesk_zendesk_…`). The **area** leads so related tools sort together, and every read tool ends in a
 controlled read verb (`get` / `list` / `search` / `count` / `export` / `autocomplete`) while any other verb
@@ -522,7 +542,7 @@ by all tools:
 - **Bulk writes** — bulk operations (≤100 items unless noted) return a `job_status`; poll
   `job_statuses_get` until it reports `completed`/`failed`.
 
-### Read tools (85 total)
+### Read tools (100 total)
 
 Every read tool is annotated `ReadOnly = true` and is available in all execution modes.
 
@@ -566,6 +586,7 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | `tickets_collaborators_list` | Lists the collaborators (CCs) of a ticket. |
 | `tickets_comments_count` | Returns a ticket's comment count. |
 | `tickets_export_incremental` | Exports tickets incrementally (cursor-based incremental export). |
+| `tickets_deleted_list` | Lists soft-deleted tickets (the id source for `tickets_restore` / `tickets_delete_permanently`). |
 
 #### Organizations
 
@@ -602,6 +623,7 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | Tool | What it does |
 | --- | --- |
 | `articles_search` | Full-text searches Help Center knowledge base articles. |
+| `articles_deflection_search` | Returns Guide's suggested (deflection) articles for a question — title + permalink, no body. |
 | `articles_get` | Returns a single Help Center article including its full body. |
 | `articles_list` | Lists Help Center articles, optionally scoped to a section. |
 | `articles_sections_list` | Lists Help Center sections, optionally scoped to a category. |
@@ -624,7 +646,10 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | --- | --- |
 | `macros_list` | Lists Zendesk macros. |
 | `macros_list_active` | Lists only the macros usable by the current agent. |
+| `macros_search` | Finds macros by title keyword and/or filters (access/active/category/group). |
 | `macros_get` | Returns a single macro including its actions. |
+| `macros_changes_get` | Previews the ticket field/comment changes a macro would make (not applied). |
+| `macros_ticket_preview_get` | Previews a specific ticket as it would look after applying a macro (not applied). |
 
 #### Ticket forms
 
@@ -640,7 +665,9 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | `views_list` | Lists Zendesk views. |
 | `views_get` | Returns a Zendesk view by id. |
 | `views_tickets_list` | Returns the tickets currently matching a view. |
+| `views_rows_list` | Runs a view as a work queue — rows rendered with the view's configured columns and sorting. |
 | `views_count` | Returns the (cached) ticket count of a view. |
+| `views_count_many` | Returns cached ticket counts for several views at once (bulk queue sizing). |
 
 #### Search
 
@@ -691,7 +718,30 @@ Every read tool is annotated `ReadOnly = true` and is available in all execution
 | --- | --- |
 | `attachments_get` | Downloads an attachment's content (text inline, binary as size-capped base64). |
 
-### Write tools (87 total)
+#### Satisfaction ratings
+
+| Tool | What it does |
+| --- | --- |
+| `satisfaction_ratings_list` | Lists CSAT satisfaction ratings, filterable by score and time window. |
+| `satisfaction_ratings_get` | Returns a single CSAT satisfaction rating by id. |
+| `satisfaction_ratings_count` | Returns the CSAT satisfaction rating count. |
+
+#### Community (Gather)
+
+| Tool | What it does |
+| --- | --- |
+| `community_posts_search` | Full-text searches Help Center community (Gather) posts — peer discussions and workarounds. |
+
+#### Custom objects
+
+| Tool | What it does |
+| --- | --- |
+| `custom_objects_list` | Lists the tenant's custom object types (discover the `key` for the record tools). |
+| `custom_objects_records_list` | Lists records of a custom object type (the business data), optionally filtered by external id. |
+| `custom_objects_records_search` | Free-text searches records of a custom object type. |
+| `custom_objects_records_get` | Returns a single custom object record by its (string) id. |
+
+### Write tools (115 total)
 
 Write tools are annotated `ReadOnly = false` and are gated by the [execution mode](#execution-modes):
 rejected under `ReadOnly`, simulated under `DryRun`. Rows marked **destructive** carry `Destructive = true`
@@ -704,9 +754,28 @@ return a `job_status` — poll `job_statuses_get`.
 | --- | --- | --- |
 | `tickets_create` | write | Creates a Zendesk ticket. |
 | `tickets_create_many` | write | Creates up to 100 Zendesk tickets as an async job. |
-| `tickets_update` | write | Updates a Zendesk ticket by id (public reply / internal note via `comment.public`). |
-| `tickets_update_many` | write | Applies the same change to up to 100 tickets as an async job. |
-| `tickets_update_many_batch` | write | Applies per-ticket changes to up to 100 tickets as an async job. |
+| `tickets_reply_public` | write | Adds a **public** reply (visible to the requester) to a ticket. |
+| `tickets_note_add` | write | Adds an **internal** note (agents only) to a ticket. |
+| `tickets_status_set` | write | Sets a ticket's status (+ optional custom status). |
+| `tickets_priority_set` | write | Sets a ticket's priority. |
+| `tickets_type_set` | write | Sets a ticket's type. |
+| `tickets_assignee_set` | write | Assigns a ticket to an agent (+ optional group). |
+| `tickets_group_set` | write | Routes a ticket to a group. |
+| `tickets_requester_set` | write | Sets a ticket's requester. |
+| `tickets_organization_set` | write | Sets a ticket's organization. |
+| `tickets_form_set` | write | Sets a ticket's form. |
+| `tickets_custom_fields_set` | write | Sets a ticket's custom field values. |
+| `tickets_collaborators_set` | write | Sets a ticket's collaborators (CCs). |
+| `tickets_due_at_set` | write | Sets a ticket's due date (task tickets). |
+| `tickets_subject_set` | write | Sets a ticket's subject. |
+| `tickets_status_set_many` | write | Sets the status of up to 100 tickets as an async job. |
+| `tickets_assignee_set_many` | write | Assigns up to 100 tickets to an agent as an async job. |
+| `tickets_group_set_many` | write | Routes up to 100 tickets to a group as an async job. |
+| `tickets_tags_add_many` | write | Adds tags to up to 100 tickets as an async job (bulk tag append). |
+| `tickets_tags_remove_many` | write | Removes tags from up to 100 tickets as an async job. |
+| `tickets_note_add_many` | write | Adds an internal note to up to 100 tickets as an async job. |
+| `tickets_reply_public_many` | write | Adds a public reply to up to 100 tickets as an async job. |
+| `tickets_custom_fields_set_many` | write | Sets custom field values on up to 100 tickets as an async job. |
 | `tickets_delete` | **destructive** | Soft-deletes a Zendesk ticket. |
 | `tickets_delete_many` | **destructive** | Soft-deletes up to 100 tickets as an async job. |
 | `tickets_merge` | **destructive** | Merges source tickets into a target ticket as an async job. |
@@ -732,9 +801,15 @@ return a `job_status` — poll `job_statuses_get`.
 | `users_create_or_update` | write | Creates or updates a Zendesk user matched by e-mail or external id (upsert). |
 | `users_create_many` | write | Creates up to 100 Zendesk users as an async job. |
 | `users_create_or_update_many` | write | Creates or updates up to 100 Zendesk users as an async job. |
-| `users_update` | write | Updates a Zendesk user by id. |
-| `users_update_many` | write | Applies the same change to up to 100 Zendesk users as an async job. |
-| `users_update_many_batch` | write | Applies per-user changes to up to 100 Zendesk users as an async job. |
+| `users_role_set` | write | Sets a user's role (privilege: end-user/agent/admin). |
+| `users_suspended_set` | write | Suspends or unsuspends a user (access control). |
+| `users_ticket_restriction_set` | write | Sets which tickets a user may access (permission). |
+| `users_name_set` | write | Sets a user's display name. |
+| `users_phone_set` | write | Sets a user's phone number. |
+| `users_organization_set` | write | Sets a user's default organization (removes other memberships). |
+| `users_notes_set` | write | Sets a user's agent-only notes and/or details. |
+| `users_tags_set` | write | Replaces a user's whole tag set. |
+| `users_fields_set` | write | Sets a user's custom field values. |
 | `users_merge` | **destructive** | Merges one end user into another; the loser is absorbed and the winner survives. |
 | `users_delete` | **destructive** | Soft-deletes a Zendesk user. |
 | `users_delete_many` | **destructive** | Soft-deletes up to 100 Zendesk users as an async job. |
@@ -753,9 +828,12 @@ return a `job_status` — poll `job_statuses_get`.
 | `organizations_create` | write | Creates a Zendesk organization. |
 | `organizations_create_many` | write | Creates up to 100 Zendesk organizations as an async job. |
 | `organizations_create_or_update` | write | Creates or updates a Zendesk organization, matching by id or external id. |
-| `organizations_update` | write | Updates a Zendesk organization by id. |
-| `organizations_update_many` | write | Applies the same change to up to 100 organizations as an async job. |
-| `organizations_update_many_batch` | write | Applies per-organization changes to up to 100 organizations as an async job. |
+| `organizations_name_set` | write | Sets an organization's name. |
+| `organizations_domains_set` | write | Replaces an organization's domain-name list. |
+| `organizations_notes_set` | write | Sets an organization's notes and/or details. |
+| `organizations_tags_set` | write | Replaces an organization's tag set. |
+| `organizations_fields_set` | write | Sets an organization's custom field values. |
+| `organizations_sharing_set` | write | Sets an organization's ticket/comment sharing flags. |
 | `organizations_delete` | **destructive** | Deletes a Zendesk organization by id (permanent; no restore). |
 | `organizations_delete_many` | **destructive** | Deletes up to 100 Zendesk organizations as an async job (permanent). |
 | `organizations_merge` | **destructive** | Merges one Zendesk organization into another (irreversible). |

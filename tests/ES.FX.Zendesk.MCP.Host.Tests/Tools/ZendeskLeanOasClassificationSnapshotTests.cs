@@ -47,7 +47,11 @@ public class ZendeskLeanOasClassificationSnapshotTests
             ["job_statuses"] = (ZendeskOasDocument.Support, "JobStatusObject"),
             ["audits"] = (ZendeskOasDocument.Support, "TicketAuditObject"),
             ["sections"] = (ZendeskOasDocument.HelpCenter, "SectionObject"),
-            ["categories"] = (ZendeskOasDocument.HelpCenter, "CategoryObject")
+            ["categories"] = (ZendeskOasDocument.HelpCenter, "CategoryObject"),
+            ["satisfaction_ratings"] = (ZendeskOasDocument.Support, "SatisfactionRatingObject"),
+            ["community_posts"] = (ZendeskOasDocument.HelpCenter, "PostObject"),
+            ["custom_objects"] = (ZendeskOasDocument.Support, "CustomObject"),
+            ["custom_object_records"] = (ZendeskOasDocument.Support, "CustomObjectRecord")
         };
 
     public static TheoryData<string> ClassifiedEntities()

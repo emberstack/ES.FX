@@ -39,6 +39,12 @@ public sealed class ZendeskOrganizationWriteTools(
     IRequestAdapter requestAdapter,
     IMcpExecutionModeAccessor executionMode)
 {
+    /// <summary>Serializer for the single-action setters' dry-run echo: snake_case wire names, unset fields omitted.</summary>
+    private static readonly JsonSerializerOptions WriteJsonOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     /// <summary>Creates a Zendesk organization.</summary>
     [McpServerTool(Name = "organizations_create", ReadOnly = false, Destructive = false,
         Idempotent = false, OpenWorld = false)]
@@ -122,101 +128,127 @@ public sealed class ZendeskOrganizationWriteTools(
             },
             organization);
 
-    /// <summary>Updates a Zendesk organization by id.</summary>
-    [McpServerTool(Name = "organizations_update", ReadOnly = false, Destructive = false,
-        Idempotent = true, OpenWorld = false)]
+    // ── Single-action organization setters (decomposed from the former organizations_update) ──────────────────
+    // Each sets ONE aspect of an organization so a consuming agent can be granted individual actions via its
+    // include-list. All route through ApplyOrganizationUpdate → the same PUT /organizations/{id} + mode gate.
+
+    /// <summary>Sets an organization's name.</summary>
+    [McpServerTool(Name = "organizations_name_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
     [Description(
-        "Update organization by id; only fields set in payload change, except 'domain_names' which OVERWRITES the " +
-        "list (send the complete list). Returns {id, updated_at} plus server-state values of exactly the fields " +
-        "sent; compare against request to spot trigger/business-rule overrides without a follow-up " +
-        "organizations_get. Write op: rejected in read-only mode, simulated in dry-run.")]
-    public Task<object> Update(
+        "Set an organization's name (must be unique across the account). Returns {id, updated_at, name}. Write op: " +
+        "rejected in read-only mode, simulated in dry-run.")]
+    public Task<object> NameSet(
         [Description("Numeric organization id.")]
         long id,
-        [Description("Fields to change; 'domain_names' overwrites — send complete list.")]
-        ZendeskOrganizationWrite organization,
+        [Description("New organization name (unique across the account).")]
+        string name,
         CancellationToken cancellationToken)
-        => ZendeskToolInvoker.InvokeWriteAsync(executionMode,
-            $"update organization {id}",
-            async () =>
-            {
-                // Spec gap: the generated PUT builder lost the request body (ledger row in
-                // src/ES.FX.Zendesk/OpenApi/README.md).
-                var request = zendesk.Api.V2.Organizations[id].ToPutRequestInformation();
-                request.SetContentFromParsable(requestAdapter, "application/json",
-                    new CreateOrganizationRequest { Organization = Map(organization) });
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return UpdateConfirmation(json, organization);
-            },
-            new { id, organization });
+        => ApplyOrganizationUpdate(id, new ZendeskOrganizationWrite { Name = name },
+            $"set the name of organization {id}", cancellationToken);
 
-    /// <summary>Applies the same change to up to 100 organizations as an async job.</summary>
-    [McpServerTool(Name = "organizations_update_many", ReadOnly = false, Destructive = false,
-        Idempotent = false, OpenWorld = false)]
+    /// <summary>Replaces an organization's domain names.</summary>
+    [McpServerTool(Name = "organizations_domains_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
     [Description(
-        "Apply the SAME change to up to 100 organizations by id; for per-organization changes use " +
-        "organizations_update_many_batch. Returns {id, status}; poll job_statuses_get by id until " +
-        "completed. Write op: rejected in read-only mode, simulated in dry-run.")]
-    public Task<object> UpdateMany(
-        [Description("Numeric organization ids to update (1-100).")]
-        long[] ids,
-        [Description("Change applied to every listed organization.")]
-        ZendeskOrganizationWrite change,
+        "REPLACE an organization's whole domain-name list with the given domains (send the COMPLETE list — this " +
+        "overwrites, it does not merge; pass an empty list to clear). Returns {id, updated_at, domain_names}. " +
+        "Write op: rejected in read-only mode, simulated in dry-run.")]
+    public Task<object> DomainsSet(
+        [Description("Numeric organization id.")]
+        long id,
+        [Description("Complete domain-name list; overwrites the existing set (empty clears it).")]
+        string[] domainNames,
         CancellationToken cancellationToken)
-    {
-        var action = $"update {ids.Length} organizations with the same change";
-        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
-            async () =>
-            {
-                ValidateBulkCount(ids.Length, nameof(ids));
-                // Spec gap: the generated update_many builder lost the request body (ledger row in
-                // src/ES.FX.Zendesk/OpenApi/README.md).
-                var request = zendesk.Api.V2.Organizations.Update_many.ToPutRequestInformation(cfg =>
-                    cfg.QueryParameters.Ids = string.Join(',', ids));
-                request.SetContentFromParsable(requestAdapter, "application/json",
-                    new CreateOrganizationRequest { Organization = Map(change) });
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return JobConfirmation(json);
-            },
+        => ApplyOrganizationUpdate(id, new ZendeskOrganizationWrite { DomainNames = domainNames },
+            $"set the domain names of organization {id}", cancellationToken);
+
+    /// <summary>Sets an organization's notes and/or details.</summary>
+    [McpServerTool(Name = "organizations_notes_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set an organization's agent-only notes and/or details fields (free text; provide at least one). Returns " +
+        "{id, updated_at} plus the fields you set. Write op: rejected in read-only mode, simulated in dry-run.")]
+    public Task<object> NotesSet(
+        [Description("Numeric organization id.")]
+        long id,
+        [Description("Agent-only notes (free text). Provide notes and/or details.")]
+        string? notes = null,
+        [Description("Agent-only details (free text). Provide notes and/or details.")]
+        string? details = null,
+        CancellationToken cancellationToken = default)
+        => ApplyOrganizationUpdate(id, new ZendeskOrganizationWrite { Notes = notes, Details = details },
+            $"set notes/details on organization {id}", cancellationToken,
             () =>
             {
-                ValidateBulkCount(ids.Length, nameof(ids));
-                return ZendeskDryRunResult.ForBulk(action, "update", "organizations",
-                    ids.Select(targetId => DigestTarget(targetId, change)));
+                if (notes is null && details is null)
+                    throw new ArgumentException("Provide notes and/or details.", nameof(notes));
             });
-    }
 
-    /// <summary>Applies per-organization changes to up to 100 organizations as an async job.</summary>
-    [McpServerTool(Name = "organizations_update_many_batch", ReadOnly = false, Destructive = false,
-        Idempotent = false, OpenWorld = false)]
+    /// <summary>Replaces an organization's tag set.</summary>
+    [McpServerTool(Name = "organizations_tags_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
     [Description(
-        "Apply PER-ORGANIZATION changes to up to 100 organizations in one call; every item must carry its 'id'. " +
-        "For the same change across many ids use organizations_update_many. Returns {id, status}; poll " +
-        "job_statuses_get by id until completed. Write op: rejected in read-only mode, simulated in dry-run.")]
-    public Task<object> UpdateManyBatch(
-        [Description("Per-organization changes (1-100); every item must include 'id'.")]
-        ZendeskOrganizationWrite[] organizations,
+        "REPLACE an organization's whole tag set with the given tags (pass an empty list to clear). Returns {id, " +
+        "updated_at, tags}. Write op: rejected in read-only mode, simulated in dry-run.")]
+    public Task<object> TagsSet(
+        [Description("Numeric organization id.")]
+        long id,
+        [Description("Complete new tag set; existing tags not listed here are removed.")]
+        string[] tags,
         CancellationToken cancellationToken)
-    {
-        var action = $"update {organizations.Length} organizations (batch)";
-        return ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
-            async () =>
-            {
-                ValidateBatchItems(organizations);
-                // Spec gap: the generated update_many builder lost the request body — attach the
-                // { "organizations": [...] } batch envelope (ledger row in src/ES.FX.Zendesk/OpenApi/README.md).
-                var request = zendesk.Api.V2.Organizations.Update_many.ToPutRequestInformation();
-                request.SetContentFromParsable(requestAdapter, "application/json",
-                    new OrganizationsResponse { Organizations = organizations.Select(Map).ToList() });
-                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
-                return JobConfirmation(json);
-            },
+        => ApplyOrganizationUpdate(id, new ZendeskOrganizationWrite { Tags = tags },
+            $"replace the tag set of organization {id}", cancellationToken);
+
+    /// <summary>Sets an organization's custom field values.</summary>
+    [McpServerTool(Name = "organizations_fields_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set custom organization-field values — a JSON object keyed by each field's KEY (not a numeric id): " +
+        "{\"<field_key>\": <value>}. Value type follows the field type (dropdown/multiselect=option tag value, " +
+        "checkbox=boolean, date=\"YYYY-MM-DD\", number). Only the listed fields change. Get field keys from your " +
+        "Zendesk admin or from organization_fields on an existing record (organizations_get). Returns {id, " +
+        "updated_at} plus the fields you set. Write op: rejected in read-only mode, simulated in dry-run.")]
+    public Task<object> FieldsSet(
+        [Description("Numeric organization id.")]
+        long id,
+        [Description("Custom organization-field values, keyed by field key: {\"<field_key>\": <value>}.")]
+        Dictionary<string, object?> organizationFields,
+        CancellationToken cancellationToken)
+        => ApplyOrganizationUpdate(id, new ZendeskOrganizationWrite { OrganizationFields = organizationFields },
+            $"set {organizationFields.Count} custom field(s) on organization {id}", cancellationToken,
             () =>
             {
-                ValidateBatchItems(organizations);
-                return ZendeskDryRunResult.ForBulk(action, "update", "organizations", organizations);
+                if (organizationFields.Count == 0)
+                    throw new ArgumentException("Provide at least one custom field value.",
+                        nameof(organizationFields));
             });
-    }
+
+    /// <summary>Sets an organization's ticket/comment sharing flags.</summary>
+    [McpServerTool(Name = "organizations_sharing_set", ReadOnly = false, Destructive = false, Idempotent = true,
+        OpenWorld = false)]
+    [Description(
+        "Set whether an organization's members share tickets and/or comments with each other (provide at least " +
+        "one flag). Returns {id, updated_at} plus the flags you set. Write op: rejected in read-only mode, " +
+        "simulated in dry-run.")]
+    public Task<object> SharingSet(
+        [Description("Numeric organization id.")]
+        long id,
+        [Description("Whether members can see each other's tickets. Provide sharedTickets and/or sharedComments.")]
+        bool? sharedTickets = null,
+        [Description(
+            "Whether members can see each other's ticket comments. Provide sharedTickets and/or sharedComments.")]
+        bool? sharedComments = null,
+        CancellationToken cancellationToken = default)
+        => ApplyOrganizationUpdate(id,
+            new ZendeskOrganizationWrite { SharedTickets = sharedTickets, SharedComments = sharedComments },
+            $"set the sharing flags of organization {id}", cancellationToken,
+            () =>
+            {
+                if (sharedTickets is null && sharedComments is null)
+                    throw new ArgumentException("Provide sharedTickets and/or sharedComments.",
+                        nameof(sharedTickets));
+            });
 
     /// <summary>Deletes a Zendesk organization by id.</summary>
     [McpServerTool(Name = "organizations_delete", ReadOnly = false, Destructive = true,
@@ -468,13 +500,37 @@ public sealed class ZendeskOrganizationWriteTools(
             throw new ArgumentException("Zendesk bulk operations accept between 1 and 100 items.", paramName);
     }
 
-    /// <summary>Validates a batch-update payload: the bulk count plus the per-item <c>id</c> requirement.</summary>
-    private static void ValidateBatchItems(ZendeskOrganizationWrite[] organizations)
-    {
-        ValidateBulkCount(organizations.Length, nameof(organizations));
-        if (organizations.Any(o => o.Id is null))
-            throw new ArgumentException("Every batch update item must carry Id.", nameof(organizations));
-    }
+    /// <summary>
+    ///     The shared partial-update path for the single-action organization setters: sends the narrow write model
+    ///     as a <c>PUT /organizations/{id}</c> (body attached — the spec dropped it) and returns the lean update
+    ///     confirmation with echo-of-change. The optional <paramref name="validate" /> hook runs INSIDE the
+    ///     execution-mode gate. The dry-run echoes exactly the fields the setter set (nulls omitted).
+    /// </summary>
+    private Task<object> ApplyOrganizationUpdate(long id, ZendeskOrganizationWrite change, string action,
+        CancellationToken cancellationToken, Action? validate = null)
+        => ZendeskToolInvoker.InvokeWriteAsync(executionMode, action,
+            async () =>
+            {
+                validate?.Invoke();
+                var request = zendesk.Api.V2.Organizations[id].ToPutRequestInformation();
+                request.SetContentFromParsable(requestAdapter, "application/json",
+                    new CreateOrganizationRequest { Organization = Map(change) });
+                var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+                return UpdateConfirmation(json, change);
+            },
+            () =>
+            {
+                validate?.Invoke();
+                var echo = new JsonObject { ["id"] = id };
+                foreach (var (name, value) in JsonSerializer.SerializeToNode(change, WriteJsonOptions)!.AsObject())
+                    if (name != "id")
+                        echo[name] = value?.DeepClone();
+                return new ZendeskDryRunResult
+                {
+                    Description = $"Dry run — no changes were made. This call would {action}.",
+                    Request = echo
+                };
+            });
 
     /// <summary>
     ///     Unwraps the <c>organization</c> member of a write response, or throws when Zendesk omitted it.
@@ -617,18 +673,6 @@ public sealed class ZendeskOrganizationWriteTools(
     /// <summary>Builds the delete acknowledgement, carrying the affected id as a structured field.</summary>
     private static ZendeskWriteAcknowledgement Acknowledge(string action, long id) =>
         new() { Description = $"Zendesk accepted the request to {action}.", Id = id };
-
-    /// <summary>
-    ///     One same-change bulk dry-run digest item: the target id merged onto the shared change, so
-    ///     <see cref="ZendeskDryRunResult.ForBulk" /> reports <c>{index, id, fields:[changed field names]}</c>
-    ///     per organization.
-    /// </summary>
-    private static JsonObject DigestTarget(long id, ZendeskOrganizationWrite change)
-    {
-        var item = (JsonObject)JsonSerializer.SerializeToNode(change)!;
-        item["id"] = id;
-        return item;
-    }
 
     /// <summary>
     ///     The bulk-membership dry-run digest. <see cref="ZendeskDryRunResult.ForBulk" /> lifts only

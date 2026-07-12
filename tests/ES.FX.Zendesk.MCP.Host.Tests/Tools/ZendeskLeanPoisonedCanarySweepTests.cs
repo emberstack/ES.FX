@@ -25,7 +25,7 @@ namespace ES.FX.Zendesk.MCP.Host.Tests.Tools;
 public class ZendeskLeanPoisonedCanarySweepTests
 {
     /// <summary>The read-side tools the sweep must cover; bump deliberately when the tool surface grows.</summary>
-    private const int ExpectedSweptTools = 47;
+    private const int ExpectedSweptTools = 56;
 
     /// <summary>The canary marker planted in every field the lean projection is supposed to strip.</summary>
     private const string Sentinel = "__CANARY_LEAK__";
@@ -45,6 +45,11 @@ public class ZendeskLeanPoisonedCanarySweepTests
         // Single-record status readers: an org-merge status blob and the related-counts record (both tiny),
         // and job_statuses_get, which returns ONE lean-by-status record, not a list envelope.
         "organizations_merges_get", "users_related_get", "job_statuses_get",
+        // Macro apply previews: single-record full-view reads (the macro's would-be ticket changes / the
+        // ticket-after-changes), not list envelopes — detail sinks like the other *_get readers.
+        "macros_changes_get", "macros_ticket_preview_get",
+        // Custom object record detail sink (full-view single record).
+        "custom_objects_records_get",
         // articles_get: detail sink with its own bodyFormat conversion + maxBodyChars cap (design B6).
         "articles_get",
         // ticket_fields_get_many: deliberately FULL-view rows — it IS the detail sink for decoding a ticket's
@@ -53,8 +58,10 @@ public class ZendeskLeanPoisonedCanarySweepTests
 
         // ---- Count/scalar tools: they return a number (or a tiny {value, refreshed_at} record) — no rows.
         "groups_count", "groups_users_count", "organizations_count", "organizations_tickets_count",
-        "organizations_users_count", "search_count", "tags_count", "tickets_comments_count", "tickets_count",
-        "users_count", "views_count",
+        "organizations_users_count", "satisfaction_ratings_count", "search_count", "tags_count",
+        "tickets_comments_count", "tickets_count", "users_count", "views_count", "views_count_many",
+        // Single-record detail sink (like the other *_get readers).
+        "satisfaction_ratings_get",
 
         // ---- Bespoke projections with their own dedicated coverage.
         "tickets_comments_list", // typed comment projection: bodyFormat/maxBodyChars/order (design B3)
@@ -235,6 +242,35 @@ public class ZendeskLeanPoisonedCanarySweepTests
                 "html_url": "https://unit-test.zendesk.com/hc/en-us/categories/7", "name": "FAQ",
                 "description": "{{new string('c', 200)}}{{Sentinel}}", "position": 1,
                 "updated_at": "2026-06-01T00:00:00Z" }
+            ],
+            "satisfaction_ratings": [
+              { "id": 62, "url": "https://unit-test.zendesk.com/api/v2/satisfaction_ratings/62.json?leak={{Sentinel}}",
+                "score": "bad", "comment": "Slow response", "reason": "Took too long", "reason_code": 100,
+                "reason_id": 5, "ticket_id": 208, "requester_id": 7881, "assignee_id": 135, "group_id": 44,
+                "created_at": "2026-07-01T00:00:00Z", "updated_at": "2026-07-02T00:00:00Z" }
+            ],
+            "deleted_tickets": [
+              { "id": 501, "subject": "Deleted ticket",
+                "actor": { "id": 7, "name": "Agent Smith" },
+                "deleted_at": "2026-07-01T00:00:00Z", "previous_state": "open",
+                "url": "https://unit-test.zendesk.com/api/v2/deleted_tickets/501.json?leak={{Sentinel}}",
+                "raw_subject": "{{Sentinel}} raw subject" }
+            ],
+            "custom_objects": [
+              { "key": "apartment", "title": "Apartment", "title_pluralized": "Apartments",
+                "description": "Rental units", "created_at": "2026-01-01T00:00:00Z",
+                "updated_at": "2026-06-01T00:00:00Z",
+                "url": "https://unit-test.zendesk.com/api/v2/custom_objects/apartment.json?leak={{Sentinel}}",
+                "raw_title": "{{Sentinel}} raw", "raw_description": "{{Sentinel}} raw",
+                "raw_title_pluralized": "{{Sentinel}} raw" }
+            ],
+            "custom_object_records": [
+              { "id": "01HXAPARTMENT4B", "name": "Unit 4B", "custom_object_key": "apartment",
+                "external_id": "ext-4b", "custom_object_fields": { "beds": 2, "floor": 4 },
+                "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-06-01T00:00:00Z",
+                "created_by_user_id": 1, "updated_by_user_id": 2,
+                "url": "https://unit-test.zendesk.com/api/v2/custom_objects/apartment/records/01HX.json?leak={{Sentinel}}",
+                "photo": { "content_url": "https://cdn.example/{{Sentinel}}.png" } }
             ],
             "results": [
               { "result_type": "ticket", "id": 801, "url": "https://unit-test.zendesk.com/api/v2/tickets/801.json?leak={{Sentinel}}",

@@ -1,0 +1,11 @@
+created_at summary
+created_by_user_id summary
+custom_object_fields summary
+custom_object_key summary
+external_id summary
+id summary
+name summary
+photo omitted
+updated_at summary
+updated_by_user_id summary
+url omitted

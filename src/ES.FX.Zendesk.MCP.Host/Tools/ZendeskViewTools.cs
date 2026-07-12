@@ -131,6 +131,61 @@ public sealed class ZendeskViewTools(
             return await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
         });
 
+    /// <summary>Runs a view as a work queue, returning its rows with the configured columns.</summary>
+    [McpServerTool(Name = "views_rows_list", ReadOnly = true, OpenWorld = false)]
+    [Description(
+        "Run a view as an agent WORK QUEUE — lists its rows rendered with the view's configured columns and " +
+        "sorting (what an agent sees opening the view), not just raw tickets (that's views_tickets_list). Response " +
+        "carries 'columns' (the layout) and 'items' (rows: scalar column values + a lean ticket summary each; " +
+        "detail:'full' for complete tickets). Ordered by the view's own sort unless overridden. Fixed page size; " +
+        "'has_more'/'next_page' drive paging. views_count_many for just the queue sizes.")]
+    public Task<JsonElement> Execute(
+        [Description("Numeric Zendesk view id.")]
+        long viewId,
+        [Description(
+            "Override sort column (e.g. \"status\", \"priority\", \"created_at\", \"updated_at\"). OMIT to keep the view's own sort.")]
+        string? sortBy = null,
+        [Description("asc|desc. OMIT to keep the view's own order.")]
+        string? sortOrder = null,
+        [Description("1-based page number (optional).")]
+        int? page = null,
+        CancellationToken cancellationToken = default,
+        [Description(DetailDescription)] string detail = "summary")
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            var parsedDetail = ZendeskLean.ParseDetail(detail);
+            var request = zendesk.Api.V2.Views[viewId].Execute.ToGetRequestInformation(configuration =>
+            {
+                if (!string.IsNullOrWhiteSpace(sortBy)) configuration.QueryParameters.SortBy = sortBy;
+                if (!string.IsNullOrWhiteSpace(sortOrder)) configuration.QueryParameters.SortOrder = sortOrder;
+                configuration.QueryParameters.Page = page;
+            });
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            return ZendeskLean.BuildViewExecuteEnvelope(json, page, parsedDetail, MaxResponseChars("views_rows_list"));
+        });
+
+    /// <summary>Returns cached ticket counts for several views at once.</summary>
+    [McpServerTool(Name = "views_count_many", ReadOnly = true, OpenWorld = false)]
+    [Description(
+        "Cached ticket counts for MULTIPLE views in one call — bulk backlog/queue sizing without listing tickets. " +
+        "Max 20 view ids per call. Returns view_counts: [{view_id, value, pretty, fresh, ...}]. Large views: value " +
+        "is approximate and cached; 'fresh' is false while the cached value reloads. Rate limited. Use views_count " +
+        "for a single view.")]
+    public Task<JsonElement> CountMany(
+        [Description("View ids to count, e.g. [25, 26]. At least one required, at most 20.")]
+        long[] ids,
+        CancellationToken cancellationToken)
+        => ZendeskToolInvoker.InvokeAsync(async () =>
+        {
+            if (ids is null || ids.Length == 0) throw new McpException("Provide at least one view id.");
+            if (ids.Length > 20) throw new McpException("views_count_many accepts at most 20 view ids per call.");
+            var request = zendesk.Api.V2.Views.Count_many.ToGetRequestInformation(configuration =>
+                configuration.QueryParameters.Ids = string.Join(',', ids));
+            var json = await requestAdapter.SendForJsonAsync(request, cancellationToken).ConfigureAwait(false);
+            // Strip API self-links; the payload is small (one row per requested view).
+            return ZendeskLean.ToFullView(json);
+        });
+
     /// <summary>Resolves the response-size budget for a tool (see <see cref="McpToolsOptions.GetMaxResponseChars" />).</summary>
     private int MaxResponseChars(string toolName) => mcpOptions.CurrentValue.Tools.GetMaxResponseChars(toolName);
 }

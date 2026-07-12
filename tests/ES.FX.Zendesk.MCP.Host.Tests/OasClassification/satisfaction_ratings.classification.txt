@@ -1,0 +1,13 @@
+assignee_id summary
+comment summary
+created_at summary
+group_id summary
+id summary
+reason summary
+reason_code summary
+reason_id omitted
+requester_id summary
+score summary
+ticket_id summary
+updated_at summary
+url omitted

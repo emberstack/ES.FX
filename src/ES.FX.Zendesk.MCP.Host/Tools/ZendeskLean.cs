@@ -64,7 +64,12 @@ internal static partial class ZendeskLean
             ["job_statuses"] = SummarizeJobStatus,
             ["audits"] = SummarizeAudit,
             ["sections"] = SummarizeSectionOrCategory,
-            ["categories"] = SummarizeSectionOrCategory
+            ["categories"] = SummarizeSectionOrCategory,
+            ["satisfaction_ratings"] = SummarizeSatisfactionRating,
+            ["deleted_tickets"] = SummarizeDeletedTicket,
+            ["community_posts"] = SummarizeCommunityPost,
+            ["custom_objects"] = SummarizeCustomObject,
+            ["custom_object_records"] = SummarizeCustomObjectRecord
         };
 
     /// <summary>
@@ -139,7 +144,34 @@ internal static partial class ZendeskLean
             ],
             // Categories share the section shape; category_id/parent_section_id can never materialize on a
             // category (they are not CategoryObject properties), so the category allowlist omits them.
-            ["categories"] = ["id", "name", "html_url", "description", "position", "updated_at"]
+            ["categories"] = ["id", "name", "html_url", "description", "position", "updated_at"],
+            // CSAT ratings are already small; the allowlist keeps everything triage-relevant and omits only the
+            // API self-link (url) and the redundant reason_id (reason + reason_code carry the reason).
+            ["satisfaction_ratings"] =
+            [
+                "id", "score", "comment", "reason", "reason_code", "ticket_id", "requester_id", "assignee_id",
+                "group_id", "created_at", "updated_at"
+            ],
+            // Deleted-ticket rows are an inline schema (no named component in the OAS), so this entity is exempt
+            // from the schema-existence/classification tests (like side_conversations). The rows are already
+            // minimal — actor is {id,name}; there are no bodies to strip.
+            ["deleted_tickets"] = ["id", "subject", "actor", "deleted_at", "previous_state"],
+            // Community (Gather) post triage rows; the post body (details) and low-signal metadata are omitted.
+            ["community_posts"] =
+            [
+                "id", "title", "html_url", "status", "author_id", "topic_id", "created_at", "updated_at",
+                "comment_count", "vote_sum", "pinned", "closed"
+            ],
+            // Custom object TYPE metadata (needed to discover the key used to query records); raw_* localization
+            // duplicates and admin flags are omitted.
+            ["custom_objects"] = ["key", "title", "title_pluralized", "description", "created_at", "updated_at"],
+            // Custom object RECORDS — the tenant business data linked to tickets/users. custom_object_fields IS the
+            // payload (kept verbatim); only the self-link and the photo attachment are stripped.
+            ["custom_object_records"] =
+            [
+                "id", "name", "custom_object_key", "external_id", "custom_object_fields", "created_at",
+                "updated_at", "created_by_user_id", "updated_by_user_id"
+            ]
         };
 
     /// <summary>The registered summary-shape keys, exposed for the staleness tests (design A6).</summary>
@@ -242,6 +274,95 @@ internal static partial class ZendeskLean
         IReadOnlyCollection<string>? extraSummaryFields = null, string? itemShapeName = null) =>
         BuildListEnvelope(response, itemsArrayName, itemShapeName, detail, false,
             requestPage, maxResponseChars, note, extraSummaryFields);
+
+    /// <summary>
+    ///     Projects a Zendesk view <c>execute</c> response (<c>{ columns, groups, rows, view }</c>) into the lean
+    ///     envelope. The configured <c>columns</c> layout metadata is kept (that is the point of executing a view
+    ///     rather than listing its tickets), each <c>rows</c> entry keeps its scalar column values but replaces the
+    ///     embedded heavy <c>ticket</c> object with a lean ticket summary (or full view under <c>detail:'full'</c>),
+    ///     and Zendesk's <c>next_page</c> URL collapses to a page <em>number</em> (never echoed). Over-budget
+    ///     responses raise the recoverable size-guard <see cref="McpException" /> (page through it) — the row set is
+    ///     bounded by the view's fixed page size, so tail-dropping is unnecessary here.
+    /// </summary>
+    public static JsonElement BuildViewExecuteEnvelope(JsonElement response, int? requestPage, ZendeskDetail detail,
+        int maxResponseChars)
+    {
+        if (response.ValueKind is not JsonValueKind.Object)
+            throw new InvalidOperationException("The Zendesk view execute response was not a JSON object.");
+        var source = (JsonObject)JsonNode.Parse(response.GetRawText())!;
+
+        var items = new JsonArray();
+        if (source["rows"] is JsonArray rows)
+            foreach (var row in rows)
+                items.Add(ProjectViewRow(row, detail));
+
+        var envelope = new JsonObject { ["detail"] = detail is ZendeskDetail.Full ? "full" : "summary" };
+        if (source["count"] is JsonValue countValue && countValue.TryGetValue(out long count))
+            envelope["count"] = count;
+        if (source["next_page"] is not null)
+        {
+            envelope["has_more"] = true;
+            envelope["next_page"] = (requestPage ?? 1) + 1;
+        }
+
+        // The view's configured column layout (id + title per column) — small; full-viewed to drop any self-links.
+        // The grouping metadata is intentionally not echoed: each row already carries its own `group` scalar.
+        if (source["columns"] is JsonArray columns) envelope["columns"] = ToFullViewNode(columns);
+        envelope["items"] = items;
+
+        return EnsureWithinBudget(JsonSerializer.SerializeToElement(envelope), "views_rows_list", maxResponseChars,
+            "View page is large — request a later page (page:N) or read individual tickets via tickets_get.");
+    }
+
+    /// <summary>
+    ///     Projects a Help Center deflection-suggestions response (<c>{ results: [{ name, html_url }] }</c>) into
+    ///     the lean envelope. Each suggested-article row carries only its title (<c>name</c>) and the human
+    ///     permalink (<c>html_url</c>) — the endpoint returns no id or body — so the projection is a fixed two-field
+    ///     allowlist. Relevance-ordered; the endpoint has no pagination.
+    /// </summary>
+    public static JsonElement BuildDeflectionEnvelope(JsonElement response, int maxResponseChars)
+    {
+        var items = new JsonArray();
+        if (response.ValueKind is JsonValueKind.Object && response.TryGetProperty("results", out var results) &&
+            results.ValueKind is JsonValueKind.Array)
+            foreach (var node in (JsonArray)JsonNode.Parse(results.GetRawText())!)
+            {
+                if (node is not JsonObject row) continue;
+                var projected = new JsonObject();
+                Copy(row, projected, "name", "html_url");
+                items.Add(projected);
+            }
+
+        var envelope = new JsonObject { ["detail"] = "summary", ["items"] = items };
+        return EnsureWithinBudget(JsonSerializer.SerializeToElement(envelope), "articles_deflection_search",
+            maxResponseChars, "Too many suggestions — use a shorter, more specific query.");
+    }
+
+    /// <summary>
+    ///     Projects one view-execute row: scalar column values are kept, the embedded <c>ticket</c> is summarized
+    ///     (or full-viewed), and a row-level <c>url</c> self-link is dropped. Non-object rows pass through.
+    /// </summary>
+    private static JsonNode? ProjectViewRow(JsonNode? row, ZendeskDetail detail)
+    {
+        if (row is not JsonObject rowObject) return row?.DeepClone();
+        var projected = new JsonObject();
+        foreach (var (name, value) in rowObject)
+            switch (name)
+            {
+                case "ticket" when value is JsonObject ticket:
+                    projected["ticket"] = detail is ZendeskDetail.Summary
+                        ? SummarizeEntity("tickets", ticket)
+                        : ToFullViewNode(ticket);
+                    break;
+                case "url" when value is JsonValue urlValue && urlValue.TryGetValue<string>(out _):
+                    break; // drop the row self-link
+                default:
+                    projected[name] = detail is ZendeskDetail.Full ? ToFullViewNode(value) : value?.DeepClone();
+                    break;
+            }
+
+        return projected;
+    }
 
     /// <summary>
     ///     Applies the envelope's summary-mode <b>sideload contract</b> to a raw Zendesk list response in place,
@@ -894,6 +1015,49 @@ internal static partial class ZendeskLean
         target[field] = value is JsonValue jsonValue && jsonValue.TryGetValue(out string? text)
             ? TruncateWithMarker(text, ExcerptChars, "tickets_audits_list detail:'full'")
             : value.DeepClone();
+    }
+
+    private static JsonObject SummarizeCustomObject(JsonObject customObject)
+    {
+        var row = new JsonObject();
+        Copy(customObject, row, "key", "title", "title_pluralized", "description", "created_at", "updated_at");
+        return row;
+    }
+
+    private static JsonObject SummarizeCustomObjectRecord(JsonObject record)
+    {
+        // custom_object_fields (the business data map) is copied verbatim — it is the reason to fetch the record.
+        var row = new JsonObject();
+        Copy(record, row, "id", "name", "custom_object_key", "external_id", "custom_object_fields", "created_at",
+            "updated_at", "created_by_user_id", "updated_by_user_id");
+        return row;
+    }
+
+    private static JsonObject SummarizeCommunityPost(JsonObject post)
+    {
+        // The post body (details) is the heavy field and is stripped — community_posts_search is a discovery tool;
+        // read the full post at its html_url.
+        var row = new JsonObject();
+        Copy(post, row, "id", "title", "html_url", "status", "author_id", "topic_id", "created_at", "updated_at",
+            "comment_count", "vote_sum", "pinned", "closed");
+        return row;
+    }
+
+    private static JsonObject SummarizeDeletedTicket(JsonObject deletedTicket)
+    {
+        // Already minimal on the wire; actor {id,name} is small and copied verbatim. Anything outside the
+        // allowlist (self-links, raw_subject, …) is dropped.
+        var row = new JsonObject();
+        Copy(deletedTicket, row, "id", "subject", "actor", "deleted_at", "previous_state");
+        return row;
+    }
+
+    private static JsonObject SummarizeSatisfactionRating(JsonObject rating)
+    {
+        var row = new JsonObject();
+        Copy(rating, row, "id", "score", "comment", "reason", "reason_code", "ticket_id", "requester_id",
+            "assignee_id", "group_id", "created_at", "updated_at");
+        return row;
     }
 
     private static JsonObject SummarizeSectionOrCategory(JsonObject sectionOrCategory)
