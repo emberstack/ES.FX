@@ -1,5 +1,5 @@
 # Build from the repository root:
-#   docker build -f src/ES.FX.Zendesk.MCP.Host/Dockerfile -t es-fx-zendesk-mcp .
+#   docker build -f src/ES.FX.Zendesk.MCP.Host/Dockerfile -t es-fx-mcp-zendesk .
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src

@@ -1,7 +1,7 @@
 ﻿using System.Text;
+using System.Text.Json;
 using ES.FX.Ignite.FluentValidation.Tests.SUT.Endpoints;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Newtonsoft.Json;
 
 namespace ES.FX.Ignite.FluentValidation.Tests;
 
@@ -18,7 +18,7 @@ public class FunctionalTests(WebApplicationFactory<Program> factory)
         var response = await client.PostAsync(
             SimpleValidationEndpoint.RoutePattern,
             new StringContent(
-                JsonConvert.SerializeObject(new SimpleValidationEndpoint.Request(name)),
+                JsonSerializer.Serialize(new SimpleValidationEndpoint.Request(name)),
                 Encoding.UTF8, "application/json"),
             TestContext.Current.CancellationToken);
         var resultContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);

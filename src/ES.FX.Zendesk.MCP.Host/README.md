@@ -205,12 +205,12 @@ Health endpoints (from Ignite): `/health/live`, `/health/ready` (the latter live
 
 ```bash
 # build from the repository root (build context = repo root)
-docker build -f src/ES.FX.Zendesk.MCP.Host/Dockerfile -t es-fx-zendesk-mcp .
+docker build -f src/ES.FX.Zendesk.MCP.Host/Dockerfile -t es-fx-mcp-zendesk .
 docker run --rm -p 8080:8080 \
   -e Ignite__Zendesk__Subdomain=acme \
   -e Ignite__Zendesk__OAuth__ClientId=*** \
   -e Ignite__Zendesk__OAuth__ClientSecret=*** \
-  es-fx-zendesk-mcp
+  es-fx-mcp-zendesk
 ```
 
 The image never contains development secrets: `appsettings.Development.json` is excluded from the build context
