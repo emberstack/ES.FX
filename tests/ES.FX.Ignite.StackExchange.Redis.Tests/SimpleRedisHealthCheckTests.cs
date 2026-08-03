@@ -73,7 +73,8 @@ public class SimpleRedisHealthCheckTests
     [Fact]
     public async Task Unhealthy_And_ExceptionCaptured_When_Ping_Throws()
     {
-        var boom = new RedisConnectionException(ConnectionFailureType.UnableToConnect, "boom");
+        var boom = new RedisConnectionException(
+            ConnectionFailureType.UnableToConnect, CommandFlags.None, "boom", null, CommandStatus.Unknown);
         var server = new Mock<IServer>();
         server.SetupGet(s => s.ServerType).Returns(ServerType.Standalone);
 
