@@ -57,20 +57,23 @@ dotnet clean
 
 ## Test
 
-Tests run with **xUnit v3**, Moq, and coverlet for coverage.
+Tests run with **xUnit v3** and Moq. `dotnet test` runs in **Microsoft.Testing.Platform** mode (opted in
+via the repo-root `global.json`), so VSTest switches such as `--filter "FullyQualifiedName~..."`,
+`--logger`, and `--collect` don't apply.
 
 ```bash
 # Run the whole suite
 dotnet test --verbosity normal
 
 # One project
-dotnet test tests/ES.FX.Tests/ES.FX.Tests.csproj
+dotnet test --project tests/ES.FX.Tests/ES.FX.Tests.csproj
 
-# One test or class by name
-dotnet test --filter "FullyQualifiedName~ClassName.MethodName"
+# One class or test by name (xUnit filters, wildcards allowed)
+dotnet test --project tests/ES.FX.Tests/ES.FX.Tests.csproj --filter-class "*.ClassName"
+dotnet test --project tests/ES.FX.Tests/ES.FX.Tests.csproj --filter-method "*.ClassName.MethodName"
 
 # Detailed console output
-dotnet test --logger "console;verbosity=detailed"
+dotnet test --output Detailed
 ```
 
 Test results are written as TRX to `.artifacts/TestResults/`.

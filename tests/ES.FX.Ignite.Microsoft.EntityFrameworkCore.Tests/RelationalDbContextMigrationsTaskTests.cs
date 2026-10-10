@@ -47,7 +47,7 @@ public class RelationalDbContextMigrationsTaskTests
                 LogLevel.Information,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((state, _) =>
-                    state.ToString()!.Contains(nameof(TestDbContext))),
+                    state != null && state.ToString()!.Contains(nameof(TestDbContext))),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtLeastOnce);

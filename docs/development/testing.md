@@ -15,11 +15,11 @@ ES.FX standardizes on one test stack across every project. Versions are pinned c
 
 | Package | Role |
 | --- | --- |
-| `xunit.v3` | Test framework (xUnit **v3**, not v2). |
-| `xunit.runner.visualstudio` | IDE / `dotnet test` runner integration. |
-| `Microsoft.NET.Test.Sdk` | Test host and discovery. |
+| `xunit.v3` | Test framework (xUnit **v3**, not v2). Each test project is a Microsoft.Testing.Platform executable. |
+| `xunit.runner.visualstudio` | VSTest adapter, kept for IDEs that still discover tests through VSTest. |
+| `Microsoft.NET.Test.Sdk` | VSTest test host, kept for the same IDE compatibility. |
 | `Moq` | Mocking for isolated unit tests. |
-| `coverlet.collector` | Code coverage collection. |
+| `coverlet.collector` | VSTest coverage collector (IDE runs only; `dotnet test` in MTP mode doesn't use it). |
 | `Testcontainers.*` | Ephemeral Docker containers for functional tests (`Redis`, `MsSql`, `PostgreSql`, `MariaDb`). |
 | `Microsoft.AspNetCore.Mvc.Testing` | In-memory host + `HttpClient` for end-to-end Spark tests. |
 
@@ -36,7 +36,7 @@ Test projects mirror the package they cover and live in `tests/`. Three naming c
 | --- | --- |
 | `{Project}.Tests` | The test project for `{Project}` (unit + functional tests). |
 | `{Project}.Tests.SUT` | A real host (ASP.NET app) exercised end-to-end by `{Project}.Tests`. |
-| `ES.FX.Shared.{Db}.Tests` | Shared Testcontainers fixtures reused across many test projects. |
+| `ES.FX.Shared.{Db}.Tests` | Shared Testcontainers fixtures reused across many test projects. A plain class library, **not** a test project. |
 
 A test `.csproj` sets `IsTestProject` and `IsPackable=false`, references the package under test, and
 adds the shared fixtures project when it needs a live service:
@@ -70,8 +70,15 @@ adds the shared fixtures project when it needs a live service:
 
 > [!NOTE]
 > `Directory.Build.props` treats any project whose name contains `.Tests` as a test project: it disables
-> packing and coverage packaging, and emits a per-project TRX logger. You don't repeat that wiring in the
-> `.csproj`. See [Conventions & build config](./conventions.md) for the full set of global properties.
+> packing and coverage packaging, and passes the arguments that write a per-project xUnit TRX report. You
+> don't repeat that wiring in the `.csproj`. See [Conventions & build config](./conventions.md) for the
+> full set of global properties.
+
+> [!IMPORTANT]
+> A shared fixtures project (`ES.FX.Shared.{Db}.Tests`) contains no tests, so it must **not** be a test
+> project. Leave out `IsTestProject`, `Microsoft.NET.Test.Sdk`, and `xunit.runner.visualstudio`, and
+> reference `xunit.v3.extensibility.core` (for `IAsyncLifetime`) instead of `xunit.v3`. Microsoft.Testing.Platform
+> fails any test application that runs zero tests (exit code 8), which would fail the whole `dotnet test` run.
 
 The `<Using Include="Xunit" />` global using is the reason test files reference `[Fact]`, `[Theory]`, and
 `Assert` without a `using Xunit;` line.
@@ -294,34 +301,40 @@ public class NSwagFunctionalTests(WebApplicationFactory<Program> factory)
 
 ## Run the tests
 
-`dotnet test` discovers and runs every test project in the solution. Results are written as TRX files to
-`.artifacts/TestResults/`.
+`dotnet test` discovers and runs every test project in the solution. The repo-root `global.json` opts it
+into **Microsoft.Testing.Platform (MTP) mode**, so VSTest switches (`--filter "FullyQualifiedName~..."`,
+`--logger`, `--collect`) don't apply. Results are written as one xUnit TRX file per project
+(`{Project}.trx`) to `.artifacts/TestResults/`.
 
 ```bash
 # Run the whole suite (Docker must be running for functional tests)
 dotnet test --verbosity normal
 
 # Run a single test project
-dotnet test tests/ES.FX.Tests/ES.FX.Tests.csproj
+dotnet test --project tests/ES.FX.Tests/ES.FX.Tests.csproj
 
-# Detailed console output
-dotnet test --logger "console;verbosity=detailed"
+# Detailed per-test console output
+dotnet test --output Detailed
 ```
 
-Filter to a subset with `--filter` and xUnit's `FullyQualifiedName` selector:
+Filter to a subset with xUnit's filter switches (`--filter-class`, `--filter-method`, `--filter-namespace`,
+`--filter-trait`, `--filter-query`). Names are fully qualified, and `*` is allowed at either end:
 
 ```bash
-# One class
-dotnet test --filter "FullyQualifiedName~HostingTests"
+# One class in one project
+dotnet test --project tests/ES.FX.Ignite.StackExchange.Redis.Tests/ES.FX.Ignite.StackExchange.Redis.Tests.csproj --filter-class "*.HostingTests"
 
-# One test method
-dotnet test --filter "FullyQualifiedName~HostingTests.IgniteDoesNotAllowReconfiguration"
+# One test method in one project
+dotnet test --project tests/ES.FX.Ignite.StackExchange.Redis.Tests/ES.FX.Ignite.StackExchange.Redis.Tests.csproj --filter-method "*.HostingTests.IgniteDoesNotAllowReconfiguration"
+
+# Across the whole solution: projects with no matching test exit with code 8, so ignore that code
+dotnet test --filter-class "*.HostingTests" --ignore-exit-code 8
 ```
 
 > [!TIP]
 > To skip the Docker-dependent functional tests on a machine without a Docker engine, run only the
-> pure-unit project (`dotnet test tests/ES.FX.Tests/ES.FX.Tests.csproj`) or narrow with `--filter` to the
-> hosting/unit classes you care about.
+> pure-unit project (`dotnet test --project tests/ES.FX.Tests/ES.FX.Tests.csproj`) or narrow with a
+> filter to the hosting/unit classes you care about.
 
 ## See also
 

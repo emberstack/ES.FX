@@ -70,7 +70,7 @@ Any project whose name starts with `ES.FX` and does **not** contain `.Tests` is 
 - Packages are written to `.artifacts/nuget` (at the repo root, via `PackageOutputPath`).
 - Every package embeds the repo-root `README.md` (`PackageReadmeFile`) and `package.icon.png` (`PackageIcon`), is `Authors=emberstack` / `Company=EmberStack`, MIT-licensed (`PackageLicenseExpression=MIT`), and points `RepositoryUrl` at the GitHub repo.
 
-Test projects (`*.Tests`) opt out: `GeneratePackageOnBuild` is forced back to `false`, they are decorated with `[ExcludeFromCodeCoverage]`, and they emit a per-project TRX logger to `.artifacts/TestResults`.
+Test projects (`*.Tests`) opt out: `GeneratePackageOnBuild` is forced back to `false`, they are decorated with `[ExcludeFromCodeCoverage]`, and `TestingPlatformCommandLineArguments` makes each one write a per-project xUnit TRX report (`{Project}.trx`) to `.artifacts/TestResults`. `dotnet test` runs in Microsoft.Testing.Platform mode, which the repo-root `global.json` opts into.
 
 > [!NOTE]
 > The `README.md` and `package.icon.png` shipped in each package are the **repo-root** files, shared by every package. There is no per-project README in the `.nupkg`.

@@ -117,7 +117,8 @@ public class EndpointConventionBuilderExtensionsTests
         CancellationToken cancellationToken)
     {
         var appBuilder = WebApplication.CreateBuilder();
-        appBuilder.Services.AddApiVersioning();
+        appBuilder.Services.AddApiVersioning(options =>
+            options.ApiVersionReader = new QueryStringApiVersionReader());
         appBuilder.Services.AddRouting();
         await using var app = appBuilder.Build();
 

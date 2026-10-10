@@ -128,9 +128,9 @@ folder node:
 
 Every library gets a sibling test project named `{PackageName}.Tests` under `tests/`. Test projects are
 **excluded from packing and code coverage** automatically (the `.Tests` suffix is what triggers that in
-`Directory.Build.props`), and each emits a per-project TRX logger to `.artifacts/TestResults/`.
+`Directory.Build.props`), and each writes a per-project TRX report to `.artifacts/TestResults/`.
 
-The stack is **xUnit v3** with Moq, coverlet for coverage, and Testcontainers for functional tests that need
+The stack is **xUnit v3** on Microsoft.Testing.Platform, with Moq and Testcontainers for functional tests that need
 a real service. Model the test `.csproj` on the Redis Spark's tests:
 
 ```xml
@@ -197,7 +197,7 @@ ls .artifacts/nuget
 Then run the tests:
 
 ```bash
-dotnet test tests/ES.FX.MyFeature.Tests/ES.FX.MyFeature.Tests.csproj --verbosity normal
+dotnet test --project tests/ES.FX.MyFeature.Tests/ES.FX.MyFeature.Tests.csproj
 ```
 
 Apply formatting before you commit:

@@ -41,11 +41,13 @@ SDKs pick it up automatically at the repo root.
 dotnet build
 dotnet build --configuration Release
 
-# Test — functional tests need Docker running (Testcontainers spins up real services)
+# Test — functional tests need Docker running (Testcontainers spins up real services).
+# dotnet test runs in Microsoft.Testing.Platform mode (global.json): no VSTest --filter/--logger/--collect.
 dotnet test --verbosity normal
-dotnet test tests/ES.FX.Tests/ES.FX.Tests.csproj              # one project
-dotnet test --filter "FullyQualifiedName~ClassName.MethodName" # one test / class
-dotnet test --logger "console;verbosity=detailed"
+dotnet test --project tests/ES.FX.Tests/ES.FX.Tests.csproj                                    # one project
+dotnet test --project tests/ES.FX.Tests/ES.FX.Tests.csproj --filter-class "*.ClassName"       # one class
+dotnet test --project tests/ES.FX.Tests/ES.FX.Tests.csproj --filter-method "*.Class.Method"   # one test
+dotnet test --output Detailed
 
 dotnet format          # apply formatting/style fixes
 dotnet clean
@@ -103,7 +105,7 @@ Global settings live in `Directory.Build.props` and apply to every project:
   they embed `README.md` and `package.icon.png`, MIT-licensed, `JetBrains.Annotations` referenced privately.
   Host apps opt out by setting `GeneratePackageOnBuild=false` in their `.csproj`.
 - Test projects (name contains `.Tests`, including `.Tests.SUT`) are excluded from packing and from code
-  coverage, and emit per-project TRX loggers.
+  coverage, and write per-project xUnit TRX reports (via `TestingPlatformCommandLineArguments`).
 - **Central Package Management**: all versions are pinned in `Directory.Packages.props`
   (`ManagePackageVersionsCentrally=true`). Add/bump versions there, never inline in a `.csproj`.
 
@@ -117,9 +119,11 @@ Naming:
 
 ## Testing
 
-- **xUnit v3** (`xunit.v3`), Moq, coverlet for coverage.
+- **xUnit v3** (`xunit.v3`) on **Microsoft.Testing.Platform** (`global.json` opts `dotnet test` into MTP
+  mode), Moq.
 - Functional tests use **Testcontainers** and require a running Docker engine: MsSql, Redis, PostgreSQL,
-  MariaDB. Shared fixtures live in `tests/ES.FX.Shared.{Service}.Tests`.
+  MariaDB. Shared fixtures live in `tests/ES.FX.Shared.{Service}.Tests`. These are plain class libraries
+  (`xunit.v3.extensibility.core`, no `IsTestProject`), because MTP fails a test app that runs zero tests.
 - `.SUT` projects are real hosts (ASP.NET etc.) started via `Microsoft.AspNetCore.Mvc.Testing` for
   end-to-end coverage of a Spark. Details: [`docs/development/testing.md`](docs/development/testing.md).
 
