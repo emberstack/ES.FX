@@ -1,5 +1,8 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ES.FX.Hosting.Lifetime;
+using ES.FX.Hosting.Tests.SUT;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -152,39 +155,62 @@ public class ProgramEntrySignalOverloadTests
     }
 
     /// <summary>
-    ///     Drives the full graceful-shutdown flow through a REAL POSIX signal (SIGINT). The signal handler the
-    ///     entry point registers must cancel the token, and the action observing that cancellation and throwing an
-    ///     <see cref="OperationCanceledException" /> must map to exit code 0 with a Debug 'shut down gracefully' log.
-    ///     Skipped on Windows where raising SIGINT into the current process is not reliably supported by
-    ///     <see cref="PosixSignalRegistration" /> from managed code.
+    ///     Drives the full graceful-shutdown flow through a REAL POSIX signal (SIGINT). The signal goes to a child
+    ///     process (<c>ES.FX.Hosting.Tests.SUT</c>) running the entry point, never to the test process itself: the
+    ///     Microsoft.Testing.Platform host treats SIGINT as Ctrl+C and aborts the whole test session. The handler the
+    ///     entry point registers must cancel the token, and the resulting <see cref="OperationCanceledException" />
+    ///     must map to exit code 0 with a Debug 'shut down gracefully' log. Not discovered on Windows, which has no
+    ///     POSIX signals to send to another process (see <see cref="PosixFactAttribute" />).
     /// </summary>
-    [Fact]
+    [PosixFact]
     public async Task GracefulShutdown_RealSignal_CancelsToken_Returns0_AndLogsDebug()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            return; // SIGINT raise is not deterministic on Windows; covered on Linux CI.
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var output = new ConcurrentQueue<string>();
+        var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        var loggerMock = new Mock<ILogger<ProgramEntry>>();
-        var programEntry = BuildWith(loggerMock);
-
-        var result = await programEntry.RunAsync(async (_, ct) =>
+        using var sut = new Process();
+        sut.StartInfo = new ProcessStartInfo(Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet",
+            [typeof(SutMarkers).Assembly.Location])
         {
-            // Raise SIGINT so the entry point's registered handler cancels the CTS backing 'ct'.
-            RaiseSignal(2); // SIGINT == 2
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        sut.OutputDataReceived += OnOutput;
+        sut.ErrorDataReceived += OnOutput;
+        sut.Start();
+        sut.BeginOutputReadLine();
+        sut.BeginErrorReadLine();
 
-            // Wait for the handler to observe and propagate cancellation, then throw an OCE tied to the token.
-            var start = DateTime.UtcNow;
-            while (!ct.IsCancellationRequested && DateTime.UtcNow - start < TimeSpan.FromSeconds(5))
-                await Task.Delay(10, CancellationToken.None);
+        try
+        {
+            await ready.Task.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
+            Assert.Equal(0, SendSignal(sut.Id, 2)); // SIGINT == 2
+            await sut.WaitForExitAsync(cancellationToken).WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            Assert.Fail($"The SUT did not finish in time. Output:{Environment.NewLine}" +
+                        string.Join(Environment.NewLine, output));
+        }
+        finally
+        {
+            if (!sut.HasExited) sut.Kill(true);
+        }
 
-            ct.ThrowIfCancellationRequested();
-            return 99; // should never be reached
-        });
+        Assert.Equal(0, sut.ExitCode);
+        Assert.Contains(output, line => line.Contains("shut down gracefully"));
+        return;
 
-        Assert.Equal(0, result);
-        loggerMock.VerifyLoggerWasCalled("shut down gracefully");
+        void OnOutput(object sender, DataReceivedEventArgs e)
+        {
+            if (e.Data is null) return;
+            output.Enqueue(e.Data);
+            if (e.Data == SutMarkers.Ready) ready.TrySetResult();
+        }
     }
 
-    [DllImport("libc", EntryPoint = "raise", SetLastError = true)]
-    private static extern int RaiseSignal(int signal);
+    [DllImport("libc", EntryPoint = "kill", SetLastError = true)]
+    private static extern int SendSignal(int pid, int signal);
 }

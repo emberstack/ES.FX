@@ -13,7 +13,6 @@ namespace ES.FX.Additions.Microsoft.Data.SqlClient.Tests;
 ///     (Testcontainers spins up MsSql via the shared <see cref="SqlServerContainerFixture" />).
 /// </summary>
 public class SqlServerSafeQueryFunctionalTests(SqlServerContainerFixture sqlServerFixture)
-    : IClassFixture<SqlServerContainerFixture>
 {
     private SqlConnection CreateConnection() => new(sqlServerFixture.GetConnectionString());
 

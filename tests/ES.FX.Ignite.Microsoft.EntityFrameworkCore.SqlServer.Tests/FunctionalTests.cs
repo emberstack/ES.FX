@@ -15,14 +15,13 @@ using Microsoft.Extensions.Hosting;
 namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests;
 
 public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
-    : IClassFixture<SqlServerContainerFixture>
 {
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task CanConnect(bool useFactory)
     {
-        await sqlServerFixture.InitializeAsync();
+        var connectionString = await sqlServerFixture.CreateDatabaseAsync(TestContext.Current.CancellationToken);
 
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
@@ -59,7 +58,7 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
 
         void ConfigureOptions(SqlServerDbContextSparkOptions<TestDbContext> options)
         {
-            options.ConnectionString = sqlServerFixture.GetConnectionString();
+            options.ConnectionString = connectionString;
         }
 
         void ConfigureSqlServerDbContextOptionsBuilder(
@@ -75,7 +74,7 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
     [InlineData(true)]
     public async Task HealthChecks(bool useFactory)
     {
-        await sqlServerFixture.InitializeAsync();
+        var connectionString = await sqlServerFixture.CreateDatabaseAsync(TestContext.Current.CancellationToken);
 
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
@@ -111,7 +110,7 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
 
         void ConfigureOptions(SqlServerDbContextSparkOptions<TestDbContext> options)
         {
-            options.ConnectionString = sqlServerFixture.GetConnectionString();
+            options.ConnectionString = connectionString;
         }
 
         void ConfigureSqlServerDbContextOptionsBuilder(
@@ -127,7 +126,7 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
     [InlineData(true)]
     public async Task RelationalDbContextMigrationsTask(bool useFactory)
     {
-        await sqlServerFixture.InitializeAsync();
+        var connectionString = await sqlServerFixture.CreateDatabaseAsync(TestContext.Current.CancellationToken);
 
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
@@ -157,7 +156,7 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
 
         void ConfigureOptions(SqlServerDbContextSparkOptions<TestDbContext> options)
         {
-            options.ConnectionString = sqlServerFixture.GetConnectionString();
+            options.ConnectionString = connectionString;
         }
 
         void ConfigureSqlServerDbContextOptionsBuilder(

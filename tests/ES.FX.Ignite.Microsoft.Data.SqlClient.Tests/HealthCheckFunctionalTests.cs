@@ -14,7 +14,6 @@ namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Tests;
 ///     (killing "always return Healthy" from the negative side).
 /// </summary>
 public class HealthCheckFunctionalTests(SqlServerContainerFixture sqlServerFixture)
-    : IClassFixture<SqlServerContainerFixture>
 {
     [Fact]
     public async Task HealthCheck_Reports_Healthy_Against_Live_Server()

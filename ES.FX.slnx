@@ -93,6 +93,7 @@
   </Folder>
   <Folder Name="/tests/FX/">
     <Project Path="tests/ES.FX.Hosting.Tests/ES.FX.Hosting.Tests.csproj" />
+    <Project Path="tests/ES.FX.Hosting.Tests.SUT/ES.FX.Hosting.Tests.SUT.csproj" />
     <Project Path="tests/ES.FX.Migrations.Tests/ES.FX.Migrations.Tests.csproj" />
     <Project Path="tests/ES.FX.OpenData.Countries.Tests/ES.FX.OpenData.Countries.Tests.csproj" />
     <Project Path="tests/ES.FX.OpenData.Currencies.Tests/ES.FX.OpenData.Currencies.Tests.csproj" />

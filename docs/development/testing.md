@@ -35,7 +35,7 @@ Test projects mirror the package they cover and live in `tests/`. Three naming c
 | Suffix | Purpose |
 | --- | --- |
 | `{Project}.Tests` | The test project for `{Project}` (unit + functional tests). |
-| `{Project}.Tests.SUT` | A real host (ASP.NET app) exercised end-to-end by `{Project}.Tests`. |
+| `{Project}.Tests.SUT` | A real host exercised end-to-end by `{Project}.Tests`: an ASP.NET app booted in-process, or a console app run as a child process. |
 | `ES.FX.Shared.{Db}.Tests` | Shared Testcontainers fixtures reused across many test projects. A plain class library, **not** a test project. |
 
 A test `.csproj` sets `IsTestProject` and `IsPackable=false`, references the package under test, and
@@ -247,6 +247,35 @@ public class FunctionalTests(RedisContainerFixture redisFixture)
 > MariaDB follow the same `IAsyncLifetime` shape (`SqlServerContainerFixture`, `PostgreSqlContainerFixture`,
 > `MySqlContainerFixture`), each pinning a specific image and tag.
 
+SQL Server is heavy (each instance wants roughly 2 GB of memory), so `SqlServerContainerFixture` is shared
+**per test assembly** rather than per class. Register it once and inject it as usual:
+
+```csharp
+// AssemblyFixtures.cs
+using ES.FX.Shared.SqlServer.Tests.Fixtures;
+
+[assembly: AssemblyFixture(typeof(SqlServerContainerFixture))]
+```
+
+```csharp
+public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
+{
+    [Fact]
+    public async Task Migrates()
+    {
+        // A fresh, empty database on the shared server, isolated from every other test.
+        var connectionString = await sqlServerFixture.CreateDatabaseAsync(TestContext.Current.CancellationToken);
+        // ...
+    }
+}
+```
+
+> [!WARNING]
+> Never call a fixture's `InitializeAsync()` from a test to get a clean slate. It starts **another
+> container** each time, and the earlier ones keep running until the test process exits. With SQL Server,
+> that exhausts CI runner memory and crashes the engine. Use `CreateDatabaseAsync` for isolation; read-only
+> tests can share the server's default database through `GetConnectionString()`.
+
 ## End-to-end tests with a system-under-test (SUT)
 
 To test middleware and endpoints that only exist on a real web host, ES.FX uses a companion
@@ -298,6 +327,29 @@ public class NSwagFunctionalTests(WebApplicationFactory<Program> factory)
 > Reach for the SUT pattern when the thing you're verifying is a request-pipeline behavior — a mapped
 > endpoint, response header middleware, health-check routes, or generated OpenAPI. For pure DI/config
 > assertions, the lighter `Host.CreateEmptyApplicationBuilder(null)` approach is enough.
+
+### Console SUTs for process-level behavior
+
+Some behavior only exists at the process level, such as `ProgramEntry` reacting to a real `SIGINT`. That
+can't run inside the test process: the Microsoft.Testing.Platform host treats `SIGINT` as Ctrl+C and
+**aborts the whole test session** (exit code 3). Even a handler that sets `PosixSignalContext.Cancel` only
+suppresses the default termination; every other handler in the process still runs.
+
+Instead, `ES.FX.Hosting.Tests.SUT` is a small console app that runs the entry point and prints a ready
+marker (`SutMarkers.Ready`) once its signal handlers are registered. The test references the SUT project
+(which copies its `.dll` and `runtimeconfig.json` next to the test assembly), starts it with
+`dotnet <SUT.dll>`, waits for the marker, sends the signal to the **child's** PID via libc `kill`, and
+asserts on the exit code and output.
+
+Windows has no POSIX signals to send to another process, so the test uses `[PosixFact]` instead of
+`[Fact]`. Its discoverer (`PosixFactDiscoverer`) yields no test cases on Windows: the test isn't reported as
+skipped there, it just doesn't exist, and it runs normally on Linux and macOS. Prefer this over an early
+`return` (which reports a pass without asserting anything) or `Assert.Skip` (which leaves a permanent skip
+in every local run).
+
+> [!WARNING]
+> Never `raise()` a signal or otherwise signal the current process from a test. Send it to a child
+> process you started.
 
 ## Run the tests
 

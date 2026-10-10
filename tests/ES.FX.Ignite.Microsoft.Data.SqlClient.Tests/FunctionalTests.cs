@@ -10,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 namespace ES.FX.Ignite.Microsoft.Data.SqlClient.Tests;
 
 public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
-    : IClassFixture<SqlServerContainerFixture>
 {
     [Theory]
     [InlineData(false)]

@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ES.FX.Hosting\ES.FX.Hosting.csproj" />
+    <ProjectReference Include="..\ES.FX.Hosting.Tests.SUT\ES.FX.Hosting.Tests.SUT.csproj" />
   </ItemGroup>
 
   <ItemGroup>

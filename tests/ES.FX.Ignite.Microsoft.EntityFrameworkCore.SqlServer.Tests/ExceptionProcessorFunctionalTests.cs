@@ -19,14 +19,13 @@ namespace ES.FX.Ignite.Microsoft.EntityFrameworkCore.SqlServer.Tests;
 ///     Testcontainers fixture like the other functional tests in this project.
 /// </summary>
 public class ExceptionProcessorFunctionalTests(SqlServerContainerFixture sqlServerFixture)
-    : IClassFixture<SqlServerContainerFixture>
 {
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task DuplicateKey_IsTranslatedTo_UniqueConstraintException(bool useFactory)
     {
-        await sqlServerFixture.InitializeAsync();
+        var connectionString = await sqlServerFixture.CreateDatabaseAsync(TestContext.Current.CancellationToken);
 
         var builder = Host.CreateEmptyApplicationBuilder(null);
 
@@ -65,7 +64,7 @@ public class ExceptionProcessorFunctionalTests(SqlServerContainerFixture sqlServ
         return;
 
         void ConfigureOptions(SqlServerDbContextSparkOptions<TestDbContext> options) =>
-            options.ConnectionString = sqlServerFixture.GetConnectionString();
+            options.ConnectionString = connectionString;
 
         void ConfigureSqlServerDbContextOptionsBuilder(
             SqlServerDbContextOptionsBuilder sqlServerDbContextOptionsBuilder) =>
