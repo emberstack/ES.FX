@@ -19,9 +19,9 @@
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0" />
     <PackageVersion Include="KubernetesClient" Version="21.0.8" />
-    <PackageVersion Include="MassTransit" Version="9.2.3" />
-    <PackageVersion Include="MassTransit.Abstractions" Version="9.2.3" />
-    <PackageVersion Include="MassTransit.RabbitMQ" Version="9.2.3" />
+    <PackageVersion Include="MassTransit" Version="9.2.4" />
+    <PackageVersion Include="MassTransit.Abstractions" Version="9.2.4" />
+    <PackageVersion Include="MassTransit.RabbitMQ" Version="9.2.4" />
     <PackageVersion Include="MediatR" Version="14.2.0" />
     <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
