@@ -178,6 +178,14 @@ jobs:
     if: ${{ needs.discovery.outputs.release == 'true' && github.ref == 'refs/heads/main' }}
     needs: [discovery, build]
     runs-on: ubuntu-latest
+    # NuGet.org trusted publishing: the nuget.org policy is bound to this workflow file (pipeline.yaml)
+    # and, optionally, this environment. Restrict the environment's deployment branches to `main`.
+    environment: release
+    # An explicit permissions block replaces the repository default, so list everything this job uses.
+    permissions:
+      contents: read
+      packages: write   # GITHUB_TOKEN authenticates the GitHub Packages source
+      id-token: write   # OIDC token exchanged by NuGet/login for a short-lived NuGet.org API key
     env:
       gitVersion_SemVer: ${{ needs.discovery.outputs.gitVersion_SemVer }}
       gitVersion_AssemblySemFileVer: ${{ needs.discovery.outputs.gitVersion_AssemblySemFileVer }}
@@ -195,11 +203,20 @@ jobs:
             dotnet nuget push "$pkg" --source "github" --api-key ${{ secrets.ES_GITHUB_PAT }} --skip-duplicate
           done
 
+      - name: nuget - login (trusted publishing)
+        id: nuget_login
+        if: github.ref == 'refs/heads/main'
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.ES_NUGET_USER }}  # nuget.org profile name, not email
+
       - name: dotnet nuget push - NuGet
         if: github.ref == 'refs/heads/main'
+        env:
+          NUGET_API_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
         run: |
           for pkg in .artifacts/nuget/*.nupkg; do
-            dotnet nuget push "$pkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.ES_NUGET_APIKEY }} --skip-duplicate
+            dotnet nuget push "$pkg" --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --skip-duplicate
           done
 
       - name: github - release - create

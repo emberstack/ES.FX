@@ -104,7 +104,7 @@ A single pipeline, `.github/workflows/pipeline.yaml`, runs on every branch and p
 
 1. **Discovery** installs .NET `10.x` and GitVersion `6.x`, computes the version, and uses `dorny/paths-filter` to decide what to run. The source filter (`src`, which also gates package pushes) matches `src/**`, `*.slnx`, `*.sln`, and `*.props`; the build filter adds `tests/**` and `playground/**`.
 2. **Build** runs `dotnet restore` → `dotnet build` → `dotnet test`, publishes the TRX test report, and uploads the `.nupkg` artifacts. Configuration is `Release` on `main`, `Debug` elsewhere. On non-pull-request, non-Dependabot pushes that touched source, this job also pushes the packages to **GitHub Packages**.
-3. **Release** runs only on `main`: it pushes packages to **GitHub Packages** and **NuGet.org** and cuts a GitHub release named/tagged `v{version}`.
+3. **Release** runs only on `main`, in the `release` GitHub environment: it pushes packages to **GitHub Packages** and **NuGet.org** and cuts a GitHub release named/tagged `v{version}`. NuGet.org pushes use [trusted publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing): `NuGet/login` exchanges the job's GitHub OIDC token for a short-lived API key, so no long-lived NuGet.org key is stored in the repository.
 
 > [!IMPORTANT]
 > Package publishing is gated. Pull requests and Dependabot-authored runs never push packages. Pushes to NuGet.org and the GitHub release happen only on `main`; other branches may still push to GitHub Packages when source changes.

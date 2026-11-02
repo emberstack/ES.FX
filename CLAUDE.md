@@ -143,7 +143,9 @@ Naming:
 - `main` builds `Release`; all other branches build `Debug`.
 - **Publishing**: any direct branch push (not PRs, not Dependabot) that touches source pushes the built
   packages to **GitHub Packages** — so pushing a feature branch publishes prerelease packages. `main`
-  additionally publishes to **NuGet.org** and cuts a GitHub release (`v{semver}`).
+  additionally publishes to **NuGet.org** and cuts a GitHub release (`v{semver}`). The NuGet.org push uses
+  **trusted publishing** (OIDC via `NuGet/login`, `release` environment, `id-token: write`) — there is no
+  NuGet.org API key secret; the nuget.org policy is bound to the workflow file name `pipeline.yaml`.
 - Dependabot: `.github/dependabot.yaml` groups all NuGet + GitHub Actions bumps into one daily batch;
   `.github/workflows/dependabot.auto.yaml` auto-approves and squash-auto-merges Dependabot PRs once checks
   pass. Stale issues are handled by `stale.yaml`.
