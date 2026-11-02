@@ -1,8 +1,8 @@
+using ES.FX.Shared.SqlServer.Tests.Fixtures;
 using ES.FX.TransactionalOutbox.Entities;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Testcontainers.MsSql;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests;
 
@@ -13,34 +13,20 @@ namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests;
 ///     custom-schema table qualification branch. These require a real relational engine because the provider
 ///     issues raw SQL with SQL-Server-specific lock hints.
 /// </summary>
-public class SqlServerOutboxProviderQueryTests : IAsyncLifetime
+public class SqlServerOutboxProviderQueryTests(SqlServerContainerFixture sqlServerFixture) : IAsyncLifetime
 {
-    private const string Registry = "mcr.microsoft.com";
-    private const string Image = "mssql/server";
-    private const string Tag = "2025-latest";
-
     private string? _connectionString;
-    private MsSqlContainer? _msSqlContainer;
 
-    public async ValueTask InitializeAsync()
-    {
-        _msSqlContainer = new MsSqlBuilder($"{Registry}/{Image}:{Tag}")
-            .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
-            .Build();
+    public async ValueTask InitializeAsync() =>
+        // xUnit builds a new instance per test, so every test gets its own database on the shared server
+        _connectionString = await sqlServerFixture.CreateDatabaseAsync(TestContext.Current.CancellationToken);
 
-        await _msSqlContainer.StartAsync(TestContext.Current.CancellationToken);
-        _connectionString = _msSqlContainer.GetConnectionString();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_msSqlContainer != null) await _msSqlContainer.DisposeAsync();
-    }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     private OutboxTestDbContext CreateContext()
     {
         if (_connectionString == null)
-            throw new InvalidOperationException("Container not initialized. Test setup failed.");
+            throw new InvalidOperationException("Database not initialized. Test setup failed.");
 
         var builder = new DbContextOptionsBuilder<OutboxTestDbContext>()
             .UseSqlServer(_connectionString,
@@ -211,7 +197,7 @@ public class SqlServerOutboxProviderQueryTests : IAsyncLifetime
         // Arrange - Outbox mapped to a non-default schema exercises the [schema].[table] branch and the
         // schema-qualified StoreObjectIdentifier column resolution.
         if (_connectionString == null)
-            throw new InvalidOperationException("Container not initialized.");
+            throw new InvalidOperationException("Database not initialized.");
 
         var builder = new DbContextOptionsBuilder<CustomSchemaOutboxContext>()
             .UseSqlServer(_connectionString);

@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime\ES.FX.Additions.Microsoft.EntityFrameworkCore.SqlServer.DesignTime.csproj" />
+    <ProjectReference Include="..\ES.FX.Shared.SqlServer.Tests\ES.FX.Shared.SqlServer.Tests.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

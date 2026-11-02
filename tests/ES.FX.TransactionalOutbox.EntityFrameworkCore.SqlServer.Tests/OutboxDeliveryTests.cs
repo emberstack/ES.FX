@@ -1,39 +1,14 @@
+using ES.FX.Shared.SqlServer.Tests.Fixtures;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Delivery;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests;
 using ES.FX.TransactionalOutbox.EntityFrameworkCore.Tests.Context;
 using Microsoft.EntityFrameworkCore;
-using Testcontainers.MsSql;
 
 namespace ES.FX.TransactionalOutbox.EntityFrameworkCore.SqlServer.Tests;
 
-public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
+public class OutboxDeliveryTests(SqlServerContainerFixture sqlServerFixture, ITestOutputHelper output)
+    : OutboxDeliveryTestsBase(output)
 {
-    public const string Registry = "mcr.microsoft.com";
-    public const string Image = "mssql/server";
-    public const string Tag = "2025-latest";
-    private string? _connectionString;
-    private MsSqlContainer? _msSqlContainer;
-
-    public OutboxDeliveryTests(ITestOutputHelper output) : base(output)
-    {
-    }
-
-    public async ValueTask InitializeAsync()
-    {
-        // Create a dedicated SQL Server container for this test class
-        _msSqlContainer = new MsSqlBuilder($"{Registry}/{Image}:{Tag}")
-            .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
-            .Build();
-
-        await _msSqlContainer.StartAsync(TestContext.Current.CancellationToken);
-        _connectionString = _msSqlContainer.GetConnectionString();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_msSqlContainer != null) await _msSqlContainer.DisposeAsync();
-    }
-
     protected override void ConfigureDbContext(DbContextOptionsBuilder optionsBuilder, string connectionString)
     {
         optionsBuilder.UseSqlServer(connectionString,
@@ -45,17 +20,9 @@ public class OutboxDeliveryTests : OutboxDeliveryTestsBase, IAsyncLifetime
         options.UseSqlServerOutboxProvider();
     }
 
-    protected override Task<string> GetConnectionStringAsync()
-    {
-        if (_connectionString == null)
-            throw new InvalidOperationException("Container not initialized. Call InitializeAsync first.");
-
-        return Task.FromResult(_connectionString);
-    }
-
-    protected override Task CleanupAsync(string connectionString) =>
-        // No cleanup needed - container will be disposed
-        Task.CompletedTask;
+    // A fresh database on the shared server per test; it is discarded along with the container.
+    protected override Task<string> GetConnectionStringAsync() =>
+        sqlServerFixture.CreateDatabaseAsync(TestContext.Current.CancellationToken);
 
     protected override async Task InitializeDatabaseAsync(OutboxTestDbContext context)
     {

@@ -275,6 +275,17 @@ public class FunctionalTests(SqlServerContainerFixture sqlServerFixture)
 > container** each time, and the earlier ones keep running until the test process exits. With SQL Server,
 > that exhausts CI runner memory and crashes the engine. Use `CreateDatabaseAsync` for isolation; read-only
 > tests can share the server's default database through `GetConnectionString()`.
+>
+> The same applies to implementing `IAsyncLifetime` on a test class to start a container: xUnit creates a
+> new class instance **per test**, so that starts one container per test, not per class. To set up per-test
+> state on the shared server, have `InitializeAsync` call `CreateDatabaseAsync` instead.
+
+Every SQL Server container should come from `SqlServerContainerFixture.StartContainerAsync(image, namePrefix)`,
+which the fixture itself uses and which project-local fixtures with their own image coordinates can call
+too. It caps each instance at `MemoryLimitMb` (2 GB, via `MSSQL_MEMORY_LIMIT_MB`); otherwise every instance
+sizes itself to 80% of the host's memory. It also retries up to `StartAttempts` times when the engine crashes
+while booting (`ContainerNotRunningException`), which happens on loaded CI runners before the server has
+accepted a single connection.
 
 ## End-to-end tests with a system-under-test (SUT)
 
