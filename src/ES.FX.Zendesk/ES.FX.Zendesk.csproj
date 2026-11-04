@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Http" />
+		<PackageReference Include="Microsoft.Kiota.Abstractions" />
 		<PackageReference Include="Microsoft.Kiota.Bundle" />
 	</ItemGroup>
 
