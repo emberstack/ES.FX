@@ -148,4 +148,7 @@ Naming:
   NuGet.org API key secret; the nuget.org policy is bound to the workflow file name `pipeline.yaml`.
 - Dependabot: `.github/dependabot.yaml` groups all NuGet + GitHub Actions bumps into one daily batch;
   `.github/workflows/dependabot.auto.yaml` auto-approves and squash-auto-merges Dependabot PRs once checks
-  pass. Stale issues are handled by `stale.yaml`.
+  pass. Stale issues are handled by `stale.yaml`. `Microsoft.Extensions.*` / `Microsoft.AspNetCore.*` /
+  `Microsoft.EntityFrameworkCore*` major bumps are ignored, keeping them on the target .NET major (10.x), and
+  `OpenTelemetry*` is held below 1.21 (it pulls the .NET 11 `System.Diagnostics.DiagnosticSource`); see
+  [`docs/development/conventions.md`](docs/development/conventions.md#net-versioned-packages-follow-the-target-framework).

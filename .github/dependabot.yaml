@@ -12,6 +12,22 @@ updates:
       all-dependencies:
         patterns:
           - "*"
+    # Packages released with each .NET version stay on the repo's target .NET major (net10.0 -> 10.x).
+    # A new major of these arrives with the next .NET release (e.g. 11.0.0 with .NET 11) and is taken
+    # together with the TFM retarget, never as a Dependabot bump. Patch/minor updates still flow.
+    # Note: the Microsoft.Extensions.* pattern also holds Microsoft.Extensions.Azure (Azure SDK
+    # versioning) - bump its major by hand.
+    ignore:
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: ["version-update:semver-major"]
+      # OpenTelemetry 1.21+ depends on System.Diagnostics.DiagnosticSource 11.0.0 on net10.0 (1.20.x uses
+      # the copy built into .NET 10). Held at 1.20.x until the net11.0 retarget; 1.20.x patches still flow.
+      - dependency-name: "OpenTelemetry*"
+        versions: [">= 1.21.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

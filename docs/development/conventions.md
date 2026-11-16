@@ -45,6 +45,24 @@ The version comes from the central file:
 
 `CentralPackageTransitivePinningEnabled` is `false`, so only your direct references are pinned; transitive versions are resolved normally by NuGet.
 
+### .NET-versioned packages follow the target framework
+
+Packages released with each .NET version — `Microsoft.Extensions.*`, `Microsoft.AspNetCore.*`, and
+`Microsoft.EntityFrameworkCore*` — are kept on the **latest release of the repo's target .NET major**
+(`net10.0` → `10.x`), even when a newer major is installable. A new .NET release ships `11.0.0` versions of
+these packages; some only target the new framework, and others fall back to a `netstandard2.0` build on the
+older one. Take that major together with the target-framework retarget, not as a routine bump.
+
+`.github/dependabot.yaml` enforces this with `ignore` rules for `semver-major` updates on those patterns, so
+patch and minor updates still flow. Remove the rules (or move them to the next major) when retargeting.
+
+The same rule covers transitive dependencies: other packages stay on their latest release **whose
+dependency graph stays on the target .NET major**. OpenTelemetry is held at `1.20.x` because `1.21.0` and
+later depend on `System.Diagnostics.DiagnosticSource` `11.0.0` on `net10.0`, while `1.20.x` uses the copy
+built into .NET 10. `.github/dependabot.yaml` blocks `OpenTelemetry*` `>= 1.21.0`; lift it with the
+retarget. To check a bump, search the restored `obj/project.assets.json` files for packages from the
+next .NET major, such as `"System.Diagnostics.DiagnosticSource/11.0.0"`.
+
 ## Global build settings
 
 `Directory.Build.props` applies these `PropertyGroup` defaults to **every** project in the repo:
