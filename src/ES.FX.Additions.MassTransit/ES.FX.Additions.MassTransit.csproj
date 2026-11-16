@@ -9,6 +9,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="MassTransit" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 	</ItemGroup>
 
 	<ItemGroup>
