@@ -18,7 +18,7 @@
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0" />
-    <PackageVersion Include="KubernetesClient" Version="21.0.8" />
+    <PackageVersion Include="KubernetesClient" Version="21.0.41" />
     <PackageVersion Include="MassTransit" Version="9.3.0" />
     <PackageVersion Include="MassTransit.Abstractions" Version="9.3.0" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="9.3.0" />
@@ -79,8 +79,8 @@
     <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
     <PackageVersion Include="Serilog.Settings.Configuration" Version="11.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
-    <PackageVersion Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
-    <PackageVersion Include="Serilog.Sinks.Seq" Version="9.1.0" />
+    <PackageVersion Include="Serilog.Sinks.OpenTelemetry" Version="4.3.0" />
+    <PackageVersion Include="Serilog.Sinks.Seq" Version="9.2.0" />
     <PackageVersion Include="SharpGrip.FluentValidation.AutoValidation.Endpoints" Version="2.0.0" />
     <PackageVersion Include="SharpGrip.FluentValidation.AutoValidation.Mvc" Version="2.0.0" />
     <PackageVersion Include="StackExchange.Redis" Version="3.4.35" />
